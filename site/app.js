@@ -1,9 +1,6 @@
 // Tenner front end. Reads data/trending.json and data/new.json (rebuilt hourly by GitHub Actions).
 // Routes: #top (all services), #netflix, #disney … (one service), #new (new releases).
 
-const SITE_URL = 'https://danseacroft-lang.github.io/Tenner/';
-const SHARE_TEXT = "Tenner: the UK's top 10 shows and films on Netflix, Disney+, Prime Video, HBO Max and Paramount+, updated every hour.";
-
 const state = { trending: null, fresh: null, kind: 'tv', route: 'top' };
 const $ = (s, el = document) => el.querySelector(s);
 const view = $('#view');
@@ -93,7 +90,7 @@ function route() {
 function render() {
   const isNew = state.route === 'new';
   $('#controls').hidden = isNew;
-  if (isNew) { view.innerHTML = layout(pageNew()); document.title = 'New this week | Tenner'; wireShare(); return; }
+  if (isNew) { view.innerHTML = `<div class="wrap">${pageNew()}</div>`; document.title = 'New this week | Tenner'; return; }
 
   $('#service').value = state.route;
   document.querySelectorAll('[data-kind]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.kind === state.kind)));
@@ -108,11 +105,9 @@ function render() {
     ? `${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up. Add your TMDB key and run the workflow to see the real chart.</p>` : ''}
        ${posterRow(list)}${overview(list, !s, where)}`
     : `<p class="lede" style="margin-top:24px">No ${words().toLowerCase()} found for ${esc(where)} yet. The provider name may have changed; check data/providers.json after the next update.</p>`;
-  view.innerHTML = layout(chart);
-  wireScroller(); wireShare();
+  view.innerHTML = `<div class="wrap chart">${chart}</div>`;
+  wireScroller(); wireRanks();
 }
-
-const layout = (chart) => `<div class="wrap layout"><div class="chart">${chart}</div>${shareCard()}</div>`;
 
 // ---------- pieces ----------
 function hue(str) { let h = 0; for (const c of String(str)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
@@ -125,9 +120,34 @@ const meta = (it) => [
   it.rating ? `<span class="star" aria-label="Rated ${it.rating} out of 10">★ ${it.rating.toFixed(1)}</span>` : '',
 ].join('');
 
-// Each rank is an SVG so its outline can take the rainbow gradient and glow.
-const rankSvg = (i) => `<svg class="num" viewBox="-14 -14 176 124" aria-hidden="true" style="animation-delay:${-i * 1.1}s">
-  <text x="0" y="96">${pad(i + 1)}</text></svg>`;
+// Each rank is a little neon sign: a soft aura, a glassy fill, a rainbow tube with bloom and a white-hot core.
+// The rainbow flows along every number, offset per card so it ripples across the row.
+const RAINBOW = ['#ff375f', '#ff9f0a', '#ffd60a', '#30d158', '#40c8e0', '#5e5ce6', '#bf5af2', '#ff375f'];
+function rankSvg(i) {
+  const id = `rk${i}`, n = pad(i + 1);
+  const stops = RAINBOW.map((c, k) => `<stop offset="${(k / (RAINBOW.length - 1)).toFixed(3)}" stop-color="${c}"/>`).join('');
+  const t = (cls, extra = '') => `<text class="${cls}" x="0" y="104" ${extra}>${n}</text>`;
+  return `<svg class="num" viewBox="-24 -24 200 152" aria-hidden="true">
+    <defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="-40" y1="0" x2="200" y2="40" spreadMethod="repeat">${stops}
+      <animateTransform attributeName="gradientTransform" type="translate" from="0 0" to="240 40" dur="7s" begin="${(-i * 0.45).toFixed(2)}s" repeatCount="indefinite"/>
+    </linearGradient></defs>
+    ${t('aura', `fill="url(#${id})" filter="url(#aura)"`)}
+    ${t('glass')}
+    ${t('tube', `stroke="url(#${id})" filter="url(#bloom)"`)}
+    ${t('core')}
+  </svg>`;
+}
+
+// Only animate the numbers you can see, and none at all for reduced motion.
+let rankObserver;
+function wireRanks() {
+  const svgs = [...document.querySelectorAll('svg.num')];
+  if (reduceMotion) { svgs.forEach((s) => s.pauseAnimations?.()); return; }
+  rankObserver?.disconnect();
+  rankObserver = new IntersectionObserver((entries) => entries.forEach((e) =>
+    e.isIntersecting ? e.target.unpauseAnimations?.() : e.target.pauseAnimations?.()), { rootMargin: '80px' });
+  svgs.forEach((s) => rankObserver.observe(s));
+}
 
 function posterRow(list) {
   return `<div class="row-wrap">
@@ -206,59 +226,6 @@ function pageNew() {
     <p class="lede">Arriving over the last and next seven days. Dates come from US listings, so a few UK dates may differ.</p>
     ${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up.</p>` : ''}
     ${body}`;
-}
-
-// ---------- share card ----------
-const ICONS = {
-  // Simple generic glyphs (white on each colour circle).
-  wa: '<path d="M12 3.5a8.5 8.5 0 0 0-7.4 12.7L3.5 20.5l4.4-1.1A8.5 8.5 0 1 0 12 3.5z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M9.2 8.6c.3-.5.7-.4.9 0l.6 1.4c.1.3 0 .6-.2.8l-.5.5c.6 1.2 1.6 2.2 2.8 2.8l.5-.5c.2-.2.5-.3.8-.2l1.4.6c.4.2.5.6 0 .9-1.2 1.2-3.2.6-5.1-1.3S8 9.8 9.2 8.6z" fill="#fff"/>',
-  im: '<path d="M12 4C7.3 4 3.5 7.1 3.5 11c0 2.1 1.1 4 2.9 5.3-.2 1.4-.9 2.6-1.9 3.4 2 0 3.7-.7 4.9-1.7.8.2 1.7.3 2.6.3 4.7 0 8.5-3.1 8.5-7S16.7 4 12 4z" fill="#fff"/>',
-  ms: '<path d="M12 3.5c-4.8 0-8.5 3.5-8.5 8.1 0 2.4 1 4.5 2.7 6v3l2.7-1.5c1 .3 2 .4 3.1.4 4.8 0 8.5-3.5 8.5-8.1S16.8 3.5 12 3.5z" fill="#fff"/><path d="M7 14l3.4-3.6 2 2L16.9 10l-3.4 3.6-2-2z" fill="#0a7cff"/>',
-  em: '<rect x="3.5" y="6" width="17" height="12.5" rx="2.5" fill="none" stroke="#fff" stroke-width="2"/><path d="M4.5 7.5 12 13l7.5-5.5" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>',
-  cp: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.2 1.2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.2-1.2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>',
-  mo: '<path d="M12 3.5v11M8 7.5l4-4 4 4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 10.5H6.5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>',
-};
-const icon = (k) => `<span class="ico ${k}"><svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[k]}</svg></span>`;
-
-function shareCard() {
-  const msg = encodeURIComponent(`${SHARE_TEXT} ${SITE_URL}`);
-  const touch = matchMedia('(pointer: coarse)').matches;
-  return `<aside class="share" aria-labelledby="share-h">
-    <img src="logo.svg" alt="" width="52" height="52">
-    <h2 id="share-h">Do us a favour, pal</h2>
-    <p>Share Tenner with your mates. One link, the whole UK top ten, fresh every hour.</p>
-    <div class="share-list">
-      <a class="btn btn-glass" href="https://wa.me/?text=${msg}" target="_blank" rel="noopener">${icon('wa')}WhatsApp</a>
-      <a class="btn btn-glass" href="sms:&body=${msg}">${icon('im')}iMessage</a>
-      <a class="btn btn-glass" data-share="messenger" href="${touch ? `fb-messenger://share/?link=${encodeURIComponent(SITE_URL)}` : 'https://www.messenger.com/'}" target="_blank" rel="noopener">${icon('ms')}Messenger</a>
-      <a class="btn btn-glass" href="mailto:?subject=${encodeURIComponent('Have you seen Tenner?')}&body=${msg}">${icon('em')}Email</a>
-      <button type="button" class="btn btn-glass" data-share="copy">${icon('cp')}<span>Copy link</span></button>
-      ${navigator.share ? `<button type="button" class="btn btn-glass" data-share="more">${icon('mo')}More…</button>` : ''}
-    </div>
-  </aside>`;
-}
-
-async function copyLink() {
-  try { await navigator.clipboard.writeText(SITE_URL); return true; } catch { return false; }
-}
-function wireShare() {
-  const card = $('.share'); if (!card) return;
-  card.addEventListener('click', async (e) => {
-    const el = e.target.closest('[data-share]'); if (!el) return;
-    const kind = el.dataset.share;
-    if (kind === 'copy') {
-      e.preventDefault();
-      const ok = await copyLink();
-      toast(ok ? 'Link copied' : SITE_URL);
-      if (ok) { const label = el.querySelector('span:last-child'); label.textContent = 'Copied'; setTimeout(() => (label.textContent = 'Copy link'), 2000); }
-    } else if (kind === 'more') {
-      e.preventDefault();
-      try { await navigator.share({ title: 'Tenner', text: SHARE_TEXT, url: SITE_URL }); } catch {}
-    } else if (kind === 'messenger' && !matchMedia('(pointer: coarse)').matches) {
-      // Messenger on desktop can't take a pre-filled link, so copy it first.
-      if (await copyLink()) toast('Link copied. Paste it into Messenger.');
-    }
-  });
 }
 
 let toastTimer;
