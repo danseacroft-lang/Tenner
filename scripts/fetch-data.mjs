@@ -92,10 +92,14 @@ async function buildTrending() {
     tmdb('/watch/providers/tv', { watch_region: REGION }),
   ]);
   const ids = Object.fromEntries(SERVICES.map((s) => [s.key, new Set()]));
+  const logos = {}; // the service's main plan has the best (lowest) display priority
   const seen = {};
   for (const p of [...pm.results, ...pt.results]) {
     const s = serviceFor(p.provider_name);
-    if (s) { ids[s.key].add(p.provider_id); seen[p.provider_id] = p.provider_name; }
+    if (!s) continue;
+    ids[s.key].add(p.provider_id); seen[p.provider_id] = p.provider_name;
+    const prio = p.display_priorities?.[REGION] ?? p.display_priority ?? 999;
+    if (p.logo_path && (!logos[s.key] || prio < logos[s.key].prio)) logos[s.key] = { prio, url: `${IMG}/w154${p.logo_path}` };
   }
 
   // 2. Most popular titles currently streaming on each service in the UK.
@@ -103,7 +107,7 @@ async function buildTrending() {
     const providerIds = [...ids[s.key]];
     if (!providerIds.length) {
       console.warn(`! No TMDB provider matched ${s.label}. Check the regex in SERVICES.`);
-      return { key: s.key, label: s.label, providerIds, movie: [], tv: [] };
+      return { key: s.key, label: s.label, logo: logos[s.key]?.url || null, providerIds, movie: [], tv: [] };
     }
     const q = {
       watch_region: REGION,
@@ -116,7 +120,7 @@ async function buildTrending() {
     };
     const [m, t] = await Promise.all([tmdb('/discover/movie', q), tmdb('/discover/tv', q)]);
     return {
-      key: s.key, label: s.label, providerIds,
+      key: s.key, label: s.label, logo: logos[s.key]?.url || null, providerIds,
       movie: m.results.slice(0, PER_LIST).map((r) => toItem(r, 'movie')),
       tv: t.results.slice(0, PER_LIST).map((r) => toItem(r, 'tv')),
     };

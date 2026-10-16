@@ -11,6 +11,7 @@
   --label: #000000;
   --label2: rgba(60, 60, 67, .62);
   --sep: rgba(60, 60, 67, .2);
+  --label3: rgba(60, 60, 67, .36);
   --accent: #007aff;
   --green: #28a745;
   --gold: #c27c00;
@@ -34,7 +35,7 @@
   :root:not([data-theme="light"]) {
     --bg: #000000; --bg2: #1c1c1e; --card: #1c1c1e;
     --fill: rgba(118, 118, 128, .24); --fill-strong: rgba(118, 118, 128, .36);
-    --label: #ffffff; --label2: rgba(235, 235, 245, .62); --sep: rgba(84, 84, 88, .6);
+    --label: #ffffff; --label2: rgba(235, 235, 245, .62); --label3: rgba(235, 235, 245, .3); --sep: rgba(84, 84, 88, .6);
     --accent: #0a84ff; --green: #30d158; --gold: #ffb340;
     --nav: rgba(22, 22, 24, .72); --thumb: #636366; --shadow: 0 10px 30px rgba(0, 0, 0, .6); --num-glass: rgba(0, 0, 0, .42); --aura: .5; --core: .9;
     color-scheme: dark;
@@ -43,7 +44,7 @@
 :root[data-theme="dark"] {
   --bg: #000000; --bg2: #1c1c1e; --card: #1c1c1e;
   --fill: rgba(118, 118, 128, .24); --fill-strong: rgba(118, 118, 128, .36);
-  --label: #ffffff; --label2: rgba(235, 235, 245, .62); --sep: rgba(84, 84, 88, .6);
+  --label: #ffffff; --label2: rgba(235, 235, 245, .62); --label3: rgba(235, 235, 245, .3); --sep: rgba(84, 84, 88, .6);
   --accent: #0a84ff; --green: #30d158; --gold: #ffb340;
   --nav: rgba(22, 22, 24, .72); --thumb: #636366; --shadow: 0 10px 30px rgba(0, 0, 0, .6); --num-glass: rgba(0, 0, 0, .42); --aura: .5; --core: .9;
   color-scheme: dark;
@@ -88,43 +89,139 @@ main:focus { outline: none; }
 .btn-filled:hover { background: color-mix(in srgb, var(--accent) 88%, #000); }
 .btn-icon { width: 44px; height: 44px; padding: 0; }
 
-/* ---------- frosted navigation bar ---------- */
-body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 11; background: var(--bg); }
-.nav {
-  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10;
-  background: var(--nav);
-  -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: .5px solid var(--sep);
+/* ============================================================ the shell, from Channel Crossings: Liquid Glass
+   A bar that floats at the top (logo, the tabs, the round button), the tabs floating at the bottom on phones as in iOS,
+   and a soft wash of colour behind everything so the page feels lit from above. */
+:root{
+  --amb1:rgba(0,122,255,.11); --amb2:rgba(255,55,95,.07); --amb3:rgba(191,90,242,.07);
+  --glass:rgba(255,255,255,.64); --glass-hi:rgba(255,255,255,.85); --glass-line:rgba(60,60,67,.12); --glass-shadow:0 8px 30px rgba(0,0,0,.10),0 1px 3px rgba(0,0,0,.06);
+  --pill:rgba(118,118,128,.14); --ease-spring:cubic-bezier(.3,1.25,.4,1); --ease-out:cubic-bezier(.2,.8,.2,1);
 }
-.nav-inner {
-  max-width: var(--max); margin: 0 auto; height: 56px;
-  display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  padding-left: var(--gutter); padding-right: var(--gutter-r);
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --amb1:rgba(10,132,255,.24); --amb2:rgba(255,55,95,.1); --amb3:rgba(191,90,242,.16);
+  --glass:rgba(32,32,36,.58); --glass-hi:rgba(255,255,255,.16); --glass-line:rgba(255,255,255,.09); --glass-shadow:0 10px 34px rgba(0,0,0,.5),0 1px 3px rgba(0,0,0,.3);
+  --pill:rgba(118,118,128,.28);
+}}
+:root[data-theme="dark"]{
+  --amb1:rgba(10,132,255,.24); --amb2:rgba(255,55,95,.1); --amb3:rgba(191,90,242,.16);
+  --glass:rgba(32,32,36,.58); --glass-hi:rgba(255,255,255,.16); --glass-line:rgba(255,255,255,.09); --glass-shadow:0 10px 34px rgba(0,0,0,.5),0 1px 3px rgba(0,0,0,.3);
+  --pill:rgba(118,118,128,.28);
 }
-.brand { display: inline-flex; align-items: center; gap: 9px; color: var(--label); font: 700 21px/1 var(--font-display); letter-spacing: -.035em; }
-.brand:hover { text-decoration: none; }
-.brand img { width: 30px; height: 30px; }
-.nav-links { display: flex; gap: 4px; }
-.nav-links .btn { color: var(--label2); }
-.nav-links .btn[aria-current="page"] { color: var(--label); background: var(--fill); }
+html{scroll-padding-top:84px;overflow-x:clip}
+body{overflow-x:clip}
+body{isolation:isolate}
+body::before{content:"";position:fixed;z-index:-1;left:-10vw;right:-10vw;top:-20vh;height:95vh;pointer-events:none;
+  background:radial-gradient(55% 55% at 18% 18%,var(--amb1),transparent 70%),radial-gradient(40% 45% at 92% 6%,var(--amb2),transparent 72%),radial-gradient(60% 50% at 62% 48%,var(--amb3),transparent 75%)}
+
+/* the bar at the top: logo, the tabs, the round button */
+.top-row{position:sticky;top:0;z-index:49;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:16px;
+  max-width:var(--max);margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 10px) var(--gutter-r) 10px var(--gutter);pointer-events:none}
+.top-row > *{position:relative;z-index:1}
+/* once the page scrolls, a fade of the page colour behind the bar keeps the chart from showing through its gaps */
+.top-row::before{content:"";position:absolute;z-index:0;left:-50vw;right:-50vw;top:0;bottom:-22px;pointer-events:none;opacity:0;transition:opacity .25s ease;
+  background:linear-gradient(to bottom,var(--bg) 55%,transparent)}
+.scrolled .top-row::before{opacity:.94}
+.top-brand{display:flex;align-items:center;gap:10px;pointer-events:auto;min-width:0}
+.lt-logo{display:block;width:36px;height:36px;border-radius:9px;flex:none;box-shadow:0 2px 8px rgba(120,40,200,.28)}
+.lt-logo img{width:36px;height:36px}
+.brand-name{font:700 1.2rem/1 var(--font-display);letter-spacing:-.035em;color:var(--label)}
+.top-act{justify-self:end;display:flex;align-items:center;pointer-events:auto;min-width:0;gap:2px;padding:3px;border-radius:999px;
+  background:var(--glass);-webkit-backdrop-filter:blur(24px) saturate(190%);backdrop-filter:blur(24px) saturate(190%);
+  box-shadow:inset 0 0 0 .5px var(--glass-hi),var(--glass-shadow)}
+.tb-btn{position:relative;flex:none;display:grid;place-items:center;width:40px;height:40px;padding:0;border:0;border-radius:50%;appearance:none;background:none;cursor:pointer;touch-action:manipulation;color:var(--label)}
+.tb-btn::after{content:"";position:absolute;inset:-3px}
+.tb-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tb-btn[aria-expanded="true"]{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}
+@media (hover:hover){.tb-btn:not([aria-expanded="true"]):hover{background:var(--pill)}}
+.tb-btn svg{width:21px;height:21px}
+
+/* the tabs: a capsule of glass, the chosen tab under a pill that glides (and squashes a little) as it moves */
+.tabbar{display:flex;align-items:center;gap:10px;pointer-events:auto}
+.tabs{position:relative;display:flex;padding:4px;border-radius:999px;background:var(--glass);-webkit-backdrop-filter:blur(24px) saturate(190%);backdrop-filter:blur(24px) saturate(190%)}
+.tabs button{position:relative;z-index:1;appearance:none;border:0;background:none;display:flex;align-items:center;gap:7px;height:36px;padding:0 16px;border-radius:999px;
+  font:600 15px/1 var(--font);letter-spacing:-.01em;color:var(--label);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.tabs button svg{display:block;width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.tabs button[aria-selected="true"]{color:var(--accent)}
+.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.tab-ind{position:absolute;z-index:0;left:0;top:4px;bottom:4px;width:0;border-radius:999px;transform-origin:center;pointer-events:none}
+@media (hover:hover){.tabs button[aria-selected="false"]:hover{color:var(--accent)}}
+/* Liquid Glass, refined: an even specular rim all the way round, a soft shadow straight below, and the chosen tab under a
+   pill of lighter glass with its own rim, inset the same distance on every side so the two shapes stay concentric */
+.tabs{isolation:isolate;box-shadow:0 10px 30px rgba(0,0,0,.18),0 2px 6px rgba(0,0,0,.08)}
+.tabs::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;z-index:2;
+  background:linear-gradient(to bottom,rgba(255,255,255,.75),rgba(255,255,255,.18) 45%,rgba(255,255,255,.1) 70%,rgba(255,255,255,.32));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.tab-ind{background:color-mix(in srgb,var(--pill) 100%,rgba(255,255,255,.1));box-shadow:inset 0 .5px 0 rgba(255,255,255,.45),inset 0 0 0 .5px rgba(255,255,255,.12)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tabs{box-shadow:0 12px 34px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.3)}
+  :root:not([data-theme="light"]) .tabs::before{background:linear-gradient(to bottom,rgba(255,255,255,.34),rgba(255,255,255,.08) 45%,rgba(255,255,255,.05) 70%,rgba(255,255,255,.14))}
+  :root:not([data-theme="light"]) .tab-ind{background:rgba(255,255,255,.12);box-shadow:inset 0 .5px 0 rgba(255,255,255,.22)}}
+:root[data-theme="dark"] .tabs{box-shadow:0 12px 34px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.3)}
+:root[data-theme="dark"] .tabs::before{background:linear-gradient(to bottom,rgba(255,255,255,.34),rgba(255,255,255,.08) 45%,rgba(255,255,255,.05) 70%,rgba(255,255,255,.14))}
+:root[data-theme="dark"] .tab-ind{background:rgba(255,255,255,.12);box-shadow:inset 0 .5px 0 rgba(255,255,255,.22)}
+/* outline symbols at rest, filled for the chosen tab */
+.tabs .i-f{display:none}
+.tabs [aria-selected="true"] .i-o{display:none}
+.tabs [aria-selected="true"] .i-f{display:block}
+.tabs .i-f .solid{fill:currentColor;stroke:none}
+.tabs .i-f .thick{stroke-width:2.7}
+/* Liquid Glass answers a touch by swelling slightly and lighting up, rather than shrinking */
+.tabs button:active,.tb-btn:active{transform:scale(1.08);filter:brightness(1.12)}
+.tabs button,.tb-btn{transition:transform .35s var(--ease-spring),filter .2s ease,color .3s ease,background-color .2s ease}
+.tabbar{transition:opacity .25s ease,transform .35s var(--ease-out)}
+
+/* phones: the tab bar floats at the bottom of the screen, as in iOS */
+@media (max-width:719px){
+  .top-row{grid-template-columns:minmax(0,1fr) auto}
+  .top-row > .tabbar{position:fixed;z-index:2;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);justify-content:center;gap:10px;padding:0 max(14px,env(safe-area-inset-left,0px));pointer-events:none}
+  .tabbar > *{pointer-events:auto}
+  .tabs{flex:1;max-width:340px;padding:5px}
+  .tab-ind{top:5px;bottom:5px}
+  .tabs button{flex:1;flex-direction:column;justify-content:center;height:54px;padding:2px 6px 0;gap:4px;font-size:11px;font-weight:600;letter-spacing:0}
+  .tabs button svg{width:25px;height:25px;stroke-width:1.8}
+  .credits{padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))}
+  .toast{bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+}
+
+/* the card that drops from the round button: Auto, Day or Night */
+.tb-pop{position:fixed;z-index:65;box-sizing:border-box;width:min(300px,calc(100vw - 24px));overflow-y:auto;overscroll-behavior:contain;max-height:calc(100dvh - 90px);
+  border-radius:24px;padding:18px 18px 12px;color:var(--label);
+  background:color-mix(in srgb,var(--card) 86%,transparent);-webkit-backdrop-filter:blur(30px) saturate(190%);backdrop-filter:blur(30px) saturate(190%);
+  box-shadow:inset 0 0 0 .5px var(--glass-hi),0 0 0 .5px var(--glass-line),0 24px 60px rgba(0,0,0,.22);
+  transform-origin:var(--tb-o,top right);animation:tbDrop .5s cubic-bezier(.34,1.45,.5,1) both}
+:root[data-theme="dark"] .tb-pop{background-color:rgba(44,44,46,.7)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tb-pop{background-color:rgba(44,44,46,.7)}}
+.tb-pop:focus{outline:0}
+@keyframes tbDrop{0%{opacity:0;transform:translateY(-10px) scale(.6);filter:blur(4px)}55%{opacity:1;filter:blur(0)}100%{transform:none}}
+.tb-pop > *{animation:tbRise .45s cubic-bezier(.2,.85,.25,1) both;animation-delay:calc(70ms + var(--i,0) * 40ms)}
+@keyframes tbRise{from{opacity:0;transform:translateY(10px)}}
+.tb-pop.out{animation:tbOut .18s cubic-bezier(.4,0,1,1) both;pointer-events:none}
+.tb-pop.out > *{animation:none}
+@keyframes tbOut{to{opacity:0;transform:translateY(-6px) scale(.92)}}
+.tb-btn[aria-expanded="true"] .ic-sun{animation:tbSpin .7s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes tbSpin{from{transform:rotate(-90deg) scale(.7)}}
+.tb-btn[aria-expanded="true"] .ic-moon{transform-origin:60% 60%;animation:tbRock .7s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes tbRock{30%{transform:rotate(-24deg)}65%{transform:rotate(10deg)}}
+.tb-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px}
+.tb-pop h2{margin:0;font:700 1.5rem/1.15 var(--font-display);letter-spacing:-.03em}
+.th-list{display:grid;gap:2px;margin:0 -8px}
+.th-list button{display:flex;align-items:center;gap:12px;width:100%;padding:8px;border:0;border-radius:10px;background:none;color:var(--label);text-align:left;font:inherit;cursor:pointer}
+@media (hover:hover){.th-list button:hover{background:var(--fill)}}
+.th-list button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.th-list i{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--fill-strong)}
+.th-list i svg{width:18px;height:18px}
+.th-list span{flex:1;display:grid;gap:2px}
+.th-list b{font-weight:600;font-size:16px}
+.th-list small{color:var(--label2);font-size:13px}
+.th-list em{flex:none;width:20px;height:20px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--label3)}
+.th-list [aria-checked="true"] em{box-shadow:inset 0 0 0 6px var(--accent)}
+@media (prefers-reduced-motion:reduce){.tb-pop,.tb-pop > *,.tb-pop.out,.tb-btn svg{animation:none!important}}
 
 /* ---------- controls ---------- */
-.intro { padding-top: 24px; }
+.intro { padding-top: 8px; }
 .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .picker { position: relative; display: inline-flex; align-items: center; }
 .picker select { appearance: none; -webkit-appearance: none; padding-right: 38px; min-width: 176px; justify-content: flex-start; }
 .picker svg { position: absolute; right: 15px; pointer-events: none; color: var(--label2); }
-.segmented {
-  display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr;
-  height: 36px; padding: 3px; border-radius: 999px; background: var(--fill);
-}
-.segmented button {
-  font: 600 14px/1 var(--font); letter-spacing: -.01em; color: var(--label2);
-  background: none; border: 0; border-radius: 999px; padding: 0 16px; min-width: 78px; cursor: pointer;
-  transition: background-color .2s, color .2s, box-shadow .2s;
-}
-.segmented button[aria-checked="true"] { background: var(--thumb); color: var(--label); box-shadow: 0 2px 6px rgba(0, 0, 0, .14); }
-
 .updated { margin-left: auto; color: var(--label2); font-weight: 500; }
 .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); position: relative; }
 .live-dot::after {
@@ -241,4 +338,34 @@ td.num-col { color: var(--label2); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+
+/* ---------- platform logos in the heading ---------- */
+.brand-logo { display: inline-block; height: .95em; width: auto; aspect-ratio: 1; vertical-align: -0.14em; border-radius: .22em; box-shadow: 0 0 0 .5px var(--sep), 0 4px 14px rgba(0, 0, 0, .18); }
+.brand-stack { display: inline-flex; vertical-align: -0.14em; }
+.brand-stack img { height: .95em; width: .95em; border-radius: .22em; box-shadow: 0 0 0 2px var(--bg); }
+.brand-stack img + img { margin-left: -.22em; }
+
+/* ---------- phones ---------- */
+@media (max-width: 560px) {
+  .controls { flex-wrap: nowrap; gap: 8px; }
+  .picker { flex: 1; min-width: 0; }
+  .picker select { width: 100%; min-width: 0; font-size: 16px; height: 40px; }  /* 16px stops iOS zooming in on tap */
+  .updated { flex: none; height: 40px; padding: 0 14px; font-size: 14px; }
+  .large-title { font-size: 30px; margin-top: 18px; }
+  .lede { font-size: 15px; }
+  .posters { grid-auto-columns: min(44vw, 200px); gap: 16px; padding-top: 26px; }
+  .pcard { padding-top: 36px; }
+  .num { width: 140px; height: 106px; top: -14px; left: -10px; }
+  .ph { font-size: 18px; padding: 12px; }
+  .pcard h3 { font-size: 15px; margin-top: 10px; }
+  .pcard .sub { font-size: 13px; }
+  .overview { margin-top: 26px; }
+  .overview .large-title { font-size: 26px; }
+  .notice { font-size: 14px; padding: 10px 14px; }
+}
+/* small touches for touch screens */
+@media (hover: none) {
+  .pcard a.cover:hover { transform: none; }
+  a, button, select { -webkit-tap-highlight-color: transparent; }
 }

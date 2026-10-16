@@ -21,6 +21,10 @@
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
 
+  <script>/* Night is the default; Day or Auto only when chosen */
+  function tnTheme(t){var r=document.documentElement;if(t==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",t);
+    var c=t==="auto"?null:(t==="light"?"#ffffff":"#000000");document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){if(!m.dataset.c)m.dataset.c=m.content;m.content=c||m.dataset.c;});}
+  try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}</script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -40,18 +44,35 @@
     </defs>
   </svg>
 
-  <header class="nav">
-    <div class="nav-inner">
-      <a class="brand" href="#top" aria-label="Tenner home">
-        <img src="logo.svg" alt="" width="30" height="30">
-        <span>Tenner</span>
-      </a>
-      <nav class="nav-links" aria-label="Sections">
-        <a class="btn btn-sm" href="#top" data-section="top">Top 10</a>
-        <a class="btn btn-sm" href="#new" data-section="new">New</a>
-      </nav>
+  <!-- the bar at the top: the logo, the tabs (a floating bar at the bottom on phones) and the round button -->
+  <div class="top-row">
+    <div class="top-brand">
+      <a class="lt-logo" href="#top" aria-label="Tenner, back to the top"><img src="logo.svg" alt="" width="36" height="36"></a>
+      <span class="brand-name">Tenner</span>
     </div>
-  </header>
+    <nav class="tabbar" aria-label="Pages"><div class="tabs" role="tablist" id="tabs"><span class="tab-ind" id="tabInd" aria-hidden="true"></span>
+      <button type="button" role="tab" data-tab="tv" aria-selected="true">
+        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.8" y="4.5" width="18.4" height="12.8" rx="2.6"/><path d="M8.5 20.5h7"/></svg>
+        <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><rect class="solid" x="2.3" y="4" width="19.4" height="13.8" rx="3"/><path class="thick" d="M8.5 20.6h7"/></svg>
+        <span>Shows</span></button>
+      <button type="button" role="tab" data-tab="movie" aria-selected="false" tabindex="-1">
+        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 3.5v17M16 3.5v17M3.5 8.5H8M3.5 15.5H8M16 8.5h4.5M16 15.5h4.5"/></svg>
+        <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><path class="solid" d="M6.5 3h11A3.5 3.5 0 0 1 21 6.5v11a3.5 3.5 0 0 1-3.5 3.5h-11A3.5 3.5 0 0 1 3 17.5v-11A3.5 3.5 0 0 1 6.5 3zM4.6 9.4h2.3V7.1H4.6zm0 7.5h2.3v-2.3H4.6zm12.5-7.5h2.3V7.1h-2.3zm0 7.5h2.3v-2.3h-2.3z" fill-rule="evenodd"/></svg>
+        <span>Films</span></button>
+      <button type="button" role="tab" data-tab="new" aria-selected="false" tabindex="-1">
+        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3.5l1.8 4.9 4.9 1.8-4.9 1.8-1.8 4.9-1.8-4.9-4.9-1.8 4.9-1.8z"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z"/></svg>
+        <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><path class="solid" d="M10.5 2.5l2.1 5.4 5.4 2.1-5.4 2.1-2.1 5.4-2.1-5.4L3 10l5.4-2.1z"/><path class="solid" d="M18 13.5l1.1 2.4 2.4 1.1-2.4 1.1L18 20.5l-1.1-2.4-2.4-1.1 2.4-1.1z"/></svg>
+        <span>New</span></button>
+    </div></nav>
+    <div class="top-act">
+      <button type="button" class="tb-btn" id="thBtn" aria-haspopup="menu" aria-controls="thPop" aria-expanded="false" aria-label="Appearance" title="Appearance"><span id="thIc" style="display:contents"></span></button>
+    </div>
+  </div>
+
+  <div class="tb-pop th-pop" id="thPop" role="menu" aria-labelledby="thH" hidden>
+    <div class="tb-head"><h2 id="thH">Appearance</h2></div>
+    <div class="th-list"><button type="button" role="menuitemradio" data-mode="auto" aria-checked="false"><i><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 3.4a8.6 8.6 0 0 1 0 17.2z" fill="currentColor"/></svg></i><span><b>Auto</b><small>Follows your device</small></span><em aria-hidden="true"></em></button><button type="button" role="menuitemradio" data-mode="light" aria-checked="false"><i><svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2 12h2.4M19.6 12H22M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg></i><span><b>Day</b><small>Light all the time</small></span><em aria-hidden="true"></em></button><button type="button" role="menuitemradio" data-mode="dark" aria-checked="false"><i><svg class="ic-moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.7A8.5 8.5 0 1 1 9.3 3.5a7 7 0 0 0 11.2 11.2Z"/></svg></i><span><b>Night</b><small>Dark all the time</small></span><em aria-hidden="true"></em></button></div>
+  </div>
 
   <main id="main" tabindex="-1">
     <section class="intro wrap" id="controls" hidden>
@@ -61,16 +82,12 @@
           <select id="service" class="btn btn-tinted"></select>
           <svg aria-hidden="true" viewBox="0 0 12 8" width="12" height="8"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </label>
-        <div class="segmented" role="radiogroup" aria-label="Show">
-          <button type="button" role="radio" data-kind="tv" aria-checked="true">Shows</button>
-          <button type="button" role="radio" data-kind="movie" aria-checked="false">Films</button>
-        </div>
         <button type="button" id="refresh" class="btn btn-tinted updated" aria-live="polite">
           <span class="live-dot" aria-hidden="true"></span><span id="ago">Updated a few moments ago</span>
         </button>
       </div>
       <h1 id="heading" class="large-title">Top 10</h1>
-      <p class="lede">What the UK is watching right now on Netflix, Disney+, Prime Video, HBO Max and Paramount+.</p>
+      <p class="lede" id="lede">What the UK is watching right now on Netflix, Disney+, Prime Video, HBO Max and Paramount+.</p>
     </section>
 
     <div id="view"><p class="wrap muted">Loading the chart…</p></div>

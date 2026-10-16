@@ -46,13 +46,18 @@ const services = () => state.trending.services;
 const svc = (k) => services().find((s) => s.key === k);
 
 // ---------- "Updated … ago" ----------
+const narrow = matchMedia('(max-width: 560px)');
 function agoText(iso) {
-  const mins = Math.floor((Date.now() - Date.parse(iso)) / 60000);
+  const mins = Math.floor((Date.now() - Date.parse(iso)) / 60000), h = Math.floor(mins / 60);
+  if (narrow.matches) { // phones: the short form, so the pill sits beside the service picker
+    if (mins < 3) return 'Just updated';
+    return mins < 60 ? `${mins} min ago` : `${h} hr ago`;
+  }
   if (mins < 3) return 'Updated a few moments ago';
   if (mins < 60) return `Updated ${mins} minutes ago`;
-  const h = Math.floor(mins / 60);
   return `Updated ${h} hour${h === 1 ? '' : 's'} ago`;
 }
+narrow.addEventListener('change', () => state.trending && showUpdated());
 function showUpdated() {
   const d = new Date(state.trending.generatedAt);
   $('#ago').textContent = agoText(state.trending.generatedAt);
@@ -80,25 +85,23 @@ $('#refresh').addEventListener('click', async () => {
 function route() {
   const h = location.hash.slice(1);
   state.route = h === 'new' || svc(h) ? h : 'top';
-  document.querySelectorAll('[data-section]').forEach((a) => {
-    const on = a.dataset.section === (state.route === 'new' ? 'new' : 'top');
-    on ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current');
-  });
+  if (state.route !== 'new') state.lastChart = state.route;
   render();
 }
 
 function render() {
+  selectTab(state.route === 'new' ? 'new' : state.kind);
   const isNew = state.route === 'new';
   $('#controls').hidden = isNew;
   if (isNew) { view.innerHTML = `<div class="wrap">${pageNew()}</div>`; document.title = 'New this week | Tenner'; return; }
 
   $('#service').value = state.route;
-  document.querySelectorAll('[data-kind]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.kind === state.kind)));
 
   const s = state.route === 'top' ? null : svc(state.route);
   const list = s ? s[state.kind] : state.trending.overall[state.kind];
   const where = s ? s.label : 'UK streaming';
-  $('#heading').textContent = `Top 10 ${words()} on ${where}`;
+  $('#heading').innerHTML = `Top 10 ${words()} on ${s ? brand(s) : allBrands()}`;
+  $('#lede').textContent = `What the UK is watching right now on ${s ? s.label : 'Netflix, Disney+, Prime Video, HBO Max and Paramount+'}.`;
   document.title = s ? `${s.label} Top 10 | Tenner` : 'Tenner';
 
   const chart = list.length
@@ -108,6 +111,14 @@ function render() {
   view.innerHTML = `<div class="wrap chart">${chart}</div>`;
   wireScroller(); wireRanks();
 }
+
+// The platform's own logo (supplied by TMDB) in place of its name; the name stays for screen readers and as a fallback.
+const brand = (s, cls = 'brand-logo') => s.logo
+  ? `<img class="${cls}" src="${esc(s.logo)}" alt="${esc(s.label)}" title="${esc(s.label)}">`
+  : esc(s.label);
+const allBrands = () => services().every((s) => s.logo)
+  ? `<span class="brand-stack" role="img" aria-label="UK streaming">${services().map((s) => `<img src="${esc(s.logo)}" alt="" title="${esc(s.label)}">`).join('')}</span>`
+  : 'UK streaming';
 
 // ---------- pieces ----------
 function hue(str) { let h = 0; for (const c of String(str)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
@@ -249,18 +260,90 @@ function wireScroller() {
 }
 
 // ---------- controls ----------
-document.addEventListener('click', (e) => {
-  const b = e.target.closest('[data-kind]');
-  if (!b || !state.trending) return;
-  state.kind = b.dataset.kind;
+
+// ---------- tabs: Shows, Films, New (ported from Channel Crossings) ----------
+const tabs = [...document.querySelectorAll('#tabs [role=tab]')], ind = $('#tabInd'), tabNames = tabs.map((t) => t.dataset.tab);
+let curTab = null, indX = null;
+// the pill under the chosen tab: glides across, stretching a little on the way and settling with a small spring
+function placeInd(animate) {
+  const b = tabs[tabNames.indexOf(curTab)]; if (!b || !b.offsetWidth) return;
+  const x = b.offsetLeft, w = b.offsetWidth;
+  if (indX === null || !animate || reduceMotion || !ind.animate) { ind.style.width = w + 'px'; ind.style.transform = `translateX(${x}px)`; indX = x; return; }
+  const from = ind.style.transform, fw = ind.style.width, mid = (indX + x) / 2, mw = Math.max(parseFloat(fw), w) * 1.18;
+  ind.style.width = w + 'px'; ind.style.transform = `translateX(${x}px)`;
+  ind.animate([{ transform: from, width: fw }, { transform: `translateX(${mid - (mw - w) / 2}px)`, width: mw + 'px', offset: 0.45 }, { transform: `translateX(${x}px)`, width: w + 'px' }],
+    { duration: 520, easing: 'cubic-bezier(.3,1.15,.4,1)' });
+  indX = x;
+}
+function selectTab(name) {
+  const first = curTab === null;
+  curTab = name;
+  tabs.forEach((t) => { const on = t.dataset.tab === name; t.setAttribute('aria-selected', on); t.tabIndex = on ? 0 : -1; });
+  placeInd(!first);
+}
+function openTab(name) {
+  if (name === curTab) { scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }); return; } // tap the open tab: back to the top
+  if (name === 'new') { location.hash = 'new'; return; }
+  state.kind = name;
   try { localStorage.setItem('tenner-kind', state.kind); } catch {}
-  render();
+  if (state.route === 'new') location.hash = state.lastChart || 'top'; else render();
+}
+tabs.forEach((t, i) => {
+  t.addEventListener('click', () => openTab(t.dataset.tab));
+  t.addEventListener('keydown', (e) => { // arrow keys move along the tabs, Home and End to the first and last
+    const k = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key]; if (k === undefined) return;
+    e.preventDefault(); const n = tabs[(k + tabs.length) % tabs.length]; n.focus(); openTab(n.dataset.tab);
+  });
 });
-$('.segmented').addEventListener('keydown', (e) => {
-  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-  const other = $(`.segmented [data-kind="${state.kind === 'tv' ? 'movie' : 'tv'}"]`);
-  other.click(); other.focus();
-});
+addEventListener('resize', () => placeInd(false));
+document.fonts?.ready.then(() => placeInd(false));
+
+// ---------- appearance: Auto, Day or Night (ported from Channel Crossings; Night by default) ----------
+const root = document.documentElement, modeBtns = document.querySelectorAll('.th-list button');
+const mode = () => root.getAttribute('data-theme') || 'auto';
+function showTheme() {
+  const m = mode();
+  modeBtns.forEach((b) => b.setAttribute('aria-checked', b.dataset.mode === m));
+  const dark = m === 'dark' || (m === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+  $('#thIc').innerHTML = $(`.th-list [data-mode="${dark ? 'dark' : 'light'}"] i`).innerHTML; // the round button: a moon by night, a sun by day
+}
+// the round button opens a card just under it, lined up with its right edge
+function tbMenu(btn, pop, onOpen) {
+  const place = () => {
+    const r = btn.getBoundingClientRect(), w = pop.offsetWidth, left = Math.max(12, Math.min(r.right - w, innerWidth - w - 12));
+    pop.style.top = (r.bottom + 8) + 'px';
+    pop.style.maxHeight = Math.max(200, innerHeight - r.bottom - 20) + 'px';
+    pop.style.left = left + 'px';
+    pop.style.setProperty('--tb-o', `${r.left + r.width / 2 - left}px -14px`); // it grows out of its own button
+  };
+  const set = (on) => {
+    if (on === !pop.hidden && !pop.classList.contains('out')) return;
+    btn.setAttribute('aria-expanded', on);
+    if (on) {
+      pop.classList.remove('out'); pop.hidden = false;
+      [...pop.children].forEach((c, i) => c.style.setProperty('--i', i));
+      place(); onOpen?.();
+    } else if (reduceMotion) pop.hidden = true;
+    else { pop.classList.add('out'); setTimeout(() => { if (pop.classList.contains('out')) { pop.hidden = true; pop.classList.remove('out'); } }, 190); }
+  };
+  btn.addEventListener('click', (e) => { e.stopPropagation(); set(pop.hidden || pop.classList.contains('out')); });
+  document.addEventListener('click', (e) => { if (!pop.hidden && !pop.contains(e.target) && e.target.isConnected) set(false); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && !pop.hidden) { set(false); btn.focus({ preventScroll: true }); } });
+  addEventListener('resize', () => { if (!pop.hidden) place(); });
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', showTheme); // Auto: the icon follows the device
+tbMenu($('#thBtn'), $('#thPop'), () => $('#thPop [aria-checked="true"]')?.focus({ preventScroll: true }));
+modeBtns.forEach((b) => b.addEventListener('click', () => {
+  const n = b.dataset.mode;
+  window.tnTheme?.(n);
+  try { localStorage.setItem('tenner-theme', n); } catch {}
+  showTheme();
+}));
+showTheme();
+
+// a fade behind the floating bar once the page has scrolled
+const onScroll = () => root.classList.toggle('scrolled', scrollY > 8);
+addEventListener('scroll', onScroll, { passive: true }); onScroll();
 
 addEventListener('hashchange', () => { route(); scrollTo(0, 0); });
 load();
