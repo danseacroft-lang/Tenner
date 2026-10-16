@@ -236,7 +236,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     await write('trending.json', trending);
     await write('new.json', fresh);
   } else if (!process.env.TMDB_TOKEN && !process.env.TMDB_API_KEY) {
-    console.warn('No TMDB_TOKEN set, so the site keeps its sample data. Add the secret to go live.');
+    const msg = 'No TMDB_TOKEN secret found, so the site is still showing sample data. Add it under Settings > Secrets and variables > Actions.';
+    console.warn(process.env.GITHUB_ACTIONS ? `::warning title=Sample data::${msg}` : msg);
   } else {
     const { data, providers } = await buildTrending();
     await write('trending.json', data);
