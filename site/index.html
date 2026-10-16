@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Telly Top</title>
+  <meta name="description" content="The top 10 shows and films right now on Netflix, Disney+, Prime Video, HBO Max and Paramount+ in the UK. Updated every hour.">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to the chart</a>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="wordmark" href="#top">Telly Top</a>
+      <nav aria-label="Sections">
+        <a href="#top" data-section="top">Top 10</a>
+        <a href="#new" data-section="new">New</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <section class="intro wrap" id="controls" hidden>
+      <div class="controls">
+        <label class="picker">
+          <span class="visually-hidden">Service</span>
+          <select id="service"></select>
+          <svg aria-hidden="true" viewBox="0 0 12 8" width="12" height="8"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </label>
+        <div class="segmented" role="radiogroup" aria-label="Show">
+          <button type="button" role="radio" data-kind="tv" aria-checked="true">Shows</button>
+          <button type="button" role="radio" data-kind="movie" aria-checked="false">Films</button>
+        </div>
+      </div>
+      <h1 id="heading" class="large-title">Top 10</h1>
+      <p id="when" class="when"></p>
+    </section>
+
+    <div id="view"><p class="wrap loading">Loading the chart…</p></div>
+  </main>
+
+  <footer class="credits wrap">
+    <p id="updated"></p>
+    <p>Popularity, posters and where-to-watch data from <a href="https://www.themoviedb.org/">TMDB</a> (powered by JustWatch). This product uses the TMDB API but is not endorsed or certified by TMDB. New releases from <a href="https://www.watchmode.com/">Watchmode</a>.</p>
+  </footer>
+
+  <script src="app.js" defer></script>
+</body>
+</html>

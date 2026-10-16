@@ -1,0 +1,76 @@
+{
+ "generatedAt": "2026-10-16T17:47:05.749Z",
+ "note": "Sample data.",
+ "items": [
+  {
+   "title": "Low Tide at Kessock",
+   "type": "movie",
+   "season": null,
+   "date": "2026-10-11",
+   "service": "netflix",
+   "original": true,
+   "poster": null,
+   "url": null
+  },
+  {
+   "title": "Brass Monkeys",
+   "type": "tv",
+   "season": 2,
+   "date": "2026-10-13",
+   "service": "hbomax",
+   "original": false,
+   "poster": null,
+   "url": null
+  },
+  {
+   "title": "Dog and Duck",
+   "type": "tv",
+   "season": 3,
+   "date": "2026-10-15",
+   "service": "disney",
+   "original": true,
+   "poster": null,
+   "url": null
+  },
+  {
+   "title": "Saltmarsh",
+   "type": "movie",
+   "season": null,
+   "date": "2026-10-16",
+   "service": "paramount",
+   "original": false,
+   "poster": null,
+   "url": null
+  },
+  {
+   "title": "The Lighthouse Keepers",
+   "type": "tv",
+   "season": 1,
+   "date": "2026-10-18",
+   "service": "prime",
+   "original": true,
+   "poster": null,
+   "url": null
+  },
+  {
+   "title": "Northern Line",
+   "type": "tv",
+   "season": 2,
+   "date": "2026-10-20",
+   "service": "netflix",
+   "original": false,
+   "poster": null,
+   "url": null
+  },
+  {
+   "title": "Fenland",
+   "type": "movie",
+   "season": null,
+   "date": "2026-10-22",
+   "service": "hbomax",
+   "original": true,
+   "poster": null,
+   "url": null
+  }
+ ]
+}
