@@ -274,7 +274,7 @@ body::before{content:"";position:fixed;z-index:-1;left:-10vw;right:-10vw;top:-20
 .scroller:hover { background: var(--card); }
 .scroller.prev { left: -6px; }
 .scroller.next { right: -6px; }
-.scroller:disabled { opacity: 0; pointer-events: none; }
+.scroller:disabled { opacity: 0; transform: scale(.6); pointer-events: none; }
 @media (hover: none) { .scroller { display: none; } }
 
 /* ---------- overview table ---------- */
@@ -368,4 +368,110 @@ td.num-col { color: var(--label2); }
 @media (hover: none) {
   .pcard a.cover:hover { transform: none; }
   a, button, select { -webkit-tap-highlight-color: transparent; }
+}
+
+/* ============================================================ motion: fluid, springy, never in the way */
+
+/* the poster row melts into the page at both ends: the posters fade out under a strip of frosted glass,
+   and each strip slides away once you reach that end */
+.row-wrap { --edge: 84px; }
+.posters {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--fl, var(--edge)), #000 calc(100% - var(--fr, var(--edge))), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 var(--fl, var(--edge)), #000 calc(100% - var(--fr, var(--edge))), transparent 100%);
+  transition: --fl .45s var(--ease-out), --fr .45s var(--ease-out);
+}
+@property --fl { syntax: "<length>"; inherits: true; initial-value: 84px; }
+@property --fr { syntax: "<length>"; inherits: true; initial-value: 84px; }
+.row-wrap.at-start .posters { --fl: 0px; }
+.row-wrap.at-end .posters { --fr: 0px; }
+.row-wrap::before, .row-wrap::after {
+  content: ""; position: absolute; z-index: 1; top: 24px; bottom: 60px; width: calc(var(--edge) * .7); pointer-events: none;
+  -webkit-backdrop-filter: blur(8px) saturate(150%); backdrop-filter: blur(8px) saturate(150%);
+  transition: opacity .45s var(--ease-out), transform .55s var(--ease-spring);
+}
+.row-wrap::before { left: calc(-1 * var(--gutter)); -webkit-mask-image: linear-gradient(to right, #000, transparent); mask-image: linear-gradient(to right, #000, transparent); }
+.row-wrap::after { right: calc(-1 * var(--gutter-r)); -webkit-mask-image: linear-gradient(to left, #000, transparent); mask-image: linear-gradient(to left, #000, transparent); }
+.row-wrap.at-start::before { opacity: 0; transform: translateX(-24px); }
+.row-wrap.at-end::after { opacity: 0; transform: translateX(24px); }
+@media (max-width: 560px) { .row-wrap { --edge: 36px; } .row-wrap::before, .row-wrap::after { bottom: 48px; } }
+
+/* arrows: glass circles that spring in and out, and swell under the finger like Liquid Glass */
+.scroller { transition: opacity .3s ease, transform .45s var(--ease-spring), background-color .2s ease; }
+.scroller:hover { transform: scale(1.08); }
+.scroller:active { transform: scale(.94); }
+
+/* cards: they rise into place one after another */
+.pcard { animation: cardIn .7s var(--ease-out) both; animation-delay: calc(var(--d, 0) * 55ms); }
+@keyframes cardIn { from { opacity: 0; transform: translateY(26px) scale(.94); filter: blur(6px); } }
+.pcard .num { transition: transform .5s var(--ease-spring); }
+.pcard:hover .num { transform: translateY(-6px) scale(1.04); }
+.pcard:hover .num .aura { opacity: calc(var(--aura) * 1.7); }
+.num .aura { transition: opacity .4s ease; }
+
+/* cover: lifts, leans towards the mouse, and catches a soft sheen */
+.pcard a.cover {
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, 0px));
+  transition: transform .6s var(--ease-spring), box-shadow .4s ease;
+  will-change: transform;
+}
+.pcard a.cover::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .35s ease;
+  background: radial-gradient(60% 45% at var(--mx, 50%) var(--my, 30%), rgba(255, 255, 255, .28), transparent 70%);
+  mix-blend-mode: soft-light;
+}
+.pcard a.cover img { transition: transform .8s var(--ease-out); }
+@media (hover: hover) {
+  .pcard:hover a.cover { --lift: -6px; box-shadow: 0 22px 46px rgba(0, 0, 0, .32), 0 4px 10px rgba(0, 0, 0, .12); }
+  .pcard:hover a.cover img { transform: scale(1.04); }
+  .pcard a.cover.tilting { transition: transform .12s linear, box-shadow .4s ease; }
+  .pcard a.cover.tilting::after { opacity: 1; }
+}
+.pcard a.cover:active { --lift: 2px; transition-duration: .2s; }
+.pcard h3, .pcard .sub { transition: transform .5s var(--ease-spring); }
+.pcard:hover h3 { transform: translateX(2px); }
+
+/* the opening: controls and title settle in first, then the cards ripple in */
+.intro > * { animation: riseIn .7s var(--ease-out) both; }
+.intro > :nth-child(2) { animation-delay: .06s; }
+.intro > :nth-child(3) { animation-delay: .12s; }
+.top-row > * { animation: riseIn .6s var(--ease-out) both; }
+@keyframes riseIn { from { opacity: 0; transform: translateY(12px); } }
+
+/* switching tab or service crossfades (View Transitions), and the bar at the top stays put */
+.top-row { view-transition-name: topbar; }
+::view-transition-old(root) { animation: vtOut .22s ease both; }
+::view-transition-new(root) { animation: vtIn .38s var(--ease-out) both; }
+@keyframes vtOut { to { opacity: 0; transform: scale(.985); filter: blur(4px); } }
+@keyframes vtIn { from { opacity: 0; transform: translateY(10px); } }
+
+/* table rows slide in as they come into view, where the browser supports scroll-driven animation */
+@supports (animation-timeline: view()) {
+  tbody tr { animation: rowIn linear both; animation-timeline: view(); animation-range: entry 0% entry 60%; }
+  @keyframes rowIn { from { opacity: 0; transform: translateY(18px); } }
+}
+tbody tr { transition: background-color .25s ease; }
+@media (hover: hover) { tbody tr:hover { background: var(--fill); } }
+tbody tr td.rank span { display: inline-block; transition: transform .5s var(--ease-spring); }
+@media (hover: hover) { tbody tr:hover td.rank span { transform: scale(1.15) rotate(-3deg); } }
+
+/* pills and pickers: a springy press everywhere */
+.btn, .picker select { transition: background-color .18s, color .18s, transform .45s var(--ease-spring); }
+.btn:active, .picker select:active { transform: scale(.95); }
+@media (hover: hover) { .picker:hover select { transform: scale(1.02); } }
+
+/* the Updated pill: new text slides in */
+#ago.swap { animation: agoSwap .5s var(--ease-out); display: inline-block; }
+@keyframes agoSwap { from { opacity: 0; transform: translateY(6px); filter: blur(3px); } }
+.updated.busy .live-dot { animation: busy 1s ease-in-out infinite; }
+@keyframes busy { 50% { transform: scale(.5); opacity: .5; } }
+
+/* New this week: rows drift up one after another */
+.group { animation: riseIn .6s var(--ease-out) both; }
+.group:nth-of-type(2) { animation-delay: .05s; } .group:nth-of-type(3) { animation-delay: .1s; }
+.group:nth-of-type(4) { animation-delay: .15s; } .group:nth-of-type(n+5) { animation-delay: .2s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pcard, .intro > *, .top-row > *, .group, tbody tr { animation: none !important; }
+  .pcard a.cover { transform: none !important; }
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none !important; }
 }

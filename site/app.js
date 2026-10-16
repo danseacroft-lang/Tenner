@@ -60,7 +60,8 @@ function agoText(iso) {
 narrow.addEventListener('change', () => state.trending && showUpdated());
 function showUpdated() {
   const d = new Date(state.trending.generatedAt);
-  $('#ago').textContent = agoText(state.trending.generatedAt);
+  const ago = $('#ago'), txt = agoText(state.trending.generatedAt);
+  if (ago.textContent !== txt) { ago.textContent = txt; ago.classList.remove('swap'); void ago.offsetWidth; ago.classList.add('swap'); }
   $('#refresh').title = `Last update ${fmtTime(d)}. Tap to check for a newer chart.`;
   $('#updated').textContent = `Chart updated ${fmtDate(d, { weekday: 'long', day: 'numeric', month: 'long' })} at ${fmtTime(d)}. Refreshes every hour.`;
 }
@@ -90,6 +91,14 @@ function route() {
 }
 
 function render() {
+  morph(draw);
+}
+// Swap the page through a View Transition where the browser has one, so changes crossfade instead of jumping.
+function morph(fn) {
+  if (!document.startViewTransition || reduceMotion || !view.firstElementChild || view.querySelector('.loading')) { fn(); return; }
+  document.startViewTransition(fn);
+}
+function draw() {
   selectTab(state.route === 'new' ? 'new' : state.kind);
   const isNew = state.route === 'new';
   $('#controls').hidden = isNew;
@@ -165,7 +174,7 @@ function posterRow(list) {
     <button type="button" class="btn btn-icon scroller prev" aria-label="Previous titles" disabled>
       <svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><path d="M8 2L2 8l6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <ol class="posters" aria-label="Top 10">
-      ${list.map((it, i) => `<li class="pcard">
+      ${list.map((it, i) => `<li class="pcard" style="--d:${i}">
         ${rankSvg(i)}
         <a class="cover" href="${esc(it.url)}" target="_blank" rel="noopener" aria-label="Number ${i + 1}: ${esc(it.title)}">
           ${it.poster ? `<img src="${esc(it.poster)}" alt="" loading="${i < 4 ? 'eager' : 'lazy'}" width="342" height="513">` : placeholder(it)}
@@ -190,7 +199,7 @@ function overview(list, showWhere, where) {
         <th scope="col" class="num-col hide-sm">Year</th><th scope="col" class="num-col">Rating</th>
         <th scope="col" class="${showWhere ? 'hide-sm' : 'num-col hide-sm'}">${showWhere ? 'Where to watch' : 'Popularity'}</th>
       </tr></thead>
-      <tbody>${list.map((it, i) => `<tr>
+      <tbody>${list.map((it, i) => `<tr style="--d:${i}">
         <td class="rank"><span>${pad(i + 1)}</span></td>
         <td><div class="tcell">
           ${it.backdrop ? `<img src="${esc(it.backdrop.replace('/w1280/', '/w300/'))}" alt="" loading="lazy">` : it.poster ? `<img src="${esc(it.poster)}" alt="" loading="lazy">` : placeholder(it)}
@@ -248,15 +257,39 @@ function toast(text) {
 // ---------- poster row arrows ----------
 function wireScroller() {
   const row = $('.posters'); if (!row) return;
-  const prev = $('.scroller.prev'), next = $('.scroller.next');
+  const wrap = row.parentElement, prev = $('.scroller.prev'), next = $('.scroller.next');
   const update = () => {
-    prev.disabled = row.scrollLeft < 8;
-    next.disabled = row.scrollLeft + row.clientWidth >= row.scrollWidth - 8;
+    const start = row.scrollLeft < 8, end = row.scrollLeft + row.clientWidth >= row.scrollWidth - 8;
+    prev.disabled = start; next.disabled = end;
+    wrap.classList.toggle('at-start', start); wrap.classList.toggle('at-end', end); // the frosted edges fade away at either end
   };
   const by = (dir) => row.scrollBy({ left: dir * row.clientWidth * 0.8, behavior: reduceMotion ? 'auto' : 'smooth' });
   prev.onclick = () => by(-1); next.onclick = () => by(1);
   row.addEventListener('scroll', update, { passive: true });
+  addEventListener('resize', update);
   update();
+  wireTilt(row);
+}
+
+// Cards lean towards the mouse with a soft sheen where it points. Mouse only, never with reduced motion.
+const finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
+function wireTilt(row) {
+  if (!finePointer || reduceMotion) return;
+  let card = null, raf = 0, ev = null;
+  const paint = () => {
+    raf = 0; if (!card || !ev) return;
+    const r = card.getBoundingClientRect(), x = (ev.clientX - r.left) / r.width, y = (ev.clientY - r.top) / r.height;
+    card.style.setProperty('--rx', ((0.5 - y) * 9).toFixed(2) + 'deg');
+    card.style.setProperty('--ry', ((x - 0.5) * 11).toFixed(2) + 'deg');
+    card.style.setProperty('--mx', (x * 100).toFixed(1) + '%');
+    card.style.setProperty('--my', (y * 100).toFixed(1) + '%');
+  };
+  row.addEventListener('pointermove', (e) => {
+    const c = e.target.closest('.cover');
+    if (c !== card) { card?.classList.remove('tilting'); card = c; card?.classList.add('tilting'); }
+    ev = e; if (!raf) raf = requestAnimationFrame(paint);
+  });
+  row.addEventListener('pointerleave', () => { card?.classList.remove('tilting'); card = null; });
 }
 
 // ---------- controls ----------
