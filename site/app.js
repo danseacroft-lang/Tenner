@@ -1,4 +1,4 @@
-// Telly Top front end. Reads data/trending.json and data/new.json (rebuilt hourly by GitHub Actions).
+// Tenner front end. Reads data/trending.json and data/new.json (rebuilt hourly by GitHub Actions).
 // Routes: #top (all services), #netflix, #bbc … (one service), #new (new releases).
 
 const state = { trending: null, fresh: null, kind: 'tv', route: 'top' };
@@ -13,8 +13,8 @@ const fmtTime = (d) => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: 
 // ---------- data ----------
 async function load() {
   try {
-    if (window.__TELLY__) {
-      ({ trending: state.trending, fresh: state.fresh } = window.__TELLY__);
+    if (window.__TENNER__) {
+      ({ trending: state.trending, fresh: state.fresh } = window.__TENNER__);
     } else {
       const v = `?v=${Math.floor(Date.now() / 600000)}`; // fresh copy every 10 minutes
       const [t, f] = await Promise.all([
@@ -28,7 +28,7 @@ async function load() {
       <p class="when">${esc(err.message)}. If you've just set the site up, run the "Update and deploy" workflow once, then refresh.</p></div>`;
     return;
   }
-  try { const k = localStorage.getItem('telly-kind'); if (k === 'tv' || k === 'movie') state.kind = k; } catch {}
+  try { const k = localStorage.getItem('tenner-kind'); if (k === 'tv' || k === 'movie') state.kind = k; } catch {}
 
   const sel = $('#service');
   sel.innerHTML = `<option value="top">All five services</option>` +
@@ -57,7 +57,7 @@ function route() {
 function render() {
   const isNew = state.route === 'new';
   $('#controls').hidden = isNew;
-  if (isNew) { view.innerHTML = pageNew(); document.title = 'New this week | Telly Top'; return; }
+  if (isNew) { view.innerHTML = pageNew(); document.title = 'New this week | Tenner'; return; }
 
   $('#service').value = state.route;
   document.querySelectorAll('[data-kind]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.kind === state.kind)));
@@ -68,7 +68,7 @@ function render() {
   $('#heading').textContent = `Top 10 ${words()} on ${where}`;
   const d = new Date(state.trending.generatedAt);
   $('#when').textContent = `${fmtDate(d, { day: 'numeric', month: 'long', year: 'numeric' })}, ${fmtTime(d)}`;
-  document.title = s ? `${s.label} Top 10 | Telly Top` : 'Telly Top';
+  document.title = s ? `${s.label} Top 10 | Tenner` : 'Tenner';
 
   view.innerHTML = list.length ? `
     ${state.trending.sample ? `<div class="wrap"><p class="notice"><strong>Sample data.</strong> These titles are made up. Add your TMDB key and run the workflow to see the real chart.</p></div>` : ''}
@@ -183,7 +183,7 @@ document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-kind]');
   if (!b || !state.trending) return;
   state.kind = b.dataset.kind;
-  try { localStorage.setItem('telly-kind', state.kind); } catch {}
+  try { localStorage.setItem('tenner-kind', state.kind); } catch {}
   render();
 });
 // Arrow keys move between the two segments, like a native segmented control.

@@ -1,4 +1,6 @@
-# Telly Top
+# Tenner
+
+Your top ten, every hour.
 
 The top 10 shows and films right now in the UK on Netflix, Disney+, Prime Video, HBO Max and Paramount+. Clean, Apple-style design with light and dark mode, rebuilt every hour on GitHub Pages.
 
