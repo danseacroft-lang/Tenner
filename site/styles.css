@@ -243,11 +243,17 @@ body::before{content:"";position:fixed;z-index:-1;left:-10vw;right:-10vw;top:-20
 .chart { min-width: 0; padding-top: 6px; }
 
 /* ---------- poster row with rainbow-glow ranks ---------- */
-.row-wrap { position: relative; }
+.row-wrap {
+  /* the row runs edge to edge of the screen; its first card lines up with the page column */
+  --col: max(var(--gutter), calc((100vw - var(--max)) / 2 + var(--gutter)));
+  --cw: min(64vw, 236px);
+  --edge: max(76px, var(--col));
+  position: relative; width: 100vw; margin-left: calc(50% - 50vw);
+}
 .posters {
-  list-style: none; margin: 0 calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); padding: 34px var(--gutter-r) 12px var(--gutter);
-  display: grid; grid-auto-flow: column; grid-auto-columns: min(64vw, 236px); gap: 26px;
-  overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; scroll-padding-left: var(--gutter);
+  list-style: none; margin: 0; padding: 34px var(--col) 14px;
+  display: grid; grid-auto-flow: column; grid-auto-columns: var(--cw); gap: 26px;
+  overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; scroll-padding-inline: var(--col);
 }
 .posters::-webkit-scrollbar { display: none; }
 .pcard { scroll-snap-align: start; position: relative; padding-top: 50px; }
@@ -267,13 +273,13 @@ body::before{content:"";position:fixed;z-index:-1;left:-10vw;right:-10vw;top:-20
 .star { color: var(--gold); font-weight: 600; }
 
 .scroller {
-  position: absolute; top: calc(50% - 22px); z-index: 2; color: var(--label);
+  position: absolute; top: calc(34px + 50px + var(--cw) * .75 - 22px); z-index: 3; color: var(--label);
   background: var(--nav); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
   box-shadow: 0 2px 12px rgba(0, 0, 0, .18), inset 0 0 0 .5px var(--sep);
 }
 .scroller:hover { background: var(--card); }
-.scroller.prev { left: -6px; }
-.scroller.next { right: -6px; }
+.scroller.prev { left: max(10px, calc(var(--col) - 22px)); }
+.scroller.next { right: max(10px, calc(var(--col) - 22px)); }
 .scroller:disabled { opacity: 0; transform: scale(.6); pointer-events: none; }
 @media (hover: none) { .scroller { display: none; } }
 
@@ -354,7 +360,7 @@ td.num-col { color: var(--label2); }
   .updated { flex: none; height: 40px; padding: 0 14px; font-size: 14px; }
   .large-title { font-size: 30px; margin-top: 18px; }
   .lede { font-size: 15px; }
-  .posters { grid-auto-columns: min(44vw, 200px); gap: 16px; padding-top: 26px; }
+  .posters { gap: 16px; padding-top: 26px; }
   .pcard { padding-top: 36px; }
   .num { width: 140px; height: 106px; top: -14px; left: -10px; }
   .ph { font-size: 18px; padding: 12px; }
@@ -372,28 +378,61 @@ td.num-col { color: var(--label2); }
 
 /* ============================================================ motion: fluid, springy, never in the way */
 
-/* the poster row melts into the page at both ends: the posters fade out under a strip of frosted glass,
-   and each strip slides away once you reach that end */
-.row-wrap { --edge: 84px; }
+/* ---------- the poster row melts into the screen edges ----------
+   Two things together, the way Apple's own apps do it:
+   1. the posters fade out along a smootherstep curve (no visible start or end to the ramp), and
+   2. above them, six stacked layers of glass whose blur doubles towards the edge, each masked to its own band,
+      so the frosting deepens gradually instead of starting as a strip.
+   Each edge glides away when you reach that end of the row. */
+@property --fl { syntax: "<length>"; inherits: true; initial-value: 0px; }
+@property --fr { syntax: "<length>"; inherits: true; initial-value: 0px; }
 .posters {
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--fl, var(--edge)), #000 calc(100% - var(--fr, var(--edge))), transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0, #000 var(--fl, var(--edge)), #000 calc(100% - var(--fr, var(--edge))), transparent 100%);
-  transition: --fl .45s var(--ease-out), --fr .45s var(--ease-out);
+  --fl: var(--edge); --fr: var(--edge);
+  -webkit-mask-image: linear-gradient(to right, rgb(0 0 0 / 0.0000) calc(var(--fl) * 0.0000), rgb(0 0 0 / 0.0051) calc(var(--fl) * 0.0833), rgb(0 0 0 / 0.0355) calc(var(--fl) * 0.1667), rgb(0 0 0 / 0.1035) calc(var(--fl) * 0.2500), rgb(0 0 0 / 0.2099) calc(var(--fl) * 0.3333), rgb(0 0 0 / 0.3466) calc(var(--fl) * 0.4167), rgb(0 0 0 / 0.5000) calc(var(--fl) * 0.5000), rgb(0 0 0 / 0.6534) calc(var(--fl) * 0.5833), rgb(0 0 0 / 0.7901) calc(var(--fl) * 0.6667), rgb(0 0 0 / 0.8965) calc(var(--fl) * 0.7500), rgb(0 0 0 / 0.9645) calc(var(--fl) * 0.8333), rgb(0 0 0 / 0.9949) calc(var(--fl) * 0.9167), rgb(0 0 0 / 1.0000) calc(var(--fl) * 1.0000), rgb(0 0 0 / 1.0000) calc(100% - var(--fr) * 1.0000), rgb(0 0 0 / 0.9949) calc(100% - var(--fr) * 0.9167), rgb(0 0 0 / 0.9645) calc(100% - var(--fr) * 0.8333), rgb(0 0 0 / 0.8965) calc(100% - var(--fr) * 0.7500), rgb(0 0 0 / 0.7901) calc(100% - var(--fr) * 0.6667), rgb(0 0 0 / 0.6534) calc(100% - var(--fr) * 0.5833), rgb(0 0 0 / 0.5000) calc(100% - var(--fr) * 0.5000), rgb(0 0 0 / 0.3466) calc(100% - var(--fr) * 0.4167), rgb(0 0 0 / 0.2099) calc(100% - var(--fr) * 0.3333), rgb(0 0 0 / 0.1035) calc(100% - var(--fr) * 0.2500), rgb(0 0 0 / 0.0355) calc(100% - var(--fr) * 0.1667), rgb(0 0 0 / 0.0051) calc(100% - var(--fr) * 0.0833), rgb(0 0 0 / 0.0000) calc(100% - var(--fr) * 0.0000));
+  mask-image: linear-gradient(to right, rgb(0 0 0 / 0.0000) calc(var(--fl) * 0.0000), rgb(0 0 0 / 0.0051) calc(var(--fl) * 0.0833), rgb(0 0 0 / 0.0355) calc(var(--fl) * 0.1667), rgb(0 0 0 / 0.1035) calc(var(--fl) * 0.2500), rgb(0 0 0 / 0.2099) calc(var(--fl) * 0.3333), rgb(0 0 0 / 0.3466) calc(var(--fl) * 0.4167), rgb(0 0 0 / 0.5000) calc(var(--fl) * 0.5000), rgb(0 0 0 / 0.6534) calc(var(--fl) * 0.5833), rgb(0 0 0 / 0.7901) calc(var(--fl) * 0.6667), rgb(0 0 0 / 0.8965) calc(var(--fl) * 0.7500), rgb(0 0 0 / 0.9645) calc(var(--fl) * 0.8333), rgb(0 0 0 / 0.9949) calc(var(--fl) * 0.9167), rgb(0 0 0 / 1.0000) calc(var(--fl) * 1.0000), rgb(0 0 0 / 1.0000) calc(100% - var(--fr) * 1.0000), rgb(0 0 0 / 0.9949) calc(100% - var(--fr) * 0.9167), rgb(0 0 0 / 0.9645) calc(100% - var(--fr) * 0.8333), rgb(0 0 0 / 0.8965) calc(100% - var(--fr) * 0.7500), rgb(0 0 0 / 0.7901) calc(100% - var(--fr) * 0.6667), rgb(0 0 0 / 0.6534) calc(100% - var(--fr) * 0.5833), rgb(0 0 0 / 0.5000) calc(100% - var(--fr) * 0.5000), rgb(0 0 0 / 0.3466) calc(100% - var(--fr) * 0.4167), rgb(0 0 0 / 0.2099) calc(100% - var(--fr) * 0.3333), rgb(0 0 0 / 0.1035) calc(100% - var(--fr) * 0.2500), rgb(0 0 0 / 0.0355) calc(100% - var(--fr) * 0.1667), rgb(0 0 0 / 0.0051) calc(100% - var(--fr) * 0.0833), rgb(0 0 0 / 0.0000) calc(100% - var(--fr) * 0.0000));
+  transition: --fl .6s var(--ease-out), --fr .6s var(--ease-out);
 }
-@property --fl { syntax: "<length>"; inherits: true; initial-value: 84px; }
-@property --fr { syntax: "<length>"; inherits: true; initial-value: 84px; }
 .row-wrap.at-start .posters { --fl: 0px; }
 .row-wrap.at-end .posters { --fr: 0px; }
-.row-wrap::before, .row-wrap::after {
-  content: ""; position: absolute; z-index: 1; top: 24px; bottom: 60px; width: calc(var(--edge) * .7); pointer-events: none;
-  -webkit-backdrop-filter: blur(8px) saturate(150%); backdrop-filter: blur(8px) saturate(150%);
-  transition: opacity .45s var(--ease-out), transform .55s var(--ease-spring);
+.edge { position: absolute; z-index: 2; top: 0; bottom: 0; width: var(--edge); pointer-events: none; transition: opacity .6s var(--ease-out), translate .7s var(--ease-spring); }
+.edge.l { left: 0; --to: left; }
+.edge.r { right: 0; --to: right; }
+.edge i { position: absolute; inset: 0; }
+.edge i:nth-child(1) { -webkit-backdrop-filter: blur(0.6px); backdrop-filter: blur(0.6px); -webkit-mask-image: linear-gradient(to var(--to), transparent 0.00%, #000 14.29%, #000 28.57%, transparent 42.86%); mask-image: linear-gradient(to var(--to), transparent 0.00%, #000 14.29%, #000 28.57%, transparent 42.86%); }
+.edge i:nth-child(2) { -webkit-backdrop-filter: blur(1.4px); backdrop-filter: blur(1.4px); -webkit-mask-image: linear-gradient(to var(--to), transparent 14.29%, #000 28.57%, #000 42.86%, transparent 57.14%); mask-image: linear-gradient(to var(--to), transparent 14.29%, #000 28.57%, #000 42.86%, transparent 57.14%); }
+.edge i:nth-child(3) { -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); -webkit-mask-image: linear-gradient(to var(--to), transparent 28.57%, #000 42.86%, #000 57.14%, transparent 71.43%); mask-image: linear-gradient(to var(--to), transparent 28.57%, #000 42.86%, #000 57.14%, transparent 71.43%); }
+.edge i:nth-child(4) { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); -webkit-mask-image: linear-gradient(to var(--to), transparent 42.86%, #000 57.14%, #000 71.43%, transparent 85.71%); mask-image: linear-gradient(to var(--to), transparent 42.86%, #000 57.14%, #000 71.43%, transparent 85.71%); }
+.edge i:nth-child(5) { -webkit-backdrop-filter: blur(11px); backdrop-filter: blur(11px); -webkit-mask-image: linear-gradient(to var(--to), transparent 57.14%, #000 71.43%, #000 85.71%, transparent 100.00%); mask-image: linear-gradient(to var(--to), transparent 57.14%, #000 71.43%, #000 85.71%, transparent 100.00%); }
+.edge i:nth-child(6) { -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); -webkit-mask-image: linear-gradient(to var(--to), transparent 71.43%, #000 85.71%); mask-image: linear-gradient(to var(--to), transparent 71.43%, #000 85.71%); }
+.row-wrap.at-start .edge.l { opacity: 0; translate: -30% 0; }
+.row-wrap.at-end .edge.r { opacity: 0; translate: 30% 0; }
+
+/* depth: cards sink back a touch as they slide into the frosted zone, tied to the scroll itself */
+@supports (animation-timeline: view()) {
+  .pcard {
+    animation: cardIn .7s var(--ease-out) both, depth linear both;
+    animation-delay: calc(var(--d, 0) * 55ms), 0s;
+    animation-timeline: auto, view(inline var(--col) var(--edge));
+    animation-range: normal, cover;
+  }
+  @keyframes depth {
+    entry 0% { scale: .86; translate: -7% 0; }
+    entry 100% { scale: 1; translate: 0 0; }
+    exit 0% { scale: 1; translate: 0 0; }
+    exit 100% { scale: .86; translate: 7% 0; }
+  }
 }
-.row-wrap::before { left: calc(-1 * var(--gutter)); -webkit-mask-image: linear-gradient(to right, #000, transparent); mask-image: linear-gradient(to right, #000, transparent); }
-.row-wrap::after { right: calc(-1 * var(--gutter-r)); -webkit-mask-image: linear-gradient(to left, #000, transparent); mask-image: linear-gradient(to left, #000, transparent); }
-.row-wrap.at-start::before { opacity: 0; transform: translateX(-24px); }
-.row-wrap.at-end::after { opacity: 0; transform: translateX(24px); }
-@media (max-width: 560px) { .row-wrap { --edge: 36px; } .row-wrap::before, .row-wrap::after { bottom: 48px; } }
+
+/* drag to scroll with a mouse: grab, fling, and it settles on a card */
+@media (hover: hover) and (pointer: fine) { .posters { cursor: grab; } }
+.posters.dragging { cursor: grabbing; scroll-snap-type: none; user-select: none; }
+.posters.dragging a { pointer-events: none; }
+
+@media (max-width: 560px) {
+  .row-wrap { --cw: min(44vw, 200px); --edge: 46px; }
+  .edge i:nth-child(odd) { display: none; }   /* three layers are plenty on a phone, and cheaper to scroll */
+}
+@media (prefers-reduced-transparency: reduce) { .edge { display: none; } }
 
 /* arrows: glass circles that spring in and out, and swell under the finger like Liquid Glass */
 .scroller { transition: opacity .3s ease, transform .45s var(--ease-spring), background-color .2s ease; }
@@ -471,6 +510,7 @@ tbody tr td.rank span { display: inline-block; transition: transform .5s var(--e
 .group:nth-of-type(4) { animation-delay: .15s; } .group:nth-of-type(n+5) { animation-delay: .2s; }
 
 @media (prefers-reduced-motion: reduce) {
+  .pcard { scale: none !important; translate: none !important; }
   .pcard, .intro > *, .top-row > *, .group, tbody tr { animation: none !important; }
   .pcard a.cover { transform: none !important; }
   ::view-transition-old(root), ::view-transition-new(root) { animation: none !important; }

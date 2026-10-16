@@ -36,6 +36,7 @@ After that it rebuilds every hour on its own.
 | `#top` | Top 10 across all five services |
 | `#netflix`, `#disney`, `#prime`, `#hbomax`, `#paramount` | One service's top 10 |
 | `#new` | New this week |
+| `about.html` | How Tenner works |
 
 Each chart shows a row of poster cards with big rank numbers, then an overview table. The pill picker switches service and the Shows / Films control switches type.
 

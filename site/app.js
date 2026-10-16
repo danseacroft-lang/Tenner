@@ -170,7 +170,9 @@ function wireRanks() {
 }
 
 function posterRow(list) {
-  return `<div class="row-wrap">
+  const edge = (side) => `<div class="edge ${side}" aria-hidden="true">${'<i></i>'.repeat(6)}</div>`;
+  return `<div class="row-wrap at-start">
+    ${edge('l')}${edge('r')}
     <button type="button" class="btn btn-icon scroller prev" aria-label="Previous titles" disabled>
       <svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><path d="M8 2L2 8l6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <ol class="posters" aria-label="Top 10">
@@ -255,25 +257,76 @@ function toast(text) {
 }
 
 // ---------- poster row arrows ----------
+let rowAbort; // each render gets fresh listeners; the old row's are dropped with it
 function wireScroller() {
+  rowAbort?.abort(); rowAbort = new AbortController();
+  const sig = { signal: rowAbort.signal, passive: true };
   const row = $('.posters'); if (!row) return;
   const wrap = row.parentElement, prev = $('.scroller.prev'), next = $('.scroller.next');
   const update = () => {
     const start = row.scrollLeft < 8, end = row.scrollLeft + row.clientWidth >= row.scrollWidth - 8;
     prev.disabled = start; next.disabled = end;
-    wrap.classList.toggle('at-start', start); wrap.classList.toggle('at-end', end); // the frosted edges fade away at either end
+    wrap.classList.toggle('at-start', start); wrap.classList.toggle('at-end', end); // each frosted edge glides away at its end
   };
-  const by = (dir) => row.scrollBy({ left: dir * row.clientWidth * 0.8, behavior: reduceMotion ? 'auto' : 'smooth' });
-  prev.onclick = () => by(-1); next.onclick = () => by(1);
-  row.addEventListener('scroll', update, { passive: true });
-  addEventListener('resize', update);
+  const by = (dir) => row.scrollBy({ left: dir * row.clientWidth * 0.75, behavior: reduceMotion ? 'auto' : 'smooth' });
+  prev.addEventListener('click', () => by(-1), sig);
+  next.addEventListener('click', () => by(1), sig);
+  row.addEventListener('scroll', update, sig);
+  addEventListener('resize', update, sig);
   update();
-  wireTilt(row);
+  wireTilt(row, sig);
+  wireDrag(row, sig);
+}
+
+// Drag the row with a mouse: it follows the hand, keeps the fling's momentum, then settles onto the nearest card.
+function wireDrag(row, sig) {
+  if (!finePointer) return;
+  let down = false, dragging = false, startX = 0, startLeft = 0, lastX = 0, lastT = 0, v = 0, raf = 0, moved = 0;
+  const snapStops = () => [...row.children].map((li) => li.offsetLeft - parseFloat(getComputedStyle(row).scrollPaddingLeft || 0));
+  const settle = () => {
+    const stops = snapStops(), at = row.scrollLeft;
+    const target = stops.reduce((best, x) => (Math.abs(x - at) < Math.abs(best - at) ? x : best), stops[0] ?? 0);
+    row.scrollTo({ left: Math.max(0, target), behavior: reduceMotion ? 'auto' : 'smooth' });
+    setTimeout(() => row.classList.remove('dragging'), reduceMotion ? 0 : 420);
+  };
+  row.addEventListener('pointerdown', (e) => {
+    if (e.pointerType !== 'mouse' || e.button !== 0) return;
+    cancelAnimationFrame(raf);
+    down = true; dragging = false; moved = 0; v = 0;
+    startX = lastX = e.clientX; startLeft = row.scrollLeft; lastT = performance.now();
+  }, sig);
+  addEventListener('pointermove', (e) => {
+    if (!down) return;
+    const dx = e.clientX - startX;
+    if (!dragging && Math.abs(dx) > 5) { dragging = true; row.classList.add('dragging'); }
+    if (!dragging) return;
+    moved = Math.abs(dx);
+    row.scrollLeft = startLeft - dx;
+    const now = performance.now(), dt = Math.max(1, now - lastT);
+    v = 0.75 * v + 0.25 * ((lastX - e.clientX) / dt); // px per ms, smoothed
+    lastX = e.clientX; lastT = now;
+  }, sig);
+  const release = () => {
+    if (!down) return; down = false;
+    if (!dragging) return;
+    if (reduceMotion) { settle(); return; }
+    let vel = v * 16; // px per frame
+    const glide = () => {
+      vel *= 0.935; row.scrollLeft += vel;
+      const atEdge = row.scrollLeft <= 0 || row.scrollLeft + row.clientWidth >= row.scrollWidth - 1;
+      if (Math.abs(vel) > 0.6 && !atEdge) raf = requestAnimationFrame(glide); else settle();
+    };
+    raf = requestAnimationFrame(glide);
+  };
+  addEventListener('pointerup', release, sig);
+  addEventListener('pointercancel', release, sig);
+  row.addEventListener('click', (e) => { if (moved > 5) { e.preventDefault(); e.stopPropagation(); moved = 0; } }, { signal: sig.signal, capture: true });
+  row.addEventListener('dragstart', (e) => e.preventDefault(), { signal: sig.signal });
 }
 
 // Cards lean towards the mouse with a soft sheen where it points. Mouse only, never with reduced motion.
 const finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
-function wireTilt(row) {
+function wireTilt(row, sig) {
   if (!finePointer || reduceMotion) return;
   let card = null, raf = 0, ev = null;
   const paint = () => {
@@ -285,98 +338,27 @@ function wireTilt(row) {
     card.style.setProperty('--my', (y * 100).toFixed(1) + '%');
   };
   row.addEventListener('pointermove', (e) => {
+    if (row.classList.contains('dragging')) return;
     const c = e.target.closest('.cover');
     if (c !== card) { card?.classList.remove('tilting'); card = c; card?.classList.add('tilting'); }
     ev = e; if (!raf) raf = requestAnimationFrame(paint);
-  });
-  row.addEventListener('pointerleave', () => { card?.classList.remove('tilting'); card = null; });
+  }, sig);
+  row.addEventListener('pointerleave', () => { card?.classList.remove('tilting'); card = null; }, sig);
 }
 
 // ---------- controls ----------
 
-// ---------- tabs: Shows, Films, New (ported from Channel Crossings) ----------
-const tabs = [...document.querySelectorAll('#tabs [role=tab]')], ind = $('#tabInd'), tabNames = tabs.map((t) => t.dataset.tab);
-let curTab = null, indX = null;
-// the pill under the chosen tab: glides across, stretching a little on the way and settling with a small spring
-function placeInd(animate) {
-  const b = tabs[tabNames.indexOf(curTab)]; if (!b || !b.offsetWidth) return;
-  const x = b.offsetLeft, w = b.offsetWidth;
-  if (indX === null || !animate || reduceMotion || !ind.animate) { ind.style.width = w + 'px'; ind.style.transform = `translateX(${x}px)`; indX = x; return; }
-  const from = ind.style.transform, fw = ind.style.width, mid = (indX + x) / 2, mw = Math.max(parseFloat(fw), w) * 1.18;
-  ind.style.width = w + 'px'; ind.style.transform = `translateX(${x}px)`;
-  ind.animate([{ transform: from, width: fw }, { transform: `translateX(${mid - (mw - w) / 2}px)`, width: mw + 'px', offset: 0.45 }, { transform: `translateX(${x}px)`, width: w + 'px' }],
-    { duration: 520, easing: 'cubic-bezier(.3,1.15,.4,1)' });
-  indX = x;
-}
-function selectTab(name) {
-  const first = curTab === null;
-  curTab = name;
-  tabs.forEach((t) => { const on = t.dataset.tab === name; t.setAttribute('aria-selected', on); t.tabIndex = on ? 0 : -1; });
-  placeInd(!first);
-}
+// ---------- tabs: the bar itself lives in shell.js (shared with the About page) ----------
+const selectTab = (name) => window.tnShell.select(name);
 function openTab(name) {
-  if (name === curTab) { scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }); return; } // tap the open tab: back to the top
+  if (name === 'about') { location.href = 'about.html'; return; }
+  if (name === window.tnShell.current() && state.route !== 'new' === (name !== 'new')) { scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }); return; } // tap the open tab: back to the top
   if (name === 'new') { location.hash = 'new'; return; }
   state.kind = name;
   try { localStorage.setItem('tenner-kind', state.kind); } catch {}
   if (state.route === 'new') location.hash = state.lastChart || 'top'; else render();
 }
-tabs.forEach((t, i) => {
-  t.addEventListener('click', () => openTab(t.dataset.tab));
-  t.addEventListener('keydown', (e) => { // arrow keys move along the tabs, Home and End to the first and last
-    const k = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key]; if (k === undefined) return;
-    e.preventDefault(); const n = tabs[(k + tabs.length) % tabs.length]; n.focus(); openTab(n.dataset.tab);
-  });
-});
-addEventListener('resize', () => placeInd(false));
-document.fonts?.ready.then(() => placeInd(false));
-
-// ---------- appearance: Auto, Day or Night (ported from Channel Crossings; Night by default) ----------
-const root = document.documentElement, modeBtns = document.querySelectorAll('.th-list button');
-const mode = () => root.getAttribute('data-theme') || 'auto';
-function showTheme() {
-  const m = mode();
-  modeBtns.forEach((b) => b.setAttribute('aria-checked', b.dataset.mode === m));
-  const dark = m === 'dark' || (m === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
-  $('#thIc').innerHTML = $(`.th-list [data-mode="${dark ? 'dark' : 'light'}"] i`).innerHTML; // the round button: a moon by night, a sun by day
-}
-// the round button opens a card just under it, lined up with its right edge
-function tbMenu(btn, pop, onOpen) {
-  const place = () => {
-    const r = btn.getBoundingClientRect(), w = pop.offsetWidth, left = Math.max(12, Math.min(r.right - w, innerWidth - w - 12));
-    pop.style.top = (r.bottom + 8) + 'px';
-    pop.style.maxHeight = Math.max(200, innerHeight - r.bottom - 20) + 'px';
-    pop.style.left = left + 'px';
-    pop.style.setProperty('--tb-o', `${r.left + r.width / 2 - left}px -14px`); // it grows out of its own button
-  };
-  const set = (on) => {
-    if (on === !pop.hidden && !pop.classList.contains('out')) return;
-    btn.setAttribute('aria-expanded', on);
-    if (on) {
-      pop.classList.remove('out'); pop.hidden = false;
-      [...pop.children].forEach((c, i) => c.style.setProperty('--i', i));
-      place(); onOpen?.();
-    } else if (reduceMotion) pop.hidden = true;
-    else { pop.classList.add('out'); setTimeout(() => { if (pop.classList.contains('out')) { pop.hidden = true; pop.classList.remove('out'); } }, 190); }
-  };
-  btn.addEventListener('click', (e) => { e.stopPropagation(); set(pop.hidden || pop.classList.contains('out')); });
-  document.addEventListener('click', (e) => { if (!pop.hidden && !pop.contains(e.target) && e.target.isConnected) set(false); });
-  addEventListener('keydown', (e) => { if (e.key === 'Escape' && !pop.hidden) { set(false); btn.focus({ preventScroll: true }); } });
-  addEventListener('resize', () => { if (!pop.hidden) place(); });
-}
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change', showTheme); // Auto: the icon follows the device
-tbMenu($('#thBtn'), $('#thPop'), () => $('#thPop [aria-checked="true"]')?.focus({ preventScroll: true }));
-modeBtns.forEach((b) => b.addEventListener('click', () => {
-  const n = b.dataset.mode;
-  window.tnTheme?.(n);
-  try { localStorage.setItem('tenner-theme', n); } catch {}
-  showTheme();
-}));
-showTheme();
-
-// a fade behind the floating bar once the page has scrolled
-const onScroll = () => root.classList.toggle('scrolled', scrollY > 8);
-addEventListener('scroll', onScroll, { passive: true }); onScroll();
+window.tnOnTab = openTab;
 
 addEventListener('hashchange', () => { route(); scrollTo(0, 0); });
 load();

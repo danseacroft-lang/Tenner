@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>About Tenner</title>
+  <meta name="description" content="How Tenner works: where the UK top 10 comes from, what the numbers mean, and how it updates every hour.">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+  <!-- Link previews in WhatsApp, iMessage, Messenger etc. -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Tenner">
+  <meta property="og:title" content="Tenner: your top ten, every hour">
+  <meta property="og:description" content="The UK's top 10 shows and films on Netflix, Disney+, Prime Video, HBO Max and Paramount+.">
+  <meta property="og:url" content="https://danseacroft-lang.github.io/Tenner/about.html">
+  <meta property="og:image" content="https://danseacroft-lang.github.io/Tenner/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <script>/* Night is the default; Day or Auto only when chosen */
+  function tnTheme(t){var r=document.documentElement;if(t==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",t);
+    var c=t==="auto"?null:(t==="light"?"#ffffff":"#000000");document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){if(!m.dataset.c)m.dataset.c=m.content;m.content=c||m.dataset.c;});}
+  try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}</script>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="about.css">
+</head>
+<body class="about">
+  <a class="skip" href="#main">Skip to the page</a>
+  <svg class="defs" aria-hidden="true" focusable="false"><defs>
+    <linearGradient id="rb" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff375f"/><stop offset=".22" stop-color="#ff9f0a"/><stop offset=".42" stop-color="#ffd60a"/><stop offset=".6" stop-color="#30d158"/><stop offset=".8" stop-color="#0a84ff"/><stop offset="1" stop-color="#bf5af2"/></linearGradient>
+    <filter id="fSoft" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="var(--a-shadow)" flood-opacity="1"/></filter>
+    <filter id="fNeon" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="2.4" result="t"/><feGaussianBlur stdDeviation="9" result="w"/><feMerge><feMergeNode in="w"/><feMergeNode in="t"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs></svg>
+
+  <!-- the bar at the top: the logo, the tabs (a floating bar at the bottom on phones) and the round button -->
+  <div class="top-row">
+    <div class="top-brand">
+      <a class="lt-logo" href="./" aria-label="Tenner, back to the chart"><img src="logo.svg" alt="" width="36" height="36"></a>
+      <span class="brand-name">Tenner</span>
+    </div>
+    <nav class="tabbar" aria-label="Pages"><div class="tabs" role="tablist" id="tabs"><span class="tab-ind" id="tabInd" aria-hidden="true"></span>
+      <button type="button" role="tab" data-tab="tv" aria-selected="false" tabindex="-1">
+        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.8" y="4.5" width="18.4" height="12.8" rx="2.6"/><path d="M8.5 20.5h7"/></svg>
+        <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><rect class="solid" x="2.3" y="4" width="19.4" height="13.8" rx="3"/><path class="thick" d="M8.5 20.6h7"/></svg>
+        <span>Shows</span></button>
+      <button type="button" role="tab" data-tab="movie" aria-selected="false" tabindex="-1">
+        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 3.5v17M16 3.5v17M3.5 8.5H8M3.5 15.5H8M16 8.5h4.5M16 15.5h4.5"/></svg>
+        <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><path class="solid" d="M6.5 3h11A3.5 3.5 0 0 1 21 6.5v11a3.5 3.5 0 0 1-3.5 3.5h-11A3.5 3.5 0 0 1 3 17.5v-11A3.5 3.5 0 0 1 6.5 3zM4.6 9.4h2.3V7.1H4.6zm0 7.5h2.3v-2.3H4.6zm12.5-7.5h2.3V7.1h-2.3zm0 7.5h2.3v-2.3h-2.3z" fill-rule="evenodd"/></svg>
+        <span>Films</span></button>
+      <button type="button" role="tab" data-tab="new" aria-selected="false" tabindex="-1">
+        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3.5l1.8 4.9 4.9 1.8-4.9 1.8-1.8 4.9-1.8-4.9-4.9-1.8 4.9-1.8z"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z"/></svg>
+        <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><path class="solid" d="M10.5 2.5l2.1 5.4 5.4 2.1-5.4 2.1-2.1 5.4-2.1-5.4L3 10l5.4-2.1z"/><path class="solid" d="M18 13.5l1.1 2.4 2.4 1.1-2.4 1.1L18 20.5l-1.1-2.4-2.4-1.1 2.4-1.1z"/></svg>
+        <span>New</span></button>
+      <button type="button" role="tab" data-tab="about" aria-selected="true">
+        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.6" r=".6" fill="currentColor"/></svg>
+        <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><path class="solid" d="M12 2.5a9.5 9.5 0 1 1 0 19 9.5 9.5 0 0 1 0-19zm0 4a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6zm-1.2 4.3v6.5h2.4v-6.5z"/></svg>
+        <span>About</span></button>
+    </div></nav>
+    <div class="top-act">
+      <button type="button" class="tb-btn" id="thBtn" aria-haspopup="menu" aria-controls="thPop" aria-expanded="false" aria-label="Appearance" title="Appearance"><span id="thIc" style="display:contents"></span></button>
+    </div>
+  </div>
+
+  <div class="tb-pop th-pop" id="thPop" role="menu" aria-labelledby="thH" hidden>
+    <div class="tb-head"><h2 id="thH">Appearance</h2></div>
+    <div class="th-list"><button type="button" role="menuitemradio" data-mode="auto" aria-checked="false"><i><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 3.4a8.6 8.6 0 0 1 0 17.2z" fill="currentColor"/></svg></i><span><b>Auto</b><small>Follows your device</small></span><em aria-hidden="true"></em></button><button type="button" role="menuitemradio" data-mode="light" aria-checked="false"><i><svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2 12h2.4M19.6 12H22M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg></i><span><b>Day</b><small>Light all the time</small></span><em aria-hidden="true"></em></button><button type="button" role="menuitemradio" data-mode="dark" aria-checked="false"><i><svg class="ic-moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.7A8.5 8.5 0 1 1 9.3 3.5a7 7 0 0 0 11.2 11.2Z"/></svg></i><span><b>Night</b><small>Dark all the time</small></span><em aria-hidden="true"></em></button></div>
+  </div>
+
+
+  <main id="main" class="awrap" tabindex="-1">
+    <header class="hero">
+      <p class="eyebrow">About Tenner</p>
+      <h1>Your top ten, every&nbsp;hour.</h1>
+      <p class="lead">Tenner shows what the UK is watching right now on Netflix, Disney+, Prime Video, HBO Max and Paramount+. One page, five services, fresh every hour.</p>
+    </header>
+
+    <div class="scene" aria-hidden="true">
+      <svg viewBox="0 0 800 360" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <radialGradient id="glowA" cx="50%" cy="45%" r="55%"><stop offset="0" stop-color="#bf5af2" stop-opacity=".55"/><stop offset="1" stop-color="#bf5af2" stop-opacity="0"/></radialGradient>
+          <radialGradient id="glowB" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#0a84ff" stop-opacity=".5"/><stop offset="1" stop-color="#0a84ff" stop-opacity="0"/></radialGradient>
+          <linearGradient id="flow" gradientUnits="userSpaceOnUse" x1="250" y1="0" x2="550" y2="40" spreadMethod="repeat">
+            <stop offset="0" stop-color="#ff375f"/><stop offset=".17" stop-color="#ff9f0a"/><stop offset=".33" stop-color="#ffd60a"/><stop offset=".5" stop-color="#30d158"/><stop offset=".67" stop-color="#40c8e0"/><stop offset=".83" stop-color="#bf5af2"/><stop offset="1" stop-color="#ff375f"/>
+            <animateTransform attributeName="gradientTransform" type="translate" from="0 0" to="300 40" dur="8s" repeatCount="indefinite"/>
+          </linearGradient>
+          <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--a-floor1)"/><stop offset="1" stop-color="var(--a-floor2)"/></linearGradient>
+        </defs>
+        <rect width="800" height="360" fill="var(--a-room)"/>
+        <ellipse cx="400" cy="150" rx="380" ry="200" fill="url(#glowA)" class="pulse"/>
+        <ellipse cx="230" cy="80" rx="240" ry="150" fill="url(#glowB)" class="pulse2"/>
+        <rect y="282" width="800" height="78" fill="url(#floor)"/>
+        <!-- the telly -->
+        <g filter="url(#fSoft)">
+          <rect x="196" y="42" width="408" height="232" rx="18" fill="var(--a-bezel)"/>
+          <rect x="206" y="52" width="388" height="212" rx="10" fill="var(--a-screen)"/>
+        </g>
+        <!-- a row of poster tiles on screen -->
+        <g opacity=".9">
+          <rect x="226" y="164" width="58" height="82" rx="7" fill="#5e5ce6"/><rect x="294" y="164" width="58" height="82" rx="7" fill="#ff9f0a"/>
+          <rect x="362" y="164" width="58" height="82" rx="7" fill="#30d158"/><rect x="430" y="164" width="58" height="82" rx="7" fill="#ff375f"/>
+          <rect x="498" y="164" width="58" height="82" rx="7" fill="#40c8e0"/><rect x="566" y="164" width="28" height="82" rx="7" fill="#bf5af2" opacity=".5"/>
+        </g>
+        <!-- neon "10" floating over the screen -->
+        <text x="400" y="148" text-anchor="middle" class="neon10" fill="none" stroke="url(#flow)" stroke-width="5" filter="url(#fNeon)">10</text>
+        <text x="400" y="148" text-anchor="middle" class="neon10" fill="none" stroke="#fff" stroke-width="1.3" opacity=".9">10</text>
+        <!-- stand and a soft reflection -->
+        <rect x="370" y="274" width="60" height="16" rx="4" fill="var(--a-bezel)"/>
+        <rect x="320" y="288" width="160" height="6" rx="3" fill="var(--a-bezel)"/>
+        <ellipse cx="400" cy="300" rx="230" ry="10" fill="#bf5af2" opacity=".18" class="pulse"/>
+        <!-- glass chips -->
+        <g class="bob"><rect x="56" y="70" width="128" height="40" rx="20" fill="var(--a-glass)" stroke="var(--a-glass-b)"/>
+          <circle cx="78" cy="90" r="5" fill="#30d158"/><text x="92" y="96" class="chip">Updated</text></g>
+        <g class="bob2"><rect x="628" y="196" width="128" height="40" rx="20" fill="var(--a-glass)" stroke="var(--a-glass-b)"/>
+          <text x="692" y="222" text-anchor="middle" class="chip">5 services</text></g>
+      </svg>
+    </div>
+
+    <section class="sec" aria-labelledby="h-stages">
+      <div class="sec-h">
+        <h2 id="h-stages">From the streamers to your screen.</h2>
+        <p>Every chart goes through the same four stages.</p>
+      </div>
+      <ol class="steps">
+        <li class="step reveal">
+          <div class="art"><svg viewBox="0 0 320 190" aria-hidden="true">
+            <g filter="url(#fSoft)"><rect x="56" y="34" width="208" height="124" rx="18" fill="var(--a-paper)"/></g>
+            <rect x="76" y="52" width="74" height="9" rx="4.5" fill="var(--a-ink)" opacity=".85"/>
+            <rect x="76" y="67" width="48" height="6" rx="3" fill="var(--a-ink2)" opacity=".6"/>
+            <g stroke="var(--a-line)" stroke-width="1"><path d="M76 140h170M76 116h170M76 92h170"/></g>
+            <path class="draw" d="M78 138 C104 134 118 124 136 120 S170 104 190 96 S224 70 244 60" fill="none" stroke="url(#rb)" stroke-width="4.5" stroke-linecap="round"/>
+            <circle cx="244" cy="60" r="7" fill="var(--a-paper)" stroke="#bf5af2" stroke-width="3" class="pop"/>
+            <g class="bob"><rect x="190" y="14" width="104" height="32" rx="16" fill="var(--a-glass)" stroke="var(--a-glass-b)"/>
+              <path d="M206 36l8-9 6 5 9-11" fill="none" stroke="#30d158" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <text x="236" y="35" class="chip sm">Trending</text></g>
+          </svg></div>
+          <div class="txt"><span class="n">1</span><h3>Popular right now</h3>
+            <p><a href="https://www.themoviedb.org/">TMDB</a> measures what <strong>millions of people</strong> are watching, searching for and adding to their lists, and turns it into a popularity score for every film and show.</p></div>
+        </li>
+        <li class="step reveal">
+          <div class="art"><svg viewBox="0 0 320 190" aria-hidden="true">
+            <g filter="url(#fSoft)"><rect x="128" y="18" width="64" height="92" rx="10" fill="#5e5ce6"/></g>
+            <rect x="138" y="88" width="38" height="6" rx="3" fill="#fff" opacity=".85"/>
+            <g fill="none" stroke="var(--a-line)" stroke-width="2" stroke-dasharray="3 5" stroke-linecap="round">
+              <path d="M160 112 C160 124 62 126 62 138"/><path d="M160 112 C160 124 111 126 111 138"/><path d="M160 112v26"/><path d="M160 112 C160 124 209 126 209 138"/><path d="M160 112 C160 124 258 126 258 138"/>
+            </g>
+            <g filter="url(#fSoft)">
+              <rect x="40" y="136" width="44" height="44" rx="11" fill="#ff375f"/><rect x="89" y="136" width="44" height="44" rx="11" fill="#0a84ff"/>
+              <rect x="138" y="136" width="44" height="44" rx="11" fill="#30b0c7"/><rect x="187" y="136" width="44" height="44" rx="11" fill="#bf5af2"/>
+              <rect x="236" y="136" width="44" height="44" rx="11" fill="#2f6fd6"/>
+            </g>
+            <g class="checks">
+              <g style="--i:0"><circle cx="80" cy="140" r="8" fill="#30d158" stroke="var(--a-tile2)" stroke-width="2"/><path d="M76.5 140l2.4 2.4 4.6-4.8" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+              <g style="--i:1"><circle cx="129" cy="140" r="8" fill="#30d158" stroke="var(--a-tile2)" stroke-width="2"/><path d="M125.5 140l2.4 2.4 4.6-4.8" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+              <g style="--i:2"><circle cx="178" cy="140" r="8" fill="#30d158" stroke="var(--a-tile2)" stroke-width="2"/><path d="M174.5 140l2.4 2.4 4.6-4.8" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+              <g style="--i:3"><circle cx="227" cy="140" r="8" fill="#30d158" stroke="var(--a-tile2)" stroke-width="2"/><path d="M223.5 140l2.4 2.4 4.6-4.8" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+              <g style="--i:4"><circle cx="276" cy="140" r="8" fill="#30d158" stroke="var(--a-tile2)" stroke-width="2"/><path d="M272.5 140l2.4 2.4 4.6-4.8" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+            </g>
+            <g class="bob2"><rect x="214" y="30" width="80" height="32" rx="16" fill="var(--a-glass)" stroke="var(--a-glass-b)"/><text x="254" y="51" text-anchor="middle" class="chip sm">In the UK</text></g>
+          </svg></div>
+          <div class="txt"><span class="n">2</span><h3>Matched to UK services</h3>
+            <p>Where-to-watch data from <strong>JustWatch</strong>, shared through TMDB, shows which of those titles are streaming on each of the <strong>five services in the UK</strong> right now.</p></div>
+        </li>
+        <li class="step reveal">
+          <div class="art"><svg viewBox="0 0 320 190" aria-hidden="true">
+            <g filter="url(#fSoft)"><circle cx="160" cy="98" r="72" fill="var(--a-paper)"/></g>
+            <circle cx="160" cy="98" r="62" fill="none" stroke="var(--a-line)" stroke-width="1.5"/>
+            <path d="M160 36 A62 62 0 1 1 98.6 89" fill="none" stroke="url(#rb)" stroke-width="6" stroke-linecap="round" class="arc"/>
+            <g fill="var(--a-ink)" class="clocknum"><text x="160" y="56" text-anchor="middle">12</text><text x="206" y="104" text-anchor="middle">3</text><text x="160" y="152" text-anchor="middle">6</text><text x="114" y="104" text-anchor="middle">9</text></g>
+            <path d="M160 98 L184 76" stroke="var(--a-ink)" stroke-width="5" stroke-linecap="round"/>
+            <path d="M160 98 L160 50" stroke="#ff375f" stroke-width="2.5" stroke-linecap="round" class="hand"/>
+            <circle cx="160" cy="98" r="5.5" fill="#ff375f"/>
+            <g class="bob"><rect x="22" y="20" width="84" height="34" rx="17" fill="var(--a-glass)" stroke="var(--a-glass-b)"/><text x="64" y="43" text-anchor="middle" class="chip">:07</text></g>
+            <g class="bob2"><rect x="214" y="22" width="92" height="34" rx="17" fill="#0a84ff"/><text x="260" y="45" text-anchor="middle" class="chip" fill="#fff">Every hour</text></g>
+          </svg></div>
+          <div class="txt"><span class="n">3</span><h3>Rebuilt every hour</h3>
+            <p>At <strong>seven minutes past every hour</strong> Tenner fetches the latest figures, builds a fresh chart for every service and publishes it straight away.</p></div>
+        </li>
+        <li class="step reveal">
+          <div class="art"><svg viewBox="0 0 320 190" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <g filter="url(#fSoft)"><rect x="104" y="16" width="112" height="210" rx="24" fill="var(--a-bezel)"/></g>
+            <rect x="111" y="23" width="98" height="196" rx="18" fill="var(--a-screen)"/>
+            <rect x="140" y="30" width="40" height="10" rx="5" fill="var(--a-bezel)"/>
+            <text x="122" y="96" class="neon01" fill="none" stroke="url(#rb)" stroke-width="2.4" filter="url(#fNeon)">01</text>
+            <text x="122" y="96" class="neon01" fill="none" stroke="#fff" stroke-width=".8" opacity=".9">01</text>
+            <rect x="122" y="104" width="76" height="80" rx="9" fill="#5e5ce6"/>
+            <g class="slide"><g filter="url(#fSoft)"><rect x="150" y="128" width="152" height="50" rx="16" fill="var(--a-glass)" stroke="var(--a-glass-b)"/></g>
+              <rect x="160" y="137" width="32" height="32" rx="8" fill="#000"/>
+              <path d="M167 147l3-2v14" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="182" cy="153" r="5.2" fill="none" stroke="url(#rb)" stroke-width="2.4"/>
+              <text x="200" y="150" class="chip sm">New chart is in</text><text x="200" y="166" class="chip xs">Updated just now</text></g>
+          </svg></div>
+          <div class="txt"><span class="n">4</span><h3>On your screen</h3>
+            <p>You get the <strong>top ten for every service</strong> in one place, with posters, ratings and a link to where each title is streaming.</p></div>
+        </li>
+      </ol>
+    </section>
+
+    <section class="sec" aria-labelledby="h-numbers">
+      <div class="sec-h">
+        <h2 id="h-numbers">What the numbers mean.</h2>
+        <p>A few things worth knowing when you read the chart.</p>
+      </div>
+      <ul class="glist reveal">
+        <li><span class="gi" style="background:#ff375f"><svg viewBox="0 0 24 24"><path d="M5 17l5-5 3 3 6-7" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div><b>Rank</b><p>Ordered by TMDB popularity among titles on that service in the UK. It's a strong guide to what people are watching, though not official viewing figures.</p></div></li>
+        <li><span class="gi" style="background:#ff9f0a"><svg viewBox="0 0 24 24"><path d="M12 4l2.4 5 5.4.6-4 3.7 1.1 5.3L12 16l-4.9 2.6 1.1-5.3-4-3.7 5.4-.6z" fill="#fff"/></svg></span>
+          <div><b>Rating</b><p>The average score from TMDB members, out of 10. It only shows once at least 20 people have rated a title.</p></div></li>
+        <li><span class="gi" style="background:#30d158"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="12" rx="2.5" fill="none" stroke="#fff" stroke-width="2.2"/><path d="M9 20h6" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+          <div><b>Where to watch</b><p>Included in a subscription, free, or free with ads. Titles you can only rent or buy are left out.</p></div></li>
+        <li><span class="gi" style="background:#0a84ff"><svg viewBox="0 0 24 24"><path d="M10.5 3.5l1.8 4.9 4.9 1.8-4.9 1.8-1.8 4.9-1.8-4.9-4.9-1.8 4.9-1.8z" fill="#fff"/></svg></span>
+          <div><b>New this week</b><p>Releases from the last and next seven days, from Watchmode. The dates are mostly US dates, so a few UK ones can differ.</p></div></li>
+        <li><span class="gi" style="background:#bf5af2"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="#fff" stroke-width="2.2"/><path d="M12 7.5V12l3 2" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+          <div><b>Updated</b><p>The green pill shows how long ago the chart was built. Tap it to check for a newer one.</p></div></li>
+      </ul>
+    </section>
+
+    <section class="sec" aria-labelledby="h-sources">
+      <div class="sec-h">
+        <h2 id="h-sources">Where it comes from.</h2>
+        <p>Three sources, all credited.</p>
+      </div>
+      <div class="live">
+        <article class="tile reveal"><div class="ic"><svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#0d253f"/><path d="M14 42l10-12 8 7 18-17" fill="none" stroke="#01b4e4" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div><h3>TMDB</h3><p>Popularity, posters, ratings and the list of services each title is on.</p><span class="src">themoviedb.org</span></div></article>
+        <article class="tile reveal"><div class="ic"><svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#1c2733"/><circle cx="32" cy="32" r="14" fill="none" stroke="#fbc500" stroke-width="5"/><path d="M28 26l9 6-9 6z" fill="#fbc500"/></svg></div>
+          <div><h3>JustWatch</h3><p>Where-to-watch data for the UK, shared with TMDB.</p><span class="src">justwatch.com, via TMDB</span></div></article>
+        <article class="tile reveal"><div class="ic"><svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#3a2a8c"/><rect x="16" y="18" width="32" height="28" rx="5" fill="none" stroke="#fff" stroke-width="4"/><path d="M16 27h32M25 14v8M39 14v8" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg></div>
+          <div><h3>Watchmode</h3><p>New and upcoming releases on the big streamers, checked once a day.</p><span class="src">watchmode.com</span></div></article>
+      </div>
+      <p class="note reveal">This product uses the TMDB API but is not endorsed or certified by TMDB. <strong>Tenner isn't connected to Netflix, Disney+, Prime Video, HBO Max or Paramount+</strong>; their names and logos belong to them.</p>
+      <div class="cta">
+        <a class="abtn abtn-p" href="./#top"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.8" y="4.5" width="18.4" height="12.8" rx="2.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 20.5h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>See the top 10</a>
+        <a class="abtn abtn-s" href="./#new"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3.5l1.8 4.9 4.9 1.8-4.9 1.8-1.8 4.9-1.8-4.9-4.9-1.8 4.9-1.8z" fill="currentColor"/></svg>New this week</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="credits awrap">
+    <p>Popularity, posters and where-to-watch data from <a href="https://www.themoviedb.org/">TMDB</a> (powered by JustWatch). New releases from <a href="https://www.watchmode.com/">Watchmode</a>.</p>
+  </footer>
+
+  <script>/* each card performs once as it arrives on screen; nothing is hidden unless this runs */
+  (function(){
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return;
+    document.documentElement.classList.add('js-reveal');
+    var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { rootMargin: '0px 0px -12% 0px' });
+    document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+  })();</script>
+  <script src="shell.js" defer></script>
+</body>
+</html>
