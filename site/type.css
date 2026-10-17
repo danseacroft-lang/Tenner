@@ -1,0 +1,40 @@
+/* Tenner's type system, loaded last on every page.
+   Apple devices use San Francisco itself (the system font). Everywhere else gets Inter for text and Inter Tight for
+   headings, bundled here, the same faces Channel Crossings uses; they're only downloaded where San Francisco is missing.
+   Sizes, weights, line heights and tracking follow apple.com: semibold headlines that are barely tightened, with
+   tracking that eases from slightly negative on big type to slightly positive on mid-size type, and body text at -0.022em. */
+
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 100 900; font-display: swap; src: url(fonts/inter-latin.woff2) format("woff2"); }
+@font-face { font-family: "Inter Tight"; font-style: normal; font-weight: 100 900; font-display: swap; src: url(fonts/inter-tight-latin.woff2) format("woff2"); }
+
+:root {
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter Tight", "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; font-optical-sizing: auto; }
+body { font-family: var(--font); font-size: 17px; line-height: 1.47; letter-spacing: -.022em; font-feature-settings: "kern"; }
+
+/* ---------- headlines (apple.com: 600 weight, tracking by size) ---------- */
+.about .hero h1 {                                      /* the hero, up to 64px */
+  font: 600 clamp(40px, 6.4vw, 64px)/1.06 var(--font-display); letter-spacing: -.009em;
+}
+.sec-h h2 { font: 600 clamp(30px, 4.2vw, 48px)/1.08 var(--font-display); letter-spacing: -.003em; }
+.large-title, .intro .large-title, .b-head .large-title, .overview .large-title {
+  font-family: var(--font-display); font-weight: 600; letter-spacing: 0; line-height: 1.1;
+}
+.empty h2, .none h2, .sheet-head h2, .tb-pop h2 { font-family: var(--font-display); font-weight: 600; letter-spacing: .004em; line-height: 1.15; }
+.step h3 { font: 600 21px/1.19 var(--font-display); letter-spacing: .011em; }
+.tile h3, .about .tile h3 { font-family: var(--font-display); font-weight: 600; letter-spacing: .012em; }
+
+/* ---------- text ---------- */
+.lead { font-size: clamp(19px, 1.9vw, 21px); line-height: 1.38; letter-spacing: .011em; }   /* apple.com intro copy */
+.lede, .sub { letter-spacing: -.022em; }
+.step p, .glist p, .tile p { letter-spacing: -.016em; }
+.pcard h3, .t { font-weight: 600; letter-spacing: -.022em; }
+.eyebrow { font-weight: 600; letter-spacing: -.01em; }
+
+/* ---------- controls and small text (apple.com 14px: -0.016em, 12px: -0.01em) ---------- */
+.btn, .segmented button, .svc-b, .coll-b, .tabs button, .g-b, .s-b, .w-b, .chip, .sub .updated, .count { letter-spacing: -.016em; }
+.panel h3, .credits, .m, .pcard .sub, th, .scale { letter-spacing: -.01em; }
+.brand-name { font-family: var(--font-display); font-weight: 600; letter-spacing: -.01em; }
+.tc-name { letter-spacing: .16em; }
