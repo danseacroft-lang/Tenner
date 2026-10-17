@@ -187,7 +187,7 @@ function overall(services) {
 // Netflix publishes every country's weekly Top 10 as a data file. The Netflix tab uses it instead of TMDB's
 // popularity ranking, so it matches the Top 10 people see in the app (weekly rather than daily). Each title is
 // matched to TMDB for its poster, year and rating. Downloaded at most twice a day; otherwise the live copy is reused.
-const NETFLIX_V = 2;   // bump when the reader changes, so the next run re-reads instead of reusing the live copy
+const NETFLIX_V = 3;   // bump when the reader changes, so the next run re-reads instead of reusing the live copy
 const NETFLIX_TSV = 'https://www.netflix.com/tudum/top10/data/all-weeks-countries.tsv';
 async function getText(url, tries = 3) {
   for (let i = 1; ; i++) {
@@ -209,8 +209,10 @@ async function matchTmdb(title, type, year) {
   // the same name can belong to several titles: take the one closest to Netflix's year (it can't have started after it)
   const gap = (x) => !year || !yearOf(x) ? 50 : yearOf(x) > year + 1 ? 99 : year - yearOf(x);
   const best = exact.sort((a, b) => gap(a) - gap(b) || b.popularity - a.popularity)[0];
-  if (best && gap(best) <= (type === 'movie' ? 1 : 8)) return best;
-  // nothing from the right time: a brand-new title TMDB doesn't know yet, so keep Netflix's details rather than a namesake
+  // a show can have started years before the season Netflix is counting (WWE Raw: 1993), so any same-named show will do;
+  // a film must be from the right year, or it's probably a remake's namesake, so Netflix's own details are kept instead
+  if (type === 'tv') return best || list[0] || null;
+  if (best && gap(best) <= 1) return best;
   return year ? null : best || list[0] || null;
 }
 // Netflix's Top 10 page is a week ahead of the data file, so it's read first. Its chart is embedded in the page as
