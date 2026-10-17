@@ -36,7 +36,8 @@ async function load() {
 
   const sel = $('#service');
   sel.innerHTML = `<option value="top">All five services</option>` +
-    services().map((s) => `<option value="${s.key}">${esc(s.label)}</option>`).join('');
+    services().filter((s) => !s.store).map((s) => `<option value="${s.key}">${esc(s.label)}</option>`).join('') +
+    services().filter((s) => s.store).map((s) => `<option disabled>──────────</option><option value="${s.key}">${esc(s.label)}</option>`).join('');
   sel.addEventListener('change', () => { location.hash = sel.value; });
   showUpdated();
   route();
@@ -109,8 +110,10 @@ function draw() {
   const s = state.route === 'top' ? null : svc(state.route);
   const list = s ? s[state.kind] : state.trending.overall[state.kind];
   const where = s ? s.label : 'UK streaming';
-  $('#heading').innerHTML = `Top 10 ${words()} on ${s ? brand(s) : allBrands()}`;
-  $('#lede').textContent = `What the UK is watching right now on ${s ? s.label : 'Netflix, Disney+, Prime Video, HBO Max and Paramount+'}.`;
+  $('#heading').innerHTML = s?.store ? `Top 10 ${words()} to buy or rent` : `Top 10 ${words()} on ${s ? brand(s) : allBrands()}`;
+  $('#lede').textContent = s?.store
+    ? `The most popular new ${state.kind === 'tv' ? 'shows' : 'films'} you can buy or rent in the UK right now, from Apple TV, Prime Video Store, Sky Store and others. Not on a subscription yet.`
+    : `What the UK is watching right now on ${s ? s.label : 'Netflix, Disney+, Prime Video, HBO Max and Paramount+'}.`;
   document.title = s ? `${s.label} Top 10 | Tenner` : 'Tenner';
 
   const chart = list.length
@@ -125,8 +128,9 @@ function draw() {
 const brand = (s, cls = 'brand-logo') => s.logo
   ? `<img class="${cls}" src="${esc(s.logo)}" alt="${esc(s.label)}" title="${esc(s.label)}">`
   : esc(s.label);
-const allBrands = () => services().every((s) => s.logo)
-  ? `<span class="brand-stack" role="img" aria-label="UK streaming">${services().map((s) => `<img src="${esc(s.logo)}" alt="" title="${esc(s.label)}">`).join('')}</span>`
+const streaming = () => services().filter((s) => !s.store);
+const allBrands = () => streaming().every((s) => s.logo)
+  ? `<span class="brand-stack" role="img" aria-label="UK streaming">${streaming().map((s) => `<img src="${esc(s.logo)}" alt="" title="${esc(s.label)}">`).join('')}</span>`
   : 'UK streaming';
 
 // ---------- pieces ----------
