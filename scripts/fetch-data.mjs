@@ -199,14 +199,45 @@ async function getText(url, tries = 3) {
   }
 }
 const same = (a, b) => norm(a || '') === norm(b || '');
-async function matchTmdb(title, type) {
+async function matchTmdb(title, type, year) {
   const r = await tmdb(`/search/${type}`, { query: title, language: 'en-GB', include_adult: 'false' });
   const list = r.results || [];
-  // an exact title match first (the most popular if there are several), otherwise TMDB's best guess
+  const yearOf = (x) => Number(String((type === 'movie' ? x.release_date : x.first_air_date) || '').slice(0, 4)) || null;
+  // an exact title match (from the right year, when Netflix says which), the most popular if several; else TMDB's best guess
   const exact = list.filter((x) => same(type === 'movie' ? x.title : x.name, title) || same(type === 'movie' ? x.original_title : x.original_name, title));
-  return (exact.sort((a, b) => b.popularity - a.popularity)[0]) || list[0] || null;
+  const dated = year ? exact.filter((x) => yearOf(x) && Math.abs(yearOf(x) - year) <= 1) : [];
+  return (dated.length ? dated : exact).sort((a, b) => b.popularity - a.popularity)[0] || list[0] || null;
 }
-export async function buildNetflixOfficial() {
+// Netflix's Top 10 page is a week ahead of the data file, so it's read first. Its chart is embedded in the page as
+// (escaped) JSON: one "PulseTop10ItemEntity" per entry, with weekEndDate, category (MOVIES or SERIES), weeklyRank,
+// cumulativeWeeksInTop10, videoId, then the video's title and releaseYear (for a series: "Show: Season 2", then the
+// parent show's title). If the page ever changes shape, the data file stands in.
+const NETFLIX_PAGE = { movie: 'https://www.netflix.com/tudum/top10/united-kingdom', tv: 'https://www.netflix.com/tudum/top10/united-kingdom/tv' };
+function readNetflixPage(html, type) {
+  const want = type === 'tv' ? 'SERIES' : 'MOVIES';
+  const str = (chunk, key) => [...chunk.matchAll(new RegExp(`"${key}":"((?:[^"\\\\]|\\\\.)*)"`, 'g'))].map((m) => { try { return JSON.parse(`"${m[1]}"`); } catch { return m[1]; } });
+  const num = (chunk, key) => { const m = chunk.match(new RegExp(`"${key}":(-?\\d+)`)); return m ? Number(m[1]) : null; };
+  const rows = [];
+  for (const raw of html.split('PulseTop10ItemEntity:top10-').slice(1)) {
+    const chunk = raw.slice(0, 20000).replace(/\\"/g, '"');   // the page escapes its JSON inside a string
+    if (str(chunk, 'category')[0] !== want) continue;
+    const rank = num(chunk, 'weeklyRank'), week = str(chunk, 'weekEndDate')[0], titles = str(chunk, 'title');
+    if (!rank || !week || !titles.length) continue;
+    let title = titles[0], season = '';
+    if (type === 'tv') {
+      const show = titles[1] && titles[0].startsWith(`${titles[1]}: `) ? titles[1] : titles[0].split(': ')[0];
+      season = titles[0].startsWith(`${show}: `) ? titles[0].slice(show.length + 2) : '';
+      title = show;
+    }
+    rows.push({ week, rank, title, season, weeks: num(chunk, 'cumulativeWeeksInTop10'), year: num(chunk, 'releaseYear'), videoId: num(chunk, 'videoId') });
+  }
+  if (!rows.length) throw new Error(`no ${want} entries found on Netflix's page`);
+  const week = rows.map((r) => r.week).sort().at(-1);
+  const byRank = new Map();
+  for (const r of rows) if (r.week === week && !byRank.has(r.rank)) byRank.set(r.rank, r);
+  return { week, rows: [...byRank.values()].sort((a, b) => a.rank - b.rank).slice(0, PER_LIST) };
+}
+async function readNetflixFile() {
   const tsv = await getText(NETFLIX_TSV);
   const lines = tsv.split(/\r?\n/), head = lines[0].split('\t').map((h) => h.trim().toLowerCase());
   const col = (name) => { const i = head.indexOf(name); if (i < 0) throw new Error(`the Netflix file has no "${name}" column (has: ${head.join(', ')})`); return i; };
@@ -214,26 +245,41 @@ export async function buildNetflixOfficial() {
   const cSeason = head.indexOf('season_title'), cWeeks = head.indexOf('cumulative_weeks_in_top_10');
   const rows = [];
   for (const line of lines.slice(1)) {
-    if (!line.startsWith('United Kingdom') && !line.includes(`\t${REGION}\t`)) continue;
+    if (!line.includes(`\t${REGION}\t`)) continue;
     const f = line.split('\t'); if (f[cIso] !== REGION) continue;
-    rows.push({ week: f[cWeek], tv: /tv/i.test(f[cCat]), rank: Number(f[cRank]), title: f[cShow], season: cSeason >= 0 ? f[cSeason] : '', weeks: cWeeks >= 0 ? Number(f[cWeeks]) || null : null });
+    const season = cSeason >= 0 && f[cSeason] && f[cSeason] !== 'N/A' ? f[cSeason].replace(/^.*?:\s*/, '') : '';
+    rows.push({ week: f[cWeek], tv: /tv/i.test(f[cCat]), rank: Number(f[cRank]), title: f[cShow], season, weeks: cWeeks >= 0 ? Number(f[cWeeks]) || null : null, year: null, videoId: null });
   }
   if (!rows.length) throw new Error('no United Kingdom rows in the Netflix file');
   const week = rows.map((r) => r.week).sort().at(-1);
-  const out = { week, tv: [], movie: [] };
+  const pick = (tv) => rows.filter((r) => r.week === week && r.tv === tv).sort((a, b) => a.rank - b.rank).slice(0, PER_LIST);
+  return { week, tv: pick(true), movie: pick(false) };
+}
+export async function buildNetflixOfficial() {
+  let src, from;
+  try {
+    const [m, t] = await Promise.all([getText(NETFLIX_PAGE.movie, 2), getText(NETFLIX_PAGE.tv, 2)]);
+    const pm = readNetflixPage(m, 'movie'), pt = readNetflixPage(t, 'tv');
+    if (pm.rows.length < 5 || pt.rows.length < 5) throw new Error(`the page had ${pt.rows.length} shows and ${pm.rows.length} films`);
+    src = { week: [pm.week, pt.week].sort().at(-1), tv: pt.rows, movie: pm.rows }; from = 'page';
+  } catch (err) {
+    warn('Netflix Top 10', `couldn't read Netflix's Top 10 page (${err.message}), using its data file`);
+    src = await readNetflixFile(); from = 'file';
+  }
+  const out = { week: src.week, from, tv: [], movie: [] };
   for (const type of ['tv', 'movie']) {
-    const ten = rows.filter((r) => r.week === week && r.tv === (type === 'tv')).sort((a, b) => a.rank - b.rank).slice(0, PER_LIST);
-    out[type] = await Promise.all(ten.map(async (r) => {
-      let hit = null; try { hit = await matchTmdb(r.title, type); } catch { /* keep the bare title */ }
-      const it = hit ? toItem(hit, type) : { id: `nf-${norm(r.title)}`, type, title: r.title, year: null, overview: '', rating: null, popularity: 0, poster: null, backdrop: null, url: `https://www.netflix.com/search?q=${encodeURIComponent(r.title)}` };
+    out[type] = await Promise.all(src[type].map(async (r) => {
+      let hit = null; try { hit = await matchTmdb(r.title, type, r.year); } catch { /* keep the bare title */ }
+      const it = hit ? toItem(hit, type) : { id: `nf-${norm(r.title)}`, type, title: r.title, year: r.year, overview: '', rating: null, popularity: 0, poster: null, backdrop: null };
       it.title = r.title;   // Netflix's own name for it
-      const season = r.season && r.season !== 'N/A' ? r.season.replace(/^.*?:\s*/, '') : '';
-      if (season && season !== r.title) it.season = season;
+      if (r.season && r.season !== r.title) it.season = r.season;
       if (r.weeks) it.weeks = r.weeks;
+      // straight to it on Netflix when we know its Netflix ID
+      it.url = r.videoId ? `https://www.netflix.com/title/${r.videoId}` : it.url || `https://www.netflix.com/search?q=${encodeURIComponent(r.title)}`;
       return it;
     }));
   }
-  if (out.tv.length < 5 || out.movie.length < 5) throw new Error(`the latest week (${week}) has only ${out.tv.length} shows and ${out.movie.length} films`);
+  if (out.tv.length < 5 || out.movie.length < 5) throw new Error(`the latest week (${out.week}) has only ${out.tv.length} shows and ${out.movie.length} films`);
   return out;
 }
 
@@ -411,17 +457,18 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     if (built) {
       const nf = data.services.find((x) => x.key === 'netflix');
       const prevNf = (await liveCopy('trending.json'))?.services?.find((x) => x.key === 'netflix');
-      const fresh = prevNf?.official && hoursOld({ generatedAt: prevNf.official.fetchedAt }) < 12;
+      // re-read twice a day; if last time only the (week-behind) file worked, try the page again sooner
+      const fresh = prevNf?.official?.from && hoursOld({ generatedAt: prevNf.official.fetchedAt }) < (prevNf.official.from === 'page' ? 12 : 3);
       let status;
       try {
         let off;
         if (fresh) { off = prevNf.official; Object.assign(nf, { tv: prevNf.tv, movie: prevNf.movie }); console.log('Reusing Netflix official Top 10 for', off.week); }
         else {
           const o = await buildNetflixOfficial();
-          Object.assign(nf, { tv: o.tv, movie: o.movie }); off = { source: 'netflix', week: o.week, fetchedAt: new Date().toISOString() };
+          Object.assign(nf, { tv: o.tv, movie: o.movie }); off = { source: 'netflix', week: o.week, from: o.from, fetchedAt: new Date().toISOString() };
           console.log('Netflix official UK Top 10, week ending', o.week);
         }
-        nf.official = off; status = { ok: true, week: off.week, fetchedAt: off.fetchedAt };
+        nf.official = off; status = { ok: true, week: off.week, from: off.from, fetchedAt: off.fetchedAt };
       } catch (err) {
         // keep last week's official chart for up to ten days; otherwise TMDB's ranking stands in
         if (prevNf?.official && hoursOld({ generatedAt: prevNf.official.fetchedAt }) < 240) {
@@ -431,26 +478,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         status = { ok: false, error: String(err.message).slice(0, 300), at: new Date().toISOString(), kept: !!nf.official };
       }
       await write('netflix-status.json', status);
-      // TEMPORARY: a peek at Netflix's Top 10 web page, to build a reader for it (it's a week ahead of the file)
-      try {
-        const dbg = {};
-        for (const [k, u] of [['films', 'https://www.netflix.com/tudum/top10/united-kingdom'], ['tv', 'https://www.netflix.com/tudum/top10/united-kingdom/tv']]) {
-          const html = await getText(u, 2);
-          const at = (needle, w = 1500) => { const i = html.indexOf(needle); return i < 0 ? null : html.slice(Math.max(0, i - w), i + w); };
-          const pairs = (txt) => [...txt.matchAll(/\\?"(\w+)\\?"\s*:\s*(\\?"[^"\\]{0,60}|-?[\d.]+|true|false|null|\[|\{)/g)].map((m) => `${m[1]}=${m[2].replace(/^\\?"/, '')}`);
-          const hits = [...html.matchAll(/weeklyRank/g)].map((m) => m.index);
-          dbg[k] = { length: html.length, rankCount: hits.length,
-            first: hits[0] != null ? pairs(html.slice(hits[0] - 1200, hits[0] + 1200)) : null,
-            second: hits[1] != null ? pairs(html.slice(hits[1] - 600, hits[1] + 600)) : null,
-            escaped: hits[0] != null ? html.slice(hits[0] - 3, hits[0]) : null,
-            before: hits[0] != null ? html.slice(hits[0] - 300, hits[0] - 200).replace(/[<>]/g, ' ') : null,
-            // where the titles live: the key names just before known titles, and every distinct key in one entity
-            titleKeys: ['Animals', 'Widower', 'UNABOMBER'].flatMap((t) => [...html.matchAll(new RegExp(`\\\\?"(\\w+)\\\\?"\\s*:\\s*\\\\?"${t}`, 'g'))].slice(0, 3).map((m) => `${m[1]}->${t}`)),
-            entityKeys: hits[0] != null ? [...new Set([...html.slice(hits[0] - 400, html.indexOf('PulseTop10ItemEntity:', hits[0] + 50)).matchAll(/\\?"(\w+)\\?"\s*:/g)].map((m) => m[1]))] : null,
-            stringValues: hits[0] != null ? [...html.slice(hits[0] - 400, html.indexOf('PulseTop10ItemEntity:', hits[0] + 50)).matchAll(/\\?"(\w+)\\?"\s*:\s*\\?"([^"\\]{2,50})/g)].filter((m) => !/typename|url|id$|Id$|guid|__ref/i.test(m[1])).map((m) => `${m[1]}=${m[2]}`).slice(0, 40) : null };
-        }
-        await write('netflix-debug.json', dbg);
-      } catch (err) { await write('netflix-debug.json', { error: String(err.message) }); }
     }
     await write('trending.json', data);
     if (built) await write('providers.json', built.providers);

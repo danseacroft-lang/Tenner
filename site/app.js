@@ -246,7 +246,7 @@ function heroCopy({ it, n }) {
     <h2 class="h-title">${esc(it.title)}</h2>
     <p class="h-meta">${bits.map(esc).join(' · ')}</p>
     ${it.overview ? `<p class="h-blurb">${esc(firstSentence(it.overview))}</p>` : ''}
-    <a class="h-cta" href="${esc(it.url)}" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>Where to watch</a>`;
+    <a class="h-cta" href="${esc(it.url)}" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>${/netflix\.com\/title\//.test(it.url) ? 'Watch on Netflix' : 'Where to watch'}</a>`;
 }
 function hero(picks, s) {   // picks: [{ it, n }] where n is the title's rank in its own chart
   if (!heroOn() || !picks.length) return '';
