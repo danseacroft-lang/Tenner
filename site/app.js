@@ -165,7 +165,8 @@ function draw() {
 
   const chart = list.length
     ? `${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up. Add your TMDB key and run the workflow to see the real chart.</p>` : ''}
-       ${posterRow(list)}${overview(list, !s, where)}`
+       ${s?.store ? '' : features(s)}
+       ${posterRow(list)}${chartList(list, s)}${s?.store ? '' : newRow(s)}`
     : s?.store
       ? `<div class="empty"><span class="empty-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 3.5v17M16 3.5v17" stroke="currentColor" stroke-width="2"/></svg></span>
           <h2>Buy or rent is for films</h2><p>Almost every show is already on a subscription, so you'll find them on the five services.</p>
@@ -247,37 +248,67 @@ function posterRow(list) {
   </div>`;
 }
 
-function overview(list, showWhere, where) {
-  const d = new Date(state.trending.generatedAt);
-  return `<section class="overview" aria-labelledby="ov-h">
-    <h2 id="ov-h" class="large-title">Top 10 ${words()} Overview</h2>
-    <p class="lede">${esc(where)}, ${fmtDate(d, { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-    <div class="table-scroll"><table>
-      <thead><tr>
-        <th scope="col">Ranking</th><th scope="col">Title</th>
-        <th scope="col" class="num-col hide-sm">Year</th><th scope="col" class="num-col">Rating</th>
-        <th scope="col" class="${showWhere ? 'hide-sm' : 'num-col hide-sm'}">${showWhere ? 'Where to watch' : 'Popularity'}</th>
-      </tr></thead>
-      <tbody>${list.map((it, i) => `<tr style="--d:${i}">
-        <td class="rank"><span>${pad(i + 1)}</span></td>
-        <td><div class="tcell">
-          ${it.backdrop ? `<img src="${esc(it.backdrop.replace('/w1280/', '/w300/'))}" alt="" loading="lazy">` : it.poster ? `<img class="tall" src="${esc(it.poster)}" alt="" loading="lazy">` : placeholder(it)}
-          <div style="min-width:0"><a href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.title)}</a>
-          ${it.overview ? `<p class="ov">${esc(it.overview)}</p>` : ''}
-          ${showWhere ? `<span class="chips show-sm">${chips(it)}</span>` : ''}</div>
-        </div></td>
-        <td class="num-col hide-sm">${it.year ?? '–'}</td>
-        <td class="num-col">${it.rating ? `<span class="star">★</span> ${it.rating.toFixed(1)}` : '–'}</td>
-        ${showWhere
-          ? `<td class="hide-sm"><span class="chips">${chips(it)}</span></td>`
-          : `<td class="num-col hide-sm">${Math.round(it.popularity).toLocaleString('en-GB')}</td>`}
-      </tr>`).join('')}</tbody>
-    </table></div>
+// ---------- the Apple Music "New" layout ----------
+// Three wide feature cards (eyebrow, title, subtitle, then the artwork with a caption and the poster in the corner).
+const firstSentence = (t) => { const m = String(t || '').match(/^.{20,140}?[.!?](\s|$)/); return m ? m[0].trim() : String(t || '').slice(0, 120); };
+const onText = (it, fallback) => (it.on || []).map((k) => svc(k)?.label).filter(Boolean).slice(0, 2).join(', ') || fallback || '';
+function features(s) {
+  const shows = s ? s.tv : state.trending.overall.tv, films = s ? s.movie : state.trending.overall.movie;
+  const store = services().find((x) => x.store)?.movie || [];
+  const picks = [
+    shows[0] && { eye: s ? `No. 1 show on ${s.label}` : 'No. 1 show', it: shows[0], sub: s ? `${shows[0].year || ''}` : `On ${onText(shows[0], 'UK streaming')}` },
+    films[0] && { eye: s ? `No. 1 film on ${s.label}` : 'No. 1 film', it: films[0], sub: s ? `${films[0].year || ''}` : `On ${onText(films[0], 'UK streaming')}` },
+    s ? shows[1] && { eye: `No. 2 show on ${s.label}`, it: shows[1], sub: `${shows[1].year || ''}` }
+      : store[0] && { eye: 'No. 1 to buy or rent', it: store[0], sub: 'Apple TV, Sky Store and others', href: '#store' },
+  ].filter(Boolean);
+  if (!picks.length) return '';
+  return `<section class="feats" aria-label="Highlights"><div class="feat-row">${picks.map((p) => {
+    const it = p.it, wide = it.backdrop ? it.backdrop.replace('/w1280/', '/w780/') : null;
+    return `<a class="feat" href="${esc(p.href || it.url)}" ${p.href ? '' : 'target="_blank" rel="noopener"'}>
+      <span class="f-eye">${esc(p.eye)}</span>
+      <span class="f-title">${esc(it.title)}</span>
+      <span class="f-sub">${esc(p.sub)}</span>
+      <span class="f-img">
+        ${wide ? `<img src="${esc(wide)}" alt="" loading="lazy" decoding="async">` : it.poster ? `<img class="blur" src="${esc(it.poster)}" alt="" loading="lazy">` : placeholder(it)}
+        ${it.overview ? `<span class="f-cap">${esc(firstSentence(it.overview))}</span>` : ''}
+        ${it.poster ? `<img class="f-thumb" src="${esc(it.poster)}" alt="" loading="lazy">` : ''}
+      </span></a>`;
+  }).join('')}</div></section>`;
+}
+
+// The ten as a tidy list in columns, like "Best New Songs": rank, a small poster, title and where it's on.
+function chartList(list, s) {
+  const k = state.kind, browse = `browse.html#${new URLSearchParams({ ...(k === 'movie' ? { k: 'movie' } : {}), ...(s && !s.store ? { s: s.key } : {}), ...(s?.store ? { c: 'store', k: 'movie' } : {}) })}`;
+  return `<section class="clist" aria-labelledby="cl-h">
+    <div class="row-hd"><h2 class="row-h" id="cl-h">${s?.store ? 'Films to buy or rent: at a glance' : `Top 10 ${words()} at a glance`}</h2>
+      <a class="see-all" href="${esc(browse)}">See more in Browse<span class="chev" aria-hidden="true"></span></a></div>
+    <ol class="cl">${list.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener">
+      <span class="cl-n">${i + 1}</span>
+      ${it.poster ? `<img src="${esc(it.poster)}" alt="" loading="lazy">` : `<span class="cl-ph" style="background:hsl(${hue(it.title)} 45% 35%)"></span>`}
+      <span class="cl-t"><b>${esc(it.title)}</b><small>${esc([s ? '' : onText(it), it.year].filter(Boolean).join(' · '))}</small></span>
+      ${it.rating ? `<span class="cl-r">★ ${it.rating.toFixed(1)}</span>` : ''}
+    </a></li>`).join('')}</ol>
   </section>`;
 }
 
-const chips = (it) => (it.on || []).map((k) => svc(k)).filter(Boolean)
-  .map((s) => `<a class="btn btn-tinted chip" href="#${s.key}">${esc(s.label)}</a>`).join('');
+// New this week, as a row of posters (from Watchmode), filtered to the service you're looking at.
+function newRow(s) {
+  const f = state.fresh; if (!f?.items?.length) return '';
+  const today = new Date().toISOString().slice(0, 10);
+  let items = f.items.filter((x) => !s || x.service === s.key);
+  items = [...items.filter((x) => x.date <= today).reverse(), ...items.filter((x) => x.date > today)].slice(0, 14);
+  if (!items.length) return '';
+  const when = (d) => d === today ? 'Today' : new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+  return `<section class="nrow" aria-labelledby="nr-h">
+    <h2 class="row-h" id="nr-h"><a href="#new">New This Week<span class="chev" aria-hidden="true"></span></a></h2>
+    <ul class="nr">${items.map((x) => {
+      const sv = svc(x.service), what = x.type === 'movie' ? 'Film' : x.season ? `Season ${x.season}` : 'Series';
+      const body = `<span class="nr-art">${x.poster ? `<img src="${esc(x.poster)}" alt="" loading="lazy">` : placeholder({ title: x.title })}${sv?.logo ? `<img class="nr-svc" src="${esc(sv.logo)}" alt="${esc(sv.label)}">` : ''}</span>
+        <b>${esc(x.title)}</b><small>${esc(what)} · ${esc(when(x.date))}</small>`;
+      return `<li>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${body}</a>` : `<span>${body}</span>`}</li>`;
+    }).join('')}</ul>
+  </section>`;
+}
 
 function pageNew() {
   const f = state.fresh;
@@ -298,7 +329,8 @@ function pageNew() {
       <ul class="list">${items.map((x) => {
         const s = svc(x.service);
         const what = [x.type === 'movie' ? 'Film' : x.season ? `Season ${x.season}` : 'Series', x.original ? `${s?.label} original` : ''].filter(Boolean).join(', ');
-        return `<li><div class="grow">
+        const thumb = x.poster ? `<img class="nl-art" src="${esc(x.poster)}" alt="" loading="lazy">` : `<span class="nl-art" style="background:hsl(${hue(x.title)} 45% 35%)"></span>`;
+        return `<li>${thumb}<div class="grow">
           ${x.url ? `<a class="title" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a>` : `<span class="title">${esc(x.title)}</span>`}
           <span class="what">${esc(what)}</span></div>
           ${s ? `<a class="btn btn-tinted chip" href="#${s.key}">${esc(s.label)}</a>` : ''}</li>`;

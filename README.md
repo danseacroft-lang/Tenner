@@ -32,17 +32,14 @@ After that it rebuilds every hour on its own.
 
 ## Pages
 
-| Link | What |
+| Tab | What |
 | --- | --- |
-| `#top` | Top 10 across all five services |
-| `#netflix`, `#disney`, `#prime`, `#hbomax`, `#paramount` | One service's top 10 |
-| `#new` | New this week |
-| `browse.html` | Browse everything: collections, where to watch, genres, rating, sort |
-| `about.html` | About Tenner |
+| Top 10 (`./`) | Highlights, the neon top 10 row, the ten at a glance, and new this week. Pick Shows or Films, and a service (`#netflix`, `#disney`, `#prime`, `#hbomax`, `#paramount`; Films also has `#store` for buy or rent) |
+| New (`#new`) | Releases from the last and next seven days |
+| Browse (`browse.html`) | Search, collections and filters over each service's most popular titles |
+| About (`about.html`) | About Tenner and FAQs |
 
-Each chart shows a row of poster cards with big rank numbers, then an overview table. The pill picker switches service and the Shows / Films control switches type.
-
-To add a service later, add a line to `SERVICES` at the top of `scripts/fetch-data.mjs`. The site picks it up automatically.
+To add a service, add a line to `SERVICES` at the top of `scripts/fetch-data.mjs`.
 
 ## Run locally
 

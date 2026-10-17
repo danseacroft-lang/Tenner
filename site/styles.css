@@ -616,3 +616,87 @@ tbody tr td.rank span { display: inline-block; transition: transform .5s var(--e
   .intro .controls .svc { flex: 1; min-width: 0; width: auto; }
   .segmented button { min-width: 0; padding: 0 12px; }
 }
+
+/* ============================================================ homepage, the Apple Music "New" way
+   Feature cards up top, the neon row, the ten as a column list, then New This Week. Section headings are links with a chevron. */
+.row-h { margin: 44px 0 14px; font: 700 22px/1.2 var(--font-display); letter-spacing: -.008em; }
+.row-h a { color: var(--label); display: inline-flex; align-items: center; gap: 6px; }
+.row-h a:hover { text-decoration: none; color: var(--accent); }
+.chev { width: 9px; height: 9px; border-right: 2.4px solid currentColor; border-bottom: 2.4px solid currentColor; transform: rotate(-45deg); opacity: .55; margin-left: 2px; }
+
+/* feature cards */
+.feats { margin-top: 26px; }
+.feat-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.feat { display: flex; flex-direction: column; min-width: 0; color: inherit; }
+.feat:hover { text-decoration: none; }
+.f-eye { font: 600 11px/1.3 var(--font); letter-spacing: .06em; text-transform: uppercase; color: var(--label2); }
+.f-title { margin-top: 3px; font: 500 17px/1.25 var(--font); letter-spacing: -.022em; color: var(--label); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.f-sub { font-size: 15px; line-height: 1.3; color: var(--label2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.f-img {
+  position: relative; display: block; margin-top: 12px; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: var(--fill);
+  box-shadow: 0 0 0 .5px var(--sep), 0 10px 28px -14px rgba(0, 0, 0, .6); transition: translate .35s var(--ease-out);
+}
+.f-img > img:first-child, .f-img > .ph { width: 100%; height: 100%; object-fit: cover; display: block; }
+.f-img > img.blur { filter: blur(24px) saturate(1.3); transform: scale(1.3); }
+.f-img::after { content: ""; position: absolute; inset: 45% 0 0; background: linear-gradient(transparent, rgba(0, 0, 0, .72)); pointer-events: none; }
+.f-cap { position: absolute; z-index: 1; left: 14px; right: 70px; bottom: 12px; color: #fff; font-size: 13px; line-height: 1.35; letter-spacing: -.01em;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.f-thumb { position: absolute; z-index: 1; right: 12px; bottom: 12px; width: 44px; aspect-ratio: 2 / 3; height: auto; object-fit: cover; border-radius: 6px; box-shadow: 0 0 0 .5px rgba(255, 255, 255, .3), 0 4px 12px rgba(0, 0, 0, .5); }
+@media (hover: hover) { .feat:hover .f-img { translate: 0 -3px; } .feat:hover .f-title { color: var(--accent); } }
+
+/* the ten in columns */
+.cl { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(5, auto); grid-auto-flow: column; column-gap: 36px; }
+.cl li { border-top: .5px solid var(--sep); }
+.cl li:nth-child(5n + 1) { border-top: 0; }
+.cl a { display: flex; align-items: center; gap: 14px; padding: 9px 4px; color: inherit; border-radius: 10px; }
+.cl a:hover { text-decoration: none; background: var(--fill); }
+.cl-n { width: 22px; flex: none; text-align: center; font: 700 17px/1 var(--font-display); color: var(--label2); font-variant-numeric: tabular-nums; }
+.cl img, .cl-ph { width: 40px; height: 60px; flex: none; object-fit: cover; border-radius: 5px; box-shadow: 0 0 0 .5px var(--sep); }
+.cl-t { flex: 1; min-width: 0; display: grid; }
+.cl-t b { font-weight: 500; font-size: 15px; letter-spacing: -.016em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cl-t small { font-size: 13px; color: var(--label2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cl-r { flex: none; font-size: 13px; color: var(--label2); font-variant-numeric: tabular-nums; }
+
+/* new this week */
+.nr { list-style: none; margin: 0 calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); padding: 0 var(--gutter-r) 6px var(--gutter);
+  display: grid; grid-auto-flow: column; grid-auto-columns: 148px; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; scroll-padding-left: var(--gutter); }
+.nr::-webkit-scrollbar { display: none; }
+.nr li { scroll-snap-align: start; min-width: 0; }
+.nr a, .nr li > span { display: grid; gap: 2px; color: inherit; }
+.nr a:hover { text-decoration: none; }
+.nr-art { position: relative; display: block; margin-bottom: 8px; border-radius: 10px; overflow: hidden; background: var(--fill); box-shadow: 0 0 0 .5px var(--sep), 0 6px 16px -8px rgba(0, 0, 0, .5); transition: translate .35s var(--ease-out); }
+.nr-art > img:first-child, .nr-art > .ph { display: block; width: 100%; aspect-ratio: 2 / 3; height: auto; object-fit: cover; }
+.nr-art > .ph { font-size: 16px; padding: 10px; }
+.nr-svc { position: absolute; left: 7px; bottom: 7px; width: 22px; height: 22px; border-radius: 6px; box-shadow: 0 0 0 1.5px rgba(0, 0, 0, .4); }
+.nr b { font-weight: 500; font-size: 14px; letter-spacing: -.016em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nr small { font-size: 12px; color: var(--label2); }
+@media (hover: hover) { .nr a:hover .nr-art { translate: 0 -3px; } }
+
+/* the old overview table is gone; the neon row sits a little closer to the cards */
+.feats + .row-wrap { margin-top: 8px; }
+
+@media (max-width: 900px) {
+  .feat-row { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: min(82vw, 420px); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
+    margin: 0 calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); padding: 0 var(--gutter-r) 4px var(--gutter); scroll-padding-left: var(--gutter); }
+  .feat-row::-webkit-scrollbar { display: none; }
+  .feat { scroll-snap-align: start; }
+}
+@media (max-width: 640px) {
+  .cl { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-flow: row; }
+  .cl li:nth-child(5n + 1) { border-top: .5px solid var(--sep); }
+  .cl li:first-child { border-top: 0; }
+  .row-h { margin-top: 34px; font-size: 20px; }
+  .nr { grid-auto-columns: 124px; gap: 12px; }
+}
+
+.row-hd { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin: 44px 0 14px; }
+.row-hd .row-h { margin: 0; }
+.see-all { display: inline-flex; align-items: center; gap: 5px; flex: none; font-size: 15px; font-weight: 500; letter-spacing: -.016em; }
+.see-all .chev { width: 7px; height: 7px; border-width: 0 2px 2px 0; }
+@media (max-width: 640px) { .row-hd { margin-top: 34px; } .see-all { font-size: 14px; } }
+
+/* feature card with no artwork: just colour, no repeated title */
+.f-img > .ph { font-size: 0; }
+/* New This Week rows carry a small poster, like the homepage list */
+.list .nl-art { width: 40px; height: 60px; flex: none; object-fit: cover; border-radius: 5px; box-shadow: 0 0 0 .5px var(--sep); }
+.list li { padding-block: 9px; }
