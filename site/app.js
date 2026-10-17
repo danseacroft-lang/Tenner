@@ -204,7 +204,7 @@ function overview(list, showWhere, where) {
       <tbody>${list.map((it, i) => `<tr style="--d:${i}">
         <td class="rank"><span>${pad(i + 1)}</span></td>
         <td><div class="tcell">
-          ${it.backdrop ? `<img src="${esc(it.backdrop.replace('/w1280/', '/w300/'))}" alt="" loading="lazy">` : it.poster ? `<img src="${esc(it.poster)}" alt="" loading="lazy">` : placeholder(it)}
+          ${it.backdrop ? `<img src="${esc(it.backdrop.replace('/w1280/', '/w300/'))}" alt="" loading="lazy">` : it.poster ? `<img class="tall" src="${esc(it.poster)}" alt="" loading="lazy">` : placeholder(it)}
           <div style="min-width:0"><a href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.title)}</a>
           ${it.overview ? `<p class="ov">${esc(it.overview)}</p>` : ''}
           ${showWhere ? `<span class="chips show-sm">${chips(it)}</span>` : ''}</div>

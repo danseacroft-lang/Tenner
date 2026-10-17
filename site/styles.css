@@ -265,7 +265,9 @@ body::before{content:"";position:fixed;z-index:-1;left:-10vw;right:-10vw;top:-20
 .num .core { fill: none; stroke: #fff; stroke-width: 1.1; stroke-linejoin: round; opacity: var(--core); }
 .pcard a.cover { display: block; position: relative; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); transition: transform .25s ease; }
 .pcard a.cover:hover { transform: translateY(-4px); }
-.cover img, .cover .ph { width: 100%; aspect-ratio: 2 / 3; object-fit: cover; background: var(--fill); }
+/* posters are always shown whole: the box takes the poster's own 2:3 shape (height: auto beats the img's height
+   attribute, which would otherwise pin it at 513px and crop the sides), and contain guarantees nothing is ever cut off */
+.cover img, .cover .ph { width: 100%; height: auto; aspect-ratio: 2 / 3; object-fit: contain; background: var(--fill); }
 .ph { display: grid; align-content: end; padding: 18px; color: #fff; font: 700 25px/1.05 var(--font-display); letter-spacing: -.03em; text-wrap: balance; }
 .pcard h3 { margin: 12px 0 2px; font: 600 17px/1.25 var(--font); letter-spacing: -.02em; }
 .pcard h3 a { color: var(--label); }
@@ -302,7 +304,8 @@ tr:nth-child(2n) td.rank span { animation-delay: -1.2s; }
 tr:nth-child(3n) td.rank span { animation-delay: -2.6s; }
 @keyframes flow { to { background-position: 300% 0; } }
 .tcell { display: flex; align-items: center; gap: 14px; min-width: 0; }
-.tcell img, .tcell .ph { width: 92px; aspect-ratio: 16 / 9; border-radius: 8px; object-fit: cover; flex: none; }
+.tcell img, .tcell .ph { width: 92px; height: auto; aspect-ratio: 16 / 9; border-radius: 8px; object-fit: contain; background: var(--fill); flex: none; }
+.tcell img.tall { aspect-ratio: 2 / 3; width: 44px; margin-inline: 24px; }   /* no wide still: the poster, whole, centred in the same slot */
 .tcell .ph { font-size: 0; padding: 0; }
 .tcell a { color: var(--label); font-weight: 600; }
 .tcell .ov { margin: 2px 0 0; color: var(--label2); font-size: 13px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
@@ -314,6 +317,7 @@ td.num-col { color: var(--label2); }
 @media (max-width: 640px) {
   .hide-sm { display: none; }
   .tcell img, .tcell .ph { width: 64px; }
+  .tcell img.tall { width: 32px; margin-inline: 16px; }
   .tcell .ov { display: none; }
   .show-sm { display: flex; margin-top: 6px; }
   .tcell img, .tcell .ph { align-self: start; }
@@ -458,10 +462,8 @@ td.num-col { color: var(--label2); }
   background: radial-gradient(60% 45% at var(--mx, 50%) var(--my, 30%), rgba(255, 255, 255, .28), transparent 70%);
   mix-blend-mode: soft-light;
 }
-.pcard a.cover img { transition: transform .8s var(--ease-out); }
 @media (hover: hover) {
   .pcard:hover a.cover { --lift: -6px; box-shadow: 0 22px 46px rgba(0, 0, 0, .32), 0 4px 10px rgba(0, 0, 0, .12); }
-  .pcard:hover a.cover img { transform: scale(1.04); }
   .pcard a.cover.tilting { transition: transform .12s linear, box-shadow .4s ease; }
   .pcard a.cover.tilting::after { opacity: 1; }
 }
