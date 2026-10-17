@@ -517,3 +517,10 @@ tbody tr td.rank span { display: inline-block; transition: transform .5s var(--e
   .pcard a.cover { transform: none !important; }
   ::view-transition-old(root), ::view-transition-new(root) { animation: none !important; }
 }
+
+/* ---------- empty state (New this week, before it's switched on) ---------- */
+.empty { margin: 34px 0 0; padding: 40px 24px 36px; border-radius: 26px; background: var(--bg2); text-align: center; animation: riseIn .7s var(--ease-out) both; }
+.empty-ic { display: inline-grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; color: #fff; background: linear-gradient(135deg, #ff375f, #bf5af2 55%, #0a84ff); box-shadow: 0 8px 24px rgba(191, 90, 242, .35); }
+.empty-ic svg { width: 28px; height: 28px; }
+.empty h2 { margin: 16px 0 6px; font: 700 26px/1.15 var(--font-display); letter-spacing: -.03em; }
+.empty p { margin: 0 auto 18px; max-width: 40ch; color: var(--label2); font-size: 16px; text-wrap: balance; }

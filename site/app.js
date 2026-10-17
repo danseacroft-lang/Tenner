@@ -226,7 +226,10 @@ function pageNew() {
   const f = state.fresh;
   let body;
   if (!f || f.disabled || f.error) {
-    body = `<p class="lede">${f?.error ? 'The new-releases feed failed on the last update. It will try again next hour.' : 'Add a WATCHMODE_API_KEY secret to switch this page on.'}</p>`;
+    body = `<div class="empty"><span class="empty-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.5 3.5l1.8 4.9 4.9 1.8-4.9 1.8-1.8 4.9-1.8-4.9-4.9-1.8 4.9-1.8z" fill="currentColor"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z" fill="currentColor"/></svg></span>
+      <h2>${f?.error ? 'Back shortly' : 'Coming soon'}</h2>
+      <p>${f?.error ? "The latest releases didn't load this time. They'll be back after the next hourly update." : "New releases from all five services will appear here soon. In the meantime, the top 10 is live."}</p>
+      <a class="btn btn-tinted" href="#top">See the top 10</a></div>`;
   } else if (!f.items.length) {
     body = `<p class="lede">Nothing new on these services this week.</p>`;
   } else {

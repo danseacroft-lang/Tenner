@@ -24,7 +24,7 @@ const PER_LIST = 10;
 export const SERVICES = [
   { key: 'netflix',   label: 'Netflix',     match: /^netflix/ },
   { key: 'disney',    label: 'Disney+',     match: /^disney plus/ },
-  { key: 'prime',     label: 'Prime Video', match: /^amazon prime( video)?/ },
+  { key: 'prime',     label: 'Prime Video', match: /^(amazon prime( video)?|prime video)/ },
   { key: 'hbomax',    label: 'HBO Max',     match: /^(hbo max|max)( with ads)?$/ },
   { key: 'paramount', label: 'Paramount+',  match: /^paramount plus/ },
 ];
@@ -148,15 +148,20 @@ function overall(services) {
 }
 
 // ---------- Watchmode (daily) ----------
-async function buildNew() {
+export async function buildNew() {
   const key = process.env.WATCHMODE_API_KEY;
-  if (!key) return null;
+  if (!key) {
+    const msg = 'No WATCHMODE_API_KEY secret, so "New this week" is switched off. Add it under Settings > Secrets and variables > Actions.';
+    console.warn(process.env.GITHUB_ACTIONS ? `::notice title=New this week is off::${msg}` : msg);
+    return null;
+  }
 
   // Reuse the copy already live on the site if it's less than 20 hours old.
   if (process.env.SITE_URL) {
     try {
       const prev = await getJSON(new URL('data/new.json', process.env.SITE_URL.replace(/\/?$/, '/')), {}, 1);
-      if (prev?.generatedAt && Date.now() - Date.parse(prev.generatedAt) < 20 * 3600e3) {
+      const real = prev && Array.isArray(prev.items) && !prev.disabled && !prev.error && !prev.sample;
+      if (real && Date.now() - Date.parse(prev.generatedAt) < 20 * 3600e3) {
         console.log('Reusing live new.json from', prev.generatedAt);
         return prev;
       }
@@ -250,7 +255,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       const fresh = await buildNew();
       await write('new.json', fresh || { generatedAt: data.generatedAt, disabled: true, items: [] });
     } catch (err) {
-      console.warn('Watchmode step skipped:', err.message);
+      const msg = `Watchmode step failed: ${err.message}`;
+      console.warn(process.env.GITHUB_ACTIONS ? `::warning title=New this week::${msg}` : msg);
       await write('new.json', { generatedAt: data.generatedAt, error: true, items: [] });
     }
   }
