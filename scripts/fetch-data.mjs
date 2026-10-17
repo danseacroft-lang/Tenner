@@ -187,7 +187,7 @@ function overall(services) {
 // Netflix publishes every country's weekly Top 10 as a data file. The Netflix tab uses it instead of TMDB's
 // popularity ranking, so it matches the Top 10 people see in the app (weekly rather than daily). Each title is
 // matched to TMDB for its poster, year and rating. Downloaded at most twice a day; otherwise the live copy is reused.
-const NETFLIX_V = 3;   // bump when the reader changes, so the next run re-reads instead of reusing the live copy
+const NETFLIX_V = 4;   // bump when the reader changes, so the next run re-reads instead of reusing the live copy
 const NETFLIX_TSV = 'https://www.netflix.com/tudum/top10/data/all-weeks-countries.tsv';
 async function getText(url, tries = 3) {
   for (let i = 1; ; i++) {
@@ -209,9 +209,10 @@ async function matchTmdb(title, type, year) {
   // the same name can belong to several titles: take the one closest to Netflix's year (it can't have started after it)
   const gap = (x) => !year || !yearOf(x) ? 50 : yearOf(x) > year + 1 ? 99 : year - yearOf(x);
   const best = exact.sort((a, b) => gap(a) - gap(b) || b.popularity - a.popularity)[0];
-  // a show can have started years before the season Netflix is counting (WWE Raw: 1993), so any same-named show will do;
+  // a show can have started years before the season Netflix is counting (WWE Raw: 1993), so the most popular show of
+  // that exact name wins;
   // a film must be from the right year, or it's probably a remake's namesake, so Netflix's own details are kept instead
-  if (type === 'tv') return best || list[0] || null;
+  if (type === 'tv') return exact.sort((a, b) => b.popularity - a.popularity)[0] || list[0] || null;
   if (best && gap(best) <= 1) return best;
   return year ? null : best || list[0] || null;
 }
@@ -282,7 +283,7 @@ export async function buildNetflixOfficial() {
       // seasons as Netflix names them, minus its date prefixes ("2026 - October 5, 2026" -> "October 5, 2026")
       const season = String(r.season || '').replace(/^\d{4}\s*-\s*/, '').trim();
       if (season && season !== r.title && !season.includes(r.title)) it.season = season;
-      if (!hit && r.year) it.year = r.year;
+      if (r.year && (!hit || type === 'movie')) it.year = r.year;   // a film's year as Netflix gives it
       if (r.weeks) it.weeks = r.weeks;
       // straight to it on Netflix when we know its Netflix ID
       it.url = r.videoId ? `https://www.netflix.com/title/${r.videoId}` : it.url || `https://www.netflix.com/search?q=${encodeURIComponent(r.title)}`;
