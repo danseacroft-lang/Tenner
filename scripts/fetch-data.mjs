@@ -168,6 +168,13 @@ export async function buildNew() {
     } catch { /* first deploy, or site not reachable */ }
   }
 
+  // Safety cap: ask Watchmode how much of this month's allowance is left (this check is free) and stop well short of it.
+  // The free plan is 2,500 credits a month, needs no card and can't charge; Tenner normally spends about 30.
+  const status = await getJSON('https://api.watchmode.com/v1/status/', { 'X-API-Key': key }, 2);
+  const left = (status.quota ?? 0) - (status.quotaUsed ?? 0);
+  console.log(`Watchmode credits this month: ${status.quotaUsed} used of ${status.quota}`);
+  if (left < 200) throw new Error(`only ${left} Watchmode credits left this month, so skipping until it resets`);
+
   const day = (d) => Number(d.toISOString().slice(0, 10).replace(/-/g, ''));
   const now = new Date();
   const start = day(new Date(now - 7 * 864e5));
