@@ -10,6 +10,7 @@ The top 10 shows and films right now in the UK on Netflix, Disney+, Prime Video,
 GitHub Actions (every hour)
   └─ scripts/fetch-data.mjs
        ├─ TMDB: most popular titles on each service in the UK  → site/data/trending.json
+       ├─ TMDB: ~100 shows and films per service, for Browse       → site/data/browse.json
        └─ Watchmode: new releases, at most once a day           → site/data/new.json
   └─ deploys site/ to GitHub Pages
 ```
@@ -36,7 +37,8 @@ After that it rebuilds every hour on its own.
 | `#top` | Top 10 across all five services |
 | `#netflix`, `#disney`, `#prime`, `#hbomax`, `#paramount` | One service's top 10 |
 | `#new` | New this week |
-| `about.html` | How Tenner works |
+| `browse.html` | Browse everything: collections, where to watch, genres, rating, sort |
+| `about.html` | About Tenner |
 
 Each chart shows a row of poster cards with big rank numbers, then an overview table. The pill picker switches service and the Shows / Films control switches type.
 

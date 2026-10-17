@@ -410,6 +410,7 @@ function wireTilt(row, sig) {
 const selectTab = (name) => window.tnShell.select(name);
 function openTab(name) {
   if (name === 'about') { location.href = 'about.html'; return; }
+  if (name === 'browse') { location.href = 'browse.html'; return; }
   if (name === window.tnShell.current() && state.route !== 'new' === (name !== 'new')) { scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }); return; } // tap the open tab: back to the top
   if (name === 'new') { location.hash = 'new'; return; }
   state.kind = name;

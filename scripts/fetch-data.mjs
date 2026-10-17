@@ -142,6 +142,7 @@ async function buildTrending() {
     // the combined chart stays subscription-only; Buy or rent is its own chart
     data: { generatedAt: new Date().toISOString(), region: REGION, sample: false, services: [...services, store], overall: overall(services) },
     providers: Object.fromEntries(SERVICES.map((s) => [s.label, [...ids[s.key]].map((id) => `${id} ${seen[id]}`)])),
+    ids,
   };
 }
 
@@ -213,6 +214,47 @@ export async function buildNew() {
   return { generatedAt: new Date().toISOString(), note: 'Release dates are mostly US dates from Watchmode.', items };
 }
 
+// ---------- Browse catalogue ----------
+// The most popular ~100 shows and ~100 films on each service, plus new films to buy or rent, merged into one
+// compact list the Browse page filters and sorts in the browser. Short keys keep the file small:
+// i id, t 'tv'|'movie', n title, d first date, r rating (when 20+ votes), v votes, p popularity, img poster path,
+// g genre ids, s services it was found on, b 1 if it's a buy-or-rent title.
+const PAGES = 5;
+async function pool(tasks, limit = 8) {
+  const out = []; let next = 0;
+  await Promise.all(Array.from({ length: limit }, async () => { while (next < tasks.length) { const i = next++; out[i] = await tasks[i](); } }));
+  return out;
+}
+export async function buildCatalogue(ids) {
+  const base = { watch_region: REGION, sort_by: 'popularity.desc', include_adult: 'false', language: 'en-GB', 'vote_count.gte': '5' };
+  const jobs = [];
+  for (const s of SERVICES) {
+    const providerIds = [...(ids[s.key] || [])]; if (!providerIds.length) continue;
+    for (const type of ['tv', 'movie']) for (let page = 1; page <= PAGES; page++)
+      jobs.push(async () => ({ type, key: s.key, res: await tmdb(`/discover/${type}`, { ...base, page, with_watch_providers: providerIds.join('|'), with_watch_monetization_types: 'flatrate|free|ads' }) }));
+  }
+  const since = new Date(Date.now() - 180 * 864e5).toISOString().slice(0, 10);
+  for (let page = 1; page <= 3; page++)
+    jobs.push(async () => ({ type: 'movie', key: 'store', res: await tmdb('/discover/movie', { ...base, page, with_watch_monetization_types: 'rent|buy', region: REGION, with_release_type: '4', 'release_date.gte': since }) }));
+  const [results, gm, gt] = await Promise.all([pool(jobs), tmdb('/genre/movie/list', { language: 'en-GB' }), tmdb('/genre/tv/list', { language: 'en-GB' })]);
+
+  const byId = new Map();
+  for (const { type, key, res } of results) for (const r of res.results || []) {
+    if (!r.poster_path) continue;
+    const id = `${type[0]}${r.id}`;
+    let it = byId.get(id);
+    if (!it) {
+      it = { i: r.id, t: type, n: type === 'movie' ? r.title : r.name, d: (type === 'movie' ? r.release_date : r.first_air_date) || '',
+        r: r.vote_count >= 20 ? Math.round(r.vote_average * 10) / 10 : 0, v: r.vote_count, p: Math.round(r.popularity), img: r.poster_path, g: r.genre_ids || [], s: [] };
+      byId.set(id, it);
+    }
+    if (key === 'store') it.b = 1; else if (!it.s.includes(key)) it.s.push(key);
+  }
+  const genres = {};
+  for (const g of [...gm.genres, ...gt.genres]) genres[g.id] = g.name;
+  return { generatedAt: new Date().toISOString(), region: REGION, img: `${IMG}/w342`, genres, items: [...byId.values()] };
+}
+
 // ---------- Sample data ----------
 function sample() {
   const names = [
@@ -254,6 +296,19 @@ function sample() {
   };
 }
 
+function sampleCatalogue() {
+  const words = ['Lighthouse', 'Marrow', 'Kessock', 'Signal', 'Allotment', 'Northern', 'Ferryman', 'Brass', 'Carriage', 'Weekend', 'Fenland', 'Post', 'Duck', 'Ivy', 'Night Bus', 'Kiln', 'Cobble', 'Saltmarsh', 'Grammar', 'Overcast', 'Weatherfield', 'Pier'];
+  const genres = { 18: 'Drama', 35: 'Comedy', 80: 'Crime', 99: 'Documentary', 10751: 'Family', 16: 'Animation', 10765: 'Sci-Fi & Fantasy', 28: 'Action', 53: 'Thriller', 10749: 'Romance' };
+  const gids = Object.keys(genres).map(Number);
+  const items = Array.from({ length: 180 }, (_, k) => {
+    const type = k % 2 ? 'movie' : 'tv', y = 2026 - (k % 9), m = String(1 + (k * 5) % 12).padStart(2, '0');
+    return { i: 9000 + k, t: type, n: `The ${words[k % words.length]}${k > 21 ? ' ' + (Math.floor(k / 22) + 1) : ''}`, d: `${y}-${m}-1${k % 9}`,
+      r: Math.round((5.5 + ((k * 37) % 40) / 10) * 10) / 10, v: 30 + (k * 97) % 4000, p: 900 - k * 4, img: null,
+      g: [gids[k % gids.length], gids[(k * 3) % gids.length]], s: SERVICES.filter((_, j) => (k + j) % 4 === 0).map((s) => s.key), ...(k % 11 === 0 ? { b: 1 } : {}) };
+  });
+  return { generatedAt: new Date().toISOString(), region: REGION, img: '', genres, items, sample: true };
+}
+
 // ---------- main ----------
 async function write(name, obj) {
   await mkdir(OUT, { recursive: true });
@@ -266,13 +321,22 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const { trending, fresh } = sample();
     await write('trending.json', trending);
     await write('new.json', fresh);
+    await write('browse.json', sampleCatalogue());
   } else if (!process.env.TMDB_TOKEN && !process.env.TMDB_API_KEY) {
     const msg = 'No TMDB_TOKEN secret found, so the site is still showing sample data. Add it under Settings > Secrets and variables > Actions.';
     console.warn(process.env.GITHUB_ACTIONS ? `::warning title=Sample data::${msg}` : msg);
   } else {
-    const { data, providers } = await buildTrending();
+    const { data, providers, ids } = await buildTrending();
     await write('trending.json', data);
     await write('providers.json', providers);
+    try {
+      const cat = await buildCatalogue(ids);
+      await write('browse.json', cat);
+      console.log(`Browse catalogue: ${cat.items.length} titles`);
+    } catch (err) {
+      const msg = `Browse catalogue failed, keeping the last one: ${err.message}`;
+      console.warn(process.env.GITHUB_ACTIONS ? `::warning title=Browse::${msg}` : msg);
+    }
     try {
       const fresh = await buildNew();
       await write('new.json', fresh || { generatedAt: data.generatedAt, disabled: true, items: [] });

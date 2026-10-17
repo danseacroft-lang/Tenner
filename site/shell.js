@@ -30,6 +30,7 @@
     if (window.tnOnTab) return window.tnOnTab(name);
     if (name === cur) { scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); return; }
     if (name === 'about') { location.href = 'about.html'; return; }
+    if (name === 'browse') { location.href = 'browse.html'; return; }
     if (name === 'new') { location.href = './#new'; return; }
     try { localStorage.setItem('tenner-kind', name); } catch {}
     location.href = './#top';
