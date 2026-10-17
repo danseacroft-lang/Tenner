@@ -700,3 +700,9 @@ tbody tr td.rank span { display: inline-block; transition: transform .5s var(--e
 /* New This Week rows carry a small poster, like the homepage list */
 .list .nl-art { width: 40px; height: 60px; flex: none; object-fit: cover; border-radius: 5px; box-shadow: 0 0 0 .5px var(--sep); }
 .list li { padding-block: 9px; }
+
+/* "at a glance" rows: the hover fills the row exactly, edge to edge between its dividing lines (no rounded inset) */
+.cl a { border-radius: 0; padding: 9px 10px; }
+.cl a:hover { background: none; }
+.cl li { transition: background-color .15s ease; }
+@media (hover: hover) { .cl li:hover { background: var(--fill); } }
