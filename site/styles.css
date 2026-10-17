@@ -454,6 +454,53 @@ main:focus { outline: none; }
 }
 @media (prefers-reduced-transparency: reduce) { .edge { display: none; } }
 
+/* ============================================================ computers: the hero, the Sky / Apple TV way
+   The chart's top title as a big backdrop on the right of the page, melting into it on the left and at the bottom;
+   the page header and the hero's words run down the faded part, and the page carries on below as normal. */
+.backdrop, .hero { display: none; }
+@media (min-width: 1000px) {
+  main { position: relative; isolation: isolate; }
+  .backdrop {
+    display: block; position: absolute; z-index: -1; top: 0; right: 0; width: min(78%, 1320px); aspect-ratio: 16 / 9; min-height: 620px; pointer-events: none; overflow: hidden;
+    /* two fades multiplied together: in from the left, out towards the bottom, both on soft curves so neither edge shows */
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, .12) 10%, rgba(0, 0, 0, .42) 22%, rgba(0, 0, 0, .78) 36%, #000 50%),
+                        linear-gradient(to bottom, #000 0%, #000 42%, rgba(0, 0, 0, .7) 60%, rgba(0, 0, 0, .3) 78%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, .12) 10%, rgba(0, 0, 0, .42) 22%, rgba(0, 0, 0, .78) 36%, #000 50%),
+                linear-gradient(to bottom, #000 0%, #000 42%, rgba(0, 0, 0, .7) 60%, rgba(0, 0, 0, .3) 78%, transparent 100%);
+    mask-composite: intersect;
+  }
+  .bd-l { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 20%; opacity: 0; transition: opacity .6s var(--ease-out); }
+  .bd-l.in { opacity: 1; }
+
+  /* a steady height with the words sitting at the bottom, so the button and dots never move as titles change */
+  .hero { display: flex; flex-direction: column; justify-content: flex-end; position: relative; min-height: 420px; padding: 30px 0 30px; max-width: min(46%, 560px); }
+  .h-copy { transition: opacity .18s ease, translate .18s ease; }
+  .h-copy.out { opacity: 0; translate: 0 6px; }
+  .h-eye { display: flex; align-items: center; gap: 9px; margin: 0 0 10px; font: 600 13px/1.2 var(--font); letter-spacing: .04em; text-transform: uppercase; color: var(--label2); }
+  .h-eye img { width: 24px; height: 24px; border-radius: 6px; box-shadow: 0 0 0 .5px var(--sep); }
+  .h-title { margin: 0; font: 700 clamp(40px, 4.2vw, 60px)/1.04 var(--font-display); letter-spacing: -.02em; text-wrap: balance;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .h-meta { margin: 10px 0 0; color: var(--label2); font-size: 15px; letter-spacing: -.016em; font-variant-numeric: tabular-nums; }
+  .h-blurb { margin: 10px 0 0; max-width: 44ch; color: var(--label); opacity: .82; font-size: 17px; line-height: 1.45;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .h-cta {
+    display: inline-flex; align-items: center; gap: 8px; height: 44px; margin-top: 22px; padding: 0 22px 0 18px; border-radius: 999px;
+    background: var(--label); color: var(--bg); font: 600 16px/1 var(--font); letter-spacing: -.016em;
+    box-shadow: 0 8px 24px -10px rgba(0, 0, 0, .5); transition: transform .4s var(--ease-spring), opacity .2s ease;
+  }
+  .h-cta svg { width: 14px; height: 14px; }
+  .h-cta:hover { text-decoration: none; opacity: .88; }
+  .h-cta:active { transform: scale(.96); }
+  /* the dots, like the TV: the chosen one stretches into a pill */
+  .h-dots { display: flex; gap: 8px; margin-top: 26px; }
+  .h-dots button { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 999px; background: var(--label3); cursor: pointer; transition: width .35s var(--ease-spring), background-color .25s ease; }
+  .h-dots button::after { content: ""; display: block; margin: -8px; height: 24px; }   /* a bigger target than it looks */
+  .h-dots button[aria-current="true"] { width: 24px; background: var(--label); }
+  @media (hover: hover) { .h-dots button:not([aria-current="true"]):hover { background: var(--label2); } }
+  .hero + .feats { margin-top: 10px; }
+}
+
 /* ============================================================ homepage, the Apple Music "New" way
    Feature cards up top, the neon row, the ten as a column list, then New This Week. Section headings link on, with a chevron. */
 .row-h { margin: 44px 0 14px; font: 700 22px/1.2 var(--font-display); letter-spacing: -.008em; }

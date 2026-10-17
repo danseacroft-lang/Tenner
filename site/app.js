@@ -200,7 +200,7 @@ function draw() {
   document.querySelectorAll('.kind [data-kind]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.kind === state.kind)));
   const isNew = state.route === 'new';
   $('#controls').hidden = isNew;
-  if (isNew) { view.innerHTML = `<div class="wrap">${pageNew()}</div>`; document.title = 'New this week | Tenner'; return; }
+  if (isNew) { setBackdrop(null); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; document.title = 'New this week | Tenner'; return; }
 
   markService(state.route); markDropdowns();
 
@@ -214,12 +214,71 @@ function draw() {
 
   const chart = list.length
     ? `${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up. Add your TMDB key and run the workflow to see the real chart.</p>` : ''}
-       ${s?.store ? '' : features(s)}
+       ${hero(list, s)}${s?.store ? '' : features(s)}
        ${posterRow(list)}${chartList(list, s)}${s?.store ? '' : newRow(s)}`
     : `<div class="empty"><h2>Nothing here right now</h2><p>The chart for ${esc(where)} will be back after the next hourly update.</p><a class="btn btn-tinted" href="#top">See all five services</a></div>`;
   view.innerHTML = `<div class="wrap chart">${chart}</div>`;
+  setBackdrop(heroOn() && list.length ? list[0] : null);
   wireScroller(); wireRanks();
 }
+
+// ---------- computers: the hero, the Sky / Apple TV way ----------
+// The chart's top five take turns as a big backdrop on the right that fades into the page on its left and bottom;
+// the title, a line about it and a button sit on the faded part, with dots to flip between them. Nothing moves on
+// its own, so an idle page still costs nothing. Phones and tablets skip it (and never download the artwork).
+const wide = matchMedia('(min-width: 1000px)');
+wide.addEventListener('change', () => state.trending && state.route !== 'new' && render());
+const heroOn = () => wide.matches;
+let heroList = [], heroAt = 0, heroScope = null;
+function heroCopy(it, i) {
+  // on a service's page it's that service's chart; on All it's the UK-wide chart, and the details say where to find it
+  const s = heroScope, kind = state.kind === 'tv' ? 'show' : 'film';
+  const eye = s?.store ? `No. ${i + 1} to buy or rent` : s ? `No. ${i + 1} ${kind} on ${s.label}` : `No. ${i + 1} ${kind} in the UK`;
+  const where = s ? '' : onText(it);
+  const bits = [it.year, it.rating ? `★ ${it.rating.toFixed(1)}` : '', state.kind === 'tv' ? 'Series' : 'Film', where ? `On ${where}` : ''].filter(Boolean);
+  return `<p class="h-eye">${s?.logo ? `<img src="${esc(s.logo)}" alt="">` : ''}${esc(eye)}</p>
+    <h2 class="h-title">${esc(it.title)}</h2>
+    <p class="h-meta">${bits.map(esc).join(' · ')}</p>
+    ${it.overview ? `<p class="h-blurb">${esc(firstSentence(it.overview))}</p>` : ''}
+    <a class="h-cta" href="${esc(it.url)}" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>Where to watch</a>`;
+}
+function hero(list, s) {
+  if (!heroOn() || !list.length) return '';
+  heroList = list.slice(0, 5); heroAt = 0; heroScope = s;
+  return `<section class="hero" aria-label="Top of the chart">
+    <div class="h-copy" id="heroCopy" aria-live="polite">${heroCopy(heroList[0], 0)}</div>
+    ${heroList.length > 1 ? `<div class="h-dots">${heroList.map((it, i) => `<button type="button" data-hero="${i}" aria-label="Number ${i + 1}: ${esc(it.title)}" aria-current="${i === 0}"></button>`).join('')}</div>` : ''}
+  </section>`;
+}
+// The backdrop crossfades: the new picture decodes first, then fades in over the old one, which is then dropped.
+let bdKey = null;
+function setBackdrop(it) {
+  const bd = $('#backdrop'), key = it ? it.backdrop || `ph:${it.title}` : null;
+  if (key === bdKey) return; bdKey = key;
+  if (!it) { bd.replaceChildren(); return; }
+  let layer;
+  if (it.backdrop) { layer = new Image(); layer.alt = ''; layer.src = it.backdrop; }
+  else { const h = hue(it.title); layer = document.createElement('span'); layer.style.background = `linear-gradient(120deg,hsl(${h} 45% 30%),hsl(${(h + 40) % 360} 55% 12%))`; }
+  layer.className = 'bd-l';
+  const show = () => {
+    if (bdKey !== key) return;   // a newer one was asked for meanwhile
+    bd.append(layer);
+    if (reduceMotion || bd.children.length === 1) { layer.classList.add('in'); [...bd.children].slice(0, -1).forEach((c) => c.remove()); return; }
+    requestAnimationFrame(() => layer.classList.add('in'));
+    setTimeout(() => [...bd.children].slice(0, -1).forEach((c) => c.remove()), 700);
+  };
+  layer.decode ? layer.decode().then(show, show) : show();
+}
+function showHero(i) {
+  if (i === heroAt || !heroList[i]) return;
+  heroAt = i;
+  document.querySelectorAll('[data-hero]').forEach((b) => b.setAttribute('aria-current', String(Number(b.dataset.hero) === i)));
+  const copy = $('#heroCopy');
+  const swap = () => { copy.innerHTML = heroCopy(heroList[i], i); copy.classList.remove('out'); };
+  if (reduceMotion) swap(); else { copy.classList.add('out'); setTimeout(swap, 180); }
+  setBackdrop(heroList[i]);
+}
+view.addEventListener('click', (e) => { const d = e.target.closest('[data-hero]'); if (d) showHero(Number(d.dataset.hero)); });
 
 // ---------- pieces ----------
 function hue(str) { let h = 0; for (const c of String(str)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
