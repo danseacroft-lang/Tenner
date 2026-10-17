@@ -80,6 +80,7 @@ function placeSvc(animate) {
   svcX = x;
 }
 function markService(key) {
+  document.querySelectorAll('.svc-b.store, .svc-sep').forEach((el) => { el.hidden = state.kind !== 'movie'; });
   let chosen;
   document.querySelectorAll('.svc-b').forEach((b) => { const on = b.dataset.svc === key; b.setAttribute('aria-checked', on); b.tabIndex = on ? 0 : -1; if (on) chosen = b; });
   placeSvc(svcX !== null);
@@ -132,6 +133,7 @@ $('#refresh').addEventListener('click', async () => {
 function route() {
   const h = location.hash.slice(1);
   state.route = h === 'new' || svc(h) ? h : 'top';
+  if (svc(state.route)?.store) state.kind = 'movie';
   if (state.route !== 'new') state.lastChart = state.route;
   render();
 }
@@ -145,7 +147,8 @@ function morph(fn) {
   document.startViewTransition(fn);
 }
 function draw() {
-  selectTab(state.route === 'new' ? 'new' : state.kind);
+  selectTab(state.route === 'new' ? 'new' : 'top');
+  document.querySelectorAll('.kind [data-kind]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.kind === state.kind)));
   const isNew = state.route === 'new';
   $('#controls').hidden = isNew;
   if (isNew) { view.innerHTML = `<div class="wrap">${pageNew()}</div>`; document.title = 'New this week | Tenner'; return; }
@@ -155,10 +158,9 @@ function draw() {
   const s = state.route === 'top' ? null : svc(state.route);
   const list = s ? s[state.kind] : state.trending.overall[state.kind];
   const where = s ? s.label : 'UK streaming';
-  $('#heading').innerHTML = s?.store ? `Top 10 ${words()} to buy or rent` : `Top 10 ${words()} on ${s ? brand(s) : allBrands()}`;
-  $('#lede').textContent = s?.store
-    ? `The most popular new ${state.kind === 'tv' ? 'shows' : 'films'} you can buy or rent in the UK right now, from Apple TV, Prime Video Store, Sky Store and others. Not on a subscription yet.`
-    : `What the UK is watching right now on ${s ? s.label : 'Netflix, Disney+, Prime Video, HBO Max and Paramount+'}.`;
+  $('#heading').textContent = s?.store ? `Top 10 ${words()} to buy or rent` : `Top 10 ${words()}`;
+  $('#lede').innerHTML = s?.store ? 'New releases from Apple TV, Sky Store and others'
+    : s ? `On ${s.logo ? `<img class="sub-logo" src="${esc(s.logo)}" alt="">` : ''}${esc(s.label)}` : 'On all five services in the UK';
   document.title = s ? `${s.label} Top 10 | Tenner` : 'Tenner';
 
   const chart = list.length
@@ -406,19 +408,28 @@ function wireTilt(row, sig) {
 
 // ---------- controls ----------
 
-// ---------- tabs: the bar itself lives in shell.js (shared with the About page) ----------
+// ---------- tabs (pages): Top 10, New, Browse, About. The bar itself lives in shell.js ----------
 const selectTab = (name) => window.tnShell.select(name);
 function openTab(name) {
   if (name === 'about') { location.href = 'about.html'; return; }
   if (name === 'browse') { location.href = 'browse.html'; return; }
-  if (name === window.tnShell.current() && state.route !== 'new' === (name !== 'new')) { scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }); return; } // tap the open tab: back to the top
-  if (name === 'new') { location.hash = 'new'; return; }
-  state.kind = name;
-  try { localStorage.setItem('tenner-kind', state.kind); } catch {}
-  if (state.route === 'new') location.hash = state.lastChart || 'top'; else render();
+  const onNew = state.route === 'new';
+  if ((name === 'new') === onNew) { scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }); return; } // tap the open tab: back to the top
+  location.hash = name === 'new' ? 'new' : (state.lastChart || 'top');
 }
 window.tnOnTab = openTab;
-view.addEventListener('click', (e) => { const g = e.target.closest('[data-go]'); if (g) openTab(g.dataset.go); });
+
+// ---------- Shows or Films: one switch, the same as on Browse ----------
+function setKind(k) {
+  if (k === state.kind) return;
+  state.kind = k;
+  try { localStorage.setItem('tenner-kind', k); } catch {}
+  // Buy or rent is films only, so switching to shows takes you back to all services
+  if (k === 'tv' && svc(state.route)?.store) { location.hash = 'top'; return; }
+  buildServiceBar.refresh?.(); render();
+}
+document.querySelectorAll('.kind [data-kind]').forEach((b) => b.addEventListener('click', () => setKind(b.dataset.kind)));
+view.addEventListener('click', (e) => { const g = e.target.closest('[data-go]'); if (g) setKind(g.dataset.go); });
 
 addEventListener('hashchange', () => { route(); scrollTo(0, 0); });
 load();

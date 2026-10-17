@@ -32,8 +32,7 @@
     if (name === 'about') { location.href = 'about.html'; return; }
     if (name === 'browse') { location.href = 'browse.html'; return; }
     if (name === 'new') { location.href = './#new'; return; }
-    try { localStorage.setItem('tenner-kind', name); } catch {}
-    location.href = './#top';
+    location.href = './';
   }
   tabs.forEach((t, i) => {
     t.addEventListener('click', () => open(t.dataset.tab));

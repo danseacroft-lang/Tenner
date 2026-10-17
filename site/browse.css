@@ -6,21 +6,11 @@
 /* ---------- header ---------- */
 .b-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; padding-top: 8px; }
 .b-head .large-title { margin-top: 10px; }
-.segmented {
-  display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; flex: none;
-  height: 40px; padding: 3px; border-radius: 999px; background: var(--fill);
-}
-.segmented button {
-  font: 600 15px/1 var(--font); letter-spacing: -.01em; color: var(--label2);
-  background: none; border: 0; border-radius: 999px; padding: 0 20px; min-width: 88px; cursor: pointer;
-  transition: background-color .25s ease, color .25s ease, box-shadow .25s ease;
-}
-.segmented button[aria-checked="true"] { background: var(--thumb); color: var(--label); box-shadow: 0 2px 6px rgba(0, 0, 0, .14); }
-.segmented button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+/* Shows | Films uses the shared segmented control in styles.css */
 
 /* ---------- collections capsule (same glass and gliding pill as the service bar) ---------- */
 .coll {
-  position: relative; margin-top: 22px; padding: 4px; border-radius: 999px; overflow: hidden; display: flex; max-width: 100%; width: max-content;
+  position: relative; margin-top: 18px; padding: 3px; border-radius: 999px; overflow: hidden; display: flex; max-width: 100%; width: max-content;
   background: var(--glass); -webkit-backdrop-filter: blur(24px) saturate(190%); backdrop-filter: blur(24px) saturate(190%);
   box-shadow: inset 0 0 0 .5px var(--glass-hi), var(--glass-shadow);
 }
@@ -35,8 +25,8 @@
 :root[data-theme="dark"] .coll-ind { background: rgba(255, 255, 255, .13); box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .22); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .coll-ind { background: rgba(255, 255, 255, .13); box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .22); } }
 .coll-b {
-  position: relative; z-index: 1; flex: none; height: 38px; padding: 0 16px; border: 0; border-radius: 999px; background: none; cursor: pointer;
-  font: 600 15px/1 var(--font); letter-spacing: -.01em; color: var(--label2); white-space: nowrap;
+  position: relative; z-index: 1; flex: none; height: 30px; padding: 0 13px; border: 0; border-radius: 999px; background: none; cursor: pointer;
+  font: 600 14px/1 var(--font); letter-spacing: -.01em; color: var(--label2); white-space: nowrap;
   transition: color .25s ease, transform .4s var(--ease-spring);
 }
 .coll-b[aria-checked="true"] { color: var(--label); }
@@ -174,3 +164,5 @@
   .tile, .scrim { animation: none !important; }
   .filters, .art, .coll-b, .g-b, .s-b i, .w-b::after { transition: none !important; }
 }
+.b-head .large-title { font-size: clamp(30px, 3.6vw, 40px); margin-bottom: 6px; }
+.b-head .lede { font-size: 16px; }

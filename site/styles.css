@@ -579,3 +579,40 @@ tbody tr td.rank span { display: inline-block; transition: transform .5s var(--e
 /* the picker sits under the title and its line of text */
 .intro .large-title { margin-top: 14px; }
 .intro .controls { margin-top: 20px; }
+
+/* ============================================================ the chart page header, compact
+   Title, one grey line (where the chart is from, and when it was updated), then one row: Shows | Films and the services.
+   Everything in the row is 36px tall so it reads as one control strip. */
+.intro .large-title { margin: 14px 0 6px; font-size: clamp(30px, 3.6vw, 40px); }
+.sub { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 0; font-size: 16px; }
+#lede { display: inline-flex; align-items: center; gap: 7px; }
+.sub-logo { width: 22px; height: 22px; border-radius: 6px; box-shadow: 0 0 0 .5px var(--sep); }
+.sub .updated {
+  display: inline-flex; align-items: center; gap: 7px; height: auto; margin: 0; padding: 0; border: 0; background: none; cursor: pointer;
+  color: var(--label2); font: 500 15px/1.3 var(--font); letter-spacing: -.01em; border-radius: 6px;
+}
+@media (hover: hover) { .sub .updated:hover { color: var(--label); } }
+.sub .updated .live-dot { width: 7px; height: 7px; }
+.intro .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 18px; }
+.intro .controls .updated { margin-left: 0; height: auto; padding: 0; }
+
+.segmented { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; flex: none; height: 36px; padding: 3px; border-radius: 999px; background: var(--fill); }
+.segmented button { font: 600 14px/1 var(--font); letter-spacing: -.01em; color: var(--label2); background: none; border: 0; border-radius: 999px; padding: 0 16px; min-width: 72px; cursor: pointer;
+  transition: background-color .25s ease, color .25s ease, box-shadow .25s ease; }
+.segmented button[aria-checked="true"] { background: var(--thumb); color: var(--label); box-shadow: 0 2px 6px rgba(0, 0, 0, .14); }
+.segmented button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.svc { padding: 3px; }
+.svc-b { height: 30px; padding: 0 11px 0 4px; gap: 7px; font-size: 14px; }
+.svc-ic { width: 22px; height: 22px; border-radius: 6px; }
+.svc-sep { height: 18px; margin: 0 3px; }
+.svc-glyph svg { width: 14px; height: 14px; }
+.svc-b[hidden], .svc-sep[hidden] { display: none; }
+
+@media (max-width: 560px) {
+  .intro .large-title { font-size: 30px; }
+  .sub { font-size: 15px; }
+  .intro .controls { flex-wrap: nowrap; gap: 8px; }
+  .intro .controls .svc { flex: 1; min-width: 0; width: auto; }
+  .segmented button { min-width: 0; padding: 0 12px; }
+}
