@@ -219,9 +219,6 @@ body::before{content:"";position:fixed;z-index:-1;left:-10vw;right:-10vw;top:-20
 /* ---------- controls ---------- */
 .intro { padding-top: 8px; }
 .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-.picker { position: relative; display: inline-flex; align-items: center; }
-.picker select { appearance: none; -webkit-appearance: none; padding-right: 38px; min-width: 176px; justify-content: flex-start; }
-.picker svg { position: absolute; right: 15px; pointer-events: none; color: var(--label2); }
 .updated { margin-left: auto; color: var(--label2); font-weight: 500; }
 .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); position: relative; }
 .live-dot::after {
@@ -357,8 +354,6 @@ td.num-col { color: var(--label2); }
 /* ---------- phones ---------- */
 @media (max-width: 560px) {
   .controls { flex-wrap: nowrap; gap: 8px; }
-  .picker { flex: 1; min-width: 0; }
-  .picker select { width: 100%; min-width: 0; font-size: 16px; height: 40px; }  /* 16px stops iOS zooming in on tap */
   .updated { flex: none; height: 40px; padding: 0 14px; font-size: 14px; }
   .large-title { font-size: 30px; margin-top: 18px; }
   .lede { font-size: 15px; }
@@ -494,9 +489,8 @@ tbody tr td.rank span { display: inline-block; transition: transform .5s var(--e
 @media (hover: hover) { tbody tr:hover td.rank span { transform: scale(1.15) rotate(-3deg); } }
 
 /* pills and pickers: a springy press everywhere */
-.btn, .picker select { transition: background-color .18s, color .18s, transform .45s var(--ease-spring); }
-.btn:active, .picker select:active { transform: scale(.95); }
-@media (hover: hover) { .picker:hover select { transform: scale(1.02); } }
+.btn { transition: background-color .18s, color .18s, transform .45s var(--ease-spring); }
+.btn:active { transform: scale(.95); }
 
 /* the Updated pill: new text slides in */
 #ago.swap { animation: agoSwap .5s var(--ease-out); display: inline-block; }
@@ -522,3 +516,62 @@ tbody tr td.rank span { display: inline-block; transition: transform .5s var(--e
 .empty-ic svg { width: 28px; height: 28px; }
 .empty h2 { margin: 16px 0 6px; font: 700 26px/1.15 var(--font-display); letter-spacing: -.03em; }
 .empty p { margin: 0 auto 18px; max-width: 40ch; color: var(--label2); font-size: 16px; text-wrap: balance; }
+
+/* ---------- the service bar ----------
+   One glass capsule like the tab bar: each service as its own app icon with its name, and a lighter pill that glides
+   to the chosen one. Buy or rent sits after a hairline, since it isn't a service. On phones it scrolls sideways. */
+.controls { align-items: center; }
+.svc {
+  position: relative; display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 999px; max-width: 100%;
+  background: var(--glass); -webkit-backdrop-filter: blur(24px) saturate(190%); backdrop-filter: blur(24px) saturate(190%);
+  box-shadow: inset 0 0 0 .5px var(--glass-hi), var(--glass-shadow);
+  overflow: hidden; isolation: isolate;
+}
+.svc-track {
+  --fl: 28px; --fr: 28px;
+  position: relative; display: flex; align-items: center; gap: 2px; min-width: 0; max-width: 100%;
+  overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; border-radius: 999px;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--fl), #000 calc(100% - var(--fr)), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 var(--fl), #000 calc(100% - var(--fr)), transparent);
+  transition: --fl .35s ease, --fr .35s ease;
+}
+.svc-track::-webkit-scrollbar { display: none; }
+.svc.at-start .svc-track { --fl: 0px; }
+.svc.at-end .svc-track { --fr: 0px; }
+.svc-ind {
+  position: absolute; z-index: 0; left: 0; top: 0; bottom: 0; width: 0; border-radius: 999px; pointer-events: none;
+  background: var(--card); box-shadow: 0 2px 8px rgba(0, 0, 0, .14), inset 0 0 0 .5px var(--sep);
+}
+:root[data-theme="dark"] .svc-ind { background: rgba(255, 255, 255, .13); box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .22); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .svc-ind { background: rgba(255, 255, 255, .13); box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .22); } }
+.svc-b {
+  position: relative; z-index: 1; flex: none; display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px 0 6px;
+  border: 0; border-radius: 999px; background: none; cursor: pointer; color: var(--label2);
+  font: 600 15px/1 var(--font); letter-spacing: -.01em; white-space: nowrap;
+  transition: color .25s ease, transform .4s var(--ease-spring); -webkit-tap-highlight-color: transparent;
+}
+.svc-b:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.svc-b[aria-checked="true"] { color: var(--label); }
+@media (hover: hover) { .svc-b[aria-checked="false"]:hover { color: var(--label); } .svc-b:hover .svc-ic { transform: scale(1.08); } }
+.svc-b:active { transform: scale(.95); }
+.svc-ic { width: 28px; height: 28px; flex: none; border-radius: 8px; overflow: hidden; display: grid; place-items: center; transition: transform .45s var(--ease-spring), filter .3s ease, opacity .3s ease;
+  box-shadow: 0 0 0 .5px var(--sep), 0 2px 6px rgba(0, 0, 0, .18); }
+.svc-ic img { width: 100%; height: 100%; object-fit: cover; }
+.svc-b[aria-checked="false"] .svc-ic { filter: saturate(.75); opacity: .85; }
+.svc-glyph { width: 100%; height: 100%; display: grid; place-items: center; color: #fff; font: 700 14px var(--font); background: linear-gradient(135deg, #ff375f, #bf5af2 55%, #0a84ff); }
+.svc-glyph svg { width: 17px; height: 17px; }
+.svc-sep { flex: none; width: 1px; height: 22px; margin: 0 4px; background: var(--sep); }
+/* the Updated pill sits at the far end on wide screens */
+.controls .updated { margin-left: auto; height: 48px; padding: 0 18px; }
+
+@media (max-width: 860px) {
+  .controls { flex-wrap: wrap; }
+  .controls .updated { margin-left: 0; height: 36px; }
+}
+@media (max-width: 560px) {
+  .controls { flex-wrap: wrap; gap: 10px; }
+  .svc { width: 100%; margin-inline: 0; }
+  .svc-b { padding: 0 12px 0 5px; height: 40px; font-size: 14px; gap: 7px; }
+  .svc-ic { width: 26px; height: 26px; border-radius: 7px; }
+  .controls .updated { height: 32px; padding: 0 12px; font-size: 13px; }
+}

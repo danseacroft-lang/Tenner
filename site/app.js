@@ -34,17 +34,62 @@ async function load() {
   }
   try { const k = localStorage.getItem('tenner-kind'); if (k === 'tv' || k === 'movie') state.kind = k; } catch {}
 
-  const sel = $('#service');
-  sel.innerHTML = `<option value="top">All five services</option>` +
-    services().filter((s) => !s.store).map((s) => `<option value="${s.key}">${esc(s.label)}</option>`).join('') +
-    services().filter((s) => s.store).map((s) => `<option disabled>──────────</option><option value="${s.key}">${esc(s.label)}</option>`).join('');
-  sel.addEventListener('change', () => { location.hash = sel.value; });
+  buildServiceBar();
   showUpdated();
   route();
 }
 
 const services = () => state.trending.services;
 const svc = (k) => services().find((s) => s.key === k);
+
+// ---------- the service bar: each service as its own app icon in a glass capsule, a pill gliding to the chosen one ----------
+const ICON_ALL = '<img src="logo.svg" alt="">';
+const ICON_STORE = '<span class="svc-glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12.5H7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>';
+function buildServiceBar() {
+  const bar = $('#svc');
+  const item = (key, label, icon, extra = '') =>
+    `<button type="button" role="radio" class="svc-b${extra}" data-svc="${key}" aria-checked="false" tabindex="-1"><span class="svc-ic">${icon}</span><span class="svc-l">${esc(label)}</span></button>`;
+  const iconFor = (s) => s.logo ? `<img src="${esc(s.logo)}" alt="" loading="lazy">` : `<span class="svc-glyph">${esc(s.label[0])}</span>`;
+  bar.insertAdjacentHTML('beforeend',
+    item('top', 'All', ICON_ALL) +
+    services().filter((s) => !s.store).map((s) => item(s.key, s.label, iconFor(s))).join('') +
+    services().filter((s) => s.store).map((s) => `<span class="svc-sep" aria-hidden="true"></span>` + item(s.key, s.label, ICON_STORE, ' store')).join(''));
+  const btns = () => [...bar.querySelectorAll('.svc-b')];
+  bar.addEventListener('click', (e) => { const b = e.target.closest('.svc-b'); if (b) location.hash = b.dataset.svc; });
+  bar.addEventListener('keydown', (e) => { // arrow keys move along, like the tabs
+    const list = btns(), i = list.indexOf(document.activeElement);
+    const k = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: list.length - 1 }[e.key]; if (k === undefined || i < 0) return;
+    e.preventDefault(); const n = list[(k + list.length) % list.length]; n.focus(); location.hash = n.dataset.svc;
+  });
+  // fade whichever end has more to scroll to
+  const edges = () => { const w = bar.parentElement;
+    w.classList.toggle('at-start', bar.scrollLeft < 4); w.classList.toggle('at-end', bar.scrollLeft + bar.clientWidth >= bar.scrollWidth - 4); };
+  bar.addEventListener('scroll', edges, { passive: true });
+  addEventListener('resize', () => { placeSvc(false); edges(); });
+  requestAnimationFrame(edges);
+}
+let svcX = null;
+function placeSvc(animate) {
+  const b = $('.svc-b[aria-checked="true"]'), ind = $('#svcInd'); if (!b || !b.offsetWidth) return;
+  const x = b.offsetLeft, w = b.offsetWidth;
+  if (svcX === null || !animate || reduceMotion || !ind.animate) { ind.style.width = w + 'px'; ind.style.transform = `translateX(${x}px)`; svcX = x; return; }
+  const from = ind.style.transform, fw = ind.style.width, mid = (svcX + x) / 2, mw = Math.max(parseFloat(fw), w) * 1.14;
+  ind.style.width = w + 'px'; ind.style.transform = `translateX(${x}px)`;
+  ind.animate([{ transform: from, width: fw }, { transform: `translateX(${mid - (mw - w) / 2}px)`, width: mw + 'px', offset: .45 }, { transform: `translateX(${x}px)`, width: w + 'px' }],
+    { duration: 520, easing: 'cubic-bezier(.3,1.15,.4,1)' });
+  svcX = x;
+}
+function markService(key) {
+  let chosen;
+  document.querySelectorAll('.svc-b').forEach((b) => { const on = b.dataset.svc === key; b.setAttribute('aria-checked', on); b.tabIndex = on ? 0 : -1; if (on) chosen = b; });
+  placeSvc(svcX !== null);
+  // keep the chosen one in view when the bar scrolls (phones)
+  const bar = $('#svc');
+  if (chosen && bar.scrollWidth > bar.clientWidth) {
+    const target = chosen.offsetLeft - (bar.clientWidth - chosen.offsetWidth) / 2;
+    bar.scrollTo({ left: Math.max(0, target), behavior: svcX === null || reduceMotion ? 'auto' : 'smooth' });
+  }
+}
 
 // ---------- "Updated … ago" ----------
 const narrow = matchMedia('(max-width: 560px)');
@@ -105,7 +150,7 @@ function draw() {
   $('#controls').hidden = isNew;
   if (isNew) { view.innerHTML = `<div class="wrap">${pageNew()}</div>`; document.title = 'New this week | Tenner'; return; }
 
-  $('#service').value = state.route;
+  markService(state.route);
 
   const s = state.route === 'top' ? null : svc(state.route);
   const list = s ? s[state.kind] : state.trending.overall[state.kind];
