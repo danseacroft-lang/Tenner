@@ -179,3 +179,13 @@
   .glist li + li::before { left: 60px; }
   .abtn { flex: 1 1 100%; justify-content: center; }
 }
+
+/* card 2: the feature cards fan out once as it arrives */
+.fan > g { transform-box: view-box; transform-origin: 160px 150px; }
+.js-reveal .reveal .f2, .js-reveal .reveal .f3 { transform: rotate(0deg) translate(6px, -4px); }
+.js-reveal .reveal.in .f2 { transform: rotate(-5deg) translate(-4px, -6px); transition: transform .9s var(--ease-spring) .3s; }
+.js-reveal .reveal.in .f3 { transform: rotate(-10deg) translate(-8px, -12px); transition: transform .9s var(--ease-spring) .4s; }
+.f2 { transform: rotate(-5deg) translate(-4px, -6px); } .f3 { transform: rotate(-10deg) translate(-8px, -12px); }
+.spark path { transform-box: fill-box; transform-origin: center; }
+.js-reveal .reveal .spark path { transform: scale(0); }
+.js-reveal .reveal.in .spark path { transform: scale(1); transition: transform .6s var(--ease-spring) .8s; }
