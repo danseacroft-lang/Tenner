@@ -11,6 +11,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: write   # only for the keepalive step below
 
 concurrency:
   group: pages
@@ -19,6 +20,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15   # a normal run takes about a minute; never let a stuck one hold the queue
     steps:
       - uses: actions/checkout@v5
 
@@ -40,9 +42,19 @@ jobs:
         with:
           path: site
 
+      # GitHub pauses scheduled workflows after 60 days without a commit. Re-enabling it every run keeps the hourly
+      # schedule alive indefinitely, with no commits and nobody needing to touch the repo.
+      - name: Keep the hourly schedule alive
+        if: github.event_name == 'schedule'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/update.yml/enable"
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

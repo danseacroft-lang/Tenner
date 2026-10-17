@@ -92,6 +92,55 @@ function markService(key) {
   }
 }
 
+// ---------- phones: the same choices as two pull-down menus (one glass card, shared) ----------
+const ddPop = $('#ddPop'), ddList = $('#ddList');
+let ddBtn = null;
+const iconOf = (key) => key === 'top' ? ICON_ALL : key === 'store' ? ICON_STORE
+  : svc(key)?.logo ? `<img src="${esc(svc(key).logo)}" alt="">` : `<span class="svc-glyph">${esc(svc(key)?.label[0] || '')}</span>`;
+function ddItems(btn) {
+  if (btn.id === 'kindDD') return [['tv', 'Shows'], ['movie', 'Films']].map(([k, l]) => ({ act: () => setKind(k), on: state.kind === k, label: l }));
+  const keys = ['top', ...services().filter((x) => !x.store).map((x) => x.key), ...(state.kind === 'movie' ? services().filter((x) => x.store).map((x) => x.key) : [])];
+  return keys.map((k) => ({ act: () => { location.hash = k; }, on: state.route === k, label: k === 'top' ? 'All services' : svc(k).label, icon: iconOf(k), sep: k === 'store' }));
+}
+function ddClose(focus) {
+  if (!ddBtn) return;
+  const btn = ddBtn; ddBtn = null; btn.setAttribute('aria-expanded', 'false');
+  if (focus) btn.focus({ preventScroll: true });
+  if (reduceMotion) { ddPop.hidden = true; return; }
+  ddPop.classList.add('out');
+  setTimeout(() => { if (!ddBtn) { ddPop.hidden = true; ddPop.classList.remove('out'); } }, 190);
+}
+function ddOpen(btn) {
+  if (ddBtn === btn) { ddClose(); return; }
+  ddBtn = btn; btn.setAttribute('aria-expanded', 'true');
+  const items = ddItems(btn);
+  ddList.innerHTML = items.map((it, i) => `${it.sep ? '<div class="dd-sep" role="separator"></div>' : ''}<button type="button" role="menuitemradio" aria-checked="${it.on}" data-i="${i}">${it.icon ? `<i>${it.icon}</i>` : ''}<span><b>${esc(it.label)}</b></span><em aria-hidden="true"></em></button>`).join('');
+  ddList.onclick = (e) => { const b = e.target.closest('[data-i]'); if (!b) return; ddClose(); items[b.dataset.i].act(); };
+  ddPop.classList.remove('out'); ddPop.hidden = false;
+  const r = btn.getBoundingClientRect(), w = ddPop.offsetWidth, left = Math.max(12, Math.min(r.left, innerWidth - w - 12));
+  ddPop.style.left = left + 'px'; ddPop.style.top = r.bottom + 8 + 'px';
+  ddPop.style.maxHeight = Math.max(200, innerHeight - r.bottom - 120) + 'px';   // clear of the tab bar
+  ddPop.style.setProperty('--tb-o', `${r.left + r.width / 2 - left}px -14px`);    // it grows out of its own button
+  ddList.querySelector('[aria-checked="true"]')?.focus({ preventScroll: true });
+}
+document.querySelectorAll('.dd').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); ddOpen(b); }));
+document.addEventListener('click', (e) => { if (ddBtn && !ddPop.contains(e.target)) ddClose(); });
+addEventListener('keydown', (e) => {
+  if (!ddBtn) return;
+  if (e.key === 'Escape') { ddClose(true); return; }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {   // arrow keys move through the menu
+    const list = [...ddList.querySelectorAll('button')], i = list.indexOf(document.activeElement);
+    e.preventDefault(); list[(i + (e.key === 'ArrowDown' ? 1 : -1) + list.length) % list.length]?.focus();
+  }
+});
+addEventListener('resize', () => ddClose());
+addEventListener('scroll', () => ddClose(), { passive: true });
+function markDropdowns() {
+  $('#kindDD .dd-l').textContent = words();
+  $('#svcDD .dd-l').textContent = state.route === 'top' ? 'All services' : svc(state.route)?.label || 'All services';
+  $('#svcDD .dd-ic').innerHTML = iconOf(state.route);
+}
+
 // ---------- "Updated … ago" ----------
 const narrow = matchMedia('(max-width: 560px)');
 function agoText(iso) {
@@ -153,7 +202,7 @@ function draw() {
   $('#controls').hidden = isNew;
   if (isNew) { view.innerHTML = `<div class="wrap">${pageNew()}</div>`; document.title = 'New this week | Tenner'; return; }
 
-  markService(state.route);
+  markService(state.route); markDropdowns();
 
   const s = state.route === 'top' ? null : svc(state.route);
   const list = s ? s[state.kind] : state.trending.overall[state.kind];
@@ -167,23 +216,10 @@ function draw() {
     ? `${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up. Add your TMDB key and run the workflow to see the real chart.</p>` : ''}
        ${s?.store ? '' : features(s)}
        ${posterRow(list)}${chartList(list, s)}${s?.store ? '' : newRow(s)}`
-    : s?.store
-      ? `<div class="empty"><span class="empty-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 3.5v17M16 3.5v17" stroke="currentColor" stroke-width="2"/></svg></span>
-          <h2>Buy or rent is for films</h2><p>Almost every show is already on a subscription, so you'll find them on the five services.</p>
-          <button type="button" class="btn btn-tinted" data-go="movie">See films to buy or rent</button></div>`
-      : `<div class="empty"><h2>Nothing here right now</h2><p>The chart for ${esc(where)} will be back after the next hourly update.</p><a class="btn btn-tinted" href="#top">See all five services</a></div>`;
+    : `<div class="empty"><h2>Nothing here right now</h2><p>The chart for ${esc(where)} will be back after the next hourly update.</p><a class="btn btn-tinted" href="#top">See all five services</a></div>`;
   view.innerHTML = `<div class="wrap chart">${chart}</div>`;
   wireScroller(); wireRanks();
 }
-
-// The platform's own logo (supplied by TMDB) in place of its name; the name stays for screen readers and as a fallback.
-const brand = (s, cls = 'brand-logo') => s.logo
-  ? `<img class="${cls}" src="${esc(s.logo)}" alt="${esc(s.label)}" title="${esc(s.label)}">`
-  : esc(s.label);
-const streaming = () => services().filter((s) => !s.store);
-const allBrands = () => streaming().every((s) => s.logo)
-  ? `<span class="brand-stack" role="img" aria-label="UK streaming">${streaming().map((s) => `<img src="${esc(s.logo)}" alt="" title="${esc(s.label)}">`).join('')}</span>`
-  : 'UK streaming';
 
 // ---------- pieces ----------
 function hue(str) { let h = 0; for (const c of String(str)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
@@ -196,17 +232,18 @@ const meta = (it) => [
   it.rating ? `<span class="star" aria-label="Rated ${it.rating} out of 10">★ ${it.rating.toFixed(1)}</span>` : '',
 ].join('');
 
-// Each rank is a little neon sign: a soft aura, a glassy fill, a rainbow tube with bloom and a white-hot core.
-// The rainbow sweeps through each number once as the row arrives (rippling along), and again when you hover a card;
-// otherwise the numbers are still, so an idle page costs nothing.
 const RAINBOW = ['#ff375f', '#ff9f0a', '#ffd60a', '#30d158', '#40c8e0', '#5e5ce6', '#bf5af2', '#ff375f'];
+const RB_STOPS = RAINBOW.map((c, k) => `<stop offset="${(k / (RAINBOW.length - 1)).toFixed(3)}" stop-color="${c}"/>`).join('');
+// Each rank is a neon tube, drawn in four layers: a soft aura, a tinted glass body (lighter at the top),
+// the rainbow tube with a two-step bloom, and a white-hot core that fades towards the bottom like a lit tube.
+// The rainbow sweeps through each number once as the row arrives (rippling along) and again on hover; otherwise
+// the numbers are still, so an idle page costs nothing.
 function rankSvg(i) {
   const id = `rk${i}`, n = pad(i + 1);
-  const stops = RAINBOW.map((c, k) => `<stop offset="${(k / (RAINBOW.length - 1)).toFixed(3)}" stop-color="${c}"/>`).join('');
-  const t = (cls, extra = '') => `<text class="${cls}" x="0" y="104" ${extra}>${n}</text>`;
-  return `<svg class="num" viewBox="-24 -24 200 152" aria-hidden="true">
-    <defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="-40" y1="0" x2="200" y2="40" spreadMethod="repeat">${stops}
-      <animateTransform attributeName="gradientTransform" type="translate" from="-240 -40" to="0 0" dur="2.6s" begin="${(0.15 + i * 0.09).toFixed(2)}s" calcMode="spline" keyTimes="0;1" keySplines=".45 0 .2 1" fill="freeze"/>
+  const t = (cls, extra = '') => `<text class="${cls}" x="0" y="80" ${extra}>${n}</text>`;
+  return `<svg class="num" viewBox="-16 -14 156 112" aria-hidden="true">
+    <defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="-30" y1="0" x2="150" y2="30" spreadMethod="repeat">${RB_STOPS}
+      <animateTransform attributeName="gradientTransform" type="translate" from="-180 -30" to="0 0" dur="2.4s" begin="${(0.15 + i * 0.08).toFixed(2)}s" calcMode="spline" keyTimes="0;1" keySplines=".45 0 .2 1" fill="freeze"/>
     </linearGradient></defs>
     ${t('aura', `fill="url(#${id})" filter="url(#aura)"`)}
     ${t('glass')}
@@ -370,6 +407,8 @@ function wireScroller() {
 }
 
 // Drag the row with a mouse: it follows the hand, keeps the fling's momentum, then settles onto the nearest card.
+// Mouse only; touch screens scroll the row natively.
+const finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
 function wireDrag(row, sig) {
   if (!finePointer) return;
   let down = false, dragging = false, startX = 0, startLeft = 0, lastX = 0, lastT = 0, v = 0, raf = 0, moved = 0;
@@ -415,31 +454,7 @@ function wireDrag(row, sig) {
   row.addEventListener('dragstart', (e) => e.preventDefault(), { signal: sig.signal });
 }
 
-// Cards lean towards the mouse with a soft sheen where it points. Mouse only, never with reduced motion.
-const finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
-function wireTilt(row, sig) {
-  if (!finePointer || reduceMotion) return;
-  let card = null, raf = 0, ev = null;
-  const paint = () => {
-    raf = 0; if (!card || !ev) return;
-    const r = card.getBoundingClientRect(), x = (ev.clientX - r.left) / r.width, y = (ev.clientY - r.top) / r.height;
-    card.style.setProperty('--rx', ((0.5 - y) * 9).toFixed(2) + 'deg');
-    card.style.setProperty('--ry', ((x - 0.5) * 11).toFixed(2) + 'deg');
-    card.style.setProperty('--mx', (x * 100).toFixed(1) + '%');
-    card.style.setProperty('--my', (y * 100).toFixed(1) + '%');
-  };
-  row.addEventListener('pointermove', (e) => {
-    if (row.classList.contains('dragging')) return;
-    const c = e.target.closest('.cover');
-    if (c !== card) { card?.classList.remove('tilting'); card = c; card?.classList.add('tilting'); }
-    ev = e; if (!raf) raf = requestAnimationFrame(paint);
-  }, sig);
-  row.addEventListener('pointerleave', () => { card?.classList.remove('tilting'); card = null; }, sig);
-}
-
-// ---------- controls ----------
-
-// ---------- tabs (pages): Top 10, New, Browse, About. The bar itself lives in shell.js ----------
+// ---------- tabs (pages): Search, Top 10, New, Browse, About. The bar itself lives in shell.js ----------
 const selectTab = (name) => window.tnShell.select(name);
 function openTab(name) {
   if (name === 'about') { location.href = 'about.html'; return; }
@@ -458,10 +473,9 @@ function setKind(k) {
   try { localStorage.setItem('tenner-kind', k); } catch {}
   // Buy or rent is films only, so switching to shows takes you back to all services
   if (k === 'tv' && svc(state.route)?.store) { location.hash = 'top'; return; }
-  buildServiceBar.refresh?.(); render();
+  render();
 }
 document.querySelectorAll('.kind [data-kind]').forEach((b) => b.addEventListener('click', () => setKind(b.dataset.kind)));
-view.addEventListener('click', (e) => { const g = e.target.closest('[data-go]'); if (g) setKind(g.dataset.go); });
 
 addEventListener('hashchange', () => { route(); scrollTo(0, 0); });
 load();

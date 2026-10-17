@@ -1,5 +1,5 @@
 // Tenner's shell, shared by every page and ported from Channel Crossings:
-// the tab bar's gliding pill, the Appearance menu (Auto, Day, Night) and the fade behind the bar once the page scrolls.
+// the tab bar's gliding pill, the Theme menu (Auto, Day, Night) and the fade behind the bar once the page scrolls.
 (() => {
   const $ = (s) => document.querySelector(s);
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -39,18 +39,19 @@
     if (name === 'new') { location.href = './#new'; return; }
     location.href = './';
   }
-  tabs.forEach((t, i) => {
+  tabs.forEach((t) => {
     t.addEventListener('click', () => open(t.dataset.tab));
-    t.addEventListener('keydown', (e) => { // arrow keys move along the tabs, Home and End to the first and last
-      const k = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key]; if (k === undefined) return;
-      e.preventDefault(); const n = tabs[(k + tabs.length) % tabs.length]; n.focus(); open(n.dataset.tab);
+    t.addEventListener('keydown', (e) => { // arrow keys move along the visible tabs (About is hidden in the sidebar), Home and End jump
+      const shown = tabs.filter((b) => b.offsetWidth), i = shown.indexOf(t);
+      const k = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: shown.length - 1 }[e.key]; if (k === undefined) return;
+      e.preventDefault(); const n = shown[(k + shown.length) % shown.length]; n.focus(); open(n.dataset.tab);
     });
   });
   addEventListener('resize', () => placeInd(false));
   document.fonts?.ready.then(() => placeInd(false));
   placeInd(false);
 
-  // ---------- appearance: Auto, Day or Night (Night by default) ----------
+  // ---------- Theme: Auto, Day or Night (Night by default) ----------
   const modeBtns = document.querySelectorAll('.th-list button');
   const mode = () => root.getAttribute('data-theme') || 'auto';
   function showTheme() {

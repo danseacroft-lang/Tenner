@@ -1,8 +1,7 @@
-/* About Tenner. The same structure as Channel Crossings' "How it works": a centred hero over a wide picture,
-   then four illustrated stages, a grouped list like Settings, and source tiles. Cards are frosted glass at night. */
+/* About Tenner: an Apple TV-style banner (a wall of this hour's posters behind a dark veil), four illustrated cards,
+   then the FAQ. Static at rest: each card performs once as it arrives and nothing loops. */
 
 :root {
-  --a-room: #dfe5f7; --a-floor1: #cdd4ea; --a-floor2: #bfc7e0;
   --a-bezel: #1c1c1e; --a-screen: #0b0d18;
   --a-glass: rgba(255, 255, 255, .8); --a-glass-b: rgba(255, 255, 255, .95);
   --a-ink: #0b0b0f; --a-ink2: rgba(60, 60, 67, .72);
@@ -12,7 +11,6 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --a-room: #070812; --a-floor1: #10121f; --a-floor2: #090a13;
     --a-bezel: #26262c; --a-screen: #05060c;
     --a-glass: rgba(44, 44, 48, .74); --a-glass-b: rgba(255, 255, 255, .16);
     --a-ink: #ffffff; --a-ink2: rgba(235, 235, 245, .6);
@@ -22,7 +20,6 @@
   }
 }
 :root[data-theme="dark"] {
-  --a-room: #070812; --a-floor1: #10121f; --a-floor2: #090a13;
   --a-bezel: #26262c; --a-screen: #05060c;
   --a-glass: rgba(44, 44, 48, .74); --a-glass-b: rgba(255, 255, 255, .16);
   --a-ink: #ffffff; --a-ink2: rgba(235, 235, 245, .6);
@@ -31,168 +28,17 @@
   --a-card: rgba(44, 44, 48, .62); --a-card-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .1);
 }
 
-.awrap { max-width: 1000px; margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter-r); }
+/* one column shared with Top 10 and Browse, left-aligned like Apple Music */
+.awrap { max-width: var(--max); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter-r); }
 .about svg { display: block; }
-
-/* ---------- hero ---------- */
-.hero { text-align: center; margin: 22px 0 0; }
-.eyebrow { font: 600 14px/1.2 var(--font); letter-spacing: .01em; color: var(--accent); margin: 0 0 10px; }
-.hero h1 {
-  font: 700 clamp(38px, 7vw, 68px)/1.02 var(--font-display); letter-spacing: -.04em;
-  margin: 0 auto; max-width: 13ch; text-wrap: balance;
-}
-.lead {
-  font-size: clamp(17px, 1.9vw, 21px); line-height: 1.42; color: var(--label2);
-  margin: 16px auto 0; max-width: 36ch; text-wrap: balance;
-}
-.scene { margin: 32px 0 0; border-radius: 30px; overflow: hidden; box-shadow: var(--a-card-shadow); background: var(--a-room); aspect-ratio: 800 / 360; }
-.scene svg { width: 100%; height: 100%; }
-.neon10 { font: 800 118px var(--font-display); letter-spacing: -.05em; }
-.neon01 { font: 800 52px var(--font-display); letter-spacing: -.05em; }
-.chip { font: 600 15px var(--font); letter-spacing: -.01em; fill: var(--a-ink); }
-.chip.sm { font-size: 13px; }
-.chip.xs { font-size: 11px; font-weight: 500; fill: var(--a-ink2); }
-.clocknum text { font: 600 15px var(--font); }
-
-/* ---------- sections ---------- */
-.sec { margin: 80px 0 0; }
-.sec-h { text-align: center; margin: 0 0 26px; }
-.sec-h h2 { font: 700 clamp(30px, 4.6vw, 46px)/1.06 var(--font-display); letter-spacing: -.035em; margin: 0; text-wrap: balance; }
-.sec-h p { color: var(--label2); margin: 12px auto 0; max-width: 40ch; font-size: 18px; text-wrap: balance; }
-
-/* the four stages */
-.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
-.step { background: var(--a-card); border-radius: 28px; overflow: hidden; box-shadow: var(--a-card-shadow); display: flex; flex-direction: column; }
-.step .art { aspect-ratio: 320 / 190; background: linear-gradient(180deg, var(--a-tile1), var(--a-tile2)); overflow: hidden; }
-.step .art svg { width: 100%; height: 100%; }
-.step .txt { padding: 20px 24px 24px; }
-.step .n {
-  display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; margin: 0 0 12px;
-  color: #fff; font: 700 14px/1 var(--font); letter-spacing: 0;
-  background: linear-gradient(135deg, #ff375f, #bf5af2 55%, #0a84ff);
-}
-.step h3 { font: 700 22px/1.2 var(--font-display); letter-spacing: -.025em; margin: 0 0 8px; }
-.step p { margin: 0; color: var(--label2); font-size: 16px; line-height: 1.5; }
-.step p strong { color: var(--label); font-weight: 600; }
-
-/* what the numbers mean: a grouped list, like Settings */
-.glist { list-style: none; margin: 0 auto; padding: 6px 0; max-width: 720px; background: var(--a-card); border-radius: 24px; box-shadow: var(--a-card-shadow); }
-.glist li { display: flex; gap: 14px; align-items: flex-start; padding: 14px 20px; position: relative; }
-.glist li + li::before { content: ""; position: absolute; top: 0; left: 64px; right: 0; border-top: .5px solid var(--sep); }
-.gi { flex: none; width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; margin-top: 1px; }
-.gi svg { width: 19px; height: 19px; }
-.glist b { display: block; font-size: 17px; font-weight: 600; letter-spacing: -.02em; }
-.glist p { margin: 3px 0 0; color: var(--label2); font-size: 15px; line-height: 1.45; }
-
-/* sources */
-.live { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.tile { background: var(--a-card); border-radius: 26px; padding: 22px; box-shadow: var(--a-card-shadow); display: flex; flex-direction: column; gap: 14px; }
-.tile .ic { width: 64px; height: 64px; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 14px var(--a-shadow); }
-.tile .ic svg { width: 100%; height: 100%; }
-.tile > div { display: flex; flex-direction: column; gap: 6px; flex: 1; }
-.tile h3 { font: 700 19px/1.25 var(--font-display); letter-spacing: -.02em; margin: 0; }
-.tile p { margin: 0; color: var(--label2); font-size: 15px; line-height: 1.5; }
-.tile .src { margin-top: auto; padding-top: 6px; font-size: 13px; color: var(--label3); }
-
-.note {
-  max-width: 660px; margin: 26px auto 0; padding: 16px 22px; border-radius: 20px;
-  background: var(--fill); color: var(--label2); font-size: 15px; line-height: 1.55; text-align: center; text-wrap: pretty;
-}
-.note strong { color: var(--label); font-weight: 600; }
-
-.cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 30px 0 0; }
-.abtn {
-  display: inline-flex; align-items: center; gap: 8px; min-height: 50px; padding: 0 24px; border-radius: 999px;
-  font: 600 17px/1 var(--font); letter-spacing: -.01em; text-decoration: none;
-  transition: transform .45s var(--ease-spring), filter .2s ease;
-}
-.abtn:hover { text-decoration: none; }
-.abtn svg { width: 19px; height: 19px; }
-.abtn-p { background: var(--accent); color: #fff; }
-.abtn-s { background: var(--fill); color: var(--accent); }
-@media (hover: hover) { .abtn:hover { filter: brightness(1.08); transform: scale(1.03); } }
-.abtn:active { transform: scale(.96); }
-.about .credits { text-align: center; }
-.about .credits p { margin-inline: auto; }
-
-/* frosted cards at night, as on Channel Crossings */
-:root[data-theme="dark"] :is(.step, .tile, .glist) { -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) :is(.step, .tile, .glist) { -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%); } }
-
-/* ---------- motion: the scene breathes, chips bob, the clock turns; each card performs once as it arrives ---------- */
-@keyframes bob { 50% { transform: translateY(3px); } }
-@keyframes breathe { 50% { opacity: .65; } }
-@keyframes turn { to { transform: rotate(360deg); } }
-/* the chips bob a few times and settle; nothing on this page loops forever */
-.bob { animation: bob 4s ease-in-out 3; }
-.bob2 { animation: bob 5s ease-in-out -1.6s 2; }
-.hand { transform-box: view-box; transform-origin: 160px 96px; }
-.js-reveal .reveal.in .hand { animation: turn 3s cubic-bezier(.45, 0, .2, 1) .3s 1; }   /* one sweep round the clock as the card arrives */
-
-/* reveal on arrival (only once the script has marked the page, so nothing is hidden without it) */
-.js-reveal .reveal { opacity: 0; transform: translateY(28px) scale(.98); }
-.js-reveal .reveal.in { opacity: 1; transform: none; transition: opacity .8s var(--ease-out), transform 1s var(--ease-spring); }
-.js-reveal .steps .reveal:nth-child(2).in, .js-reveal .live .reveal:nth-child(2).in { transition-delay: .08s; }
-.js-reveal .live .reveal:nth-child(3).in { transition-delay: .16s; }
-.draw { stroke-dasharray: 260; stroke-dashoffset: 0; }
-.js-reveal .reveal .draw { stroke-dashoffset: 260; }
-.js-reveal .reveal.in .draw { stroke-dashoffset: 0; transition: stroke-dashoffset 1.6s cubic-bezier(.6, 0, .2, 1) .25s; }
-.js-reveal .reveal .pop { transform-box: fill-box; transform-origin: center; transform: scale(0); }
-.js-reveal .reveal.in .pop { transform: scale(1); transition: transform .6s var(--ease-spring) 1.5s; }
-.checks > g { transform-box: fill-box; transform-origin: center; }
-.js-reveal .reveal .checks > g { transform: scale(0); }
-.js-reveal .reveal.in .checks > g { transform: scale(1); transition: transform .55s var(--ease-spring); transition-delay: calc(.35s + var(--i) * .12s); }
-.arc { stroke-dasharray: 340; stroke-dashoffset: 0; }
-.js-reveal .reveal .arc { stroke-dashoffset: 340; }
-.js-reveal .reveal.in .arc { stroke-dashoffset: 0; transition: stroke-dashoffset 1.8s cubic-bezier(.6, 0, .2, 1) .2s; }
-.js-reveal .reveal .slide { transform: translateX(40px); opacity: 0; }
-.js-reveal .reveal.in .slide { transform: none; opacity: 1; transition: transform .9s var(--ease-spring) .45s, opacity .5s ease .45s; }
-.js-reveal .glist.reveal li { opacity: 0; transform: translateX(-12px); }
-.js-reveal .glist.reveal.in li { opacity: 1; transform: none; transition: opacity .5s ease, transform .7s var(--ease-spring); }
-.js-reveal .glist.reveal.in li:nth-child(2) { transition-delay: .06s; } .js-reveal .glist.reveal.in li:nth-child(3) { transition-delay: .12s; }
-.js-reveal .glist.reveal.in li:nth-child(4) { transition-delay: .18s; } .js-reveal .glist.reveal.in li:nth-child(5) { transition-delay: .24s; }
-.hero > * { animation: riseIn .8s var(--ease-out) both; }
-.hero > :nth-child(2) { animation-delay: .07s; } .hero > :nth-child(3) { animation-delay: .14s; }
-.scene { animation: riseIn 1s var(--ease-out) .2s both; }
-@media (hover: hover) { .step, .tile { transition: transform .6s var(--ease-spring), box-shadow .4s ease; } .step:hover, .tile:hover { transform: translateY(-4px); } }
-
-@media (prefers-reduced-motion: reduce) {
-  .bob, .bob2, .hand, .hero > *, .scene { animation: none !important; }
-  .js-reveal .reveal, .js-reveal .reveal *, .js-reveal .reveal .checks > g, .js-reveal .glist.reveal li { opacity: 1 !important; transform: none !important; stroke-dashoffset: 0 !important; transition: none !important; }
-}
-
-/* ---------- phones ---------- */
-@media (max-width: 719px) {
-  .hero { margin-top: 12px; }
-  .scene { border-radius: 22px; margin-top: 24px; margin-inline: -4px; }
-  .sec { margin-top: 56px; }
-  .sec-h p { font-size: 16px; }
-  .steps, .live { grid-template-columns: 1fr; gap: 12px; }
-  .step { border-radius: 24px; }
-  .step .txt { padding: 18px 20px 20px; }
-  .step h3 { font-size: 20px; }
-  .step p { font-size: 15px; }
-  .tile { flex-direction: row; align-items: flex-start; gap: 14px; padding: 16px; border-radius: 22px; }
-  .tile .ic { flex: none; width: 54px; height: 54px; border-radius: 14px; }
-  .glist { border-radius: 20px; }
-  .glist li { padding: 12px 16px; }
-  .glist li + li::before { left: 60px; }
-  .abtn { flex: 1 1 100%; justify-content: center; }
-}
-
-/* card 2: the feature cards fan out once as it arrives */
-.fan > g { transform-box: view-box; transform-origin: 160px 150px; }
-.js-reveal .reveal .f2, .js-reveal .reveal .f3 { transform: rotate(0deg) translate(6px, -4px); }
-.js-reveal .reveal.in .f2 { transform: rotate(-5deg) translate(-4px, -6px); transition: transform .9s var(--ease-spring) .3s; }
-.js-reveal .reveal.in .f3 { transform: rotate(-10deg) translate(-8px, -12px); transition: transform .9s var(--ease-spring) .4s; }
-.f2 { transform: rotate(-5deg) translate(-4px, -6px); } .f3 { transform: rotate(-10deg) translate(-8px, -12px); }
-.spark path { transform-box: fill-box; transform-origin: center; }
-.js-reveal .reveal .spark path { transform: scale(0); }
-.js-reveal .reveal.in .spark path { transform: scale(1); transition: transform .6s var(--ease-spring) .8s; }
+.eyebrow { font: 600 14px/1.2 var(--font); letter-spacing: -.01em; color: var(--accent); margin: 0 0 10px; }
+.chip { font: 600 15px var(--font); letter-spacing: -.016em; fill: var(--a-ink); }
+.neon01s { font: 800 26px var(--font-display); letter-spacing: -.05em; }
+.about .credits { text-align: left; }
 
 /* ============================================================ the banner, the Apple TV way
    A wall of this hour's posters, tilted, on the right; on the left a dark veil that blurs and fades into them, with
-   the logo, the headline, a button and a note. Static: laid out once, no animation, one blur layer. */
+   the logo, the headline, a button and a note. Laid out once: no animation, one blur layer. */
 .banner {
   position: relative; isolation: isolate; overflow: hidden; margin-top: 18px;
   min-height: clamp(380px, 40vw, 470px); border-radius: 28px; background: #0c0c10;
@@ -219,7 +65,7 @@
 .b-copy { position: relative; z-index: 2; max-width: 460px; padding: 40px 0 40px clamp(28px, 5vw, 56px); color: #fff; }
 .b-logo { width: 56px; height: 56px; border-radius: 13px; box-shadow: 0 8px 24px rgba(0, 0, 0, .5); margin-bottom: 18px; }
 .banner .eyebrow { color: #4ea1ff; margin: 0 0 8px; font-size: 15px; }
-.about .banner h1 { margin: 0; color: #fff; font-size: clamp(36px, 4.6vw, 52px); line-height: 1.05; text-wrap: balance; text-align: left; max-width: none; }
+.about .banner h1 { margin: 0; color: #fff; font: 700 clamp(36px, 4.6vw, 52px)/1.05 var(--font-display); letter-spacing: -.015em; text-wrap: balance; }
 .b-lead { margin: 14px 0 0; color: rgba(255, 255, 255, .72); font-size: 17px; line-height: 1.47; max-width: 40ch; }
 .b-cta {
   display: inline-flex; align-items: center; height: 46px; margin-top: 24px; padding: 0 24px; border-radius: 999px;
@@ -230,8 +76,33 @@
 .b-cta:active { transform: scale(.96); }
 .b-note { margin: 12px 0 0; color: rgba(255, 255, 255, .55); font-size: 13px; letter-spacing: -.01em; }
 
+/* ============================================================ sections */
+.sec { margin: 80px 0 0; }
+.sec-h { margin: 0 0 26px; }
+.sec-h h2 { font: 700 clamp(30px, 4.2vw, 48px)/1.08 var(--font-display); letter-spacing: -.01em; margin: 0; text-wrap: balance; }
+.sec-h p { color: var(--label2); margin: 12px 0 0; max-width: 40ch; font-size: 18px; text-wrap: balance; }
+
+/* the four cards: artwork on top, flush with the card's edges, then the words */
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.step { background: var(--a-card); border-radius: 28px; overflow: hidden; box-shadow: var(--a-card-shadow); display: flex; flex-direction: column; }
+.step .art { aspect-ratio: 320 / 190; background: linear-gradient(180deg, var(--a-tile1), var(--a-tile2)); overflow: hidden; }
+.step .art svg { width: 100%; height: 100%; }
+.step .txt { padding: 20px 24px 24px; }
+.step h3 { font: 700 21px/1.19 var(--font-display); letter-spacing: .004em; margin: 0 0 8px; }
+.step p { margin: 0; color: var(--label2); font-size: 16px; line-height: 1.5; letter-spacing: -.016em; }
+.step p strong { color: var(--label); font-weight: 600; }
+@media (min-width: 1000px) { .awrap { padding-top: 22px; } .banner { margin-top: 0; } }
+@media (min-width: 1240px) {
+  .steps { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+  .step .txt { padding: 18px 20px 22px; }
+  .step h3 { font-size: 19px; }
+  .step p { font-size: 15px; }
+}
+/* frosted cards at night, as on Channel Crossings */
+:root[data-theme="dark"] .step { -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .step { -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%); } }
+
 /* ============================================================ FAQ, the apple.com way: big questions, hairlines, a chevron */
-.faq .sec-h { text-align: left; }
 .faq-list { border-top: .5px solid var(--sep); }
 .faq-list details { border-bottom: .5px solid var(--sep); }
 .faq-list summary {
@@ -251,13 +122,53 @@
 .faq-list details[open] .a { animation: faqIn .35s var(--ease-out) both; }
 @keyframes faqIn { from { opacity: 0; transform: translateY(-6px); } }
 
+/* ============================================================ motion: each card performs once as it arrives; nothing loops */
+@keyframes bob { 50% { transform: translateY(3px); } }
+@keyframes turn { to { transform: rotate(360deg); } }
+.bob { animation: bob 4s ease-in-out 3; }                                  /* the chips bob a few times and settle */
+.hand { transform-box: view-box; transform-origin: 160px 96px; }
+.js-reveal .reveal.in .hand { animation: turn 3s cubic-bezier(.45, 0, .2, 1) .3s 1; }   /* one sweep round the clock */
+/* reveal on arrival (only once the script has marked the page, so nothing is hidden without it) */
+.js-reveal .reveal { opacity: 0; transform: translateY(28px) scale(.98); }
+.js-reveal .reveal.in { opacity: 1; transform: none; transition: opacity .8s var(--ease-out), transform 1s var(--ease-spring); }
+.js-reveal .steps .reveal:nth-child(2).in { transition-delay: .08s; }
+.draw { stroke-dasharray: 260; stroke-dashoffset: 0; }
+.js-reveal .reveal .draw { stroke-dashoffset: 260; }
+.js-reveal .reveal.in .draw { stroke-dashoffset: 0; transition: stroke-dashoffset 1.6s cubic-bezier(.6, 0, .2, 1) .25s; }
+.js-reveal .reveal .pop { transform-box: fill-box; transform-origin: center; transform: scale(0); }
+.js-reveal .reveal.in .pop { transform: scale(1); transition: transform .6s var(--ease-spring) 1.5s; }
+/* card 2: the feature cards fan out */
+.fan > g { transform-box: view-box; transform-origin: 160px 150px; }
+.f2 { transform: rotate(-5deg) translate(-4px, -6px); } .f3 { transform: rotate(-10deg) translate(-8px, -12px); }
+.js-reveal .reveal .f2, .js-reveal .reveal .f3 { transform: rotate(0deg) translate(6px, -4px); }
+.js-reveal .reveal.in .f2 { transform: rotate(-5deg) translate(-4px, -6px); transition: transform .9s var(--ease-spring) .3s; }
+.js-reveal .reveal.in .f3 { transform: rotate(-10deg) translate(-8px, -12px); transition: transform .9s var(--ease-spring) .4s; }
+.spark path { transform-box: fill-box; transform-origin: center; }
+.js-reveal .reveal .spark path { transform: scale(0); }
+.js-reveal .reveal.in .spark path { transform: scale(1); transition: transform .6s var(--ease-spring) .8s; }
+@media (hover: hover) { .step { transition: transform .6s var(--ease-spring), box-shadow .4s ease; } .step:hover { transform: translateY(-4px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .bob, .hand, .faq-list details[open] .a { animation: none !important; }
+  .js-reveal .reveal, .js-reveal .reveal * { opacity: 1 !important; transform: none !important; stroke-dashoffset: 0 !important; transition: none !important; }
+}
+
+/* ============================================================ phones */
 @media (max-width: 719px) {
+  .sec { margin-top: 56px; }
+  .sec-h p { font-size: 16px; }
+  .steps { grid-template-columns: 1fr; gap: 12px; }
+  .step { border-radius: 24px; }
+  .step .txt { padding: 18px 20px 20px; }
+  .step p { font-size: 15px; }
+
   .banner { flex-direction: column; align-items: stretch; min-height: 0; margin-inline: -4px; border-radius: 22px; }
-  .wall { position: relative; top: auto; bottom: auto; left: auto; right: auto; height: 230px; margin: -30px -40px 0; transform: rotate(-8deg); order: -1; }
+  .wall { position: relative; inset: auto; height: 230px; margin: -30px -40px 0; order: -1; }
   .wall .r1 { margin-left: -60px; }
-  .veil { inset: auto 0 0 0; width: 100%; height: calc(100% - 150px);
-    background: linear-gradient(0deg, #0c0c10 0%, #0c0c10 calc(100% - 90px), rgba(12, 12, 16, 0) 100%);
-    -webkit-mask-image: none; mask-image: none; }
+  /* the posters melt into the card: the veil covers the whole banner and fades in from the top, so there's no seam */
+  .veil { inset: 0; width: auto; background: #0c0c10; -webkit-backdrop-filter: none; backdrop-filter: none;
+    -webkit-mask-image: linear-gradient(180deg, transparent 90px, rgba(0, 0, 0, .55) 170px, #000 230px);
+    mask-image: linear-gradient(180deg, transparent 90px, rgba(0, 0, 0, .55) 170px, #000 230px); }
   .b-copy { padding: 0 22px 28px; margin-top: -10px; }
   .about .banner h1 { font-size: 34px; }
   .b-lead { font-size: 16px; }
@@ -265,7 +176,3 @@
   .faq-list summary { padding: 20px 2px; }
   .faq-list .a { padding: 0 8px 22px 2px; }
 }
-@media (prefers-reduced-motion: reduce) { .faq-list details[open] .a { animation: none; } }
-
-/* card 4: the small neon 01 on the phone */
-.neon01s { font: 800 26px var(--font-display); letter-spacing: -.05em; }

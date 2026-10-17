@@ -4,7 +4,11 @@
 // Env:
 //   TMDB_TOKEN          TMDB "API Read Access Token" (v4). Or TMDB_API_KEY (v3 key) instead.
 //   WATCHMODE_API_KEY   optional. Used for "New this week" (about 1 credit per day).
-//   SITE_URL            optional. Your live Pages URL, used to reuse yesterday's new.json and save credits.
+//   SITE_URL            optional. Your live Pages URL. Used to reuse the day's new.json (saving credits) and, if a
+//                       partner API has a bad hour, to keep serving the last good data instead of failing.
+//
+// Built to run unattended: every request times out and retries, the data is sanity-checked before it's published,
+// and any step that fails falls back to the copy already live on the site, so a bad hour never takes the site down.
 //
 // Usage:
 //   node scripts/fetch-data.mjs           fetch real data
@@ -38,10 +42,11 @@ export const serviceFor = (name) => {
 };
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-async function getJSON(url, headers = {}, tries = 3) {
+async function getJSON(url, headers = {}, tries = 4) {
   for (let i = 1; ; i++) {
     try {
-      const res = await fetch(url, { headers: { accept: 'application/json', ...headers } });
+      // a request that hangs gives up after 20 seconds and is retried, so a slow partner can't stall the run
+      const res = await fetch(url, { headers: { accept: 'application/json', ...headers }, signal: AbortSignal.timeout(20000) });
       if (res.ok) return res.json();
       if (res.status < 500 && res.status !== 429) {
         throw Object.assign(new Error(`${res.status} ${res.statusText} for ${redact(url)}`), { fatal: true });
@@ -49,11 +54,28 @@ async function getJSON(url, headers = {}, tries = 3) {
       throw new Error(`${res.status} for ${redact(url)}`);
     } catch (err) {
       if (err.fatal || i >= tries) throw err;
-      await sleep(800 * i);
+      await sleep(1000 * 2 ** i);   // 2s, 4s, 8s
     }
   }
 }
 const redact = (u) => String(u).replace(/(api_key|apiKey)=[^&]+/g, '$1=***');
+const warn = (title, msg) => console.warn(process.env.GITHUB_ACTIONS ? `::warning title=${title}::${msg}` : `${title}: ${msg}`);
+
+// The copy of a data file that's live on the site right now (null if there isn't one, or it's sample data).
+async function liveCopy(name) {
+  if (!process.env.SITE_URL) return null;
+  try {
+    const json = await getJSON(new URL(`data/${name}`, process.env.SITE_URL.replace(/\/?$/, '/')), {}, 2);
+    return json && !json.sample ? json : null;
+  } catch { return null; }
+}
+const hoursOld = (json) => (Date.now() - Date.parse(json?.generatedAt)) / 3600e3;
+
+// A chart is only published if it looks right: most services have a full top 10 of shows and of films.
+function checkTrending(d) {
+  const full = d.services.filter((s) => !s.store && s.tv.length >= 5 && s.movie.length >= 5).length;
+  if (full < 3 || d.overall.tv.length < 5 || d.overall.movie.length < 5) throw new Error(`only ${full} of ${SERVICES.length} services came back with a chart`);
+}
 
 // ---------- TMDB ----------
 const TMDB = 'https://api.themoviedb.org/3';
@@ -162,6 +184,7 @@ function overall(services) {
 }
 
 // ---------- Watchmode (daily) ----------
+const realNew = (j) => !!j && Array.isArray(j.items) && !j.disabled && !j.error && !j.sample;
 export async function buildNew() {
   const key = process.env.WATCHMODE_API_KEY;
   if (!key) {
@@ -171,15 +194,10 @@ export async function buildNew() {
   }
 
   // Reuse the copy already live on the site if it's less than 20 hours old.
-  if (process.env.SITE_URL) {
-    try {
-      const prev = await getJSON(new URL('data/new.json', process.env.SITE_URL.replace(/\/?$/, '/')), {}, 1);
-      const real = prev && Array.isArray(prev.items) && !prev.disabled && !prev.error && !prev.sample;
-      if (real && Date.now() - Date.parse(prev.generatedAt) < 20 * 3600e3) {
-        console.log('Reusing live new.json from', prev.generatedAt);
-        return prev;
-      }
-    } catch { /* first deploy, or site not reachable */ }
+  const prev = await liveCopy('new.json');
+  if (realNew(prev) && hoursOld(prev) < 20) {
+    console.log('Reusing live new.json from', prev.generatedAt);
+    return prev;
   }
 
   // Safety cap: ask Watchmode how much of this month's allowance is left (this check is free) and stop well short of it.
@@ -326,24 +344,39 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const msg = 'No TMDB_TOKEN secret found, so the site is still showing sample data. Add it under Settings > Secrets and variables > Actions.';
     console.warn(process.env.GITHUB_ACTIONS ? `::warning title=Sample data::${msg}` : msg);
   } else {
-    const { data, providers, ids } = await buildTrending();
+    // 1. The chart. If TMDB has a bad hour, keep the chart that's live (it says how old it is); with nothing live to
+    //    fall back on, the run fails and GitHub keeps the last deployment up.
+    let built = null;
+    try { built = await buildTrending(); checkTrending(built.data); }
+    catch (err) { warn('Chart', `TMDB failed (${err.message}), so keeping the live chart`); built = null; }
+    const live = built ? null : await liveCopy('trending.json');
+    if (!built && !live) throw new Error('No chart from TMDB and no live chart to fall back on');
+    const data = built ? built.data : live;
     await write('trending.json', data);
-    await write('providers.json', providers);
+    if (built) await write('providers.json', built.providers);
+
+    // 2. The Browse catalogue, rebuilt with the chart; otherwise the live one carries on.
     try {
-      const cat = await buildCatalogue(ids);
+      if (!built) throw new Error('the chart was not rebuilt this hour');
+      const cat = await buildCatalogue(built.ids);
+      if (cat.items.length < 100) throw new Error(`only ${cat.items.length} titles came back`);
       await write('browse.json', cat);
       console.log(`Browse catalogue: ${cat.items.length} titles`);
     } catch (err) {
-      const msg = `Browse catalogue failed, keeping the last one: ${err.message}`;
-      console.warn(process.env.GITHUB_ACTIONS ? `::warning title=Browse::${msg}` : msg);
+      const prev = await liveCopy('browse.json');
+      warn('Browse', `catalogue not rebuilt (${err.message}), ${prev ? 'keeping the live one' : 'and there is no live one yet'}`);
+      if (prev) await write('browse.json', prev);
     }
+
+    // 3. New this week (Watchmode, once a day). If it fails, the live list carries on for up to three days.
     try {
       const fresh = await buildNew();
       await write('new.json', fresh || { generatedAt: data.generatedAt, disabled: true, items: [] });
     } catch (err) {
-      const msg = `Watchmode step failed: ${err.message}`;
-      console.warn(process.env.GITHUB_ACTIONS ? `::warning title=New this week::${msg}` : msg);
-      await write('new.json', { generatedAt: data.generatedAt, error: true, items: [] });
+      const prev = await liveCopy('new.json');
+      const keep = realNew(prev) && hoursOld(prev) < 72;
+      warn('New this week', `Watchmode step failed (${err.message})${keep ? ', keeping the live list' : ''}`);
+      await write('new.json', keep ? prev : { generatedAt: data.generatedAt, error: true, items: [] });
     }
   }
 }
