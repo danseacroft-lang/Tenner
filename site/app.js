@@ -245,13 +245,15 @@ let bdKey = null;
 function setBackdrop(it) {
   const bd = $('#backdrop'), key = it ? it.backdrop || `ph:${it.title}` : null;
   if (key === bdKey) return; bdKey = key;
-  if (!it) { bd.replaceChildren(); return; }
+  if (!it) { bd.replaceChildren(); $('#bdExt')?.replaceChildren(); return; }
   let layer;
   if (it.backdrop) { layer = new Image(); layer.alt = ''; layer.src = it.backdrop; }
   else { const h = hue(it.title); layer = document.createElement('span'); layer.style.background = `linear-gradient(120deg,hsl(${h} 45% 30%),hsl(${(h + 40) % 360} 55% 12%))`; }
   layer.className = 'bd-l';
   const show = () => {
     if (bdKey !== key) return;   // a newer one was asked for meanwhile
+    // the sidebar picks up the artwork's colours through its glass: a mirrored copy sits beneath it
+    const ext = $('#bdExt'), mirror = layer.cloneNode(true); mirror.classList.add('in'); ext?.replaceChildren(mirror);
     bd.append(layer);
     if (reduceMotion || bd.children.length === 1) { layer.classList.add('in'); [...bd.children].slice(0, -1).forEach((c) => c.remove()); return; }
     requestAnimationFrame(() => layer.classList.add('in'));
