@@ -187,7 +187,7 @@
 .s-clear:hover { color: var(--label2); }
 /* while searching, the collections and Shows | Films step back, and each result says what it is */
 .kind-l { display: none; font-size: 12px; font-weight: 600; color: var(--accent); margin-top: -2px; }
-.searching .kind-l { display: block; }
+.mixed .kind-l { display: block; }   /* searching, or Both: each tile says whether it's a show or a film */
 .searching .coll, .searching .b-head .segmented { opacity: .4; pointer-events: none; filter: saturate(.5); }
 .coll, .b-head .segmented { transition: opacity .25s ease, filter .25s ease; }
 @media (max-width: 820px) { .search { max-width: none; margin-top: 16px; } }

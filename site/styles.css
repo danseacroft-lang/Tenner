@@ -85,6 +85,8 @@ img { display: block; max-width: 100%; }
 :focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 2px; }
 main:focus { outline: none; }
 .muted { color: var(--label2); }
+::selection { background: color-mix(in srgb, var(--accent) 28%, transparent); }
+.page-title { margin-top: 24px; }
 .wrap { max-width: var(--max); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter-r); }
 
 /* ============================================================ one button family */
@@ -248,6 +250,8 @@ main:focus { outline: none; }
   color: var(--label2); font: 500 15px/1.3 var(--font); letter-spacing: -.016em;
 }
 @media (hover: hover) { .updated:hover { color: var(--label); } }
+.updated { position: relative; }
+.updated::after { content: ""; position: absolute; inset: -12px -8px; }   /* a comfortable target (44pt tall) around small text */
 .live-dot { position: relative; width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
 .live-dot::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--green); opacity: 0; animation: ping 2.4s ease-out 4; }
 @keyframes ping { 0% { transform: scale(.5); opacity: .7; } 80%, 100% { transform: scale(1.4); opacity: 0; } }
@@ -319,7 +323,7 @@ main:focus { outline: none; }
   /* Shows | Films stays the switch, sitting neatly on top of the services pull-down, the two the same width */
   .controls .svc { display: none; }
   .controls { flex-wrap: wrap; gap: 8px; }
-  .controls .segmented { display: grid; width: 100%; height: 36px; }
+  .controls .segmented { display: grid; width: 100%; height: 40px; }
   .dd {
     display: inline-flex; align-items: center; gap: 8px; min-width: 0; height: 40px; padding: 0 14px; border: 0; border-radius: 999px; cursor: pointer;
     color: var(--label); font: 600 15px/1 var(--font); letter-spacing: -.016em; white-space: nowrap; -webkit-tap-highlight-color: transparent;
@@ -354,9 +358,10 @@ main:focus { outline: none; }
 .notice { margin: 18px 0 0; padding: 12px 16px; border-radius: var(--radius); background: color-mix(in srgb, var(--accent) 12%, transparent); font-size: 15px; }
 .chart { min-width: 0; padding-top: 6px; }
 
+/* phones: page titles at the iOS Large Title size (34pt bold) */
 @media (max-width: 560px) {
-  .large-title { font-size: 30px; margin-top: 18px; }
-  .intro .large-title { font-size: 30px; }
+  .large-title { font-size: 34px; line-height: 1.12; margin-top: 18px; }
+  .intro .large-title { font-size: 34px; }
   .lede, .sub { font-size: 15px; }
   .updated { flex: none; }
   .segmented button { min-width: 0; padding: 0 12px; }
@@ -682,8 +687,6 @@ main:focus { outline: none; }
   .side-links { margin-top: auto; display: flex; flex-wrap: wrap; gap: 2px 12px; padding: 0 10px; }
   .side-link { padding: 3px 0; border: 0; background: none; color: var(--label2); font: 400 12px/1.3 var(--font); letter-spacing: -.01em; cursor: default; }
   .side-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
-  a.side-link { text-decoration: none; cursor: pointer; }
-  @media (hover: hover) { a.side-link:hover { color: var(--accent); text-decoration: none; } }
   /* About: a row at the foot of the sidebar, just above Theme, styled like it */
   .side-about { display: flex; align-items: center; gap: 12px; height: 40px; margin: 8px 0 -20px; padding: 0 10px;   /* -20px: sits 2px above Theme, like the tabs */
     border-radius: 9px;
@@ -705,4 +708,23 @@ main:focus { outline: none; }
 @media (min-width: 1000px) and (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) { --side-bg: rgba(28, 28, 30, .82); }
   :root:not([data-theme="light"]) .tb-pop { background: #2c2c2e; }
+}
+
+/* ============================================================ accessibility settings, as Apple's platforms honour them
+   Reduce Transparency: every glass surface turns solid. Increase Contrast: stronger text, separators and edges. */
+@media (prefers-reduced-transparency: reduce) {
+  :root:is([data-theme], :not([data-theme])) { --glass: var(--bg2); --nav: var(--bg2); --side-bg: var(--bg2); }
+  .tabs, .top-act, .svc, .dd, .tb-pop, .top-row, .scroller, .coll, .score, .step {
+    -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  }
+  .tb-pop { background: var(--card) !important; }
+}
+@media (prefers-contrast: more) {
+  :root:is([data-theme], :not([data-theme])) {
+    --sep: color-mix(in srgb, var(--label) 45%, transparent); --label2: color-mix(in srgb, var(--label) 80%, transparent);
+    --label3: color-mix(in srgb, var(--label) 62%, transparent); --fill: color-mix(in srgb, var(--label) 16%, transparent);
+    --glass-hi: color-mix(in srgb, var(--label) 40%, transparent);
+  }
+  .pcard a.cover, .f-img, .nr-art, .svc, .dd, .segmented { outline: 1px solid var(--sep); outline-offset: -1px; }
+  @media (max-width: 999px) { .tabs { outline: 1px solid var(--sep); outline-offset: -1px; } }   /* the floating tab bar, not the sidebar */
 }

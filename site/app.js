@@ -1,12 +1,11 @@
-// Tenner front end. Reads data/trending.json and data/new.json (rebuilt hourly by GitHub Actions).
-// Routes: #top (all services), #netflix, #disney … (one service), #new (new releases).
+// Tenner's chart pages. Reads data/trending.json and data/new.json (rebuilt hourly by GitHub Actions).
+// Routes: #top (all services), #netflix, #disney … (one service), #store (buy or rent), #new (new releases).
+// Shared helpers (esc, hue, glide, arrows) come from shell.js, which loads first.
 
+const { esc, hue, glide, arrows, reduce: reduceMotion } = window.tn;
 const state = { trending: null, fresh: null, kind: 'tv', route: 'top' };
 const $ = (s, el = document) => el.querySelector(s);
 const view = $('#view');
-const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const KIND_WORDS = { tv: 'Shows', movie: 'Films', both: 'Shows and Films' };
 const words = (k = state.kind) => KIND_WORDS[k] || 'Shows';
 const fmtDate = (d, opts) => d.toLocaleDateString('en-GB', opts);
@@ -15,7 +14,6 @@ const pad = (n) => String(n).padStart(2, '0');
 
 // ---------- data ----------
 async function fetchData(bust) {
-  if (window.__TENNER__) return window.__TENNER__;
   const v = `?v=${bust ? Date.now() : Math.floor(Date.now() / 600000)}`;
   const [trending, fresh] = await Promise.all([
     fetch('data/trending.json' + v, { cache: bust ? 'no-store' : 'default' })
@@ -54,13 +52,8 @@ function buildServiceBar() {
     item('top', 'All', '') +   // just the word, to keep the bar clean
     services().filter((s) => !s.store).map((s) => item(s.key, s.label, iconFor(s))).join('') +
     services().filter((s) => s.store).map((s) => `<span class="svc-sep" aria-hidden="true"></span>` + item(s.key, s.label, ICON_STORE, ' store')).join(''));
-  const btns = () => [...bar.querySelectorAll('.svc-b')];
   bar.addEventListener('click', (e) => { const b = e.target.closest('.svc-b'); if (b) location.hash = b.dataset.svc; });
-  bar.addEventListener('keydown', (e) => { // arrow keys move along, like the tabs
-    const list = btns(), i = list.indexOf(document.activeElement);
-    const k = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: list.length - 1 }[e.key]; if (k === undefined || i < 0) return;
-    e.preventDefault(); const n = list[(k + list.length) % list.length]; n.focus(); location.hash = n.dataset.svc;
-  });
+  arrows(bar, () => [...bar.querySelectorAll('.svc-b')], (n) => { location.hash = n.dataset.svc; });
   // fade whichever end has more to scroll to
   const edges = () => { const w = bar.parentElement;
     w.classList.toggle('at-start', bar.scrollLeft < 4); w.classList.toggle('at-end', bar.scrollLeft + bar.clientWidth >= bar.scrollWidth - 4); };
@@ -68,28 +61,20 @@ function buildServiceBar() {
   addEventListener('resize', () => { placeSvc(false); edges(); });
   requestAnimationFrame(edges);
 }
-let svcX = null;
-function placeSvc(animate) {
-  const b = $('.svc-b[aria-checked="true"]'), ind = $('#svcInd'); if (!b || !b.offsetWidth) return;
-  const x = b.offsetLeft, w = b.offsetWidth;
-  if (svcX === null || !animate || reduceMotion || !ind.animate) { ind.style.width = w + 'px'; ind.style.transform = `translateX(${x}px)`; svcX = x; return; }
-  const from = ind.style.transform, fw = ind.style.width, mid = (svcX + x) / 2, mw = Math.max(parseFloat(fw), w) * 1.14;
-  ind.style.width = w + 'px'; ind.style.transform = `translateX(${x}px)`;
-  ind.animate([{ transform: from, width: fw }, { transform: `translateX(${mid - (mw - w) / 2}px)`, width: mw + 'px', offset: .45 }, { transform: `translateX(${x}px)`, width: w + 'px' }],
-    { duration: 520, easing: 'cubic-bezier(.3,1.15,.4,1)' });
-  svcX = x;
-}
+let svcPlaced = false;
+const placeSvc = (animate) => glide($('#svcInd'), $('.svc-b[aria-checked="true"]'), animate);
 function markService(key) {
   document.querySelectorAll('.svc-b.store, .svc-sep').forEach((el) => { el.hidden = state.kind !== 'movie'; });
   let chosen;
   document.querySelectorAll('.svc-b').forEach((b) => { const on = b.dataset.svc === key; b.setAttribute('aria-checked', on); b.tabIndex = on ? 0 : -1; if (on) chosen = b; });
-  placeSvc(svcX !== null);
-  // keep the chosen one in view when the bar scrolls (phones)
+  placeSvc(svcPlaced);
+  // keep the chosen one in view if the bar scrolls (narrow windows)
   const bar = $('#svc');
   if (chosen && bar.scrollWidth > bar.clientWidth) {
     const target = chosen.offsetLeft - (bar.clientWidth - chosen.offsetWidth) / 2;
-    bar.scrollTo({ left: Math.max(0, target), behavior: svcX === null || reduceMotion ? 'auto' : 'smooth' });
+    bar.scrollTo({ left: Math.max(0, target), behavior: !svcPlaced || reduceMotion ? 'auto' : 'smooth' });
   }
+  svcPlaced = true;
 }
 
 // ---------- phones: the service bar as a pull-down menu ----------
@@ -97,7 +82,7 @@ const ddPop = $('#ddPop'), ddList = $('#ddList');
 let ddBtn = null;
 const iconOf = (key) => key === 'top' ? '' : key === 'store' ? ICON_STORE
   : svc(key)?.logo ? `<img src="${esc(svc(key).logo)}" alt="">` : `<span class="svc-glyph">${esc(svc(key)?.label[0] || '')}</span>`;
-function ddItems(btn) {
+function ddItems() {
   const keys = ['top', ...services().filter((x) => !x.store).map((x) => x.key), ...(state.kind === 'movie' ? services().filter((x) => x.store).map((x) => x.key) : [])];
   return keys.map((k) => ({ act: () => { location.hash = k; }, on: state.route === k, label: k === 'top' ? 'All services' : svc(k).label, icon: iconOf(k), sep: k === 'store' }));
 }
@@ -112,7 +97,7 @@ function ddClose(focus) {
 function ddOpen(btn) {
   if (ddBtn === btn) { ddClose(); return; }
   ddBtn = btn; btn.setAttribute('aria-expanded', 'true');
-  const items = ddItems(btn);
+  const items = ddItems();
   ddList.innerHTML = items.map((it, i) => `${it.sep ? '<div class="dd-sep" role="separator"></div>' : ''}<button type="button" role="menuitemradio" aria-checked="${it.on}" data-i="${i}">${it.icon ? `<i>${it.icon}</i>` : ''}<span><b>${esc(it.label)}</b></span><em aria-hidden="true"></em></button>`).join('');
   ddList.onclick = (e) => { const b = e.target.closest('[data-i]'); if (!b) return; ddClose(); items[b.dataset.i].act(); };
   ddPop.classList.remove('out'); ddPop.hidden = false;
@@ -124,14 +109,8 @@ function ddOpen(btn) {
 }
 document.querySelectorAll('.dd').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); ddOpen(b); }));
 document.addEventListener('click', (e) => { if (ddBtn && !ddPop.contains(e.target)) ddClose(); });
-addEventListener('keydown', (e) => {
-  if (!ddBtn) return;
-  if (e.key === 'Escape') { ddClose(true); return; }
-  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {   // arrow keys move through the menu
-    const list = [...ddList.querySelectorAll('button')], i = list.indexOf(document.activeElement);
-    e.preventDefault(); list[(i + (e.key === 'ArrowDown' ? 1 : -1) + list.length) % list.length]?.focus();
-  }
-});
+addEventListener('keydown', (e) => { if (ddBtn && e.key === 'Escape') ddClose(true); });
+arrows(ddList, () => [...ddList.querySelectorAll('button')]);   // arrow keys move through the menu
 addEventListener('resize', () => ddClose());
 addEventListener('scroll', () => ddClose(), { passive: true });
 function markDropdowns() {
@@ -143,7 +122,7 @@ function markDropdowns() {
 const narrow = matchMedia('(max-width: 560px)');
 function agoText(iso) {
   const mins = Math.floor((Date.now() - Date.parse(iso)) / 60000), h = Math.floor(mins / 60);
-  if (narrow.matches) { // phones: the short form, so the pill sits beside the service picker
+  if (narrow.matches) { // phones: the short form, so the line stays on one row
     if (mins < 3) return 'Just updated';
     return mins < 60 ? `${mins} min ago` : `${h} hr ago`;
   }
@@ -161,34 +140,26 @@ function showUpdated() {
 }
 setInterval(() => state.trending && showUpdated(), 30000);
 
-$('#refresh').addEventListener('click', async () => {
+// Fetch the latest data and, if it's new, redraw in place (with the usual crossfade), keeping your scroll position.
+// Tapping "Updated …" does it with a word of feedback; the background check (from shell.js) does it quietly, and holds
+// back while a menu is open or a row is being dragged, trying again next time.
+async function refresh(quiet) {
   const btn = $('#refresh');
-  if (btn.classList.contains('busy')) return;
-  btn.classList.add('busy'); $('#ago').textContent = 'Checking…';
-  const before = state.trending.generatedAt;
-  try {
-    Object.assign(state, await fetchData(true));
-    showUpdated(); render();
-    toast(state.trending.generatedAt === before ? "You're up to date" : 'New chart loaded');
-  } catch {
-    showUpdated(); toast("Couldn't check right now. Try again in a moment.");
-  }
-  btn.classList.remove('busy');
-});
-
-// New data while the page is open: swap it in and redraw (with the usual crossfade), keeping your place.
-// Held back while a menu is open or a row is being dragged, and tried again at the next check.
-addEventListener('tn:check', async () => {
-  if (!state.trending || $('#refresh').classList.contains('busy')) return;
+  if (!state.trending || btn.classList.contains('busy')) return;
+  if (quiet && (ddBtn || $('.posters.dragging'))) return;
+  if (!quiet) { btn.classList.add('busy'); $('#ago').textContent = 'Checking…'; }
   try {
     const d = await fetchData(true);
     const changed = d.trending.generatedAt !== state.trending.generatedAt || d.fresh?.generatedAt !== state.fresh?.generatedAt;
-    if (!changed || ddBtn || document.querySelector('.posters.dragging')) return;
-    const y = scrollY;
-    Object.assign(state, d); showUpdated(); render();
-    requestAnimationFrame(() => scrollTo(0, y));
-  } catch { /* offline for a moment: the next check will catch up */ }
-});
+    if (changed) { const y = scrollY; Object.assign(state, d); render(); requestAnimationFrame(() => scrollTo(0, y)); }
+    if (!quiet) toast(changed ? 'New chart loaded' : "You're up to date");
+  } catch {
+    if (!quiet) toast("Couldn't check right now. Try again in a moment.");   // quietly: the next check catches up
+  }
+  btn.classList.remove('busy'); showUpdated();
+}
+$('#refresh').addEventListener('click', () => refresh(false));
+addEventListener('tn:check', () => refresh(true));
 
 // ---------- routing ----------
 function route() {
@@ -212,7 +183,7 @@ function draw() {
   document.querySelectorAll('.kind [data-kind]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.kind === state.kind)));
   const isNew = state.route === 'new';
   $('#controls').hidden = isNew;
-  if (isNew) { setBackdrop(null); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; document.title = 'New this week | Tenner'; return; }
+  if (isNew) { setBackdrop(null); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; document.title = 'New This Week | Tenner'; return; }
 
   markService(state.route); markDropdowns();
 
@@ -233,7 +204,7 @@ function draw() {
   const chart = list.length
     ? `${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up. Add your TMDB key and run the workflow to see the real chart.</p>` : ''}
        ${hero(picks, s)}${s?.store ? '' : features(s)}
-       ${kinds.map((k) => `${kinds.length > 1 ? `<h2 class="row-h kind-h">Top 10 ${words(k)}</h2>` : ''}${posterRow(listOf(k), k)}${chartList(listOf(k), s, k)}`).join('')}
+       ${kinds.map((k, r) => `${kinds.length > 1 ? `<h2 class="row-h kind-h">Top 10 ${words(k)}</h2>` : ''}${posterRow(listOf(k), k, r === 0)}${chartList(listOf(k), s, k)}`).join('')}
        ${s?.store ? '' : newRow(s)}`
     : `<div class="empty"><h2>Nothing here right now</h2><p>The chart for ${esc(where)} will be back after the next hourly update.</p><a class="btn btn-tinted" href="#top">See all five services</a></div>`;
   view.innerHTML = `<div class="wrap chart">${chart}</div>`;
@@ -298,6 +269,11 @@ function showHero(i) {
   setBackdrop(heroList[i].it);
 }
 view.addEventListener('click', (e) => { const d = e.target.closest('[data-hero]'); if (d) showHero(Number(d.dataset.hero)); });
+view.addEventListener('keydown', (e) => {   // ← → move between the hero's titles when a dot has focus
+  const d = e.target.closest?.('[data-hero]'); if (!d || !['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+  e.preventDefault(); const i = (heroAt + (e.key === 'ArrowRight' ? 1 : -1) + heroList.length) % heroList.length;
+  showHero(i); $(`[data-hero="${i}"]`)?.focus();
+});
 
 // Netflix's own chart is weekly (Monday to Sunday); "week" is the Sunday it ends on.
 function officialLine(o) {
@@ -308,7 +284,6 @@ function officialLine(o) {
 const weeksText = (it) => it.weeks > 1 ? `${it.weeks} weeks in the Top 10` : it.weeks === 1 ? 'New to the Top 10' : '';
 
 // ---------- pieces ----------
-function hue(str) { let h = 0; for (const c of String(str)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
 function placeholder(it) {
   const h = hue(it.title);
   return `<span class="ph" style="background:linear-gradient(160deg,hsl(${h} 45% 42%),hsl(${(h + 40) % 360} 55% 18%))">${esc(it.title)}</span>`;
@@ -352,7 +327,7 @@ function wireRanks() {
   });
 }
 
-function posterRow(list, kind = state.kind) {
+function posterRow(list, kind = state.kind, first = true) {
   const edge = (side) => `<div class="edge ${side}" aria-hidden="true">${'<i></i>'.repeat(6)}</div>`;
   return `<div class="row-wrap at-start">
     ${edge('l')}${edge('r')}
@@ -362,9 +337,9 @@ function posterRow(list, kind = state.kind) {
       ${list.map((it, i) => `<li class="pcard" style="--d:${i}">
         ${rankSvg(i, kind)}
         <a class="cover" href="${esc(it.url)}" target="_blank" rel="noopener" aria-label="Number ${i + 1}: ${esc(it.title)}">
-          ${it.poster ? `<img src="${esc(it.poster)}" alt="" loading="${i < 4 ? 'eager' : 'lazy'}" width="342" height="513">` : placeholder(it)}
+          ${it.poster ? `<img src="${esc(it.poster)}" alt="" ${first && i < 4 ? `loading="eager"${i === 0 ? ' fetchpriority="high"' : ''}` : 'loading="lazy"'} decoding="async" width="342" height="513">` : placeholder(it)}
         </a>
-        <h3><a href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.title)}</a></h3>
+        <h3><a href="${esc(it.url)}" target="_blank" rel="noopener" tabindex="-1">${esc(it.title)}</a></h3>
         <p class="sub">${meta(it)}</p>
       </li>`).join('')}
     </ol>
@@ -409,7 +384,7 @@ function chartList(list, s, k = state.kind) {
       <a class="see-all" href="${esc(browse)}">See more in Browse<span class="chev" aria-hidden="true"></span></a></div>
     <ol class="cl">${list.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener">
       <span class="cl-n">${i + 1}</span>
-      ${it.poster ? `<img src="${esc(it.poster)}" alt="" loading="lazy">` : `<span class="cl-ph" style="background:hsl(${hue(it.title)} 45% 35%)"></span>`}
+      ${it.poster ? `<img src="${esc(it.poster)}" alt="" loading="lazy" decoding="async">` : `<span class="cl-ph" style="background:hsl(${hue(it.title)} 45% 35%)"></span>`}
       <span class="cl-t"><b>${esc(it.title)}</b><small>${esc([s ? '' : onText(it), it.season, it.year].filter(Boolean).join(' · '))}</small></span>
       ${it.rating ? `<span class="cl-r">★ ${it.rating.toFixed(1)}</span>` : ''}
     </a></li>`).join('')}</ol>
@@ -461,7 +436,7 @@ function pageNew() {
           ${s ? `<a class="btn btn-tinted chip" href="#${s.key}">${esc(s.label)}</a>` : ''}</li>`;
       }).join('')}</ul></section>`).join('');
   }
-  return `<h1 class="large-title" style="margin-top:24px">New This Week</h1>
+  return `<h1 class="large-title page-title">New This Week</h1>
     <p class="lede">Arriving over the last and next seven days. Dates come from US listings, so a few UK dates may differ.</p>
     ${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up.</p>` : ''}
     ${body}`;
@@ -556,7 +531,7 @@ function openTab(name) {
 }
 window.tnOnTab = openTab;
 
-// ---------- Shows or Films: one switch, the same as on Browse ----------
+// ---------- Shows | Films | Both: one switch, the same as on Browse ----------
 function setKind(k) {
   if (k === state.kind) return;
   state.kind = k;
@@ -566,6 +541,7 @@ function setKind(k) {
   render();
 }
 document.querySelectorAll('.kind [data-kind]').forEach((b) => b.addEventListener('click', () => setKind(b.dataset.kind)));
+arrows($('.kind'), () => [...document.querySelectorAll('.kind [data-kind]')], (b) => setKind(b.dataset.kind));
 
 addEventListener('hashchange', () => { route(); scrollTo(0, 0); });
 load();

@@ -1,29 +1,46 @@
-// Tenner's shell, shared by every page and ported from Channel Crossings:
-// the tab bar's gliding pill, the Theme menu (Auto, Day, Night) and the fade behind the bar once the page scrolls.
+// Tenner's shell, shared by every page: the tabs (a sidebar on computers, a floating bar on phones), the Theme menu,
+// keyboard shortcuts, the fade behind the bar once the page scrolls, the hourly freshness check, and a few helpers the
+// pages share (window.tn), so each exists once.
 (() => {
   const $ = (s) => document.querySelector(s);
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const root = document.documentElement;
 
+  // ---------- shared helpers ----------
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const hue = (t) => { let h = 0; for (const c of String(t)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
+  // The pill under a chosen item (tabs, services, collections): it glides across, stretching a little on the way and
+  // settling with a small spring. `from` remembers where each pill was.
+  const from = new WeakMap();
+  function glide(ind, b, animate, stretch = 1.14) {
+    if (!ind || !b || !b.offsetWidth) return;
+    const x = b.offsetLeft, w = b.offsetWidth, was = from.get(ind);
+    from.set(ind, x);
+    if (was === undefined || !animate || reduce || !ind.animate) { ind.style.width = w + 'px'; ind.style.transform = `translateX(${x}px)`; return; }
+    const t0 = ind.style.transform, w0 = ind.style.width, mw = Math.max(parseFloat(w0), w) * stretch, mid = (was + x) / 2 - (mw - w) / 2;
+    ind.style.width = w + 'px'; ind.style.transform = `translateX(${x}px)`;
+    ind.animate([{ transform: t0, width: w0 }, { transform: `translateX(${mid}px)`, width: mw + 'px', offset: 0.45 }, { transform: `translateX(${x}px)`, width: w + 'px' }],
+      { duration: 520, easing: 'cubic-bezier(.3,1.15,.4,1)' });
+  }
+  // Arrow keys move through a group of radio-like buttons (segmented controls, menus), as on Apple platforms.
+  function arrows(group, items, pick) {
+    group.addEventListener('keydown', (e) => {
+      const list = items().filter((b) => b.offsetWidth && !b.hidden), i = list.indexOf(document.activeElement);
+      const k = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: list.length - 1 }[e.key];
+      if (k === undefined || i < 0) return;
+      e.preventDefault(); const n = list[(k + list.length) % list.length]; n.focus(); pick?.(n);
+    });
+  }
+  window.tn = { esc, hue, glide, arrows, reduce };
+
   // ---------- tabs ----------
   const tabs = [...document.querySelectorAll('#tabs [role=tab]')], ind = $('#tabInd'), names = tabs.map((t) => t.dataset.tab);
-  let cur = tabs.find((t) => t.getAttribute('aria-selected') === 'true')?.dataset.tab ?? null, indX = null;
-  // the pill under the chosen tab: glides across, stretching a little on the way and settling with a small spring
-  function placeInd(animate) {
-    const b = tabs[names.indexOf(cur)]; if (!b || !b.offsetWidth) return;
-    const x = b.offsetLeft, w = b.offsetWidth;
-    if (indX === null || !animate || reduce || !ind.animate) { ind.style.width = w + 'px'; ind.style.transform = `translateX(${x}px)`; indX = x; return; }
-    const from = ind.style.transform, fw = ind.style.width, mid = (indX + x) / 2, mw = Math.max(parseFloat(fw), w) * 1.18;
-    ind.style.width = w + 'px'; ind.style.transform = `translateX(${x}px)`;
-    ind.animate([{ transform: from, width: fw }, { transform: `translateX(${mid - (mw - w) / 2}px)`, width: mw + 'px', offset: 0.45 }, { transform: `translateX(${x}px)`, width: w + 'px' }],
-      { duration: 520, easing: 'cubic-bezier(.3,1.15,.4,1)' });
-    indX = x;
-  }
+  let cur = tabs.find((t) => t.getAttribute('aria-selected') === 'true')?.dataset.tab ?? null, placed = false;
+  const placeInd = (animate) => glide(ind, tabs[names.indexOf(cur)], animate, 1.18);
   function select(name) {
-    const first = indX === null;
     cur = name;
     tabs.forEach((t) => { const on = t.dataset.tab === name; t.setAttribute('aria-selected', on); t.tabIndex = on ? 0 : -1; });
-    placeInd(!first);
+    placeInd(placed); placed = true;
   }
   // pages without their own handler (About) send the tabs back to the chart
   function open(name) {
@@ -39,17 +56,19 @@
     if (name === 'new') { location.href = './#new'; return; }
     location.href = './';
   }
-  tabs.forEach((t) => {
-    t.addEventListener('click', () => open(t.dataset.tab));
-    t.addEventListener('keydown', (e) => { // arrow keys move along the visible tabs (About is hidden in the sidebar), Home and End jump
-      const shown = tabs.filter((b) => b.offsetWidth), i = shown.indexOf(t);
-      const k = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: shown.length - 1 }[e.key]; if (k === undefined) return;
-      e.preventDefault(); const n = shown[(k + shown.length) % shown.length]; n.focus(); open(n.dataset.tab);
-    });
-  });
+  tabs.forEach((t) => t.addEventListener('click', () => open(t.dataset.tab)));
+  arrows($('#tabs'), () => tabs, (n) => open(n.dataset.tab));   // the visible tabs only (About is hidden in the sidebar)
   addEventListener('resize', () => placeInd(false));
   document.fonts?.ready.then(() => placeInd(false));
-  placeInd(false);
+  placeInd(false); placed = true;
+
+  // ---------- keyboard shortcuts, as on the Mac: / or ⌘K (Ctrl+K) to search, from any page ----------
+  addEventListener('keydown', (e) => {
+    const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName) || document.activeElement?.isContentEditable;
+    if ((e.key === '/' && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) || (e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey) && !e.altKey)) {
+      e.preventDefault(); open('search');
+    }
+  });
 
   // ---------- Theme: Auto, Day or Night (Night by default) ----------
   const modeBtns = document.querySelectorAll('.th-list button');
@@ -87,6 +106,7 @@
   }
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', showTheme); // Auto: the icon follows the device
   tbMenu($('#thBtn'), $('#thPop'), () => $('#thPop [aria-checked="true"]')?.focus({ preventScroll: true }));
+  arrows($('#thPop'), () => [...modeBtns]);
   modeBtns.forEach((b) => b.addEventListener('click', () => {
     const n = b.dataset.mode;
     window.tnTheme?.(n);

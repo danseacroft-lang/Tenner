@@ -1,17 +1,15 @@
 // Tenner Browse: the hour's catalogue (data/browse.json), filtered and sorted in the browser.
 // State lives in the URL (#c=top&k=movie&s=netflix,disney&g=18&sort=rating&r=7), so any view can be shared or bookmarked.
 (() => {
+  const { esc, hue, glide, arrows, reduce } = window.tn;   // from shell.js
   const $ = (s) => document.querySelector(s);
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const PAGE = 48;
-  const today = new Date().toISOString().slice(0, 10);
-  const daysAgo = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+  const daysAgo = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);   // worked out each time, so it's right past midnight
 
   // Collections: a filter plus the sort that suits it.
   const COLLECTIONS = [
     { key: 'popular', label: 'Popular', sort: 'pop', test: (x) => x.s.length },
-    { key: 'new', label: 'New releases', sort: 'new', test: (x) => x.s.length && x.d >= daysAgo(150) && x.d <= today },
+    { key: 'new', label: 'New releases', sort: 'new', test: (x) => x.s.length && x.d >= daysAgo(150) && x.d <= daysAgo(0) },
     { key: 'top', label: 'Top rated', sort: 'rating', test: (x) => x.s.length && x.r >= 7.6 && x.v >= 300 },
     { key: 'gems', label: 'Hidden gems', sort: 'rating', test: (x) => x.s.length && x.r >= 7.2 && x.v >= 30 && x.v < 600 },
     { key: 'acclaimed', label: 'Acclaimed', sort: 'rating', test: (x) => x.s.length && x.r >= 8 && x.v >= 1500 },
@@ -32,7 +30,7 @@
   function readHash() {
     const q = new URLSearchParams(location.hash.slice(1));
     state.c = COLLECTIONS.some((c) => c.key === q.get('c')) ? q.get('c') : 'popular';
-    state.k = q.get('k') === 'movie' ? 'movie' : 'tv';
+    state.k = ['movie', 'both'].includes(q.get('k')) ? q.get('k') : 'tv';
     state.s = (q.get('s') || '').split(',').filter((k) => labels[k]);
     state.g = (q.get('g') || '').split(',').map(Number).filter((g) => cat.genres[g]);
     state.sort = SORTS.some((s) => s.key === q.get('sort')) ? q.get('sort') : null;
@@ -53,6 +51,7 @@
     history.replaceState(null, '', h ? '#' + h : location.pathname);
   }
   const collection = () => COLLECTIONS.find((c) => c.key === state.c);
+  const kindOk = (x) => state.k === 'both' || x.t === state.k;   // Shows, Films or Both
   const sortKey = () => state.sort || collection().sort;
 
   // ---------- data ----------
@@ -90,10 +89,18 @@
     $('#coll').addEventListener('click', (e) => { const b = e.target.closest('.coll-b'); if (!b) return;
       state.c = b.dataset.c; state.sort = null; if (collection().films) state.k = 'movie'; apply(true); });
 
-    document.querySelectorAll('[data-kind]').forEach((b) => b.addEventListener('click', () => {
-      if (collection().films && b.dataset.kind === 'tv') state.c = 'popular';
-      state.k = b.dataset.kind; state.g = state.g.filter((g) => genreSet().has(g)); apply(true);
-    }));
+    const setKind = (k) => {
+      if (collection().films && k !== 'movie') state.c = 'popular';
+      state.k = k; state.g = state.g.filter((g) => genreSet().has(g)); apply(true);
+    };
+    document.querySelectorAll('[data-kind]').forEach((b) => b.addEventListener('click', () => setKind(b.dataset.kind)));
+    arrows($('.b-head .segmented'), () => [...document.querySelectorAll('[data-kind]')], (b) => setKind(b.dataset.kind));
+    arrows($('#coll'), () => [...document.querySelectorAll('.coll-b')], (b) => b.click());
+    arrows($('#sort'), () => [...document.querySelectorAll('.s-b')], (b) => b.click());
+    $('#grid').addEventListener('click', (e) => {   // the empty state's button clears whatever is hiding the results
+      const c = e.target.closest('[data-clear]'); if (!c) return;
+      if (c.dataset.clear === 'q') { state.q = ''; apply(true); $('#q').focus(); } else $('#clear').click();
+    });
 
     $('#where').innerHTML = Object.keys(labels).map((k) => `<button type="button" class="w-b" data-s="${k}" aria-pressed="false" title="${esc(labels[k])}">
       <span class="w-ic">${logos[k] ? `<img src="${esc(logos[k])}" alt="">` : esc(labels[k][0])}</span><span>${esc(labels[k])}</span></button>`).join('');
@@ -111,14 +118,11 @@
 
     $('#clear').addEventListener('click', () => { Object.assign(state, { s: [], g: [], sort: null, r: 0 }); apply(true); });
 
-    // search: results as you type; '/' jumps to the box; Escape clears it
+    // search: results as you type; / or ⌘K jumps to the box (shell.js); Escape clears it
     const qi = $('#q');
     qi.addEventListener('input', () => { state.q = qi.value; apply(true, true); if (scrollY > 300) scrollTo({ top: 0, behavior: 'auto' }); });
     qi.addEventListener('keydown', (e) => { if (e.key === 'Escape' && qi.value) { e.preventDefault(); state.q = ''; apply(true); } if (e.key === 'Enter') qi.blur(); });
     $('#qClear').addEventListener('click', () => { state.q = ''; apply(true); qi.focus(); });
-    addEventListener('keydown', (e) => {
-      if (e.key === '/' && !e.metaKey && !e.ctrlKey && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) { e.preventDefault(); qi.focus(); qi.select(); }
-    });
 
     // phones: the filters open as a sheet from the bottom
     const sheet = $('#filters'), scrim = $('#scrim'), openBtn = $('#openFilters');
@@ -140,7 +144,7 @@
     addEventListener('hashchange', () => { readHash(); apply(false); });
   }
 
-  const genreSet = () => new Set(cat.items.filter((x) => x.t === state.k).flatMap((x) => x.g));
+  const genreSet = () => new Set(cat.items.filter(kindOk).flatMap((x) => x.g));
   function paintRating() {
     const r = $('#rating'); r.value = state.r;
     $('#ratingOut').textContent = state.r ? `${state.r}+` : 'Any';
@@ -176,7 +180,7 @@
         && (!state.g.length || x.g.some((g) => state.g.includes(g)))
         && (!state.r || x.r >= state.r))
         .sort((a, b) => (state.sort ? sortFn(a[0], b[0]) : (b[1] - a[1] || b[0].p - a[0].p))).map(([x]) => x);
-    } else list = cat.items.filter((x) => x.t === state.k && col.test(x)
+    } else list = cat.items.filter((x) => kindOk(x) && col.test(x)
       && (!state.s.length || col.key === 'store' || x.s.some((k) => state.s.includes(k)))
       && (!state.g.length || x.g.some((g) => state.g.includes(g)))
       && (!state.r || x.r >= state.r)).sort(sortFn);
@@ -195,9 +199,10 @@
     $('#fCount').hidden = !n; $('#fCount').textContent = n;
     $('#clear').disabled = !n;
 
-    const noun = state.k === 'tv' ? (list.length === 1 ? 'show' : 'shows') : (list.length === 1 ? 'film' : 'films');
+    const noun = { tv: ['show', 'shows'], movie: ['film', 'films'], both: ['title', 'titles'] }[state.k][list.length === 1 ? 0 : 1];
     $('#count').textContent = q ? `${list.length.toLocaleString('en-GB')} ${list.length === 1 ? 'result' : 'results'} for “${state.q.trim()}”` : `${list.length.toLocaleString('en-GB')} ${noun}`;
     document.body.classList.toggle('searching', !!q);
+    document.body.classList.toggle('mixed', !!q || state.k === 'both');   // show/film labels on the tiles when both are listed
     $('#qClear').hidden = !state.q;
     if ($('#q').value !== state.q) $('#q').value = state.q;
     if (!quiet) writeHash(); else clearTimeout(apply.t), (apply.t = setTimeout(writeHash, 250));
@@ -210,15 +215,14 @@
   function empty() {
     if (list.length) return;
     $('#grid').innerHTML = `<li class="none"><h2>No matches</h2><p>${state.q ? 'Nothing in this hour\'s catalogue matches that. Try a shorter search, or fewer filters.' : 'Try fewer filters, or a different collection.'}</p>
-      <button type="button" class="btn btn-tinted" onclick="document.getElementById('clear').click()">Clear filters</button></li>`;
+      <button type="button" class="btn btn-tinted" data-clear="${state.q ? 'q' : 'filters'}">${state.q ? 'Clear search' : 'Clear filters'}</button></li>`;
   }
 
   // ---------- the grid ----------
   const fmt = (d) => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
-  function hueOf(t) { let h = 0; for (const c of String(t)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
   function card(x, i) {
     const url = `https://www.themoviedb.org/${x.t}/${x.i}/watch?locale=GB`;
-    const h = hueOf(x.n);
+    const h = hue(x.n);
     const art = x.img
       ? `<img src="${esc(x.img.startsWith('/') ? cat.img + x.img : x.img)}" alt="" loading="lazy" decoding="async" width="342" height="513">`
       : `<span class="ph" style="background:linear-gradient(160deg,hsl(${h} 45% 42%),hsl(${(h + 40) % 360} 55% 18%))">${esc(x.n)}</span>`;
@@ -238,20 +242,11 @@
     shown += next.length;
   }
 
-  // the gliding pill under the chosen collection
-  let collX = null;
+  // the gliding pill under the chosen collection, kept in view if the capsule scrolls
   function placeColl(animate) {
-    const b = $('.coll-b[aria-checked="true"]'), ind = $('#collInd'); if (!b) return;
-    const x = b.offsetLeft, w = b.offsetWidth;
-    if (collX === null || !animate || reduce || !ind.animate) { ind.style.width = w + 'px'; ind.style.transform = `translateX(${x}px)`; collX = x; }
-    else {
-      const from = ind.style.transform, fw = ind.style.width, mid = (collX + x) / 2, mw = Math.max(parseFloat(fw), w) * 1.14;
-      ind.style.width = w + 'px'; ind.style.transform = `translateX(${x}px)`;
-      ind.animate([{ transform: from, width: fw }, { transform: `translateX(${mid - (mw - w) / 2}px)`, width: mw + 'px', offset: .45 }, { transform: `translateX(${x}px)`, width: w + 'px' }],
-        { duration: 520, easing: 'cubic-bezier(.3,1.15,.4,1)' });
-      collX = x;
-    }
+    const b = $('.coll-b[aria-checked="true"]'); if (!b) return;
+    glide($('#collInd'), b, animate);
     const track = $('#coll');
-    if (track.scrollWidth > track.clientWidth) track.scrollTo({ left: Math.max(0, x - (track.clientWidth - w) / 2), behavior: animate && !reduce ? 'smooth' : 'auto' });
+    if (track.scrollWidth > track.clientWidth) track.scrollTo({ left: Math.max(0, b.offsetLeft - (track.clientWidth - b.offsetWidth) / 2), behavior: animate && !reduce ? 'smooth' : 'auto' });
   }
 })();
