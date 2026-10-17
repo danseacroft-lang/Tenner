@@ -190,105 +190,32 @@
 .js-reveal .reveal .spark path { transform: scale(0); }
 .js-reveal .reveal.in .spark path { transform: scale(1); transition: transform .6s var(--ease-spring) .8s; }
 
-/* ============================================================ the stage: this hour's top 10 in a 3D arc
-   A dark cinema stage in both themes. A soft key light from above, the posters' own colour spilling onto
-   a glossy floor, a reflection under every card, and a neon "1" over No. 1. */
-.stage {
-  --tilt-x: 0deg; --tilt-y: 0deg;
-  position: relative; margin: 34px 0 0; height: clamp(330px, 46vw, 480px); border-radius: 32px; overflow: hidden;
-  background:
-    radial-gradient(70% 60% at 50% -8%, rgba(255, 255, 255, .16), transparent 60%),
-    radial-gradient(60% 45% at 50% 108%, rgba(191, 90, 242, .32), transparent 70%),
-    radial-gradient(45% 40% at 12% 70%, rgba(10, 132, 255, .22), transparent 70%),
-    radial-gradient(45% 40% at 88% 70%, rgba(255, 55, 95, .2), transparent 70%),
-    linear-gradient(180deg, #0b0b14, #05050a 70%);
-  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .12), 0 30px 80px -30px rgba(80, 40, 160, .45);
-  perspective: 1500px; perspective-origin: 50% 32%;
-  isolation: isolate; animation: riseIn 1s var(--ease-out) .15s both;
+/* ============================================================ the test card
+   Tenner's hero is a TV test card in its own colours: colour bars, a dial with the 10 in the middle, and a caption
+   strip like the ones broadcasters used. One static SVG and a line of text. No images, blur, 3D or animation. */
+.testcard {
+  position: relative; margin: 34px 0 0; border-radius: 30px; overflow: hidden; background: #0b0b10;
+  box-shadow: 0 0 0 .5px rgba(255, 255, 255, .14), 0 30px 70px -30px rgba(40, 20, 90, .55);
+  animation: riseIn .9s var(--ease-out) .15s both;
 }
-/* a cone of light from above, very soft */
-.stage-light {
-  position: absolute; inset: -20% 18% 30%; pointer-events: none; z-index: 0;
-  background: conic-gradient(from 180deg at 50% 0%, transparent 155deg, rgba(255, 255, 255, .07) 172deg, rgba(255, 255, 255, .11) 180deg, rgba(255, 255, 255, .07) 188deg, transparent 205deg);
-  filter: blur(6px);
+.testcard svg { display: block; width: 100%; height: clamp(260px, 37vw, 444px); }
+.tc-strip {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px;
+  padding: 14px 22px; background: #0b0b10; color: #fff; border-top: 1px solid rgba(255, 255, 255, .1);
+  font: 600 15px/1.2 var(--font); letter-spacing: -.01em;
 }
-.ring {
-  position: absolute; left: 50%; top: 13%; width: 0; height: 0; z-index: 2;
-  transform-style: preserve-3d;
-  transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
-  transition: transform .9s var(--ease-out);
-}
-.card {
-  --w: clamp(112px, 15vw, 176px);
-  position: absolute; left: calc(var(--w) / -2); top: 0; margin: 0; width: var(--w); aspect-ratio: 2 / 3;
-  border-radius: 14px; overflow: visible;
-  transform: translate3d(0, 24px, -260px) rotateY(0deg) scale(.86);
-  opacity: 0;
-  transition: transform 1.25s var(--ease-spring), opacity .6s ease, filter .6s ease;
-  transition-delay: calc(.25s + var(--i) * 55ms);
-  -webkit-box-reflect: below 6px linear-gradient(transparent 62%, rgba(0, 0, 0, .28));
-}
-.stage.open .card { opacity: 1; transform: translate3d(var(--x), 0, var(--z)) rotateY(var(--ry)); }
-.stage.open .card:not(:first-child) { filter: brightness(.82) saturate(.95); }
-.card img, .card .ph {
-  display: block; width: 100%; height: 100%; object-fit: contain; border-radius: inherit; background: #15151c;
-  box-shadow: 0 0 0 .5px rgba(255, 255, 255, .14), 0 24px 50px -14px rgba(0, 0, 0, .8);
-}
-.card .ph { display: grid; align-content: end; padding: 14px; box-sizing: border-box; color: #fff; font: 700 17px/1.08 var(--font-display); letter-spacing: -.02em; }
-.card:first-child img, .card:first-child .ph { box-shadow: 0 0 0 .5px rgba(255, 255, 255, .22), 0 30px 70px -12px rgba(0, 0, 0, .85), 0 0 60px -6px hsl(var(--h) 80% 55% / .45); }
-/* a neon "01" over No. 1, the same tube as the chart's rank numbers */
-.one {
-  position: absolute; left: -22%; top: -27%; width: 112%; height: auto; z-index: 3; pointer-events: none; overflow: visible;
-  opacity: 0; transform: translateY(12px) scale(.92); transition: opacity .7s ease 1.05s, transform 1s var(--ease-spring) 1.05s;
-}
-.one text { font: 800 120px var(--font-display); letter-spacing: -.055em; }
-.stage.open .one { opacity: 1; transform: none; }
-/* the outer posters melt into the dark at both sides */
-.stage::before, .stage::after { content: ""; position: absolute; top: 0; bottom: 0; width: 16%; z-index: 3; pointer-events: none; }
-.stage::before { left: 0; background: linear-gradient(90deg, #06060b 8%, rgba(6, 6, 11, .7) 45%, transparent); }
-.stage::after { right: 0; background: linear-gradient(-90deg, #06060b 8%, rgba(6, 6, 11, .7) 45%, transparent); }
-/* glossy floor */
-.floor {
-  position: absolute; left: -10%; right: -10%; bottom: 0; height: 34%; z-index: 1; pointer-events: none;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .035), transparent 70%);
-  border-top: .5px solid rgba(255, 255, 255, .06);
-  -webkit-mask-image: radial-gradient(70% 100% at 50% 0%, #000, transparent); mask-image: radial-gradient(70% 100% at 50% 0%, #000, transparent);
-}
-/* glass chips */
-.chip-g {
-  position: absolute; z-index: 4; display: inline-flex; align-items: center; gap: 9px; height: 42px; padding: 0 16px 0 13px; border-radius: 999px;
-  color: #fff; font: 600 15px/1 var(--font); letter-spacing: -.01em; white-space: nowrap;
-  background: rgba(40, 40, 46, .55); -webkit-backdrop-filter: blur(20px) saturate(170%); backdrop-filter: blur(20px) saturate(170%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), inset 0 0 0 .5px rgba(255, 255, 255, .16), 0 12px 30px rgba(0, 0, 0, .45);
-  opacity: 0; transform: translateY(14px) scale(.94); transition: opacity .6s ease, transform .9s var(--ease-spring);
-}
-.stage.open .chip-g { opacity: 1; transform: none; }
-.c-upd { left: 5%; top: 9%; transition-delay: 1.25s; }
-.c-svc { right: 5%; bottom: 11%; transition-delay: 1.4s; }
-.chip-g .dot { width: 9px; height: 9px; border-radius: 50%; background: #30d158; box-shadow: 0 0 10px #30d158; }
-.chip-g .logos { display: inline-flex; }
-.chip-g .logos img { width: 24px; height: 24px; border-radius: 7px; box-shadow: 0 0 0 2px rgba(30, 30, 36, .9); }
-.chip-g .logos img + img { margin-left: -7px; }
-.chip-g .logos:empty { display: none; }
-
+.tc-name { font: 800 17px/1 var(--font-display); letter-spacing: .18em; }
+.tc-mid { color: rgba(255, 255, 255, .7); font-weight: 500; text-align: center; }
+.tc-upd { justify-self: end; display: inline-flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; }
+.tc-upd i { width: 9px; height: 9px; border-radius: 50%; background: #30d158; box-shadow: 0 0 0 3px rgba(48, 209, 88, .22); }
 @media (max-width: 719px) {
-  .stage { margin-inline: -4px; border-radius: 24px; height: 340px; perspective: 1000px; }
-  .card { --w: 118px; }
-  .ring { top: 17%; }
-  .chip-g { height: 36px; font-size: 13px; padding: 0 13px 0 11px; gap: 7px; }
-  .chip-g .logos img { width: 20px; height: 20px; border-radius: 6px; }
-  .c-upd { left: 4%; top: auto; bottom: 5%; } .c-svc { right: 4%; bottom: 5%; }
-  .stage::before, .stage::after { width: 12%; }
+  .testcard { margin: 24px -4px 0; border-radius: 24px; }
+  .testcard svg { height: 250px; }
+  .tc-strip { grid-template-columns: 1fr auto; padding: 12px 16px; font-size: 13px; }
+  .tc-mid { display: none; }
+  .tc-name { font-size: 15px; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .stage, .card, .one, .chip-g, .ring { transition: none !important; animation: none !important; }
-}
+@media (prefers-reduced-motion: reduce) { .testcard { animation: none; } }
 
-/* the clock card: the hour ring sweeps round once and the second hand turns once as the card arrives */
-.dialnum { font: 700 14px var(--font-display); fill: var(--a-ink); }
-.ring-h { stroke-dasharray: 100; stroke-dashoffset: 18; }
-.js-reveal .reveal .ring-h { stroke-dashoffset: 100; }
-.js-reveal .reveal.in .ring-h { stroke-dashoffset: 18; transition: stroke-dashoffset 2.2s cubic-bezier(.5, 0, .2, 1) .25s; }
-.hand-m { transform-box: view-box; transform-origin: 160px 96px; }
-.js-reveal .reveal .hand-m { transform: rotate(-120deg); }
-.js-reveal .reveal.in .hand-m { transform: rotate(0deg); transition: transform 2.2s cubic-bezier(.5, 0, .2, 1) .25s; }
+/* card 4: the small neon 01 on the phone */
+.neon01s { font: 800 26px var(--font-display); letter-spacing: -.05em; }

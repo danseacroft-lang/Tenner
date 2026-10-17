@@ -575,3 +575,7 @@ tbody tr td.rank span { display: inline-block; transition: transform .5s var(--e
   .svc-ic { width: 26px; height: 26px; border-radius: 7px; }
   .controls .updated { height: 32px; padding: 0 12px; font-size: 13px; }
 }
+
+/* the picker sits under the title and its line of text */
+.intro .large-title { margin-top: 14px; }
+.intro .controls { margin-top: 20px; }

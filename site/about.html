@@ -82,13 +82,32 @@
       <p class="lead">Tenner shows what the UK is watching right now on Netflix, Disney+, Prime Video, HBO Max and Paramount+. One page, five services, refreshed every hour.</p>
     </header>
 
-    <div class="stage" id="stage" aria-label="This hour's top 10">
-      <div class="stage-light" aria-hidden="true"></div>
-      <div class="ring" id="ring"></div>
-      <div class="floor" aria-hidden="true"></div>
-      <div class="chip-g c-upd" id="cUpd"><span class="dot" aria-hidden="true"></span><span id="cUpdT">Updated this hour</span></div>
-      <div class="chip-g c-svc" id="cSvc"><span class="logos" id="cLogos"></span><span>5 services</span></div>
-    </div>
+    <figure class="testcard" aria-label="Tenner test card">
+      <svg viewBox="0 0 1200 444" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs>
+          <linearGradient id="tcRing" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff375f"/><stop offset=".22" stop-color="#ff9f0a"/><stop offset=".42" stop-color="#ffd60a"/><stop offset=".6" stop-color="#30d158"/><stop offset=".8" stop-color="#0a84ff"/><stop offset="1" stop-color="#bf5af2"/></linearGradient>
+          <radialGradient id="tcShade" cx="50%" cy="40%" r="70%"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".38"/></radialGradient>
+          <pattern id="tcDots" width="8" height="8" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="1" fill="#000" opacity=".12"/></pattern>
+        </defs>
+        <rect x="0.00" y="0" width="171.93" height="400" fill="#f2f2f7"/><rect x="171.43" y="0" width="171.93" height="400" fill="#ffd60a"/><rect x="342.86" y="0" width="171.93" height="400" fill="#40c8e0"/><rect x="514.29" y="0" width="171.93" height="400" fill="#30d158"/><rect x="685.71" y="0" width="171.93" height="400" fill="#bf5af2"/><rect x="857.14" y="0" width="171.93" height="400" fill="#ff375f"/><rect x="1028.57" y="0" width="171.93" height="400" fill="#0a84ff"/><rect x="0.00" y="400" width="171.93" height="44" fill="#0a84ff"/><rect x="171.43" y="400" width="171.93" height="44" fill="#111114"/><rect x="342.86" y="400" width="171.93" height="44" fill="#bf5af2"/><rect x="514.29" y="400" width="171.93" height="44" fill="#111114"/><rect x="685.71" y="400" width="171.93" height="44" fill="#40c8e0"/><rect x="857.14" y="400" width="171.93" height="44" fill="#111114"/><rect x="1028.57" y="400" width="171.93" height="44" fill="#f2f2f7"/>
+        <rect width="1200" height="444" fill="url(#tcDots)"/>
+        <g stroke="#000" stroke-opacity=".16" stroke-width="1.2"><path d="M60 0V444"/><path d="M120 0V444"/><path d="M180 0V444"/><path d="M240 0V444"/><path d="M300 0V444"/><path d="M360 0V444"/><path d="M420 0V444"/><path d="M480 0V444"/><path d="M540 0V444"/><path d="M600 0V444"/><path d="M660 0V444"/><path d="M720 0V444"/><path d="M780 0V444"/><path d="M840 0V444"/><path d="M900 0V444"/><path d="M960 0V444"/><path d="M1020 0V444"/><path d="M1080 0V444"/><path d="M1140 0V444"/><path d="M0 60H1200"/><path d="M0 120H1200"/><path d="M0 180H1200"/><path d="M0 240H1200"/><path d="M0 300H1200"/><path d="M0 360H1200"/><path d="M0 420H1200"/></g>
+        <rect width="1200" height="444" fill="url(#tcShade)"/>
+        <!-- the dial: a black disc with tick marks, a rainbow ring, and the Tenner 10 -->
+        <circle cx="600" cy="222" r="176" fill="#0b0b10"/>
+        <circle cx="600" cy="222" r="176" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="3"/>
+        <g stroke="#fff" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"><path d="M600 56v18" transform="rotate(0 600 222)"/><path d="M600 56v9" transform="rotate(6 600 222)"/><path d="M600 56v9" transform="rotate(12 600 222)"/><path d="M600 56v9" transform="rotate(18 600 222)"/><path d="M600 56v9" transform="rotate(24 600 222)"/><path d="M600 56v18" transform="rotate(30 600 222)"/><path d="M600 56v9" transform="rotate(36 600 222)"/><path d="M600 56v9" transform="rotate(42 600 222)"/><path d="M600 56v9" transform="rotate(48 600 222)"/><path d="M600 56v9" transform="rotate(54 600 222)"/><path d="M600 56v18" transform="rotate(60 600 222)"/><path d="M600 56v9" transform="rotate(66 600 222)"/><path d="M600 56v9" transform="rotate(72 600 222)"/><path d="M600 56v9" transform="rotate(78 600 222)"/><path d="M600 56v9" transform="rotate(84 600 222)"/><path d="M600 56v18" transform="rotate(90 600 222)"/><path d="M600 56v9" transform="rotate(96 600 222)"/><path d="M600 56v9" transform="rotate(102 600 222)"/><path d="M600 56v9" transform="rotate(108 600 222)"/><path d="M600 56v9" transform="rotate(114 600 222)"/><path d="M600 56v18" transform="rotate(120 600 222)"/><path d="M600 56v9" transform="rotate(126 600 222)"/><path d="M600 56v9" transform="rotate(132 600 222)"/><path d="M600 56v9" transform="rotate(138 600 222)"/><path d="M600 56v9" transform="rotate(144 600 222)"/><path d="M600 56v18" transform="rotate(150 600 222)"/><path d="M600 56v9" transform="rotate(156 600 222)"/><path d="M600 56v9" transform="rotate(162 600 222)"/><path d="M600 56v9" transform="rotate(168 600 222)"/><path d="M600 56v9" transform="rotate(174 600 222)"/><path d="M600 56v18" transform="rotate(180 600 222)"/><path d="M600 56v9" transform="rotate(186 600 222)"/><path d="M600 56v9" transform="rotate(192 600 222)"/><path d="M600 56v9" transform="rotate(198 600 222)"/><path d="M600 56v9" transform="rotate(204 600 222)"/><path d="M600 56v18" transform="rotate(210 600 222)"/><path d="M600 56v9" transform="rotate(216 600 222)"/><path d="M600 56v9" transform="rotate(222 600 222)"/><path d="M600 56v9" transform="rotate(228 600 222)"/><path d="M600 56v9" transform="rotate(234 600 222)"/><path d="M600 56v18" transform="rotate(240 600 222)"/><path d="M600 56v9" transform="rotate(246 600 222)"/><path d="M600 56v9" transform="rotate(252 600 222)"/><path d="M600 56v9" transform="rotate(258 600 222)"/><path d="M600 56v9" transform="rotate(264 600 222)"/><path d="M600 56v18" transform="rotate(270 600 222)"/><path d="M600 56v9" transform="rotate(276 600 222)"/><path d="M600 56v9" transform="rotate(282 600 222)"/><path d="M600 56v9" transform="rotate(288 600 222)"/><path d="M600 56v9" transform="rotate(294 600 222)"/><path d="M600 56v18" transform="rotate(300 600 222)"/><path d="M600 56v9" transform="rotate(306 600 222)"/><path d="M600 56v9" transform="rotate(312 600 222)"/><path d="M600 56v9" transform="rotate(318 600 222)"/><path d="M600 56v9" transform="rotate(324 600 222)"/><path d="M600 56v18" transform="rotate(330 600 222)"/><path d="M600 56v9" transform="rotate(336 600 222)"/><path d="M600 56v9" transform="rotate(342 600 222)"/><path d="M600 56v9" transform="rotate(348 600 222)"/><path d="M600 56v9" transform="rotate(354 600 222)"/></g>
+        <path d="M424 222H776M600 46V398" stroke="#fff" stroke-opacity=".12" stroke-width="1.5"/>
+        <path d="M512 160 538 142V302" fill="none" stroke="#fff" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="648" cy="222" r="72" fill="none" stroke="url(#tcRing)" stroke-width="30"/>
+        <path d="M630 190 676 222 630 254Z" fill="#fff" stroke="#fff" stroke-width="10" stroke-linejoin="round"/>
+      </svg>
+      <figcaption class="tc-strip">
+        <span class="tc-name">TENNER</span>
+        <span class="tc-mid">UK top 10, every hour</span>
+        <span class="tc-upd"><i aria-hidden="true"></i><span id="tcUpd">On air</span></span>
+      </figcaption>
+    </figure>
 
     <section class="sec" aria-labelledby="h-stages">
       <div class="sec-h">
@@ -98,15 +117,20 @@
       <ol class="steps">
         <li class="step reveal">
           <div class="art"><svg viewBox="0 0 320 190" aria-hidden="true">
-            <g filter="url(#fSoft)"><rect x="56" y="34" width="208" height="124" rx="18" fill="var(--a-paper)"/></g>
-            <rect x="76" y="52" width="74" height="9" rx="4.5" fill="var(--a-ink)" opacity=".85"/>
-            <rect x="76" y="67" width="48" height="6" rx="3" fill="var(--a-ink2)" opacity=".6"/>
-            <g stroke="var(--a-line)" stroke-width="1"><path d="M76 140h170M76 116h170M76 92h170"/></g>
-            <path class="draw" d="M78 138 C104 134 118 124 136 120 S170 104 190 96 S224 70 244 60" fill="none" stroke="url(#rb)" stroke-width="4.5" stroke-linecap="round"/>
-            <circle cx="244" cy="60" r="7" fill="var(--a-paper)" stroke="#bf5af2" stroke-width="3" class="pop"/>
-            <g class="bob"><rect x="190" y="14" width="104" height="32" rx="16" fill="var(--a-glass)" stroke="var(--a-glass-b)"/>
-              <path d="M206 36l8-9 6 5 9-11" fill="none" stroke="#30d158" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-              <text x="236" y="35" class="chip sm">Trending</text></g>
+            <defs>
+              <linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bf5af2" stop-opacity=".35"/><stop offset="1" stop-color="#bf5af2" stop-opacity="0"/></linearGradient>
+            </defs>
+            <g filter="url(#fSoft)"><rect x="70" y="40" width="196" height="128" rx="18" fill="var(--a-paper)"/></g>
+            <rect x="88" y="58" width="66" height="8" rx="4" fill="var(--a-ink)" opacity=".85"/>
+            <rect x="88" y="72" width="42" height="6" rx="3" fill="var(--a-ink2)" opacity=".55"/>
+            <g stroke="var(--a-line)" stroke-width="1"><path d="M88 150h160M88 128h160M88 106h160"/></g>
+            <path d="M90 148 C112 145 124 136 140 132 S172 118 190 110 S222 88 244 80 V150 H90 Z" fill="url(#area)"/>
+            <path class="draw" d="M90 148 C112 145 124 136 140 132 S172 118 190 110 S222 88 244 80" fill="none" stroke="url(#rb)" stroke-width="4.5" stroke-linecap="round"/>
+            <circle cx="244" cy="80" r="6.5" fill="var(--a-paper)" stroke="#bf5af2" stroke-width="3" class="pop"/>
+            <g class="bob"><rect x="18" y="14" width="124" height="34" rx="17" fill="var(--a-glass)" stroke="var(--a-glass-b)"/>
+              <path d="M34 37l7-8 5 4 9-11" fill="none" stroke="#30d158" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M49 22h6v6" fill="none" stroke="#30d158" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <text x="66" y="36" class="chip">Trending</text></g>
           </svg></div>
           <div class="txt"><h3>Popular right now</h3>
             <p>Tenner measures what <strong>millions of people</strong> are watching, searching for and adding to their lists, and turns it into a popularity score for every film and show.</p></div>
@@ -162,16 +186,24 @@
         </li>
         <li class="step reveal">
           <div class="art"><svg viewBox="0 0 320 190" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-            <g filter="url(#fSoft)"><rect x="104" y="16" width="112" height="210" rx="24" fill="var(--a-bezel)"/></g>
-            <rect x="111" y="23" width="98" height="196" rx="18" fill="var(--a-screen)"/>
-            <rect x="140" y="30" width="40" height="10" rx="5" fill="var(--a-bezel)"/>
-            <text x="122" y="96" class="neon01" fill="none" stroke="url(#rb)" stroke-width="2.4" filter="url(#fNeon)">01</text>
-            <text x="122" y="96" class="neon01" fill="none" stroke="#fff" stroke-width=".8" opacity=".9">01</text>
-            <rect x="122" y="104" width="76" height="80" rx="9" fill="#5e5ce6"/>
-            <g class="slide"><g filter="url(#fSoft)"><rect x="150" y="128" width="152" height="50" rx="16" fill="var(--a-glass)" stroke="var(--a-glass-b)"/></g>
-              <rect x="160" y="137" width="32" height="32" rx="8" fill="#000"/>
-              <path d="M167 147l3-2v14" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="182" cy="153" r="5.2" fill="none" stroke="url(#rb)" stroke-width="2.4"/>
-              <text x="200" y="150" class="chip sm">New chart is in</text><text x="200" y="166" class="chip xs">Updated just now</text></g>
+            <!-- a tablet behind, then the phone in front: the same chart on any screen -->
+            <g filter="url(#fSoft)" opacity=".9"><rect x="40" y="34" width="150" height="190" rx="16" fill="var(--a-bezel)"/></g>
+            <rect x="47" y="41" width="136" height="176" rx="10" fill="var(--a-screen)"/>
+            <g opacity=".75"><rect x="58" y="78" width="34" height="50" rx="5" fill="#5e5ce6"/><rect x="98" y="78" width="34" height="50" rx="5" fill="#ff9f0a"/><rect x="138" y="78" width="34" height="50" rx="5" fill="#30d158"/>
+              <rect x="58" y="56" width="58" height="7" rx="3.5" fill="#fff" opacity=".85"/></g>
+            <g filter="url(#fSoft)"><rect x="176" y="22" width="92" height="186" rx="20" fill="var(--a-bezel)"/></g>
+            <rect x="182" y="28" width="80" height="174" rx="15" fill="var(--a-screen)"/>
+            <rect x="207" y="33" width="30" height="8" rx="4" fill="var(--a-bezel)"/>
+            <!-- the phone's own Tenner: a neon 01 over the No. 1 poster, and the floating tab bar -->
+            <rect x="190" y="50" width="40" height="6" rx="3" fill="#fff" opacity=".85"/>
+            <rect x="196" y="78" width="48" height="70" rx="7" fill="#ff375f"/>
+            <text x="190" y="88" class="neon01s" fill="none" stroke="url(#rb)" stroke-width="1.6">01</text>
+            <rect x="196" y="154" width="36" height="4" rx="2" fill="#fff" opacity=".7"/>
+            <g filter="url(#fSoft)"><rect x="188" y="176" width="68" height="18" rx="9" fill="#2c2c30" stroke="rgba(255,255,255,.18)"/></g>
+            <circle cx="203" cy="185" r="3" fill="#0a84ff"/><circle cx="216" cy="185" r="3" fill="#8e8e93"/><circle cx="229" cy="185" r="3" fill="#8e8e93"/><circle cx="242" cy="185" r="3" fill="#8e8e93"/>
+            <g class="bob"><rect x="16" y="14" width="140" height="34" rx="17" fill="var(--a-glass)" stroke="var(--a-glass-b)"/>
+              <rect x="33" y="23" width="10" height="16" rx="2.5" fill="none" stroke="#0a84ff" stroke-width="2"/>
+              <text x="54" y="36" class="chip">Any screen</text></g>
           </svg></div>
           <div class="txt"><h3>Made for your phone</h3>
             <p>Tenner is designed <strong>phone first</strong>, so the best trending films and shows are always a tap away, wherever you are.</p></div>
@@ -193,7 +225,11 @@
     var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { rootMargin: '0px 0px -12% 0px' });
     document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
   })();</script>
-  <script src="stage.js" defer></script>
+  <script>/* the test card's caption: how long ago the chart was rebuilt (one small fetch, nothing else) */
+  fetch('data/trending.json').then(function(r){return r.ok?r.json():null}).then(function(d){
+    if(!d) return; var m=Math.floor((Date.now()-Date.parse(d.generatedAt))/60000);
+    document.getElementById('tcUpd').textContent = m<3 ? 'Updated just now' : m<60 ? 'Updated '+m+' min ago' : 'Updated this hour';
+  }).catch(function(){});</script>
   <script src="shell.js" defer></script>
 </body>
 </html>
