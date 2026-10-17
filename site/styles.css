@@ -504,6 +504,8 @@ main:focus { outline: none; }
 
 /* ============================================================ homepage, the Apple Music "New" way
    Feature cards up top, the neon row, the ten as a column list, then New This Week. Section headings link on, with a chevron. */
+/* with Both, each chart gets a heading above its neon row */
+.row-h.kind-h { margin: 40px 0 -10px; font-size: 26px; }
 .row-h { margin: 44px 0 14px; font: 700 22px/1.2 var(--font-display); letter-spacing: -.008em; }
 .row-h a { color: var(--label); display: inline-flex; align-items: center; gap: 6px; }
 .row-h a:hover { text-decoration: none; color: var(--accent); }

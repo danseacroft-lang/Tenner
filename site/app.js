@@ -7,7 +7,8 @@ const view = $('#view');
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const words = () => (state.kind === 'tv' ? 'Shows' : 'Films');
+const KIND_WORDS = { tv: 'Shows', movie: 'Films', both: 'Shows and Films' };
+const words = (k = state.kind) => KIND_WORDS[k] || 'Shows';
 const fmtDate = (d, opts) => d.toLocaleDateString('en-GB', opts);
 const fmtTime = (d) => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 const pad = (n) => String(n).padStart(2, '0');
@@ -32,7 +33,7 @@ async function load() {
       <p class="lede">${esc(err.message)}. If you've just set the site up, run the "Update and deploy" workflow once, then refresh.</p></div>`;
     return;
   }
-  try { const k = localStorage.getItem('tenner-kind'); if (k === 'tv' || k === 'movie') state.kind = k; } catch {}
+  try { const k = localStorage.getItem('tenner-kind'); if (k in KIND_WORDS) state.kind = k; } catch {}
 
   buildServiceBar();
   showUpdated();
@@ -203,7 +204,13 @@ function draw() {
   markService(state.route); markDropdowns();
 
   const s = state.route === 'top' ? null : svc(state.route);
-  const list = s ? s[state.kind] : state.trending.overall[state.kind];
+  const listOf = (k) => (s ? s[k] : state.trending.overall[k]) || [];
+  // "Both" shows the two charts one after the other; the hero takes turns between them
+  const kinds = state.kind === 'both' ? ['tv', 'movie'] : [state.kind];
+  const zip = (a, b) => Array.from({ length: Math.max(a.length, b.length) }, (_, i) => [a[i], b[i]]).flat().filter(Boolean);
+  const ranked = (k) => listOf(k).map((it, i) => ({ it, n: i + 1 }));
+  const picks = state.kind === 'both' ? zip(ranked('tv'), ranked('movie')) : ranked(state.kind);
+  const list = picks.map((p) => p.it);
   const where = s ? s.label : 'UK streaming';
   $('#heading').textContent = s?.store ? `Top 10 ${words()} to buy or rent` : `Top 10 ${words()}`;
   $('#lede').innerHTML = s?.store ? 'New releases from Apple TV, Sky Store and others'
@@ -212,11 +219,12 @@ function draw() {
 
   const chart = list.length
     ? `${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up. Add your TMDB key and run the workflow to see the real chart.</p>` : ''}
-       ${hero(list, s)}${s?.store ? '' : features(s)}
-       ${posterRow(list)}${chartList(list, s)}${s?.store ? '' : newRow(s)}`
+       ${hero(picks, s)}${s?.store ? '' : features(s)}
+       ${kinds.map((k) => `${kinds.length > 1 ? `<h2 class="row-h kind-h">Top 10 ${words(k)}</h2>` : ''}${posterRow(listOf(k), k)}${chartList(listOf(k), s, k)}`).join('')}
+       ${s?.store ? '' : newRow(s)}`
     : `<div class="empty"><h2>Nothing here right now</h2><p>The chart for ${esc(where)} will be back after the next hourly update.</p><a class="btn btn-tinted" href="#top">See all five services</a></div>`;
   view.innerHTML = `<div class="wrap chart">${chart}</div>`;
-  setBackdrop(heroOn() && list.length ? list[0] : null);
+  setBackdrop(heroOn() && list.length ? list[0] : null);   // the hero's first pick
   wireScroller(); wireRanks();
 }
 
@@ -228,24 +236,24 @@ const wide = matchMedia('(min-width: 1000px)');
 wide.addEventListener('change', () => state.trending && state.route !== 'new' && render());
 const heroOn = () => wide.matches;
 let heroList = [], heroAt = 0, heroScope = null;
-function heroCopy(it, i) {
+function heroCopy({ it, n }) {
   // on a service's page it's that service's chart; on All it's the UK-wide chart, and the details say where to find it
-  const s = heroScope, kind = state.kind === 'tv' ? 'show' : 'film';
-  const eye = s?.store ? `No. ${i + 1} to buy or rent` : s ? `No. ${i + 1} ${kind} on ${s.label}` : `No. ${i + 1} ${kind} in the UK`;
+  const s = heroScope, kind = it.type === 'tv' ? 'show' : 'film';
+  const eye = s?.store ? `No. ${n} to buy or rent` : s ? `No. ${n} ${kind} on ${s.label}` : `No. ${n} ${kind} in the UK`;
   const where = s ? '' : onText(it);
-  const bits = [it.season || (state.kind === 'tv' ? 'Series' : 'Film'), it.year, it.rating ? `★ ${it.rating.toFixed(1)}` : '', weeksText(it), where ? `On ${where}` : ''].filter(Boolean);
+  const bits = [it.season || (it.type === 'tv' ? 'Series' : 'Film'), it.year, it.rating ? `★ ${it.rating.toFixed(1)}` : '', weeksText(it), where ? `On ${where}` : ''].filter(Boolean);
   return `<p class="h-eye">${s?.logo ? `<img src="${esc(s.logo)}" alt="">` : ''}${esc(eye)}</p>
     <h2 class="h-title">${esc(it.title)}</h2>
     <p class="h-meta">${bits.map(esc).join(' · ')}</p>
     ${it.overview ? `<p class="h-blurb">${esc(firstSentence(it.overview))}</p>` : ''}
     <a class="h-cta" href="${esc(it.url)}" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>Where to watch</a>`;
 }
-function hero(list, s) {
-  if (!heroOn() || !list.length) return '';
-  heroList = list.slice(0, 5); heroAt = 0; heroScope = s;
+function hero(picks, s) {   // picks: [{ it, n }] where n is the title's rank in its own chart
+  if (!heroOn() || !picks.length) return '';
+  heroList = picks.slice(0, 5); heroAt = 0; heroScope = s;
   return `<section class="hero" aria-label="Top of the chart">
-    <div class="h-copy" id="heroCopy" aria-live="polite">${heroCopy(heroList[0], 0)}</div>
-    ${heroList.length > 1 ? `<div class="h-dots">${heroList.map((it, i) => `<button type="button" data-hero="${i}" aria-label="Number ${i + 1}: ${esc(it.title)}" aria-current="${i === 0}"></button>`).join('')}</div>` : ''}
+    <div class="h-copy" id="heroCopy" aria-live="polite">${heroCopy(heroList[0])}</div>
+    ${heroList.length > 1 ? `<div class="h-dots">${heroList.map((p, i) => `<button type="button" data-hero="${i}" aria-label="Number ${p.n}: ${esc(p.it.title)}" aria-current="${i === 0}"></button>`).join('')}</div>` : ''}
   </section>`;
 }
 // The backdrop crossfades: the new picture decodes first, then fades in over the old one, which is then dropped.
@@ -272,9 +280,9 @@ function showHero(i) {
   heroAt = i;
   document.querySelectorAll('[data-hero]').forEach((b) => b.setAttribute('aria-current', String(Number(b.dataset.hero) === i)));
   const copy = $('#heroCopy');
-  const swap = () => { copy.innerHTML = heroCopy(heroList[i], i); copy.classList.remove('out'); };
+  const swap = () => { copy.innerHTML = heroCopy(heroList[i]); copy.classList.remove('out'); };
   if (reduceMotion) swap(); else { copy.classList.add('out'); setTimeout(swap, 180); }
-  setBackdrop(heroList[i]);
+  setBackdrop(heroList[i].it);
 }
 view.addEventListener('click', (e) => { const d = e.target.closest('[data-hero]'); if (d) showHero(Number(d.dataset.hero)); });
 
@@ -304,8 +312,8 @@ const RB_STOPS = RAINBOW.map((c, k) => `<stop offset="${(k / (RAINBOW.length - 1
 // the rainbow tube with a two-step bloom, and a white-hot core that fades towards the bottom like a lit tube.
 // The rainbow sweeps through each number once as the row arrives (rippling along) and again on hover; otherwise
 // the numbers are still, so an idle page costs nothing.
-function rankSvg(i) {
-  const id = `rk${i}`, n = pad(i + 1);
+function rankSvg(i, row = '') {
+  const id = `rk${row}${i}`, n = pad(i + 1);
   const t = (cls, extra = '') => `<text class="${cls}" x="0" y="80" ${extra}>${n}</text>`;
   return `<svg class="num" viewBox="-16 -14 156 112" aria-hidden="true">
     <defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="-30" y1="0" x2="150" y2="30" spreadMethod="repeat">${RB_STOPS}
@@ -325,20 +333,21 @@ function wireRanks() {
     const t = e.target.closest?.('.pcard'); if (!t || t.contains(e.relatedTarget)) return;
     const a = t.querySelector('svg.num animateTransform'); try { a?.beginElement(); } catch {}
   };
-  const row = $('.posters'); if (!row) return;
-  row.addEventListener('pointerover', replay, { signal: rowAbort?.signal });
-  row.addEventListener('focusin', replay, { signal: rowAbort?.signal });
+  document.querySelectorAll('.posters').forEach((row) => {
+    row.addEventListener('pointerover', replay, { signal: rowAbort?.signal });
+    row.addEventListener('focusin', replay, { signal: rowAbort?.signal });
+  });
 }
 
-function posterRow(list) {
+function posterRow(list, kind = state.kind) {
   const edge = (side) => `<div class="edge ${side}" aria-hidden="true">${'<i></i>'.repeat(6)}</div>`;
   return `<div class="row-wrap at-start">
     ${edge('l')}${edge('r')}
     <button type="button" class="btn btn-icon scroller prev" aria-label="Previous titles" disabled>
       <svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><path d="M8 2L2 8l6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    <ol class="posters" aria-label="Top 10">
+    <ol class="posters" aria-label="Top 10 ${words(kind)}">
       ${list.map((it, i) => `<li class="pcard" style="--d:${i}">
-        ${rankSvg(i)}
+        ${rankSvg(i, kind)}
         <a class="cover" href="${esc(it.url)}" target="_blank" rel="noopener" aria-label="Number ${i + 1}: ${esc(it.title)}">
           ${it.poster ? `<img src="${esc(it.poster)}" alt="" loading="${i < 4 ? 'eager' : 'lazy'}" width="342" height="513">` : placeholder(it)}
         </a>
@@ -380,10 +389,10 @@ function features(s) {
 }
 
 // The ten as a tidy list in columns, like "Best New Songs": rank, a small poster, title and where it's on.
-function chartList(list, s) {
-  const k = state.kind, browse = `browse.html#${new URLSearchParams({ ...(k === 'movie' ? { k: 'movie' } : {}), ...(s && !s.store ? { s: s.key } : {}), ...(s?.store ? { c: 'store', k: 'movie' } : {}) })}`;
-  return `<section class="clist" aria-labelledby="cl-h">
-    <div class="row-hd"><h2 class="row-h" id="cl-h">${s?.store ? 'Films to buy or rent: at a glance' : `Top 10 ${words()} at a glance`}</h2>
+function chartList(list, s, k = state.kind) {
+  const browse = `browse.html#${new URLSearchParams({ ...(k === 'movie' ? { k: 'movie' } : {}), ...(s && !s.store ? { s: s.key } : {}), ...(s?.store ? { c: 'store', k: 'movie' } : {}) })}`;
+  return `<section class="clist" aria-labelledby="cl-h-${k}">
+    <div class="row-hd"><h2 class="row-h" id="cl-h-${k}">${s?.store ? 'Films to buy or rent: at a glance' : `Top 10 ${words(k)} at a glance`}</h2>
       <a class="see-all" href="${esc(browse)}">See more in Browse<span class="chev" aria-hidden="true"></span></a></div>
     <ol class="cl">${list.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener">
       <span class="cl-n">${i + 1}</span>
@@ -456,8 +465,10 @@ let rowAbort; // each render gets fresh listeners; the old row's are dropped wit
 function wireScroller() {
   rowAbort?.abort(); rowAbort = new AbortController();
   const sig = { signal: rowAbort.signal, passive: true };
-  const row = $('.posters'); if (!row) return;
-  const wrap = row.parentElement, prev = $('.scroller.prev'), next = $('.scroller.next');
+  document.querySelectorAll('.row-wrap').forEach((wrap) => wireRow(wrap, sig));
+}
+function wireRow(wrap, sig) {   // one poster row: its arrows, its frosted edges and dragging
+  const row = wrap.querySelector('.posters'), prev = wrap.querySelector('.scroller.prev'), next = wrap.querySelector('.scroller.next');
   const update = () => {
     const start = row.scrollLeft < 8, end = row.scrollLeft + row.clientWidth >= row.scrollWidth - 8;
     prev.disabled = start; next.disabled = end;
@@ -538,7 +549,7 @@ function setKind(k) {
   state.kind = k;
   try { localStorage.setItem('tenner-kind', k); } catch {}
   // Buy or rent is films only, so switching to shows takes you back to all services
-  if (k === 'tv' && svc(state.route)?.store) { location.hash = 'top'; return; }
+  if (k !== 'movie' && svc(state.route)?.store) { location.hash = 'top'; return; }
   render();
 }
 document.querySelectorAll('.kind [data-kind]').forEach((b) => b.addEventListener('click', () => setKind(b.dataset.kind)));

@@ -443,7 +443,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
             first: hits[0] != null ? pairs(html.slice(hits[0] - 1200, hits[0] + 1200)) : null,
             second: hits[1] != null ? pairs(html.slice(hits[1] - 600, hits[1] + 600)) : null,
             escaped: hits[0] != null ? html.slice(hits[0] - 3, hits[0]) : null,
-            before: hits[0] != null ? html.slice(hits[0] - 300, hits[0] - 200).replace(/[<>]/g, ' ') : null };
+            before: hits[0] != null ? html.slice(hits[0] - 300, hits[0] - 200).replace(/[<>]/g, ' ') : null,
+            // where the titles live: the key names just before known titles, and every distinct key in one entity
+            titleKeys: ['Animals', 'Widower', 'UNABOMBER'].flatMap((t) => [...html.matchAll(new RegExp(`\\\\?"(\\w+)\\\\?"\\s*:\\s*\\\\?"${t}`, 'g'))].slice(0, 3).map((m) => `${m[1]}->${t}`)),
+            entityKeys: hits[0] != null ? [...new Set([...html.slice(hits[0] - 400, html.indexOf('PulseTop10ItemEntity:', hits[0] + 50)).matchAll(/\\?"(\w+)\\?"\s*:/g)].map((m) => m[1]))] : null,
+            stringValues: hits[0] != null ? [...html.slice(hits[0] - 400, html.indexOf('PulseTop10ItemEntity:', hits[0] + 50)).matchAll(/\\?"(\w+)\\?"\s*:\s*\\?"([^"\\]{2,50})/g)].filter((m) => !/typename|url|id$|Id$|guid|__ref/i.test(m[1])).map((m) => `${m[1]}=${m[2]}`).slice(0, 40) : null };
         }
         await write('netflix-debug.json', dbg);
       } catch (err) { await write('netflix-debug.json', { error: String(err.message) }); }
