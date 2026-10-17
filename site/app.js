@@ -207,7 +207,7 @@ function draw() {
   const where = s ? s.label : 'UK streaming';
   $('#heading').textContent = s?.store ? `Top 10 ${words()} to buy or rent` : `Top 10 ${words()}`;
   $('#lede').innerHTML = s?.store ? 'New releases from Apple TV, Sky Store and others'
-    : s ? `On ${s.logo ? `<img class="sub-logo" src="${esc(s.logo)}" alt="">` : ''}${esc(s.label)}` : 'On all five services in the UK';
+    : s ? `On ${s.logo ? `<img class="sub-logo" src="${esc(s.logo)}" alt="">` : ''}${esc(s.label)}${s.official ? ` · ${esc(officialLine(s.official))}` : ''}` : 'On all five services in the UK';
   document.title = s ? `${s.label} Top 10 | Tenner` : 'Tenner';
 
   const chart = list.length
@@ -233,7 +233,7 @@ function heroCopy(it, i) {
   const s = heroScope, kind = state.kind === 'tv' ? 'show' : 'film';
   const eye = s?.store ? `No. ${i + 1} to buy or rent` : s ? `No. ${i + 1} ${kind} on ${s.label}` : `No. ${i + 1} ${kind} in the UK`;
   const where = s ? '' : onText(it);
-  const bits = [it.year, it.rating ? `★ ${it.rating.toFixed(1)}` : '', state.kind === 'tv' ? 'Series' : 'Film', where ? `On ${where}` : ''].filter(Boolean);
+  const bits = [it.season || (state.kind === 'tv' ? 'Series' : 'Film'), it.year, it.rating ? `★ ${it.rating.toFixed(1)}` : '', weeksText(it), where ? `On ${where}` : ''].filter(Boolean);
   return `<p class="h-eye">${s?.logo ? `<img src="${esc(s.logo)}" alt="">` : ''}${esc(eye)}</p>
     <h2 class="h-title">${esc(it.title)}</h2>
     <p class="h-meta">${bits.map(esc).join(' · ')}</p>
@@ -278,6 +278,14 @@ function showHero(i) {
 }
 view.addEventListener('click', (e) => { const d = e.target.closest('[data-hero]'); if (d) showHero(Number(d.dataset.hero)); });
 
+// Netflix's own chart is weekly (Monday to Sunday); "week" is the Sunday it ends on.
+function officialLine(o) {
+  const end = new Date(o.week + 'T12:00:00Z'), start = new Date(+end - 6 * 864e5);
+  const d = (x, m) => x.toLocaleDateString('en-GB', m ? { day: 'numeric', month: 'short' } : { day: 'numeric' });
+  return `Official UK Top 10, ${start.getMonth() === end.getMonth() ? d(start) : d(start, 1)}–${d(end, 1)}`;
+}
+const weeksText = (it) => it.weeks > 1 ? `${it.weeks} weeks in the Top 10` : it.weeks === 1 ? 'New to the Top 10' : '';
+
 // ---------- pieces ----------
 function hue(str) { let h = 0; for (const c of String(str)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
 function placeholder(it) {
@@ -285,6 +293,7 @@ function placeholder(it) {
   return `<span class="ph" style="background:linear-gradient(160deg,hsl(${h} 45% 42%),hsl(${(h + 40) % 360} 55% 18%))">${esc(it.title)}</span>`;
 }
 const meta = (it) => [
+  it.season ? `<span>${esc(it.season)}</span>` : '',
   it.year ? `<span>${it.year}</span>` : '',
   it.rating ? `<span class="star" aria-label="Rated ${it.rating} out of 10">★ ${it.rating.toFixed(1)}</span>` : '',
 ].join('');
@@ -379,7 +388,7 @@ function chartList(list, s) {
     <ol class="cl">${list.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener">
       <span class="cl-n">${i + 1}</span>
       ${it.poster ? `<img src="${esc(it.poster)}" alt="" loading="lazy">` : `<span class="cl-ph" style="background:hsl(${hue(it.title)} 45% 35%)"></span>`}
-      <span class="cl-t"><b>${esc(it.title)}</b><small>${esc([s ? '' : onText(it), it.year].filter(Boolean).join(' · '))}</small></span>
+      <span class="cl-t"><b>${esc(it.title)}</b><small>${esc([s ? '' : onText(it), it.season, it.year].filter(Boolean).join(' · '))}</small></span>
       ${it.rating ? `<span class="cl-r">★ ${it.rating.toFixed(1)}</span>` : ''}
     </a></li>`).join('')}</ol>
   </section>`;

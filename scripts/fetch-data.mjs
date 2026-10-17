@@ -183,6 +183,60 @@ function overall(services) {
   return out;
 }
 
+// ---------- Netflix's own UK Top 10 (official, published weekly on Tuesdays) ----------
+// Netflix publishes every country's weekly Top 10 as a data file. The Netflix tab uses it instead of TMDB's
+// popularity ranking, so it matches the Top 10 people see in the app (weekly rather than daily). Each title is
+// matched to TMDB for its poster, year and rating. Downloaded at most twice a day; otherwise the live copy is reused.
+const NETFLIX_TSV = 'https://www.netflix.com/tudum/top10/data/all-weeks-countries.tsv';
+async function getText(url, tries = 3) {
+  for (let i = 1; ; i++) {
+    try {
+      const res = await fetch(url, { headers: { 'user-agent': 'Mozilla/5.0 (compatible; Tenner/1.0; +https://danseacroft-lang.github.io/Tenner/)', accept: 'text/tab-separated-values,text/plain,*/*' }, signal: AbortSignal.timeout(90000) });
+      if (res.ok) return res.text();
+      if (res.status < 500 && res.status !== 429) throw Object.assign(new Error(`${res.status} ${res.statusText}`), { fatal: true });
+      throw new Error(`${res.status}`);
+    } catch (err) { if (err.fatal || i >= tries) throw err; await sleep(1000 * 2 ** i); }
+  }
+}
+const same = (a, b) => norm(a || '') === norm(b || '');
+async function matchTmdb(title, type) {
+  const r = await tmdb(`/search/${type}`, { query: title, language: 'en-GB', include_adult: 'false' });
+  const list = r.results || [];
+  // an exact title match first (the most popular if there are several), otherwise TMDB's best guess
+  const exact = list.filter((x) => same(type === 'movie' ? x.title : x.name, title) || same(type === 'movie' ? x.original_title : x.original_name, title));
+  return (exact.sort((a, b) => b.popularity - a.popularity)[0]) || list[0] || null;
+}
+export async function buildNetflixOfficial() {
+  const tsv = await getText(NETFLIX_TSV);
+  const lines = tsv.split(/\r?\n/), head = lines[0].split('\t').map((h) => h.trim().toLowerCase());
+  const col = (name) => { const i = head.indexOf(name); if (i < 0) throw new Error(`the Netflix file has no "${name}" column (has: ${head.join(', ')})`); return i; };
+  const cIso = col('country_iso2'), cWeek = col('week'), cCat = col('category'), cRank = col('weekly_rank'), cShow = col('show_title');
+  const cSeason = head.indexOf('season_title'), cWeeks = head.indexOf('cumulative_weeks_in_top_10');
+  const rows = [];
+  for (const line of lines.slice(1)) {
+    if (!line.startsWith('United Kingdom') && !line.includes(`\t${REGION}\t`)) continue;
+    const f = line.split('\t'); if (f[cIso] !== REGION) continue;
+    rows.push({ week: f[cWeek], tv: /tv/i.test(f[cCat]), rank: Number(f[cRank]), title: f[cShow], season: cSeason >= 0 ? f[cSeason] : '', weeks: cWeeks >= 0 ? Number(f[cWeeks]) || null : null });
+  }
+  if (!rows.length) throw new Error('no United Kingdom rows in the Netflix file');
+  const week = rows.map((r) => r.week).sort().at(-1);
+  const out = { week, tv: [], movie: [] };
+  for (const type of ['tv', 'movie']) {
+    const ten = rows.filter((r) => r.week === week && r.tv === (type === 'tv')).sort((a, b) => a.rank - b.rank).slice(0, PER_LIST);
+    out[type] = await Promise.all(ten.map(async (r) => {
+      let hit = null; try { hit = await matchTmdb(r.title, type); } catch { /* keep the bare title */ }
+      const it = hit ? toItem(hit, type) : { id: `nf-${norm(r.title)}`, type, title: r.title, year: null, overview: '', rating: null, popularity: 0, poster: null, backdrop: null, url: `https://www.netflix.com/search?q=${encodeURIComponent(r.title)}` };
+      it.title = r.title;   // Netflix's own name for it
+      const season = r.season && r.season !== 'N/A' ? r.season.replace(/^.*?:\s*/, '') : '';
+      if (season && season !== r.title) it.season = season;
+      if (r.weeks) it.weeks = r.weeks;
+      return it;
+    }));
+  }
+  if (out.tv.length < 5 || out.movie.length < 5) throw new Error(`the latest week (${week}) has only ${out.tv.length} shows and ${out.movie.length} films`);
+  return out;
+}
+
 // ---------- Watchmode (daily) ----------
 const realNew = (j) => !!j && Array.isArray(j.items) && !j.disabled && !j.error && !j.sample;
 export async function buildNew() {
@@ -352,6 +406,32 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const live = built ? null : await liveCopy('trending.json');
     if (!built && !live) throw new Error('No chart from TMDB and no live chart to fall back on');
     const data = built ? built.data : live;
+
+    // Netflix's own UK Top 10 for the Netflix tab (the "All" chart stays TMDB's, so it ranks every service alike).
+    if (built) {
+      const nf = data.services.find((x) => x.key === 'netflix');
+      const prevNf = (await liveCopy('trending.json'))?.services?.find((x) => x.key === 'netflix');
+      const fresh = prevNf?.official && hoursOld({ generatedAt: prevNf.official.fetchedAt }) < 12;
+      let status;
+      try {
+        let off;
+        if (fresh) { off = prevNf.official; Object.assign(nf, { tv: prevNf.tv, movie: prevNf.movie }); console.log('Reusing Netflix official Top 10 for', off.week); }
+        else {
+          const o = await buildNetflixOfficial();
+          Object.assign(nf, { tv: o.tv, movie: o.movie }); off = { source: 'netflix', week: o.week, fetchedAt: new Date().toISOString() };
+          console.log('Netflix official UK Top 10, week ending', o.week);
+        }
+        nf.official = off; status = { ok: true, week: off.week, fetchedAt: off.fetchedAt };
+      } catch (err) {
+        // keep last week's official chart for up to ten days; otherwise TMDB's ranking stands in
+        if (prevNf?.official && hoursOld({ generatedAt: prevNf.official.fetchedAt }) < 240) {
+          Object.assign(nf, { tv: prevNf.tv, movie: prevNf.movie, official: prevNf.official });
+        }
+        warn('Netflix Top 10', `couldn't read Netflix's chart (${err.message})${nf.official ? ', keeping the last one' : ', using TMDB for now'}`);
+        status = { ok: false, error: String(err.message).slice(0, 300), at: new Date().toISOString(), kept: !!nf.official };
+      }
+      await write('netflix-status.json', status);
+    }
     await write('trending.json', data);
     if (built) await write('providers.json', built.providers);
 
