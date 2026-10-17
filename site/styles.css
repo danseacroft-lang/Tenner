@@ -242,10 +242,10 @@ body::before{content:"";position:fixed;z-index:-1;left:-10vw;right:-10vw;top:-20
 /* ---------- poster row with rainbow-glow ranks ---------- */
 .row-wrap {
   /* the row runs edge to edge of the screen; its first card lines up with the page column */
-  --col: max(var(--gutter), calc((100vw - var(--max)) / 2 + var(--gutter)));
+  --col: max(var(--gutter), calc((100vw - var(--side, 0px) - var(--max)) / 2 + var(--gutter)));
   --cw: min(64vw, 236px);
   --edge: max(76px, var(--col));
-  position: relative; width: 100vw; margin-left: calc(50% - 50vw);
+  position: relative; width: calc(100vw - var(--side, 0px)); margin-left: calc(50% - (100vw - var(--side, 0px)) / 2);
 }
 .posters {
   list-style: none; margin: 0; padding: 34px var(--col) 14px;

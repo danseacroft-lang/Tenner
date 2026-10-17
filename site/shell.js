@@ -27,6 +27,11 @@
   }
   // pages without their own handler (About) send the tabs back to the chart
   function open(name) {
+    if (name === 'search') {   // Search lives on the Browse page: go there with the box focused
+      const q = document.getElementById('q');
+      if (q) { q.focus(); q.select(); scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); return; }
+      location.href = 'browse.html#search'; return;
+    }
     if (window.tnOnTab) return window.tnOnTab(name);
     if (name === cur) { scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); return; }
     if (name === 'about') { location.href = 'about.html'; return; }
@@ -58,10 +63,11 @@
   function tbMenu(btn, pop, onOpen) {
     const place = () => {
       const r = btn.getBoundingClientRect(), w = pop.offsetWidth, left = Math.max(12, Math.min(r.right - w, innerWidth - w - 12));
-      pop.style.top = (r.bottom + 8) + 'px';
-      pop.style.maxHeight = Math.max(200, innerHeight - r.bottom - 20) + 'px';
+      const h = pop.offsetHeight, up = innerHeight - r.bottom < h + 20 && r.top > h + 20;
+      pop.style.top = (up ? r.top - h - 8 : r.bottom + 8) + 'px';
+      pop.style.maxHeight = Math.max(200, up ? r.top - 20 : innerHeight - r.bottom - 20) + 'px';
       pop.style.left = left + 'px';
-      pop.style.setProperty('--tb-o', `${r.left + r.width / 2 - left}px -14px`); // it grows out of its own button
+      pop.style.setProperty('--tb-o', `${r.left + r.width / 2 - left}px ${up ? 'calc(100% + 14px)' : '-14px'}`); // it grows out of its own button
     };
     const set = (on) => {
       if (on === !pop.hidden && !pop.classList.contains('out')) return;

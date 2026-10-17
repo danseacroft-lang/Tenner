@@ -444,6 +444,7 @@ const selectTab = (name) => window.tnShell.select(name);
 function openTab(name) {
   if (name === 'about') { location.href = 'about.html'; return; }
   if (name === 'browse') { location.href = 'browse.html'; return; }
+  if (name === 'search') { location.href = 'browse.html#search'; return; }
   const onNew = state.route === 'new';
   if ((name === 'new') === onNew) { scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }); return; } // tap the open tab: back to the top
   location.hash = name === 'new' ? 'new' : (state.lastChart || 'top');

@@ -63,7 +63,10 @@
     cat = c;
     for (const s of t?.services || []) if (!s.store) { logos[s.key] = s.logo; labels[s.key] = s.label; }
     if (!Object.keys(labels).length) Object.assign(labels, { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+' });
+    const wantSearch = location.hash === '#search';
+    if (wantSearch) history.replaceState(null, '', location.pathname);
     readHash(); buildControls(); apply(false);
+    if (wantSearch) $('#q').focus();
   }).catch((err) => {
     $('#count').textContent = `The catalogue didn't load (${err.message}). It's rebuilt every hour, so try again shortly.`;
   });

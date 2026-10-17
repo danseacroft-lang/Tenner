@@ -1,0 +1,56 @@
+/* Tenner's shell on computers: the Apple Music sidebar.
+   From 1000px wide, the glass bar becomes a sidebar on the left (logo, then Search, Top 10, New, Browse, About, with
+   the chosen one on a grey pill and its icon in the accent colour) and the page sits to the right of it.
+   Below 1000px nothing here applies: the bar stays at the top, and on phones the tabs float at the bottom. */
+@media (min-width: 1000px) {
+  :root { --side: 236px; --side-bg: rgba(242, 242, 247, .82); }
+  :root[data-theme="dark"] { --side-bg: rgba(28, 28, 30, .82); }
+}
+@media (min-width: 1000px) and (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --side-bg: rgba(28, 28, 30, .82); } }
+@media (min-width: 1000px) {
+  html { scroll-padding-top: 24px; }
+  body { padding-left: var(--side); }
+  .top-row {
+    position: fixed; z-index: 50; inset: 0 auto 0 0; width: var(--side); max-width: none; margin: 0;
+    display: flex; flex-direction: column; align-items: stretch; gap: 22px;
+    padding: calc(env(safe-area-inset-top, 0px) + 26px) 14px calc(env(safe-area-inset-bottom, 0px) + 20px) max(14px, env(safe-area-inset-left, 0px));
+    background: var(--side-bg); border-right: .5px solid var(--sep); pointer-events: auto; animation: none;
+    -webkit-backdrop-filter: blur(30px) saturate(180%); backdrop-filter: blur(30px) saturate(180%);
+  }
+  .top-row::before { display: none; }
+  .top-row > * { animation: none; }
+  .top-brand { padding: 0 8px; gap: 11px; }
+  .lt-logo, .lt-logo img { width: 34px; height: 34px; border-radius: 8px; }
+  .brand-name { font: 700 26px/1 var(--font-display); letter-spacing: -.02em; }
+  .tabbar { display: block; }
+  .tabs { display: flex; flex-direction: column; gap: 2px; padding: 0; border-radius: 0; background: none; box-shadow: none;
+    -webkit-backdrop-filter: none; backdrop-filter: none; isolation: auto; }
+  .tabs::before, .tab-ind { display: none; }
+  .tabs button {
+    width: 100%; height: 38px; justify-content: flex-start; gap: 12px; padding: 0 10px; border-radius: 9px;
+    font: 500 15px/1 var(--font); letter-spacing: -.016em; color: var(--label);
+  }
+  .tabs button svg { width: 20px; height: 20px; color: var(--accent); }
+  .tabs button[aria-selected="true"] { background: var(--fill); color: var(--label); font-weight: 600; }
+  .tabs button:active { transform: none; filter: none; background: var(--fill-strong); }
+  @media (hover: hover) { .tabs button[aria-selected="false"]:hover { color: var(--label); background: var(--fill); } }
+  /* the appearance button sits at the foot of the sidebar, with its name */
+  .top-act { margin-top: auto; justify-self: auto; align-self: stretch; padding: 0; border-radius: 0; background: none; box-shadow: none;
+    -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .tb-btn { width: 100%; height: 40px; border-radius: 9px; display: flex; justify-content: flex-start; gap: 12px; padding: 0 10px; font: 500 15px/1 var(--font); letter-spacing: -.016em; }
+  .tb-btn::before { content: none; }
+  .tb-btn::after { content: "Appearance"; position: static; inset: auto; }
+  .tb-btn svg { width: 20px; height: 20px; }
+  /* content */
+  .intro, .bwrap, .awrap { padding-top: 22px; }
+  .browse .filters { top: 24px; max-height: calc(100dvh - 48px); }
+  .tb-pop { --tb-o: 30px calc(100% + 14px); }
+}
+@media (min-width: 1000px) {
+  /* no glass capsule in the sidebar, in either theme */
+  :root .tabs, :root[data-theme="dark"] .tabs, :root:not([data-theme="light"]) .tabs { box-shadow: none !important; background: none !important; }
+  /* the Appearance menu is a solid card over the page */
+  .tb-pop { background: var(--card) !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  :root[data-theme="dark"] .tb-pop { background: #2c2c2e !important; }
+}
+@media (min-width: 1000px) and (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tb-pop { background: #2c2c2e !important; } }
