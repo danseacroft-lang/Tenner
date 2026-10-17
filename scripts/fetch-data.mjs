@@ -431,6 +431,17 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         status = { ok: false, error: String(err.message).slice(0, 300), at: new Date().toISOString(), kept: !!nf.official };
       }
       await write('netflix-status.json', status);
+      // TEMPORARY: a peek at Netflix's Top 10 web page, to build a reader for it (it's a week ahead of the file)
+      try {
+        const dbg = {};
+        for (const [k, u] of [['films', 'https://www.netflix.com/tudum/top10/united-kingdom'], ['tv', 'https://www.netflix.com/tudum/top10/united-kingdom/tv']]) {
+          const html = await getText(u, 2);
+          const at = (needle, w = 1500) => { const i = html.indexOf(needle); return i < 0 ? null : html.slice(Math.max(0, i - w), i + w); };
+          dbg[k] = { length: html.length, scripts: [...html.matchAll(/<script[^>]*(id|type)="([^"]+)"/g)].map((m) => m[2]).slice(0, 20),
+            widower: at('Widower'), animals: at('Animals', 600), rank: at('weeklyRank', 800), week: at('10/11/26', 600) || at('2026-10-11', 600), apollo: at('__APOLLO', 300), next: at('__NEXT_DATA__', 300), json: [...html.matchAll(/https?:\/\/[^"'\s]*top10[^"'\s]*/g)].map((m) => m[0]).slice(0, 30) };
+        }
+        await write('netflix-debug.json', dbg);
+      } catch (err) { await write('netflix-debug.json', { error: String(err.message) }); }
     }
     await write('trending.json', data);
     if (built) await write('providers.json', built.providers);
