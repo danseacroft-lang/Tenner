@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-10-17T07:38:16.941Z",
+ "generatedAt": "2026-10-17T07:39:48.998Z",
  "region": "GB",
  "sample": true,
  "services": [
@@ -1254,131 +1254,10 @@
    "store": true,
    "logo": null,
    "providerIds": [],
-   "tv": [
-    {
-     "id": 101,
-     "type": "tv",
-     "title": "Pier Pressure",
-     "year": 2023,
-     "overview": "Fictional sample title. Add your TMDB key and run the workflow to see what is really popular.",
-     "rating": 6.5,
-     "popularity": 351,
-     "poster": null,
-     "backdrop": null,
-     "url": "https://www.themoviedb.org/"
-    },
-    {
-     "id": 102,
-     "type": "tv",
-     "title": "Ferryman",
-     "year": 2026,
-     "overview": "Fictional sample title. Add your TMDB key and run the workflow to see what is really popular.",
-     "rating": 7.8,
-     "popularity": 320,
-     "poster": null,
-     "backdrop": null,
-     "url": "https://www.themoviedb.org/"
-    },
-    {
-     "id": 103,
-     "type": "tv",
-     "title": "Ivy House",
-     "year": 2025,
-     "overview": "Fictional sample title. Add your TMDB key and run the workflow to see what is really popular.",
-     "rating": 6.1,
-     "popularity": 289,
-     "poster": null,
-     "backdrop": null,
-     "url": "https://www.themoviedb.org/"
-    },
-    {
-     "id": 104,
-     "type": "tv",
-     "title": "Weatherfield Close",
-     "year": 2024,
-     "overview": "Fictional sample title. Add your TMDB key and run the workflow to see what is really popular.",
-     "rating": 7.4,
-     "popularity": 258,
-     "poster": null,
-     "backdrop": null,
-     "url": "https://www.themoviedb.org/"
-    },
-    {
-     "id": 105,
-     "type": "tv",
-     "title": "Northern Line",
-     "year": 2023,
-     "overview": "Fictional sample title. Add your TMDB key and run the workflow to see what is really popular.",
-     "rating": 8.7,
-     "popularity": 227,
-     "poster": null,
-     "backdrop": null,
-     "url": "https://www.themoviedb.org/"
-    },
-    {
-     "id": 106,
-     "type": "tv",
-     "title": "Dog and Duck",
-     "year": 2026,
-     "overview": "Fictional sample title. Add your TMDB key and run the workflow to see what is really popular.",
-     "rating": 7,
-     "popularity": 196,
-     "poster": null,
-     "backdrop": null,
-     "url": "https://www.themoviedb.org/"
-    },
-    {
-     "id": 107,
-     "type": "tv",
-     "title": "Overcast",
-     "year": 2025,
-     "overview": "Fictional sample title. Add your TMDB key and run the workflow to see what is really popular.",
-     "rating": 8.3,
-     "popularity": 165,
-     "poster": null,
-     "backdrop": null,
-     "url": "https://www.themoviedb.org/"
-    },
-    {
-     "id": 108,
-     "type": "tv",
-     "title": "The Allotment",
-     "year": 2024,
-     "overview": "Fictional sample title. Add your TMDB key and run the workflow to see what is really popular.",
-     "rating": 6.6,
-     "popularity": 134,
-     "poster": null,
-     "backdrop": null,
-     "url": "https://www.themoviedb.org/"
-    },
-    {
-     "id": 109,
-     "type": "tv",
-     "title": "Second Post",
-     "year": 2023,
-     "overview": "Fictional sample title. Add your TMDB key and run the workflow to see what is really popular.",
-     "rating": 7.9,
-     "popularity": 103,
-     "poster": null,
-     "backdrop": null,
-     "url": "https://www.themoviedb.org/"
-    },
-    {
-     "id": 110,
-     "type": "tv",
-     "title": "The Grammar School",
-     "year": 2026,
-     "overview": "Fictional sample title. Add your TMDB key and run the workflow to see what is really popular.",
-     "rating": 6.2,
-     "popularity": 72,
-     "poster": null,
-     "backdrop": null,
-     "url": "https://www.themoviedb.org/"
-    }
-   ],
+   "tv": [],
    "movie": [
     {
-     "id": 111,
+     "id": 101,
      "type": "movie",
      "title": "Fenland",
      "year": 2023,
@@ -1390,7 +1269,7 @@
      "url": "https://www.themoviedb.org/"
     },
     {
-     "id": 112,
+     "id": 102,
      "type": "movie",
      "title": "Saltmarsh",
      "year": 2026,
@@ -1402,7 +1281,7 @@
      "url": "https://www.themoviedb.org/"
     },
     {
-     "id": 113,
+     "id": 103,
      "type": "movie",
      "title": "Low Tide at Kessock",
      "year": 2025,
@@ -1414,7 +1293,7 @@
      "url": "https://www.themoviedb.org/"
     },
     {
-     "id": 114,
+     "id": 104,
      "type": "movie",
      "title": "The Long Weekend",
      "year": 2024,
@@ -1426,7 +1305,7 @@
      "url": "https://www.themoviedb.org/"
     },
     {
-     "id": 115,
+     "id": 105,
      "type": "movie",
      "title": "Cobble Street",
      "year": 2023,
@@ -1438,7 +1317,7 @@
      "url": "https://www.themoviedb.org/"
     },
     {
-     "id": 116,
+     "id": 106,
      "type": "movie",
      "title": "Marrow Lane",
      "year": 2026,
@@ -1450,7 +1329,7 @@
      "url": "https://www.themoviedb.org/"
     },
     {
-     "id": 117,
+     "id": 107,
      "type": "movie",
      "title": "Quiet Carriage",
      "year": 2025,
@@ -1462,7 +1341,7 @@
      "url": "https://www.themoviedb.org/"
     },
     {
-     "id": 118,
+     "id": 108,
      "type": "movie",
      "title": "Kiln",
      "year": 2024,
@@ -1474,7 +1353,7 @@
      "url": "https://www.themoviedb.org/"
     },
     {
-     "id": 119,
+     "id": 109,
      "type": "movie",
      "title": "The Lighthouse Keepers",
      "year": 2023,
@@ -1486,7 +1365,7 @@
      "url": "https://www.themoviedb.org/"
     },
     {
-     "id": 120,
+     "id": 110,
      "type": "movie",
      "title": "Brass Monkeys",
      "year": 2026,

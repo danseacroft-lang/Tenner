@@ -119,7 +119,11 @@ function draw() {
   const chart = list.length
     ? `${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up. Add your TMDB key and run the workflow to see the real chart.</p>` : ''}
        ${posterRow(list)}${overview(list, !s, where)}`
-    : `<p class="lede" style="margin-top:24px">No ${words().toLowerCase()} found for ${esc(where)} yet. The provider name may have changed; check data/providers.json after the next update.</p>`;
+    : s?.store
+      ? `<div class="empty"><span class="empty-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 3.5v17M16 3.5v17" stroke="currentColor" stroke-width="2"/></svg></span>
+          <h2>Buy or rent is for films</h2><p>Almost every show is already on a subscription, so you'll find them on the five services.</p>
+          <button type="button" class="btn btn-tinted" data-go="movie">See films to buy or rent</button></div>`
+      : `<div class="empty"><h2>Nothing here right now</h2><p>The chart for ${esc(where)} will be back after the next hourly update.</p><a class="btn btn-tinted" href="#top">See all five services</a></div>`;
   view.innerHTML = `<div class="wrap chart">${chart}</div>`;
   wireScroller(); wireRanks();
 }
@@ -366,6 +370,7 @@ function openTab(name) {
   if (state.route === 'new') location.hash = state.lastChart || 'top'; else render();
 }
 window.tnOnTab = openTab;
+view.addEventListener('click', (e) => { const g = e.target.closest('[data-go]'); if (g) openTab(g.dataset.go); });
 
 addEventListener('hashchange', () => { route(); scrollTo(0, 0); });
 load();

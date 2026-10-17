@@ -127,17 +127,15 @@ async function buildTrending() {
   }));
 
   // 3. Buy or rent: the most popular new releases you pay for one at a time (Apple TV, Prime Video Store, Sky Store…).
-  //    Films: a UK digital release in the last 120 days. Shows: an episode in the last 90 days, sold by the episode or season.
+  //    Films with a UK digital release in the last six months.
   const ago = (d) => new Date(Date.now() - d * 864e5).toISOString().slice(0, 10);
   const shop = { watch_region: REGION, with_watch_monetization_types: 'rent|buy', sort_by: 'popularity.desc', include_adult: 'false', language: 'en-GB' };
-  const [sm, st] = await Promise.all([
-    tmdb('/discover/movie', { ...shop, region: REGION, with_release_type: '4', 'release_date.gte': ago(120), 'release_date.lte': ago(-1) }),
-    tmdb('/discover/tv', { ...shop, 'air_date.gte': ago(90), 'vote_count.gte': '5' }),
-  ]);
+  // Films only: almost every show is on a subscription, so a TV buy-or-rent chart would just repeat the others.
+  const sm = await tmdb('/discover/movie', { ...shop, region: REGION, with_release_type: '4', 'release_date.gte': ago(180), 'release_date.lte': ago(-1) });
   const store = {
     key: 'store', label: 'Buy or rent', store: true, logo: null, providerIds: [],
     movie: sm.results.slice(0, PER_LIST).map((r) => toItem(r, 'movie')),
-    tv: st.results.slice(0, PER_LIST).map((r) => toItem(r, 'tv')),
+    tv: [],
   };
 
   return {
@@ -240,7 +238,7 @@ function sample() {
     movie: Array.from({ length: PER_LIST }, (_, i) => make('movie', i, si)),
   }));
   const storeChart = { key: 'store', label: 'Buy or rent', store: true, logo: null, providerIds: [],
-    tv: Array.from({ length: PER_LIST }, (_, i) => make('tv', i, 7)), movie: Array.from({ length: PER_LIST }, (_, i) => make('movie', i, 7)) };
+    tv: [], movie: Array.from({ length: PER_LIST }, (_, i) => make('movie', i, 7)) };
   const today = new Date();
   const iso = (d) => new Date(+today + d * 864e5).toISOString().slice(0, 10);
   const fresh = {
