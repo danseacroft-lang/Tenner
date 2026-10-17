@@ -92,13 +92,12 @@ function markService(key) {
   }
 }
 
-// ---------- phones: the same choices as two pull-down menus (one glass card, shared) ----------
+// ---------- phones: the service bar as a pull-down menu ----------
 const ddPop = $('#ddPop'), ddList = $('#ddList');
 let ddBtn = null;
 const iconOf = (key) => key === 'top' ? ICON_ALL : key === 'store' ? ICON_STORE
   : svc(key)?.logo ? `<img src="${esc(svc(key).logo)}" alt="">` : `<span class="svc-glyph">${esc(svc(key)?.label[0] || '')}</span>`;
 function ddItems(btn) {
-  if (btn.id === 'kindDD') return [['tv', 'Shows'], ['movie', 'Films']].map(([k, l]) => ({ act: () => setKind(k), on: state.kind === k, label: l }));
   const keys = ['top', ...services().filter((x) => !x.store).map((x) => x.key), ...(state.kind === 'movie' ? services().filter((x) => x.store).map((x) => x.key) : [])];
   return keys.map((k) => ({ act: () => { location.hash = k; }, on: state.route === k, label: k === 'top' ? 'All services' : svc(k).label, icon: iconOf(k), sep: k === 'store' }));
 }
@@ -136,7 +135,6 @@ addEventListener('keydown', (e) => {
 addEventListener('resize', () => ddClose());
 addEventListener('scroll', () => ddClose(), { passive: true });
 function markDropdowns() {
-  $('#kindDD .dd-l').textContent = words();
   $('#svcDD .dd-l').textContent = state.route === 'top' ? 'All services' : svc(state.route)?.label || 'All services';
   $('#svcDD .dd-ic').innerHTML = iconOf(state.route);
 }

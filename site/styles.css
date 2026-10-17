@@ -312,10 +312,13 @@ main:focus { outline: none; }
 .svc-glyph svg { width: 14px; height: 14px; }
 .svc-sep { flex: none; width: 1px; height: 18px; margin: 0 3px; background: var(--sep); }
 
-/* phones: Shows | Films and the service bar fold into two pull-down buttons, iOS style */
+/* phones: the service bar folds into a pull-down button, iOS style, under Shows | Films */
 .dd { display: none; }
 @media (max-width: 560px) {
-  .controls .segmented, .controls .svc { display: none; }
+  /* Shows | Films stays the switch, sitting neatly on top of the services pull-down, the two the same width */
+  .controls .svc { display: none; }
+  .controls { flex-wrap: wrap; gap: 8px; }
+  .controls .segmented { display: grid; width: 100%; height: 36px; }
   .dd {
     display: inline-flex; align-items: center; gap: 8px; min-width: 0; height: 40px; padding: 0 14px; border: 0; border-radius: 999px; cursor: pointer;
     color: var(--label); font: 600 15px/1 var(--font); letter-spacing: -.016em; white-space: nowrap; -webkit-tap-highlight-color: transparent;
@@ -323,7 +326,7 @@ main:focus { outline: none; }
     box-shadow: inset 0 0 0 .5px var(--glass-hi), var(--glass-shadow);
     transition: transform .35s var(--ease-spring), background-color .2s ease;
   }
-  #svcDD { flex: 1; padding-left: 6px; }
+  #svcDD { flex: 1 1 100%; padding-left: 6px; }
   .dd:active { transform: scale(1.04); }
   .dd[aria-expanded="true"] { color: var(--accent); }
   .dd-l { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: left; }
@@ -354,8 +357,6 @@ main:focus { outline: none; }
   .intro .large-title { font-size: 30px; }
   .lede, .sub { font-size: 15px; }
   .updated { flex: none; }
-  .controls { flex-wrap: nowrap; gap: 8px; }
-  .controls .svc { flex: 1; min-width: 0; }
   .segmented button { min-width: 0; padding: 0 12px; }
   .notice { font-size: 14px; padding: 10px 14px; }
 }
