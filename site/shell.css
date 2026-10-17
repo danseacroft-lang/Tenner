@@ -54,3 +54,12 @@
   :root[data-theme="dark"] .tb-pop { background: #2c2c2e !important; }
 }
 @media (min-width: 1000px) and (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tb-pop { background: #2c2c2e !important; } }
+
+/* every page shares one column: the About page lines up with Top 10 and Browse, left-aligned like Apple Music */
+.about .awrap { max-width: var(--max); }
+.about .sec-h { text-align: left; }
+.about .sec-h p { margin-left: 0; }
+.about .credits { text-align: left; }
+.about .credits p { margin-inline: 0; }
+@media (min-width: 1000px) { .about .banner { margin-top: 0; } }
+@media (min-width: 1240px) { .about .steps { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; } .about .step .txt { padding: 18px 20px 22px; } .about .step h3 { font-size: 19px; } .about .step p { font-size: 15px; } }
