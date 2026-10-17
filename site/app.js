@@ -176,6 +176,20 @@ $('#refresh').addEventListener('click', async () => {
   btn.classList.remove('busy');
 });
 
+// New data while the page is open: swap it in and redraw (with the usual crossfade), keeping your place.
+// Held back while a menu is open or a row is being dragged, and tried again at the next check.
+addEventListener('tn:check', async () => {
+  if (!state.trending || $('#refresh').classList.contains('busy')) return;
+  try {
+    const d = await fetchData(true);
+    const changed = d.trending.generatedAt !== state.trending.generatedAt || d.fresh?.generatedAt !== state.fresh?.generatedAt;
+    if (!changed || ddBtn || document.querySelector('.posters.dragging')) return;
+    const y = scrollY;
+    Object.assign(state, d); showUpdated(); render();
+    requestAnimationFrame(() => scrollTo(0, y));
+  } catch { /* offline for a moment: the next check will catch up */ }
+});
+
 // ---------- routing ----------
 function route() {
   const h = location.hash.slice(1);

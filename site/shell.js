@@ -99,5 +99,15 @@
   const onScroll = () => root.classList.toggle('scrolled', scrollY > 8);
   addEventListener('scroll', onScroll, { passive: true }); onScroll();
 
+  // ---------- staying current: pages left open fetch the new hour's data by themselves ----------
+  // Every 15 minutes while the page is on screen, and whenever you come back to it after a few minutes away,
+  // a "tn:check" event goes out; each page listens and quietly swaps in fresh posters, artwork and charts.
+  // Nothing runs while the tab is hidden.
+  let lastCheck = Date.now();
+  const check = () => { lastCheck = Date.now(); dispatchEvent(new Event('tn:check')); };
+  setInterval(() => { if (document.visibilityState === 'visible') check(); }, 15 * 60e3);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && Date.now() - lastCheck > 4 * 60e3) check(); });
+  addEventListener('pageshow', (e) => { if (e.persisted) check(); });   // back/forward cache
+
   window.tnShell = { select, current: () => cur };
 })();

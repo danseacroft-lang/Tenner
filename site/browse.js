@@ -71,6 +71,17 @@
     $('#count').textContent = `The catalogue didn't load (${err.message}). It's rebuilt every hour, so try again shortly.`;
   });
 
+  // New catalogue while the page is open: take it in quietly. Near the top of the page the grid redraws straight
+  // away; further down it waits for your next filter or search, so the posters never shift under you.
+  addEventListener('tn:check', () => {
+    if (!cat) return;
+    fetch(`data/browse.json?v=${Date.now()}`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((c) => {
+      if (!c?.items?.length || c.generatedAt === cat.generatedAt) return;
+      cat = c;
+      if (scrollY < 400 && !document.activeElement?.matches('input')) apply(false);
+    }).catch(() => {});
+  });
+
   // ---------- controls ----------
   function buildControls() {
     // collections: a glass capsule with a gliding pill, like the service bar

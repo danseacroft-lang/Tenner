@@ -245,12 +245,16 @@
           : '<span class="ph" style="background:linear-gradient(160deg,hsl('+hue(x.n)+' 50% 42%),hsl('+((hue(x.n)+40)%360)+' 55% 16%))"></span>';
       }).join('')+'</div>'}).join('');
     }
-    fetch('data/browse.json').then(function(r){return r.ok?r.json():null}).then(function(d){
+    var stamp=null;
+    function load(bust){ fetch('data/browse.json'+(bust?'?v='+Date.now():''),bust?{cache:'no-store'}:{}).then(function(r){return r.ok?r.json():null}).then(function(d){
+      if(bust&&(!d||d.generatedAt===stamp)) return; if(d) stamp=d.generatedAt;
       if(!d||!d.items) throw 0;
       var top=d.items.filter(function(x){return x.img&&x.s&&x.s.length}).sort(function(a,b){return b.p-a.p});
       if(top.length<8) throw 0;
       draw(top.map(function(x){return {n:x.n, src: x.img.charAt(0)==='/' ? d.img+x.img : x.img}}));
-    }).catch(function(){ draw(['Lighthouse','Marrow','Signal','Ferryman','Kiln','Fenland','Saltmarsh','Overcast','Ivy','Cobble','Grammar','Pier','Duck','Post','Brass','Weekend'].map(function(n){return {n:n}})); });
+    }).catch(function(){ if(bust) return; draw(['Lighthouse','Marrow','Signal','Ferryman','Kiln','Fenland','Saltmarsh','Overcast','Ivy','Cobble','Grammar','Pier','Duck','Post','Brass','Weekend'].map(function(n){return {n:n}})); }); }
+    load(false);
+    addEventListener('tn:check', function(){ load(true); });   /* this hour's posters, even if the page was left open */
   })();</script>
   <script src="shell.js" defer></script>
 </body>
