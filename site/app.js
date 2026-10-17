@@ -44,15 +44,14 @@ const services = () => state.trending.services;
 const svc = (k) => services().find((s) => s.key === k);
 
 // ---------- the service bar: each service as its own app icon in a glass capsule, a pill gliding to the chosen one ----------
-const ICON_ALL = '<img src="logo.svg" alt="">';
 const ICON_STORE = '<span class="svc-glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12.5H7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>';
 function buildServiceBar() {
   const bar = $('#svc');
   const item = (key, label, icon, extra = '') =>
-    `<button type="button" role="radio" class="svc-b${extra}" data-svc="${key}" aria-checked="false" tabindex="-1"><span class="svc-ic">${icon}</span><span class="svc-l">${esc(label)}</span></button>`;
+    `<button type="button" role="radio" class="svc-b${extra}${icon ? '' : ' txt'}" data-svc="${key}" aria-checked="false" tabindex="-1">${icon ? `<span class="svc-ic">${icon}</span>` : ''}<span class="svc-l">${esc(label)}</span></button>`;
   const iconFor = (s) => s.logo ? `<img src="${esc(s.logo)}" alt="" loading="lazy">` : `<span class="svc-glyph">${esc(s.label[0])}</span>`;
   bar.insertAdjacentHTML('beforeend',
-    item('top', 'All', ICON_ALL) +
+    item('top', 'All', '') +   // just the word, to keep the bar clean
     services().filter((s) => !s.store).map((s) => item(s.key, s.label, iconFor(s))).join('') +
     services().filter((s) => s.store).map((s) => `<span class="svc-sep" aria-hidden="true"></span>` + item(s.key, s.label, ICON_STORE, ' store')).join(''));
   const btns = () => [...bar.querySelectorAll('.svc-b')];
@@ -96,7 +95,7 @@ function markService(key) {
 // ---------- phones: the service bar as a pull-down menu ----------
 const ddPop = $('#ddPop'), ddList = $('#ddList');
 let ddBtn = null;
-const iconOf = (key) => key === 'top' ? ICON_ALL : key === 'store' ? ICON_STORE
+const iconOf = (key) => key === 'top' ? '' : key === 'store' ? ICON_STORE
   : svc(key)?.logo ? `<img src="${esc(svc(key).logo)}" alt="">` : `<span class="svc-glyph">${esc(svc(key)?.label[0] || '')}</span>`;
 function ddItems(btn) {
   const keys = ['top', ...services().filter((x) => !x.store).map((x) => x.key), ...(state.kind === 'movie' ? services().filter((x) => x.store).map((x) => x.key) : [])];
@@ -137,7 +136,7 @@ addEventListener('resize', () => ddClose());
 addEventListener('scroll', () => ddClose(), { passive: true });
 function markDropdowns() {
   $('#svcDD .dd-l').textContent = state.route === 'top' ? 'All services' : svc(state.route)?.label || 'All services';
-  $('#svcDD .dd-ic').innerHTML = iconOf(state.route);
+  const ic = iconOf(state.route); $('#svcDD .dd-ic').innerHTML = ic; $('#svcDD .dd-ic').hidden = !ic;
 }
 
 // ---------- "Updated … ago" ----------

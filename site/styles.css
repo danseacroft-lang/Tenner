@@ -298,6 +298,7 @@ main:focus { outline: none; }
   font: 600 14px/1 var(--font); letter-spacing: -.016em; white-space: nowrap;
   transition: color .25s ease, transform .4s var(--ease-spring); -webkit-tap-highlight-color: transparent;
 }
+.svc-b.txt { padding: 0 13px; }   /* All: just the word */
 .svc-b:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .svc-b[aria-checked="true"] { color: var(--label); }
 @media (hover: hover) { .svc-b[aria-checked="false"]:hover { color: var(--label); } .svc-b:hover .svc-ic { transform: scale(1.08); } }
@@ -327,6 +328,7 @@ main:focus { outline: none; }
     transition: transform .35s var(--ease-spring), background-color .2s ease;
   }
   #svcDD { flex: 1 1 100%; padding-left: 6px; }
+  #svcDD:has(.dd-ic[hidden]) { padding-left: 16px; }
   .dd:active { transform: scale(1.04); }
   .dd[aria-expanded="true"] { color: var(--accent); }
   .dd-l { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: left; }
@@ -646,7 +648,7 @@ main:focus { outline: none; }
    From 1000px wide, the glass bar becomes a fixed sidebar on the left (logo, then Search, Top 10, New and Browse, the chosen
    one on a grey pill with its icon in the accent colour; then About and the small print, the version, and Theme at the
    foot) and the page sits to the right of it. About lives in the tab bar on phones and tablets. */
-.side-links { display: none; }
+.side-links, .side-about { display: none; }
 @media (min-width: 1000px) {
   :root { --side: 236px; --side-bg: rgba(242, 242, 247, .82); }
   :root[data-theme="dark"] { --side-bg: rgba(28, 28, 30, .82); }
@@ -682,10 +684,16 @@ main:focus { outline: none; }
   .side-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
   a.side-link { text-decoration: none; cursor: pointer; }
   @media (hover: hover) { a.side-link:hover { color: var(--accent); text-decoration: none; } }
-  .side-about { flex-basis: 100%; margin-bottom: 2px; color: var(--label); font-weight: 500; }
-  .side-about[aria-current] { color: var(--accent); }
+  /* About: a row at the foot of the sidebar, just above Theme, styled like it */
+  .side-about { display: flex; align-items: center; gap: 12px; height: 40px; margin: 8px 0 -20px; padding: 0 10px;   /* -20px: sits 2px above Theme, like the tabs */
+    border-radius: 9px;
+    color: var(--label); font: 500 15px/1 var(--font); letter-spacing: -.016em; text-decoration: none; transition: background-color .2s ease; }
+  .side-about svg { width: 20px; height: 20px; flex: none; }
+  .side-about:hover { text-decoration: none; background: var(--fill); }
+  .side-about[aria-current] { background: var(--fill); font-weight: 600; }
+  .side-about[aria-current] svg { color: var(--accent); }
   .side-ver { flex-basis: 100%; margin-top: 6px; color: var(--label3); font-size: 12px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
-  .top-act { margin-top: 4px; justify-self: auto; align-self: stretch; padding: 0; border-radius: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .top-act { margin-top: 0; justify-self: auto; align-self: stretch; padding: 0; border-radius: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
   .tb-btn { width: 100%; height: 40px; border-radius: 9px; display: flex; justify-content: flex-start; gap: 12px; padding: 0 10px; font: 500 15px/1 var(--font); letter-spacing: -.016em; }
   .tb-btn::after { content: "Theme"; position: static; inset: auto; }
   .tb-btn svg { width: 20px; height: 20px; }
