@@ -334,7 +334,6 @@ function wireScroller() {
   row.addEventListener('scroll', update, sig);
   addEventListener('resize', update, sig);
   update();
-  wireTilt(row, sig);
   wireDrag(row, sig);
 }
 
