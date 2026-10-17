@@ -187,6 +187,7 @@ function overall(services) {
 // Netflix publishes every country's weekly Top 10 as a data file. The Netflix tab uses it instead of TMDB's
 // popularity ranking, so it matches the Top 10 people see in the app (weekly rather than daily). Each title is
 // matched to TMDB for its poster, year and rating. Downloaded at most twice a day; otherwise the live copy is reused.
+const NETFLIX_V = 2;   // bump when the reader changes, so the next run re-reads instead of reusing the live copy
 const NETFLIX_TSV = 'https://www.netflix.com/tudum/top10/data/all-weeks-countries.tsv';
 async function getText(url, tries = 3) {
   for (let i = 1; ; i++) {
@@ -205,8 +206,12 @@ async function matchTmdb(title, type, year) {
   const yearOf = (x) => Number(String((type === 'movie' ? x.release_date : x.first_air_date) || '').slice(0, 4)) || null;
   // an exact title match (from the right year, when Netflix says which), the most popular if several; else TMDB's best guess
   const exact = list.filter((x) => same(type === 'movie' ? x.title : x.name, title) || same(type === 'movie' ? x.original_title : x.original_name, title));
-  const dated = year ? exact.filter((x) => yearOf(x) && Math.abs(yearOf(x) - year) <= 1) : [];
-  return (dated.length ? dated : exact).sort((a, b) => b.popularity - a.popularity)[0] || list[0] || null;
+  // the same name can belong to several titles: take the one closest to Netflix's year (it can't have started after it)
+  const gap = (x) => !year || !yearOf(x) ? 50 : yearOf(x) > year + 1 ? 99 : year - yearOf(x);
+  const best = exact.sort((a, b) => gap(a) - gap(b) || b.popularity - a.popularity)[0];
+  if (best && gap(best) <= (type === 'movie' ? 1 : 8)) return best;
+  // nothing from the right time: a brand-new title TMDB doesn't know yet, so keep Netflix's details rather than a namesake
+  return year ? null : best || list[0] || null;
 }
 // Netflix's Top 10 page is a week ahead of the data file, so it's read first. Its chart is embedded in the page as
 // (escaped) JSON: one "PulseTop10ItemEntity" per entry, with weekEndDate, category (MOVIES or SERIES), weeklyRank,
@@ -272,7 +277,10 @@ export async function buildNetflixOfficial() {
       let hit = null; try { hit = await matchTmdb(r.title, type, r.year); } catch { /* keep the bare title */ }
       const it = hit ? toItem(hit, type) : { id: `nf-${norm(r.title)}`, type, title: r.title, year: r.year, overview: '', rating: null, popularity: 0, poster: null, backdrop: null };
       it.title = r.title;   // Netflix's own name for it
-      if (r.season && r.season !== r.title) it.season = r.season;
+      // seasons as Netflix names them, minus its date prefixes ("2026 - October 5, 2026" -> "October 5, 2026")
+      const season = String(r.season || '').replace(/^\d{4}\s*-\s*/, '').trim();
+      if (season && season !== r.title && !season.includes(r.title)) it.season = season;
+      if (!hit && r.year) it.year = r.year;
       if (r.weeks) it.weeks = r.weeks;
       // straight to it on Netflix when we know its Netflix ID
       it.url = r.videoId ? `https://www.netflix.com/title/${r.videoId}` : it.url || `https://www.netflix.com/search?q=${encodeURIComponent(r.title)}`;
@@ -458,14 +466,14 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       const nf = data.services.find((x) => x.key === 'netflix');
       const prevNf = (await liveCopy('trending.json'))?.services?.find((x) => x.key === 'netflix');
       // re-read twice a day; if last time only the (week-behind) file worked, try the page again sooner
-      const fresh = prevNf?.official?.from && hoursOld({ generatedAt: prevNf.official.fetchedAt }) < (prevNf.official.from === 'page' ? 12 : 3);
+      const fresh = prevNf?.official?.v === NETFLIX_V && hoursOld({ generatedAt: prevNf.official.fetchedAt }) < (prevNf.official.from === 'page' ? 12 : 3);
       let status;
       try {
         let off;
         if (fresh) { off = prevNf.official; Object.assign(nf, { tv: prevNf.tv, movie: prevNf.movie }); console.log('Reusing Netflix official Top 10 for', off.week); }
         else {
           const o = await buildNetflixOfficial();
-          Object.assign(nf, { tv: o.tv, movie: o.movie }); off = { source: 'netflix', week: o.week, from: o.from, fetchedAt: new Date().toISOString() };
+          Object.assign(nf, { tv: o.tv, movie: o.movie }); off = { source: 'netflix', v: NETFLIX_V, week: o.week, from: o.from, fetchedAt: new Date().toISOString() };
           console.log('Netflix official UK Top 10, week ending', o.week);
         }
         nf.official = off; status = { ok: true, week: off.week, from: off.from, fetchedAt: off.fetchedAt };
