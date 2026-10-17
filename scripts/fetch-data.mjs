@@ -437,8 +437,13 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         for (const [k, u] of [['films', 'https://www.netflix.com/tudum/top10/united-kingdom'], ['tv', 'https://www.netflix.com/tudum/top10/united-kingdom/tv']]) {
           const html = await getText(u, 2);
           const at = (needle, w = 1500) => { const i = html.indexOf(needle); return i < 0 ? null : html.slice(Math.max(0, i - w), i + w); };
-          dbg[k] = { length: html.length, scripts: [...html.matchAll(/<script[^>]*(id|type)="([^"]+)"/g)].map((m) => m[2]).slice(0, 20),
-            widower: at('Widower'), animals: at('Animals', 600), rank: at('weeklyRank', 800), week: at('10/11/26', 600) || at('2026-10-11', 600), apollo: at('__APOLLO', 300), next: at('__NEXT_DATA__', 300), json: [...html.matchAll(/https?:\/\/[^"'\s]*top10[^"'\s]*/g)].map((m) => m[0]).slice(0, 30) };
+          const pairs = (txt) => [...txt.matchAll(/\\?"(\w+)\\?"\s*:\s*(\\?"[^"\\]{0,60}|-?[\d.]+|true|false|null|\[|\{)/g)].map((m) => `${m[1]}=${m[2].replace(/^\\?"/, '')}`);
+          const hits = [...html.matchAll(/weeklyRank/g)].map((m) => m.index);
+          dbg[k] = { length: html.length, rankCount: hits.length,
+            first: hits[0] != null ? pairs(html.slice(hits[0] - 1200, hits[0] + 1200)) : null,
+            second: hits[1] != null ? pairs(html.slice(hits[1] - 600, hits[1] + 600)) : null,
+            escaped: hits[0] != null ? html.slice(hits[0] - 3, hits[0]) : null,
+            before: hits[0] != null ? html.slice(hits[0] - 300, hits[0] - 200).replace(/[<>]/g, ' ') : null };
         }
         await write('netflix-debug.json', dbg);
       } catch (err) { await write('netflix-debug.json', { error: String(err.message) }); }
