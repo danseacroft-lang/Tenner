@@ -123,11 +123,11 @@
 @keyframes bob { 50% { transform: translateY(3px); } }
 @keyframes breathe { 50% { opacity: .65; } }
 @keyframes turn { to { transform: rotate(360deg); } }
-.bob { animation: bob 4s ease-in-out infinite; }
-.bob2 { animation: bob 5s ease-in-out -1.6s infinite; }
-.pulse { animation: breathe 6s ease-in-out infinite; }
-.pulse2 { animation: breathe 7.5s ease-in-out -2s infinite; }
-.hand { transform-box: view-box; transform-origin: 160px 98px; animation: turn 12s linear infinite; }
+/* the chips bob a few times and settle; nothing on this page loops forever */
+.bob { animation: bob 4s ease-in-out 3; }
+.bob2 { animation: bob 5s ease-in-out -1.6s 2; }
+.hand { transform-box: view-box; transform-origin: 160px 98px; }
+.js-reveal .reveal.in .hand { animation: turn 3s cubic-bezier(.45, 0, .2, 1) .3s 1; }   /* one sweep round the clock as the card arrives */
 
 /* reveal on arrival (only once the script has marked the page, so nothing is hidden without it) */
 .js-reveal .reveal { opacity: 0; transform: translateY(28px) scale(.98); }
@@ -157,7 +157,7 @@
 @media (hover: hover) { .step, .tile { transition: transform .6s var(--ease-spring), box-shadow .4s ease; } .step:hover, .tile:hover { transform: translateY(-4px); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .bob, .bob2, .pulse, .pulse2, .hand, .hero > *, .scene { animation: none !important; }
+  .bob, .bob2, .hand, .hero > *, .scene { animation: none !important; }
   .js-reveal .reveal, .js-reveal .reveal *, .js-reveal .reveal .checks > g, .js-reveal .glist.reveal li { opacity: 1 !important; transform: none !important; stroke-dashoffset: 0 !important; transition: none !important; }
 }
 

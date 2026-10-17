@@ -226,7 +226,7 @@ body::before{content:"";position:fixed;z-index:-1;left:-10vw;right:-10vw;top:-20
 .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); position: relative; }
 .live-dot::after {
   content: ""; position: absolute; inset: -4px; border-radius: 50%;
-  border: 2px solid var(--green); opacity: 0; animation: ping 2.4s ease-out infinite;
+  border: 2px solid var(--green); opacity: 0; animation: ping 2.4s ease-out 4;
 }
 @keyframes ping { 0% { transform: scale(.5); opacity: .7; } 80%, 100% { transform: scale(1.4); opacity: 0; } }
 .updated.busy .live-dot { background: var(--label2); }
@@ -298,11 +298,9 @@ td.rank { width: 3.2em; font: 800 24px/1 var(--font-display); letter-spacing: -.
 td.rank span {
   background: linear-gradient(90deg, #ff375f, #ff9f0a, #ffd60a, #30d158, #40c8e0, #5e5ce6, #bf5af2, #ff375f) 0 0 / 300% 100%;
   -webkit-background-clip: text; background-clip: text; color: transparent;
-  animation: flow 7s linear infinite;
 }
-tr:nth-child(2n) td.rank span { animation-delay: -1.2s; }
-tr:nth-child(3n) td.rank span { animation-delay: -2.6s; }
-@keyframes flow { to { background-position: 300% 0; } }
+@media (hover: hover) { tbody tr:hover td.rank span { animation: flow 1.6s cubic-bezier(.45, 0, .2, 1) both; } }   /* the rainbow runs through once on hover */
+@keyframes flow { to { background-position: 200% 0; } }
 .tcell { display: flex; align-items: center; gap: 14px; min-width: 0; }
 .tcell img, .tcell .ph { width: 92px; height: auto; aspect-ratio: 16 / 9; border-radius: 8px; object-fit: contain; background: var(--fill); flex: none; }
 .tcell img.tall { aspect-ratio: 2 / 3; width: 44px; margin-inline: 24px; }   /* no wide still: the poster, whole, centred in the same slot */

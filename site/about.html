@@ -85,13 +85,13 @@
           <radialGradient id="glowB" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#0a84ff" stop-opacity=".5"/><stop offset="1" stop-color="#0a84ff" stop-opacity="0"/></radialGradient>
           <linearGradient id="flow" gradientUnits="userSpaceOnUse" x1="250" y1="0" x2="550" y2="40" spreadMethod="repeat">
             <stop offset="0" stop-color="#ff375f"/><stop offset=".17" stop-color="#ff9f0a"/><stop offset=".33" stop-color="#ffd60a"/><stop offset=".5" stop-color="#30d158"/><stop offset=".67" stop-color="#40c8e0"/><stop offset=".83" stop-color="#bf5af2"/><stop offset="1" stop-color="#ff375f"/>
-            <animateTransform attributeName="gradientTransform" type="translate" from="0 0" to="300 40" dur="8s" repeatCount="indefinite"/>
+            <animateTransform attributeName="gradientTransform" type="translate" from="-300 -40" to="0 0" dur="3s" begin=".5s" calcMode="spline" keyTimes="0;1" keySplines=".45 0 .2 1" fill="freeze"/>
           </linearGradient>
           <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--a-floor1)"/><stop offset="1" stop-color="var(--a-floor2)"/></linearGradient>
         </defs>
         <rect width="800" height="360" fill="var(--a-room)"/>
-        <ellipse cx="400" cy="150" rx="380" ry="200" fill="url(#glowA)" class="pulse"/>
-        <ellipse cx="230" cy="80" rx="240" ry="150" fill="url(#glowB)" class="pulse2"/>
+        <ellipse cx="400" cy="150" rx="380" ry="200" fill="url(#glowA)"/>
+        <ellipse cx="230" cy="80" rx="240" ry="150" fill="url(#glowB)"/>
         <rect y="282" width="800" height="78" fill="url(#floor)"/>
         <!-- the telly -->
         <g filter="url(#fSoft)">
@@ -110,7 +110,7 @@
         <!-- stand and a soft reflection -->
         <rect x="370" y="274" width="60" height="16" rx="4" fill="var(--a-bezel)"/>
         <rect x="320" y="288" width="160" height="6" rx="3" fill="var(--a-bezel)"/>
-        <ellipse cx="400" cy="300" rx="230" ry="10" fill="#bf5af2" opacity=".18" class="pulse"/>
+        <ellipse cx="400" cy="300" rx="230" ry="10" fill="#bf5af2" opacity=".18"/>
         <!-- glass chips -->
         <g class="bob"><rect x="56" y="70" width="128" height="40" rx="20" fill="var(--a-glass)" stroke="var(--a-glass-b)"/>
           <circle cx="78" cy="90" r="5" fill="#30d158"/><text x="92" y="96" class="chip">Updated</text></g>

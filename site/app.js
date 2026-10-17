@@ -149,7 +149,8 @@ const meta = (it) => [
 ].join('');
 
 // Each rank is a little neon sign: a soft aura, a glassy fill, a rainbow tube with bloom and a white-hot core.
-// The rainbow flows along every number, offset per card so it ripples across the row.
+// The rainbow sweeps through each number once as the row arrives (rippling along), and again when you hover a card;
+// otherwise the numbers are still, so an idle page costs nothing.
 const RAINBOW = ['#ff375f', '#ff9f0a', '#ffd60a', '#30d158', '#40c8e0', '#5e5ce6', '#bf5af2', '#ff375f'];
 function rankSvg(i) {
   const id = `rk${i}`, n = pad(i + 1);
@@ -157,7 +158,7 @@ function rankSvg(i) {
   const t = (cls, extra = '') => `<text class="${cls}" x="0" y="104" ${extra}>${n}</text>`;
   return `<svg class="num" viewBox="-24 -24 200 152" aria-hidden="true">
     <defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="-40" y1="0" x2="200" y2="40" spreadMethod="repeat">${stops}
-      <animateTransform attributeName="gradientTransform" type="translate" from="0 0" to="240 40" dur="7s" begin="${(-i * 0.45).toFixed(2)}s" repeatCount="indefinite"/>
+      <animateTransform attributeName="gradientTransform" type="translate" from="-240 -40" to="0 0" dur="2.6s" begin="${(0.15 + i * 0.09).toFixed(2)}s" calcMode="spline" keyTimes="0;1" keySplines=".45 0 .2 1" fill="freeze"/>
     </linearGradient></defs>
     ${t('aura', `fill="url(#${id})" filter="url(#aura)"`)}
     ${t('glass')}
@@ -166,15 +167,16 @@ function rankSvg(i) {
   </svg>`;
 }
 
-// Only animate the numbers you can see, and none at all for reduced motion.
-let rankObserver;
+// Hovering (or focusing) a card replays its rainbow sweep. Nothing loops.
 function wireRanks() {
-  const svgs = [...document.querySelectorAll('svg.num')];
-  if (reduceMotion) { svgs.forEach((s) => s.pauseAnimations?.()); return; }
-  rankObserver?.disconnect();
-  rankObserver = new IntersectionObserver((entries) => entries.forEach((e) =>
-    e.isIntersecting ? e.target.unpauseAnimations?.() : e.target.pauseAnimations?.()), { rootMargin: '80px' });
-  svgs.forEach((s) => rankObserver.observe(s));
+  if (reduceMotion) { document.querySelectorAll('svg.num').forEach((s) => s.pauseAnimations?.()); return; }
+  const replay = (e) => {
+    const t = e.target.closest?.('.pcard'); if (!t || t.contains(e.relatedTarget)) return;
+    const a = t.querySelector('svg.num animateTransform'); try { a?.beginElement(); } catch {}
+  };
+  const row = $('.posters'); if (!row) return;
+  row.addEventListener('pointerover', replay, { signal: rowAbort?.signal });
+  row.addEventListener('focusin', replay, { signal: rowAbort?.signal });
 }
 
 function posterRow(list) {
