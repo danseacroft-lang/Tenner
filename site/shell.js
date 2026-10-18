@@ -5,14 +5,16 @@
   const $ = (s) => document.querySelector(s);
   const root = document.documentElement;
   // ---------- settings (settings.html), on this device only ----------
-  const PREFS = 'tenner-settings', DEF = { start: 'auto', still: false, moves: true, ratings: true, hero: true, trailers: 'here', no18: false };
+  const PREFS = 'tenner-settings', DEF = { start: 'auto', anim: false, moves: true, ratings: true, hero: true, trailers: 'here', no18: false };
   const prefs = {
     get() { try { return { ...DEF, ...JSON.parse(localStorage.getItem(PREFS) || '{}') }; } catch { return { ...DEF }; } },
     set(k, v) { const p = prefs.get(); p[k] = v; try { localStorage.setItem(PREFS, JSON.stringify(p)); } catch {} apply(); dispatchEvent(new Event('tn:prefs')); },
   };
-  const apply = () => { const p = prefs.get(); root.classList.toggle('still', p.still); root.classList.toggle('no-moves', !p.moves); root.classList.toggle('no-ratings', !p.ratings); root.classList.toggle('no-hero', !p.hero); };
+  // no animations unless you switch them on in Settings (and never when the device asks for reduced motion)
+  const osStill = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const apply = () => { const p = prefs.get(); root.classList.toggle('still', !p.anim || osStill); root.classList.toggle('no-moves', !p.moves); root.classList.toggle('no-ratings', !p.ratings); root.classList.toggle('no-hero', !p.hero); };
   apply();
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches || prefs.get().still;
+  const reduce = osStill || !prefs.get().anim;
 
   // ---------- shared helpers ----------
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -39,14 +41,14 @@
       e.preventDefault(); const n = list[(k + list.length) % list.length]; n.focus(); pick?.(n);
     });
   }
-  // A segmented control that behaves like an iOS switch: its thumb moves straight to the chosen option (no glide: it
-  // feels quicker), and you can grab it and slide it between options; it swells slightly while held, then snaps to the nearest.
+  // A segmented control that behaves like an iOS switch: its thumb glides to the chosen option with a little spring
+  // (when animations are on), and you can grab it and slide (or flick) it between options; it swells slightly while held, then snaps to the nearest.
   // The thumb follows aria-checked, so pages only mark the choice; `pick` is called when a drag lands on a new option.
   function segment(group, pick) {
     if (!group) return;
     const thumb = group.querySelector('.seg-thumb'), btns = () => [...group.querySelectorAll('button')].filter((b) => b.offsetWidth);
     const place = (animate) => glide(thumb, group.querySelector('button[aria-checked="true"]'), animate, 1.1);
-    new MutationObserver(() => place(false)).observe(group, { attributes: true, subtree: true, attributeFilter: ['aria-checked'] });
+    new MutationObserver(() => place(true)).observe(group, { attributes: true, subtree: true, attributeFilter: ['aria-checked'] });
     addEventListener('resize', () => place(false)); document.fonts?.ready.then(() => place(false)); place(false);
     let drag = null, moved = false;
     group.addEventListener('pointerdown', (e) => {
@@ -69,14 +71,14 @@
       // snap to whichever option the thumb's centre is over
       const r = thumb.getBoundingClientRect(), mid = r.left + r.width / 2;
       const to = btns().reduce((best, n) => { const nr = n.getBoundingClientRect(), d = Math.abs(nr.left + nr.width / 2 - mid); return d < best.d ? { n, d } : best; }, { n: null, d: Infinity }).n;
-      if (to && to.getAttribute('aria-checked') !== 'true') pick(to); else place(false);
+      if (to && to.getAttribute('aria-checked') !== 'true') pick(to); else place(true);
     };
     group.addEventListener('pointerup', end); group.addEventListener('pointercancel', end);
     // a drag isn't a tap: swallow the click that follows it
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.2.2';
+  const version = '1.3.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
