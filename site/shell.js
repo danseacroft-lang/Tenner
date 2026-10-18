@@ -68,7 +68,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
-  const contact = 'hello@example.com';
+  const contact = 'support@tenneruk.space';
   document.querySelectorAll('a.contact-email').forEach((a) => { a.href = `mailto:${contact}`; a.textContent = contact; });
   document.querySelectorAll('.contact-email-text').forEach((el) => { el.textContent = contact; });
 
