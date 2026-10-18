@@ -38,6 +38,8 @@ After that it rebuilds every hour on its own.
 | New (`#new`) | Releases from the last and next seven days |
 | Browse (`browse.html`) | Search, collections and filters over each service's most popular titles |
 | About (`about.html`) | About Tenner and FAQs |
+| Privacy & Terms (`legal.html`) | Privacy Policy (with Cookies) and Terms of Service, each in its own scrolling box |
+| Contact (`contact.html`) | A compose sheet that opens your email app; the address is set once in `shell.js` (`contact`) |
 
 To add a service, add a line to `SERVICES` at the top of `scripts/fetch-data.mjs`.
 

@@ -1,0 +1,87 @@
+/* Privacy Policy & Terms of Service, and Contact. The same design as Channel Crossings' privacy page: one centred
+   column, a title and "Last updated" line, small grey section labels, and each document in its own rounded box that
+   scrolls on its own (frosted at night); on phones the text simply runs on down the page. */
+
+.lwrap {
+  max-width: 680px; margin: 0 auto; padding: 8px var(--gutter-r) 0 var(--gutter);
+  display: flex; flex-direction: column; align-items: center;
+}
+.lwrap h1 { margin: 18px 0 6px; font: 700 28px/1.15 var(--font-display); letter-spacing: .004em; text-align: center; text-wrap: balance; }
+.l-updated, .l-lede { margin: 0 0 24px; font-size: 15px; color: var(--label2); text-align: center; text-wrap: balance; }
+.section-label {
+  width: 100%; margin: 0 0 8px; padding-inline: 16px;
+  font-size: 13px; font-weight: 400; color: var(--label2); text-transform: uppercase; letter-spacing: -.005em;
+}
+.policy-box + .section-label { margin-top: 32px; }
+
+/* each document scrolls inside its own box */
+.policy-box {
+  width: 100%; height: min(55vh, 520px); overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scroll-padding-top: 20px;
+  background: var(--card); border: .5px solid var(--sep); border-radius: 12px; padding: 24px clamp(18px, 4vw, 32px);
+}
+.policy-box:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.policy-box h2 { margin: 26px 0 8px; font: 600 17px/1.3 var(--font); letter-spacing: -.022em; }
+.policy-box h2:first-child { margin-top: 0; }
+.policy-box p, .policy-box li { margin: 0 0 12px; font-size: 15px; line-height: 1.55; letter-spacing: -.016em; }
+.policy-box ul { margin: 0 0 12px; padding-left: 20px; }
+.policy-box strong { font-weight: 600; }
+.policy-box::-webkit-scrollbar { width: 8px; }
+.policy-box::-webkit-scrollbar-thumb { background: var(--label3); border-radius: 8px; }
+.policy-box::-webkit-scrollbar-track { background: transparent; }
+/* night: frosted boxes */
+:root[data-theme="dark"] :is(.policy-box, .c-sheet) { background: rgba(44, 44, 48, .62); border-color: transparent; box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .12);
+  -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) :is(.policy-box, .c-sheet) { background: rgba(44, 44, 48, .62); border-color: transparent;
+  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .12); -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%); } }
+/* phones: no box scrolling inside the page; the text runs on */
+@media (max-width: 600px) { .policy-box { height: auto; overflow: visible; } }
+
+/* ============================================================ Contact: a compose sheet, the Apple Mail way
+   Rows like Mail's (To, From, Subject), a topic switch, then the message. Send opens your own email app with it all
+   filled in: nothing is sent to or stored by Tenner. */
+.c-icon {
+  display: grid; place-items: center; width: 64px; height: 64px; margin: 18px 0 4px; border-radius: 16px; color: var(--accent);
+  background: var(--frost); box-shadow: var(--frost-line); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur);
+}
+.c-icon svg { width: 30px; height: 30px; }
+.c-icon + h1 { margin-top: 12px; }
+.c-sheet { width: 100%; background: var(--card); border: .5px solid var(--sep); border-radius: 12px; overflow: hidden; }
+.c-row { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 16px; border-bottom: .5px solid var(--sep); }
+.c-row > span:first-child { flex: none; width: 64px; color: var(--label2); font-size: 15px; }
+.c-row input, .c-row .c-to {
+  flex: 1; min-width: 0; border: 0; padding: 8px 0; background: none; color: var(--label); font: 400 16px/1.3 var(--font); letter-spacing: -.016em;
+}
+.c-row input::placeholder, .c-msg::placeholder { color: var(--label3); }
+.c-row input:focus, .c-msg:focus { outline: none; }
+.c-row:focus-within, .c-msg:focus { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.c-to { display: flex; align-items: center; gap: 8px; }
+.c-to b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.c-copy { flex: none; height: 28px; padding: 0 10px; font-size: 13px; }
+.c-row .segmented { flex: 1; min-width: 0; }
+.c-row .segmented button { min-width: 0; padding: 0 8px; font-size: 13px; }
+.c-msg {
+  display: block; width: 100%; min-height: 200px; padding: 14px 16px; border: 0; resize: vertical; background: none;
+  color: var(--label); font: 400 16px/1.5 var(--font); letter-spacing: -.016em;
+}
+.c-actions { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 14px; }
+.c-note { margin: 0; font-size: 13px; color: var(--label2); text-wrap: pretty; }
+.c-send { flex: none; gap: 8px; height: 40px; padding: 0 18px 0 15px; color: var(--accent); }
+.c-send svg { width: 16px; height: 16px; }
+.c-more { width: 100%; margin-top: 32px; }
+.c-list { list-style: none; margin: 0; padding: 0; background: var(--bg2); border-radius: 12px; overflow: hidden; }
+.c-list li + li { border-top: .5px solid var(--sep); }
+.c-list a { display: flex; align-items: center; gap: 12px; padding: 13px 16px; color: var(--label); }
+.c-list a:hover { text-decoration: none; }
+@media (hover: hover) { .c-list a:hover { background: var(--fill); } }
+.c-list .gi { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; color: #fff; }
+.c-list .gi svg { width: 17px; height: 17px; }
+.c-list .tx { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.c-list .tx b { font-weight: 500; font-size: 16px; }
+.c-list .tx small { color: var(--label2); font-size: 13px; }
+.c-list .chev { flex: none; width: 8px; height: 8px; border-right: 2px solid var(--label3); border-bottom: 2px solid var(--label3); transform: rotate(-45deg); }
+@media (max-width: 560px) {
+  .c-actions { flex-direction: column-reverse; align-items: stretch; }
+  .c-send { justify-content: center; height: 44px; }
+  .c-note { text-align: center; }
+  .c-row > span:first-child { width: 56px; }
+}

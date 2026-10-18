@@ -67,7 +67,12 @@
     // a drag isn't a tap: swallow the click that follows it
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
-  window.tn = { esc, hue, glide, arrows, segment, reduce };
+  // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
+  const contact = 'hello@example.com';
+  document.querySelectorAll('a.contact-email').forEach((a) => { a.href = `mailto:${contact}`; a.textContent = contact; });
+  document.querySelectorAll('.contact-email-text').forEach((el) => { el.textContent = contact; });
+
+  window.tn = { esc, hue, glide, arrows, segment, reduce, contact };
 
   // ---------- tabs ----------
   const tabs = [...document.querySelectorAll('#tabs [role=tab]')], ind = $('#tabInd'), names = tabs.map((t) => t.dataset.tab);

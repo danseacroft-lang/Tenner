@@ -651,6 +651,12 @@ main:focus { outline: none; }
 }
 .credits { padding-block: 36px calc(28px + env(safe-area-inset-bottom, 0px)); color: var(--label2); font-size: 12px; letter-spacing: -.01em; }
 .credits p { margin: 6px 0; max-width: 72ch; }
+/* the small print, as links: on every page, so phones (which have no sidebar) can reach them too */
+.ft-nav { display: flex; flex-wrap: wrap; gap: 0 18px; margin-top: 10px; font-size: 13px; }
+.ft-nav a { display: inline-flex; align-items: center; min-height: 32px; color: var(--label2); }
+@media (hover: hover) { .ft-nav a:hover { color: var(--label); text-decoration: none; } }
+.l-foot { align-items: stretch; text-align: center; }
+.l-foot p, .l-foot .ft-nav { margin-inline: auto; justify-content: center; }
 
 /* ============================================================ motion: fluid and springy, and only on arrival or touch */
 @media (hover: none) { a, button, select { -webkit-tap-highlight-color: transparent; } }
@@ -709,6 +715,9 @@ main:focus { outline: none; }
   .side-links { margin-top: auto; display: flex; flex-wrap: wrap; gap: 2px 12px; padding: 0 10px; }
   .side-link { padding: 3px 0; border: 0; background: none; color: var(--label2); font: 400 12px/1.3 var(--font); letter-spacing: -.01em; cursor: default; }
   .side-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  a.side-link { text-decoration: none; cursor: pointer; }
+  @media (hover: hover) { a.side-link:hover { color: var(--label); text-decoration: none; } }
+  .side-link[aria-current] { color: var(--label); font-weight: 600; }
   /* About: a row at the foot of the sidebar, just above Theme, styled like it */
   .side-about { display: flex; align-items: center; gap: 12px; height: 40px; margin: 8px 0 -20px; padding: 0 10px;   /* -20px: sits 2px above Theme, like the tabs */
     border-radius: 9px;
