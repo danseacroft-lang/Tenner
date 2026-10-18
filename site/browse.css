@@ -126,7 +126,6 @@
 .more { height: 1px; }
 .scrim { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, .4); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); animation: fadeIn .25s ease both; }
 @keyframes fadeIn { from { opacity: 0; } }
-.browse .credits { margin-top: 30px; }
 
 /* ---------- tablets: filters in a narrower column ---------- */
 @media (max-width: 1040px) { .b-body { grid-template-columns: 236px minmax(0, 1fr); gap: 22px; } }

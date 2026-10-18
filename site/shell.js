@@ -67,6 +67,10 @@
     // a drag isn't a tap: swallow the click that follows it
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
+  // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
+  const version = '1.0.1';
+  document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
+
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
   const contact = 'support@tenneruk.space';
   document.querySelectorAll('a.contact-email').forEach((a) => { a.href = `mailto:${contact}`; a.textContent = contact; });
@@ -142,7 +146,7 @@
   // ---------- the search API (worker/, on Cloudflare): every film and show on TMDB. Empty until it's deployed ----------
   const api = 'https://tenner-api.danseacroft.workers.dev';
 
-  window.tn = { esc, hue, glide, arrows, segment, reduce, contact, saved, progress, nextUp, whenText, mine, pickMine, api };
+  window.tn = { version, esc, hue, glide, arrows, segment, reduce, contact, saved, progress, nextUp, whenText, mine, pickMine, api };
 
   // ---------- tabs ----------
   const tabs = [...document.querySelectorAll('#tabs [role=tab]')], ind = $('#tabInd'), names = tabs.map((t) => t.dataset.tab);

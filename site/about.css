@@ -33,7 +33,6 @@
 .about svg { display: block; }
 .eyebrow { font: 600 14px/1.2 var(--font); letter-spacing: -.01em; color: var(--accent); margin: 0 0 10px; }
 .neon01s { font: 800 26px var(--font-display); letter-spacing: -.05em; }
-.about .credits { text-align: left; }
 
 /* ============================================================ the splash
    This hour's top shows and films, each a full poster for a few seconds, washed with Tenner's colours and dissolving
@@ -191,3 +190,14 @@
 
 /* with a mouse or trackpad: a push button shades when pressed (the macOS way) */
 @media (hover: hover) and (pointer: fine) { .sp-cta:active { filter: var(--press); } }
+
+/* phones and tablets (no sidebar): the small print, as a tidy list at the end of About */
+.more-links { display: none; }
+@media (max-width: 999px) {
+  .more-links { display: grid; margin: 40px 0 8px; border-radius: 12px; background: var(--bg2); overflow: hidden; }
+  .more-links a { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; color: var(--label); font-size: 16px; text-decoration: none; }
+  .more-links a + a { border-top: .5px solid var(--sep); }
+  .more-links a::after { content: ""; width: 8px; height: 8px; border-right: 2px solid var(--label3); border-bottom: 2px solid var(--label3); transform: rotate(-45deg); }
+}
+.more-ver { display: none; }
+@media (max-width: 999px) { .more-ver { display: block; margin: 12px 4px 0; color: var(--label3); font-size: 13px; } }

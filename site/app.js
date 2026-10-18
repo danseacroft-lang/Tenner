@@ -167,7 +167,7 @@ function showUpdated() {
   const ago = $('#ago'), txt = agoText(state.trending.generatedAt);
   if (ago.textContent !== txt) { ago.textContent = txt; ago.classList.remove('swap'); void ago.offsetWidth; ago.classList.add('swap'); }
   $('#refresh').title = `Last update ${fmtTime(d)}. Tap to check for a newer chart.`;
-  $('#updated').textContent = `Chart updated ${fmtDate(d, { weekday: 'long', day: 'numeric', month: 'long' })} at ${fmtTime(d)}. Refreshes every hour.`;
+  if ($('#updated')) $('#updated').textContent = `Chart updated ${fmtDate(d, { weekday: 'long', day: 'numeric', month: 'long' })} at ${fmtTime(d)}. Refreshes every hour.`;
 }
 setInterval(() => state.trending && showUpdated(), 30000);
 

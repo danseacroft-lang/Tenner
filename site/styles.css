@@ -204,7 +204,7 @@ a.tb-btn:hover { text-decoration: none; }
   .tab-ind { top: 5px; bottom: 5px; }
   .tabs button { flex: 1; flex-direction: column; justify-content: center; height: 54px; padding: 2px 6px 0; gap: 4px; font-size: 11px; font-weight: 600; }
   .tabs button svg { width: 25px; height: 25px; stroke-width: 1.8; }
-  .credits { padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px)); }
+  body { padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px)); }   /* the end of every page clears the floating tab bar */
   .toast { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 }
 
@@ -733,14 +733,7 @@ a.tb-btn:hover { text-decoration: none; }
   transform: translateX(-50%); padding: 12px 18px; border-radius: 999px;
   background: var(--label); color: var(--bg); font: 600 15px/1.2 var(--font); box-shadow: var(--shadow);
 }
-.credits { padding-block: 36px calc(28px + env(safe-area-inset-bottom, 0px)); color: var(--label2); font-size: 12px; letter-spacing: -.01em; }
-.credits p { margin: 6px 0; max-width: 72ch; }
-/* the small print, as links: on every page, so phones (which have no sidebar) can reach them too */
-.ft-nav { display: flex; flex-wrap: wrap; gap: 0 18px; margin-top: 10px; font-size: 13px; }
-.ft-nav a { display: inline-flex; align-items: center; min-height: 32px; color: var(--label2); }
-@media (hover: hover) { .ft-nav a:hover { color: var(--label); text-decoration: none; } }
-.l-foot { align-items: stretch; text-align: center; }
-.l-foot p, .l-foot .ft-nav { margin-inline: auto; justify-content: center; }
+main { padding-bottom: 56px; }   /* breathing room at the end of every page */
 
 /* ============================================================ motion: fluid and springy, and only on arrival or touch */
 @media (hover: none) { a, button, select { -webkit-tap-highlight-color: transparent; } }
