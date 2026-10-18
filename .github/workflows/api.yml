@@ -29,3 +29,14 @@ jobs:
           secrets: TMDB_TOKEN
         env:
           TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
+      - name: Check it answers
+        if: steps.ready.outputs.go == 'yes'
+        run: |
+          sleep 5
+          U=https://tenner-api.danseacroft.workers.dev
+          S=$(curl -s -H "Origin: https://danseacroft-lang.github.io" "$U/search?q=matrix")
+          T=$(curl -s -H "Origin: https://danseacroft-lang.github.io" "$U/title/m603")
+          echo "Search: $(echo "$S" | jq -r '[.results[]?.title] | .[:5] | join(", ")')"
+          echo "Title:  $(echo "$T" | jq -r '.info.title // .error')  ·  UK streaming: $(echo "$T" | jq -r '[.items[]?.f[]?] | length') services"
+          echo "Others blocked: $(curl -s -o /dev/null -w '%{http_code}' -H 'Origin: https://example.com' "$U/search?q=matrix")"
+          echo "$S" | jq -e '.results | length > 0' > /dev/null
