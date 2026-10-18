@@ -204,7 +204,7 @@ a.tb-btn:hover { text-decoration: none; }
   }
   .tabbar > * { pointer-events: auto; }
   .tabs { flex: 1; max-width: 340px; padding: 5px; }
-  .tab-ind { top: 5px; bottom: 5px; border-radius: 50%; }   /* a circle: placed square by shell.js */
+  .tab-ind { top: 5px; bottom: 5px; }
   .tabs button { flex: 1; flex-direction: column; justify-content: center; height: 54px; padding: 2px 6px 0; gap: 4px; font-size: 11px; font-weight: 600; }
   .tabs button svg { width: 25px; height: 25px; stroke-width: 1.8; }
   body { padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px)); }   /* the end of every page clears the floating tab bar */

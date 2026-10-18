@@ -24,6 +24,7 @@
   ];
 
   let cat = null, logos = {}, labels = {}, shown = 0, list = [];
+  const shops = new Set();   // stores (Sky Store): in the Where to watch filter, not in My services
   const state = { c: 'popular', k: 'tv', s: [], g: [], sort: null, r: 0, q: '' };
 
   // ---------- URL <-> state ----------
@@ -65,7 +66,7 @@
     window.tn.prefs.get().no18 ? window.tnSheet?.details() : null,   // Settings: "Hide titles rated 18" needs the certificates
   ]).then(([c, t, d]) => {
     cat = c; certs = d;
-    for (const s of t?.services || []) if (!s.store) { logos[s.key] = s.logo; labels[s.key] = s.label; }
+    for (const s of t?.services || []) if (!s.store) { logos[s.key] = s.logo; labels[s.key] = s.label; if (s.shop) shops.add(s.key); }
     if (!Object.keys(labels).length) Object.assign(labels, { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+' });
     const wantSearch = location.hash === '#search';
     if (wantSearch) history.replaceState(null, '', location.pathname);
@@ -113,7 +114,7 @@
 
     $('#where').innerHTML = Object.keys(labels).map((k) => `<button type="button" class="w-b" data-s="${k}" aria-pressed="false" title="${esc(labels[k])}">
       <span class="w-ic">${logos[k] ? `<img src="${esc(logos[k])}" alt="">` : esc(labels[k][0])}</span><span>${esc(labels[k])}</span></button>`).join('');
-    $('#mineLink').addEventListener('click', () => window.tn.pickMine(Object.keys(labels).map((k) => ({ key: k, label: labels[k], logo: logos[k] }))));
+    $('#mineLink').addEventListener('click', () => window.tn.pickMine(Object.keys(labels).filter((k) => !shops.has(k)).map((k) => ({ key: k, label: labels[k], logo: logos[k] }))));
     addEventListener('tn:mine', () => { readHash(); apply(false); });
     $('#where').addEventListener('click', (e) => { const b = e.target.closest('.w-b'); if (!b) return;
       const k = b.dataset.s; state.s = state.s.includes(k) ? state.s.filter((x) => x !== k) : [...state.s, k]; apply(true); });

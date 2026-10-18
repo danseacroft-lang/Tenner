@@ -32,6 +32,11 @@ export const SERVICES = [
   { key: 'hbomax',    label: 'HBO Max',     match: /^(hbo max|max)( with ads)?$/ },
   { key: 'paramount', label: 'Paramount+',  match: /^paramount plus/ },
 ];
+// Stores: services where you buy or rent one title at a time. Each gets its own chart of shows and films (shop: true),
+// stays out of the combined chart and My services, and can be picked in Browse.
+export const SHOPS = [
+  { key: 'skystore', label: 'Sky Store', match: /^sky store/ },
+];
 const RESELLER = /\b(amazon|apple tv|roku premium|roku) channel\b/;
 
 const norm = (s) => s.toLowerCase().replace(/\+/g, ' plus').replace(/[^a-z0-9]+/g, ' ').trim();
@@ -73,7 +78,7 @@ const hoursOld = (json) => (Date.now() - Date.parse(json?.generatedAt)) / 3600e3
 
 // A chart is only published if it looks right: most services have a full top 10 of shows and of films.
 function checkTrending(d) {
-  const full = d.services.filter((s) => !s.store && s.tv.length >= 5 && s.movie.length >= 5).length;
+  const full = d.services.filter((s) => !s.store && !s.shop && s.tv.length >= 5 && s.movie.length >= 5).length;
   if (full < 3 || d.overall.tv.length < 5 || d.overall.movie.length < 5) throw new Error(`only ${full} of ${SERVICES.length} services came back with a chart`);
 }
 
@@ -116,8 +121,9 @@ async function buildTrending() {
   const ids = Object.fromEntries(SERVICES.map((s) => [s.key, new Set()]));
   const logos = {}; // the service's main plan has the best (lowest) display priority
   const seen = {};
+  for (const s of SHOPS) ids[s.key] = new Set();
   for (const p of [...pm.results, ...pt.results]) {
-    const s = serviceFor(p.provider_name);
+    const s = serviceFor(p.provider_name) || SHOPS.find((x) => x.match.test(norm(p.provider_name)));
     if (!s) continue;
     ids[s.key].add(p.provider_id); seen[p.provider_id] = p.provider_name;
     const prio = p.display_priorities?.[REGION] ?? p.display_priority ?? 999;
@@ -160,9 +166,19 @@ async function buildTrending() {
     tv: [],
   };
 
+  // 4. Each store (Sky Store): its most popular shows and films to buy or rent
+  const shops = await Promise.all(SHOPS.map(async (s) => {
+    const providerIds = [...ids[s.key]];
+    if (!providerIds.length) { warn('Stores', `no TMDB provider matched ${s.label}`); return null; }
+    const q = { ...shop, with_watch_providers: providerIds.join('|'), 'vote_count.gte': '5' };
+    const [m, t] = await Promise.all([tmdb('/discover/movie', q), tmdb('/discover/tv', q)]);
+    return { key: s.key, label: s.label, shop: true, logo: logos[s.key]?.url || null, providerIds,
+      movie: m.results.slice(0, PER_LIST).map((r) => toItem(r, 'movie')), tv: t.results.slice(0, PER_LIST).map((r) => toItem(r, 'tv')) };
+  }));
+
   return {
-    // the combined chart stays subscription-only; Buy or rent is its own chart
-    data: { generatedAt: new Date().toISOString(), region: REGION, sample: false, services: [...services, store], overall: overall(services) },
+    // the combined chart stays subscription-only; Buy or rent and the stores are charts of their own
+    data: { generatedAt: new Date().toISOString(), region: REGION, sample: false, services: [...services, ...shops.filter(Boolean), store], overall: overall(services) },
     providers: Object.fromEntries(SERVICES.map((s) => [s.label, [...ids[s.key]].map((id) => `${id} ${seen[id]}`)])),
     ids,
   };
@@ -536,6 +552,11 @@ export async function buildCatalogue(ids) {
     for (const type of ['tv', 'movie']) for (let page = 1; page <= PAGES; page++)
       jobs.push(async () => ({ type, key: s.key, res: await tmdb(`/discover/${type}`, { ...base, page, with_watch_providers: providerIds.join('|'), with_watch_monetization_types: 'flatrate|free|ads' }) }));
   }
+  for (const s of SHOPS) {   // the stores' catalogues, so Browse can filter to them
+    const providerIds = [...(ids[s.key] || [])]; if (!providerIds.length) continue;
+    for (const type of ['tv', 'movie']) for (let page = 1; page <= 3; page++)
+      jobs.push(async () => ({ type, key: s.key, res: await tmdb(`/discover/${type}`, { ...base, page, with_watch_providers: providerIds.join('|'), with_watch_monetization_types: 'rent|buy' }) }));
+  }
   const since = new Date(Date.now() - 180 * 864e5).toISOString().slice(0, 10);
   for (let page = 1; page <= 3; page++)
     jobs.push(async () => ({ type: 'movie', key: 'store', res: await tmdb('/discover/movie', { ...base, page, with_watch_monetization_types: 'rent|buy', region: REGION, with_release_type: '4', 'release_date.gte': since }) }));
@@ -595,6 +616,8 @@ function sample() {
   }));
   const storeChart = { key: 'store', label: 'Buy or rent', store: true, logo: null, providerIds: [],
     tv: [], movie: Array.from({ length: PER_LIST }, (_, i) => make('movie', i, 7)) };
+  const shopCharts = SHOPS.map((s, si) => ({ key: s.key, label: s.label, shop: true, logo: null, providerIds: [],
+    tv: Array.from({ length: PER_LIST }, (_, i) => make('tv', i, 9 + si)), movie: Array.from({ length: PER_LIST }, (_, i) => make('movie', i, 9 + si)) }));
   const today = new Date();
   const iso = (d) => new Date(+today + d * 864e5).toISOString().slice(0, 10);
   const fresh = {
@@ -605,7 +628,7 @@ function sample() {
     })),
   };
   return {
-    trending: { generatedAt: today.toISOString(), region: REGION, sample: true, services: [...services, storeChart], overall: overall(services) },
+    trending: { generatedAt: today.toISOString(), region: REGION, sample: true, services: [...services, ...shopCharts, storeChart], overall: overall(services) },
     fresh,
   };
 }

@@ -77,11 +77,12 @@ function fillServiceBar(bar) {
   bar.insertAdjacentHTML('beforeend',
     item('top', 'All', '') +   // just the word, to keep the bar clean
     (window.tn.mine.get().length ? item('mine', 'Mine', '') : '') +
-    services().filter((s) => !s.store).map((s) => item(s.key, s.label, iconFor(s))).join('') +
+    services().filter((s) => !s.store && !s.shop).map((s) => item(s.key, s.label, iconFor(s))).join('') +
+    services().filter((s) => s.shop).map((s, i) => (i ? '' : '<span class="svc-sep shop-sep" aria-hidden="true"></span>') + item(s.key, s.label, iconFor(s), ' shop')).join('') +
     services().filter((s) => s.store).map((s) => `<span class="svc-sep" aria-hidden="true"></span>` + item(s.key, s.label, ICON_STORE, ' store')).join('') +
     `<button type="button" class="svc-edit" data-pick aria-label="Choose my services" title="Choose my services">${SLIDERS}</button>`);
 }
-const pickMine = () => window.tn.pickMine(services().filter((s) => !s.store).map((s) => ({ key: s.key, label: s.label, logo: s.logo })));
+const pickMine = () => window.tn.pickMine(services().filter((s) => !s.store && !s.shop).map((s) => ({ key: s.key, label: s.label, logo: s.logo })));
 function wireServiceBar(bar) {
   bar.addEventListener('click', (e) => { if (e.target.closest('[data-pick]')) { pickMine(); return; } const b = e.target.closest('.svc-b'); if (b) location.hash = b.dataset.svc; });
   arrows(bar, () => [...bar.querySelectorAll('.svc-b')], (n) => { location.hash = n.dataset.svc; });
@@ -95,7 +96,7 @@ function wireServiceBar(bar) {
 let svcPlaced = false;
 const placeSvc = (animate) => glide($('#svcInd'), $('.svc-b[aria-checked="true"]'), animate);
 function markService(key) {
-  document.querySelectorAll('.svc-b.store, .svc-sep').forEach((el) => { el.hidden = state.kind !== 'movie'; });
+  document.querySelectorAll('.svc-b.store, .svc-sep:not(.shop-sep)').forEach((el) => { el.hidden = state.kind !== 'movie'; });
   let chosen;
   document.querySelectorAll('.svc-b').forEach((b) => { const on = b.dataset.svc === key; b.setAttribute('aria-checked', on); b.tabIndex = on ? 0 : -1; if (on) chosen = b; });
   placeSvc(svcPlaced);
@@ -119,7 +120,8 @@ svcSel.addEventListener('change', () => {
 function markDropdowns() {
   const has = window.tn.mine.get().length, opt = (v, l) => `<option value="${v}"${v === state.route ? ' selected' : ''}>${esc(l)}</option>`;
   svcSel.innerHTML = opt('top', 'All services') + (has ? opt('mine', 'My services') : '')
-    + services().filter((x) => !x.store).map((x) => opt(x.key, x.label)).join('')
+    + services().filter((x) => !x.store && !x.shop).map((x) => opt(x.key, x.label)).join('')
+    + services().filter((x) => x.shop).map((x) => opt(x.key, `${x.label} (buy or rent)`)).join('')
     + (state.kind === 'movie' ? services().filter((x) => x.store).map((x) => opt(x.key, x.label)).join('') : '')
     + `<option value="pick">${has ? 'Change my services…' : 'Choose my services…'}</option>`;
   $('#svcDD .dd-l').textContent = state.route === 'top' ? 'All services' : state.route === 'mine' ? 'My services' : svc(state.route)?.label || 'All services';
@@ -288,7 +290,7 @@ function draw() {
   $('#heading').textContent = s?.store ? `Top 10 ${words()} to buy or rent` : `Top 10 ${words()}`;
   $('#lede').innerHTML = s?.mine ? `On your services: ${esc(s.names)}`
     : s?.store ? 'New releases from Apple TV, Sky Store and others'
-    : s ? `On ${s.logo ? `<img class="sub-logo" src="${esc(s.logo)}" alt="">` : ''}${esc(s.label)}${s.official ? ` · ${esc(officialLine(s.official))}` : ''}` : 'On all five services in the UK';
+    : s ? `${s.shop ? 'To buy or rent on' : 'On'} ${s.logo ? `<img class="sub-logo" src="${esc(s.logo)}" alt="">` : ''}${esc(s.label)}${s.official ? ` · ${esc(officialLine(s.official))}` : ''}` : 'On all five services in the UK';
   document.title = s?.mine ? 'My Top 10 | Tenner' : s ? `${s.label} Top 10 | Tenner` : 'Tenner';
 
   const chart = list.length
