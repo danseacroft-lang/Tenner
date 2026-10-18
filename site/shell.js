@@ -91,7 +91,7 @@
   addEventListener('storage', (e) => { if (e.key === WL) dispatchEvent(new Event('tn:saved')); });
 
   // ---------- the search API (worker/, on Cloudflare): every film and show on TMDB. Empty until it's deployed ----------
-  const api = '';
+  const api = 'https://tenner-api.danseacroft.workers.dev';
 
   window.tn = { esc, hue, glide, arrows, segment, reduce, contact, saved, api };
 
