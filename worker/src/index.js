@@ -35,7 +35,9 @@ export default {
     if (!hit) {
       const r = await fetch(`${TMDB}${path}?${new URLSearchParams(params)}`, { headers: { authorization: `Bearer ${env.TMDB_TOKEN}`, accept: 'application/json' } });
       if (!r.ok) return json({ error: `TMDB ${r.status}` }, r.status === 404 ? 404 : 502, cors);
-      hit = new Response(JSON.stringify(shape(await r.json())), { headers: { 'content-type': 'application/json', 'cache-control': `public, max-age=${ttl}` } });
+      const body = shape(await r.json());
+      if (body.items) await addLinks(body);   // the title's own page on each service, from Wikidata
+      hit = new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json', 'cache-control': `public, max-age=${ttl}` } });
       ctx.waitUntil(cache.put(key, hit.clone()));
     }
     const out = new Response(hit.body, hit);
@@ -82,4 +84,20 @@ function titleShape(d, type, k) {
       rating: d.vote_count >= 20 ? Math.round(d.vote_average * 10) / 10 : null, overview: d.overview || '',
       poster: d.poster_path ? `${IMG}/w342${d.poster_path}` : null, backdrop: d.backdrop_path ? `${IMG}/w1280${d.backdrop_path}` : null },
   };
+}
+
+// Each title's own page on Netflix, Disney+, Prime Video, HBO Max and Apple TV, from Wikidata (as the hourly job does)
+async function addLinks(body) {
+  const k = Object.keys(body.items)[0], type = k[0] === 'm' ? 'movie' : 'tv', id = k.slice(1);
+  const P = { nf: 'P1874', dpm: 'P7595', dps: 'P7596', pv: 'P8055', pv2: 'P14440', hb: 'P8298', atm: 'P9586', ats: 'P9751' };
+  const q = `SELECT ${Object.keys(P).map((v) => `?${v}`).join(' ')} WHERE { ?i wdt:${type === 'movie' ? 'P4947' : 'P4983'} "${id}" . ${Object.entries(P).map(([v, p]) => `OPTIONAL { ?i wdt:${p} ?${v} }`).join(' ')} } LIMIT 1`;
+  try {
+    const r = await fetch(`https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(q)}`,
+      { headers: { accept: 'application/sparql-results+json', 'user-agent': 'Tenner/1.0 (https://github.com/danseacroft-lang/Tenner)' }, signal: AbortSignal.timeout(4000) });
+    const b = r.ok ? (await r.json()).results?.bindings?.[0] : null; if (!b) return;
+    const v = (n) => b[n]?.value;
+    const ln = Object.fromEntries(Object.entries({ nf: v('nf'), dp: v('dpm') ? `movies/wd/${v('dpm')}` : v('dps') ? `series/wp/${v('dps')}` : undefined,
+      pv: v('pv2') || v('pv'), hb: v('hb'), ap: v('atm') ? `movie/${v('atm')}` : v('ats') ? `show/${v('ats')}` : undefined }).filter(([, x]) => x));
+    if (Object.keys(ln).length) body.items[k].ln = ln;
+  } catch { /* no links: the sheet uses each service's search */ }
 }

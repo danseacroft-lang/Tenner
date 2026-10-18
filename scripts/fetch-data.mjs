@@ -384,6 +384,40 @@ export function buildTrackers(data, h, now = new Date()) {
   return { trail, week };
 }
 
+// ---------- Each title's own page on each service, from Wikidata (free, no key) ----------
+// TMDB says where a title is on, but not the link to it there. Wikidata keeps each title's Netflix, Disney+, Prime
+// Video, HBO Max and Apple TV IDs, so the title sheet can open the title itself (and on phones, the app). Looked up by
+// TMDB ID in a few batched queries; each title is re-checked every three days, and titles without IDs fall back to the
+// service's own search. Kept inside titles.json as each item's `ln`: { at, nf?, dp?, pv?, hb?, ap? }.
+const WD_PROPS = { nf: 'P1874', dpm: 'P7595', dps: 'P7596', pv: 'P8055', pv2: 'P14440', hb: 'P8298', atm: 'P9586', ats: 'P9751' };
+export async function buildLinks(keys, old) {
+  const due = keys.filter((k) => !old?.[k] || hoursAgo(old[k].at) > 72).slice(0, 600);
+  const out = Object.fromEntries(keys.filter((k) => old?.[k]).map((k) => [k, old[k]]));
+  for (const type of ['movie', 'tv']) {
+    const p = type === 'movie' ? 'm' : 't';
+    const ids = due.filter((k) => k[0] === p).map((k) => k.slice(1));
+    for (let i = 0; i < ids.length; i += 150) {
+      const batch = ids.slice(i, i + 150);
+      const vars = Object.keys(WD_PROPS).map((v) => `?${v}`).join(' ');
+      const q = `SELECT ?t ${vars} WHERE { VALUES ?t { ${batch.map((x) => `"${x}"`).join(' ')} } ?i wdt:${type === 'movie' ? 'P4947' : 'P4983'} ?t . `
+        + Object.entries(WD_PROPS).map(([v, prop]) => `OPTIONAL { ?i wdt:${prop} ?${v} }`).join(' ') + ' }';
+      try {
+        const res = await getJSON(`https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(q)}`,
+          { 'user-agent': 'Tenner/1.0 (https://github.com/danseacroft-lang/Tenner)', accept: 'application/sparql-results+json' }, 2);
+        const found = {};
+        for (const b of res.results?.bindings || []) {
+          const k = `${p}${b.t.value}`, v = (n) => b[n]?.value, f = (found[k] ||= {});
+          const got = { nf: v('nf'), dp: v('dpm') ? `movies/wd/${v('dpm')}` : v('dps') ? `series/wp/${v('dps')}` : undefined,
+            pv: v('pv2') || v('pv'), hb: v('hb'), ap: v('atm') ? `movie/${v('atm')}` : v('ats') ? `show/${v('ats')}` : undefined };
+          for (const [n, x] of Object.entries(got)) if (x && !f[n]) f[n] = x;   // the first ID of each kind
+        }
+        for (const id of batch) out[`${p}${id}`] = { at: Date.now(), ...(found[`${p}${id}`] || {}) };
+      } catch (err) { warn('Links', `Wikidata didn't answer (${err.message}); keeping the last links`); }
+    }
+  }
+  return out;
+}
+
 // ---------- Title details: where to watch in the UK, runtime, age rating, trailer ----------
 // One TMDB request per title (details plus watch providers, videos and UK certification), so Tenner can show where to
 // watch without sending people elsewhere. Charted titles refresh every hour; the rest of the Browse catalogue at most
@@ -607,7 +641,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         c: ['U', 'PG', '12', '15', '18'][n % 5], g: ['Drama', 'Comedy', 'Crime'].slice(0, 1 + n % 3), tl: n % 2 ? 'A fictional tagline for a sample title.' : undefined,
         f: sv.store ? [] : [[8, 337, 9, 1899][n % 4]], fr: n % 5 === 0 ? [9] : [], re: [2, 130].slice(0, 1 + n % 2), bu: [2], tr: undefined,
         nx: t === 'tv' && n % 3 === 0 ? [new Date(Date.now() + (1 + n % 9) * 864e5).toISOString().slice(0, 10), 1 + n % 4, 3 + n % 6] : undefined,
-        sz: t === 'tv' ? Array.from({ length: 1 + n % 4 }, (_, s) => 6 + ((n + s) % 5)) : undefined };
+        sz: t === 'tv' ? Array.from({ length: 1 + n % 4 }, (_, s) => 6 + ((n + s) % 5)) : undefined,
+        ln: n % 2 ? { at: Date.now(), nf: String(80000000 + n), ap: `${t === 'movie' ? 'movie' : 'show'}/umc.cmc.sample${n}` } : undefined };
     }
     // sample trackers: a made-up week of charts (each day nudged a little), so the history and round-up can be tried
     let sh = { v: 1, hours: {}, days: {} };
@@ -720,7 +755,14 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       for (const t of ['tv', 'movie']) for (const it of data.overall?.[t] || []) { const k = key(t, it.id); if (k) chartKeys.add(k); }
       for (const it of newList?.items || []) { const k = it.id && key(it.type, it.id); if (k) chartKeys.add(k); }
       const catalogueKeys = new Set((catalogue?.items || []).map((x) => `${x.t[0]}${x.i}`));
-      const titles = await buildTitles(chartKeys, catalogueKeys, await liveCopy('titles.json'));
+      const prevTitles = await liveCopy('titles.json');
+      const titles = await buildTitles(chartKeys, catalogueKeys, prevTitles);
+      try {   // each title's own link on each service (see buildLinks); kept from the last run if Wikidata is down
+        const oldLn = Object.fromEntries(Object.entries(prevTitles?.items || {}).filter(([, x]) => x.ln).map(([k, x]) => [k, x.ln]));
+        const ln = await buildLinks(Object.keys(titles.items), oldLn);
+        for (const [k, x] of Object.entries(titles.items)) if (ln[k]) x.ln = ln[k];
+        console.log(`Links: ${Object.values(ln).filter((x) => Object.keys(x).length > 1).length} of ${Object.keys(titles.items).length} titles have direct links`);
+      } catch (err) { warn('Links', err.message); }
       await write('titles.json', titles);
       console.log(`Title details: ${Object.keys(titles.items).length} titles (${titles.refreshed} refreshed this run)`);
     } catch (err) {

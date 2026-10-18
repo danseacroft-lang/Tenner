@@ -107,12 +107,20 @@
     'Rakuten TV': (t) => `https://www.rakuten.tv/uk/search?q=${q(t)}`, 'BBC iPlayer': (t) => `https://www.bbc.co.uk/iplayer/search?q=${q(t)}`,
     'Microsoft Store': (t) => `https://www.microsoft.com/en-gb/search/shop/movies?q=${q(t)}`,
   };
+  // the title itself on each service, where Wikidata knows its ID (titles.json `ln`); on phones these open the app
+  const DIRECT = {
+    'Netflix': (l) => l.nf && `https://www.netflix.com/title/${l.nf}`, 'Disney+': (l) => l.dp && `https://www.disneyplus.com/${l.dp}`,
+    'Prime Video': (l) => l.pv && `https://www.primevideo.com/detail/${l.pv}`, 'Prime Video Store': (l) => l.pv && `https://www.primevideo.com/detail/${l.pv}`,
+    'HBO Max': (l) => l.hb && `https://play.hbomax.com/${l.hb}`, 'Apple TV': (l) => l.ap && `https://tv.apple.com/gb/${l.ap}`, 'Apple TV+': (l) => l.ap && `https://tv.apple.com/gb/${l.ap}`,
+  };
   function providerList(ids, d, info) {
+    const ln = d.items?.[info.k]?.ln || {};
     const seen = new Set();
     return (ids || []).map((id) => [id, ...(d.providers[id] || [])]).filter(([, n]) => n && !seen.has(brand(n)) && seen.add(brand(n))).map(([id, n, logo]) => {
       // Netflix titles go straight to the title on Netflix; the big stores and services open their own search for the
       // title (TMDB gives no per-title links into each app); anything else goes to the title's TMDB watch page
-      const go = SEARCH[brand(n)], href = /^Netflix/i.test(n) && info.netflix ? info.netflix : go ? go(info.title) : info.watch;
+      const b = brand(n), go = SEARCH[b];
+      const href = DIRECT[b]?.(ln) || (/^Netflix/i.test(n) && info.netflix) || (go ? go(info.title) : info.watch);
       return `<a class="sh-prov" href="${esc(href)}" target="_blank" rel="noopener">${logo && d.logo ? `<img src="${esc(d.logo + logo)}" alt="" loading="lazy">` : `<i>${esc(brand(n)[0])}</i>`}<span>${esc(brand(n))}</span></a>`;
     }).join('');
   }
@@ -145,7 +153,7 @@
         <div class="sh-btns">
           ${x.tr ? `<button type="button" class="btn btn-tinted" data-act="trailer"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>Trailer</button>` : ''}
           ${info.k ? saveBtn(saved.has(info.k)) : ''}
-          ${info.netflix ? `<a class="btn btn-tinted" href="${esc(info.netflix)}" target="_blank" rel="noopener">Watch on Netflix</a>` : ''}
+          ${info.netflix || x.ln?.nf ? `<a class="btn btn-tinted" href="${esc(info.netflix || `https://www.netflix.com/title/${x.ln.nf}`)}" target="_blank" rel="noopener">Watch on Netflix</a>` : ''}
           <button type="button" class="btn btn-tinted" data-act="share"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M6 11v8.5h12V11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Share</button>
         </div>
         ${x.tl ? `<p class="sh-tl">${esc(x.tl)}</p>` : ''}
