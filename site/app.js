@@ -544,6 +544,7 @@ function setKind(k) {
 }
 document.querySelectorAll('.kind [data-kind]').forEach((b) => b.addEventListener('click', () => setKind(b.dataset.kind)));
 arrows($('.kind'), () => [...document.querySelectorAll('.kind [data-kind]')], (b) => setKind(b.dataset.kind));
+window.tn.segment($('.kind'), (b) => setKind(b.dataset.kind));   // the thumb slides and can be dragged, like an iOS switch
 
 addEventListener('hashchange', () => { route(); scrollTo(0, 0); });
 load();

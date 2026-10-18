@@ -31,7 +31,43 @@
       e.preventDefault(); const n = list[(k + list.length) % list.length]; n.focus(); pick?.(n);
     });
   }
-  window.tn = { esc, hue, glide, arrows, reduce };
+  // A segmented control that behaves like an iOS switch: its thumb glides to the chosen option with a little spring,
+  // and you can grab it and slide (or flick) it between options; it swells slightly while held, then snaps to the nearest.
+  // The thumb follows aria-checked, so pages only mark the choice; `pick` is called when a drag lands on a new option.
+  function segment(group, pick) {
+    if (!group) return;
+    const thumb = group.querySelector('.seg-thumb'), btns = () => [...group.querySelectorAll('button')].filter((b) => b.offsetWidth);
+    const place = (animate) => glide(thumb, group.querySelector('button[aria-checked="true"]'), animate, 1.1);
+    new MutationObserver(() => place(true)).observe(group, { attributes: true, subtree: true, attributeFilter: ['aria-checked'] });
+    addEventListener('resize', () => place(false)); document.fonts?.ready.then(() => place(false)); place(false);
+    let drag = null, moved = false;
+    group.addEventListener('pointerdown', (e) => {
+      const b = e.target.closest('button');
+      if (!b || b.getAttribute('aria-checked') !== 'true' || e.button) return;   // grab the thumb itself
+      const x = b.offsetLeft, max = Math.max(...btns().map((n) => n.offsetLeft + n.offsetWidth)) - b.offsetWidth;
+      drag = { id: e.pointerId, x0: e.clientX, x, min: btns()[0].offsetLeft, max }; moved = false;
+      group.setPointerCapture(e.pointerId); thumb.classList.add('held');
+    });
+    group.addEventListener('pointermove', (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const dx = e.clientX - drag.x0; if (Math.abs(dx) > 3) moved = true;
+      thumb.getAnimations?.().forEach((a) => a.cancel());
+      thumb.style.transform = `translateX(${Math.min(drag.max, Math.max(drag.min, drag.x + dx))}px)`;
+    });
+    const end = (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      drag = null; thumb.classList.remove('held');
+      if (!moved) return;
+      // snap to whichever option the thumb's centre is over
+      const r = thumb.getBoundingClientRect(), mid = r.left + r.width / 2;
+      const to = btns().reduce((best, n) => { const nr = n.getBoundingClientRect(), d = Math.abs(nr.left + nr.width / 2 - mid); return d < best.d ? { n, d } : best; }, { n: null, d: Infinity }).n;
+      if (to && to.getAttribute('aria-checked') !== 'true') pick(to); else place(true);
+    };
+    group.addEventListener('pointerup', end); group.addEventListener('pointercancel', end);
+    // a drag isn't a tap: swallow the click that follows it
+    group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
+  }
+  window.tn = { esc, hue, glide, arrows, segment, reduce };
 
   // ---------- tabs ----------
   const tabs = [...document.querySelectorAll('#tabs [role=tab]')], ind = $('#tabInd'), names = tabs.map((t) => t.dataset.tab);

@@ -95,6 +95,7 @@
     };
     document.querySelectorAll('[data-kind]').forEach((b) => b.addEventListener('click', () => setKind(b.dataset.kind)));
     arrows($('.b-head .segmented'), () => [...document.querySelectorAll('[data-kind]')], (b) => setKind(b.dataset.kind));
+    window.tn.segment($('.b-head .segmented'), (b) => setKind(b.dataset.kind));
     arrows($('#coll'), () => [...document.querySelectorAll('.coll-b')], (b) => b.click());
     arrows($('#sort'), () => [...document.querySelectorAll('.s-b')], (b) => b.click());
     $('#grid').addEventListener('click', (e) => {   // the empty state's button clears whatever is hiding the results
