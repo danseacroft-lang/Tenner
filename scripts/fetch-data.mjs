@@ -387,11 +387,13 @@ export function buildTrackers(data, h, now = new Date()) {
 // ---------- Each title's own page on each service, from Wikidata (free, no key) ----------
 // TMDB says where a title is on, but not the link to it there. Wikidata keeps each title's Netflix, Disney+, Prime
 // Video, HBO Max and Apple TV IDs, so the title sheet can open the title itself (and on phones, the app). Looked up by
-// TMDB ID in a few batched queries; each title is re-checked every three days, and titles without IDs fall back to the
-// service's own search. Kept inside titles.json as each item's `ln`: { at, nf?, dp?, pv?, hb?, ap? }.
+// TMDB ID in a few batched queries; new titles straight away, then re-checked daily until found (every three days after),
+// and titles without IDs fall back to the service's own search. Kept inside titles.json as each item's `ln`: { at, nf?, dp?, pv?, hb?, ap? }.
 const WD_PROPS = { nf: 'P1874', dpm: 'P7595', dps: 'P7596', pv: 'P8055', pv2: 'P14440', hb: 'P8298', atm: 'P9586', ats: 'P9751' };
 export async function buildLinks(keys, old) {
-  const due = keys.filter((k) => !old?.[k] || hoursAgo(old[k].at) > 72).slice(0, 600);
+  // new titles straight away; ones Wikidata hasn't got yet every day (volunteers usually add new releases within days);
+  // ones with links every three days
+  const due = keys.filter((k) => !old?.[k] || hoursAgo(old[k].at) > (Object.keys(old[k]).length > 1 ? 72 : 24)).slice(0, 600);
   const out = Object.fromEntries(keys.filter((k) => old?.[k]).map((k) => [k, old[k]]));
   for (const type of ['movie', 'tv']) {
     const p = type === 'movie' ? 'm' : 't';
