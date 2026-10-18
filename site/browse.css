@@ -156,10 +156,6 @@
   .t { font-size: 15px; }
   .m { font-size: 13px; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .tile, .scrim { animation: none !important; }
-  .filters, .art, .coll-b, .g-b, .s-b i, .w-b::after { transition: none !important; }
-}
 .b-head .lede { font-size: 16px; }
 
 /* ---------- search ---------- */
@@ -231,7 +227,6 @@
 .pv-svc img { width: 18px; height: 18px; border-radius: 5px; }
 .pv-svc.buy { padding-left: 9px; color: var(--accent); }
 .pv-hint { margin: 10px 0 0; font-size: 12px; color: var(--label3); }
-@media (prefers-reduced-motion: reduce) { .pv { transition: none; } }
 @media (prefers-reduced-transparency: reduce) { .pv { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--card); } }
 
 /* searching everything: TMDB's results under this hour's catalogue */

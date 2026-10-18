@@ -741,10 +741,6 @@ main { padding-bottom: 56px; }   /* breathing room at the end of every page */
 @keyframes vtOut { to { opacity: 0; transform: scale(.985); filter: blur(4px); } }
 @keyframes vtIn { from { opacity: 0; transform: translateY(10px); } }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
-  ::view-transition-old(root), ::view-transition-new(root) { animation: none !important; }
-}
 
 /* ============================================================ computers: the Apple Music sidebar
    From 1000px wide, the glass bar becomes a fixed sidebar on the left (logo, then Search, Top 10, New and Browse, the chosen
@@ -898,7 +894,6 @@ a.sh-prov:hover { text-decoration: none; }
   .sh-poster { left: 18px; width: 76px; }
   .sheet h2 { font-size: 24px; }
 }
-@media (prefers-reduced-motion: reduce) { .sheet, .sheet::backdrop { transition: none; } }
 @media (prefers-reduced-transparency: reduce) { .sheet { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--card); } }
 @media (hover: hover) and (pointer: fine) { a.sh-prov:active { filter: var(--press); } }
 
@@ -949,9 +944,8 @@ a.sh-prov:hover { text-decoration: none; }
 }
 
 /* ============================================================ Settings, applied on every page */
-/* Animations (off unless switched on in Settings): nothing animates or transitions at all, not even for a moment,
+/* Animations (off unless switched on in Settings, and always off when the device asks for reduced motion): nothing animates or transitions at all, not even for a moment,
    so the browser has no motion to set up and every change lands at once */
 .still, .still *, .still *::before, .still *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
-.still ::view-transition-group(*), .still ::view-transition-old(*), .still ::view-transition-new(*) { animation: none !important; }
 .no-moves .mv { display: none !important; }
 .no-ratings .star, .no-ratings .cl-r, .no-ratings .score { display: none !important; }

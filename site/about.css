@@ -85,7 +85,6 @@
   .sp-now { left: var(--gutter); right: auto; bottom: auto; top: calc(env(safe-area-inset-top, 0px) + 84px); }
   .sp-shade { background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--fade) 30%, transparent) 30%, color-mix(in srgb, var(--fade) 75%, transparent) 55%, color-mix(in srgb, var(--fade) 85%, transparent) 80%); }
 }
-@media (prefers-reduced-motion: reduce) { .sp-art img { transition: none; scale: 1; } }
 
 /* ============================================================ sections */
 .sec { margin: 80px 0 0; }
@@ -157,10 +156,6 @@
 .js-reveal .reveal.in .spark path { transform: scale(1); transition: transform .6s var(--ease-spring) .8s; }
 @media (hover: hover) { .step { transition: transform .6s var(--ease-spring), box-shadow .4s ease; } .step:hover { transform: translateY(-4px); } }
 
-@media (prefers-reduced-motion: reduce) {
-  .hand, .faq-list details[open] .a { animation: none !important; }
-  .js-reveal .reveal, .js-reveal .reveal * { opacity: 1 !important; transform: none !important; stroke-dashoffset: 0 !important; transition: none !important; }
-}
 
 /* ============================================================ phones */
 @media (max-width: 719px) {
