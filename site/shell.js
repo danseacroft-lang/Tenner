@@ -193,4 +193,7 @@
   addEventListener('pageshow', (e) => { if (e.persisted) check(); });   // back/forward cache
 
   window.tnShell = { select, current: () => cur };
+
+  // ---------- install as an app: the offline cache (sw.js) ----------
+  if ('serviceWorker' in navigator && location.protocol === 'https:') addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 })();

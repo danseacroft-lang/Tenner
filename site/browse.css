@@ -5,7 +5,7 @@
 
 /* ---------- header ---------- */
 .b-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; padding-top: 8px; }
-.b-head .large-title { margin-top: 10px; }
+.b-head .large-title { margin: 10px 0 6px; font-size: clamp(30px, 3.6vw, 40px); }
 /* Shows | Films uses the shared segmented control in styles.css */
 
 /* ---------- collections (the same frosted bar and gliding tile as the service bar) ---------- */
@@ -109,10 +109,9 @@
 .score {
   position: absolute; right: 8px; top: 8px; display: grid; place-items: center; min-width: 38px; height: 24px; padding: 0 7px; border-radius: 8px;
   background: rgba(20, 20, 24, .62); -webkit-backdrop-filter: blur(12px) saturate(160%); backdrop-filter: blur(12px) saturate(160%);
-  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .22); color: #fff; font: 700 13px/1 var(--font); font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .22); color: #fff; font: 700 13px/1 var(--font); font-variant-numeric: tabular-nums; grid-auto-flow: column;
 }
 .score::before { content: "★"; margin-right: 3px; color: #ffd60a; font-size: 11px; }
-.score { grid-auto-flow: column; }
 .t { margin-top: 8px; font: 600 16px/1.25 var(--font); letter-spacing: -.022em; color: var(--label); transition: color .2s ease;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .m { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--label2); font-size: 14px; letter-spacing: -.01em; white-space: nowrap; }
@@ -162,7 +161,6 @@
   .tile, .scrim { animation: none !important; }
   .filters, .art, .coll-b, .g-b, .s-b i, .w-b::after { transition: none !important; }
 }
-.b-head .large-title { font-size: clamp(30px, 3.6vw, 40px); margin-bottom: 6px; }
 .b-head .lede { font-size: 16px; }
 
 /* ---------- search ---------- */

@@ -1,0 +1,23 @@
+{
+  "name": "Tenner",
+  "short_name": "Tenner",
+  "description": "The UK's top 10 shows and films on Netflix, Disney+, Prime Video, HBO Max and Paramount+, updated every hour.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "lang": "en-GB",
+  "categories": ["entertainment"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "New This Week", "url": "./#new" },
+    { "name": "Browse", "url": "browse.html" },
+    { "name": "Watchlist", "url": "./#watchlist" }
+  ]
+}

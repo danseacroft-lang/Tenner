@@ -33,7 +33,6 @@
   let current = null, opener = null, pushed = false, pageTitle = document.title;
 
   const runtime = (m) => !m ? '' : m < 60 ? `${m}m` : `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}`;
-  // one entry per service: "Netflix" and "Netflix Standard with Ads" are the same place to watch
   // one entry per service: TMDB lists plans and channels separately ("Netflix Standard with Ads", "Paramount+ Amazon
   // Channel", "Paramount Plus Premium"); they're all the same place to watch, so they fold into the service's own name
   const NAMES = { 'Disney Plus': 'Disney+', 'Amazon Prime Video': 'Prime Video', 'Paramount Plus': 'Paramount+', 'Apple TV Plus': 'Apple TV+',

@@ -334,6 +334,7 @@ function moveBadge(it, quietSame) {
 const topText = (it) => (it.top > 1 ? `No. 1 for ${it.top} days` : '');
 
 // ---------- pieces ----------
+const thumb = (u) => String(u).replace('/t/p/w342/', '/t/p/w154/');   // small spots (lists) take TMDB's smaller poster
 function placeholder(it) {
   const h = hue(it.title);
   return `<span class="ph" style="background:linear-gradient(160deg,hsl(${h} 45% 42%),hsl(${(h + 40) % 360} 55% 18%))">${esc(it.title)}</span>`;
@@ -455,7 +456,7 @@ function chartList(list, s, k = state.kind) {
       <a class="see-all" href="${esc(browse)}">See more in Browse<span class="chev" aria-hidden="true"></span></a></div>
     <ol class="cl">${list.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(rated ? infoFor(it, k, `No. ${i + 1} top rated${s ? ` on ${s.label}` : ''}`) : chartInfo(it, i, k))}>
       <span class="cl-n">${i + 1}${rated ? '' : moveBadge(it)}</span>
-      ${it.poster ? `<img src="${esc(it.poster)}" alt="" loading="lazy" decoding="async">` : `<span class="cl-ph" style="background:hsl(${hue(it.title)} 45% 35%)"></span>`}
+      ${it.poster ? `<img src="${esc(thumb(it.poster))}" alt="" loading="lazy" decoding="async">` : `<span class="cl-ph" style="background:hsl(${hue(it.title)} 45% 35%)"></span>`}
       <span class="cl-t"><b>${esc(it.title)}</b><small>${esc([s ? '' : onText(it), it.season, it.year].filter(Boolean).join(' · '))}</small></span>
       ${it.rating ? `<span class="cl-r">★ ${it.rating.toFixed(1)}</span>` : ''}
     </a></li>`).join('')}</ol>
@@ -511,7 +512,7 @@ function pageWatchlist() {
     : `<ul class="list wl">${list.map((x) => {
         const spot = spots.get(x.k), sh = reg(wlInfo(x, spot || 'In your Watchlist'));
         const what = [x.type === 'movie' ? 'Film' : 'Series', x.year].filter(Boolean).join(' · ');
-        const thumb = x.poster ? `<img class="nl-art" src="${esc(x.poster)}" alt="" loading="lazy">` : `<span class="nl-art" style="background:hsl(${hue(x.title)} 45% 35%)"></span>`;
+        const thumb = x.poster ? `<img class="nl-art" src="${esc(thumb(x.poster))}" alt="" loading="lazy">` : `<span class="nl-art" style="background:hsl(${hue(x.title)} 45% 35%)"></span>`;
         return `<li>${thumb}<div class="grow">
           <a class="title" href="${esc(tmdbUrl(x.type, x.k.slice(1)))}" target="_blank" rel="noopener" ${sh}>${esc(x.title)}</a>
           <span class="what">${esc(what)}${spot ? ` · <b class="wl-spot">${esc(spot)}</b>` : ''}</span></div>
@@ -563,7 +564,7 @@ function pageNew() {
       <ul class="list">${items.map((x) => {
         const s = svc(x.service);
         const what = [x.type === 'movie' ? 'Film' : x.season ? `Season ${x.season}` : 'Series', x.original ? `${s?.label} original` : ''].filter(Boolean).join(', ');
-        const thumb = x.poster ? `<img class="nl-art" src="${esc(x.poster)}" alt="" loading="lazy">` : `<span class="nl-art" style="background:hsl(${hue(x.title)} 45% 35%)"></span>`;
+        const thumb = x.poster ? `<img class="nl-art" src="${esc(thumb(x.poster))}" alt="" loading="lazy">` : `<span class="nl-art" style="background:hsl(${hue(x.title)} 45% 35%)"></span>`;
         return `<li>${thumb}<div class="grow">
           ${x.url ? `<a class="title" href="${esc(x.url)}" target="_blank" rel="noopener" ${reg(infoFor(x, x.type, `New on ${s?.label || 'streaming'}`, s ? [s] : []))}>${esc(x.title)}</a>` : `<span class="title">${esc(x.title)}</span>`}
           <span class="what">${esc(what)}</span></div>
