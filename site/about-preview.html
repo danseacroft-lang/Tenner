@@ -37,46 +37,49 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="about.css">
 <style>
-/* ===== preview: the About splash, a poster of what's No. 1 right now ===== */
-.splash { position: relative; isolation: isolate; overflow: hidden; min-height: 100svh; display: flex; align-items: flex-end; background: #000; margin-bottom: -10vh; }
-.sp-art { position: absolute; inset: 0; z-index: -3; }
+/* ===== preview: the About splash, a poster of what's No. 1 right now, dissolving into the page in either theme ===== */
+.splash { --fade: var(--bg); position: relative; isolation: isolate; min-height: 100svh; display: flex; align-items: flex-end; background: var(--bg); margin-bottom: -6vh; }
+/* the artwork itself fades out at its edges (a mask), so there's no hard line anywhere: it melts into the page */
+.sp-art { position: absolute; inset: 0; z-index: -3; overflow: hidden;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 42%, rgba(0,0,0,.55) 68%, rgba(0,0,0,.15) 86%, transparent 100%), linear-gradient(90deg, transparent 0%, #000 22%);
+  -webkit-mask-composite: source-in; mask-image: linear-gradient(180deg, #000 0%, #000 42%, rgba(0,0,0,.55) 68%, rgba(0,0,0,.15) 86%, transparent 100%), linear-gradient(90deg, transparent 0%, #000 22%); mask-composite: intersect; }
 .sp-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; opacity: 0; transition: opacity 1.6s ease, scale 9s linear; scale: 1.06; }
 .sp-art img.on { opacity: 1; scale: 1; }
-/* the colour: Tenner's gradient washed through the artwork, then darkness at the bottom and left for the words */
-.sp-wash { position: absolute; inset: 0; z-index: -2; mix-blend-mode: soft-light; opacity: .85;
-  background: linear-gradient(125deg, #ff375f 0%, #ff9f0a 22%, transparent 45%, #0a84ff 75%, #bf5af2 100%); }
-.splash::before { content: ""; position: absolute; inset: 0; z-index: -1;
+/* Tenner's colours washed through it, softly */
+.sp-wash { position: absolute; inset: 0; z-index: -2; mix-blend-mode: soft-light; opacity: .8; pointer-events: none;
+  background: linear-gradient(125deg, #ff375f 0%, #ff9f0a 22%, transparent 45%, #0a84ff 75%, #bf5af2 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 40%, transparent 95%); mask-image: linear-gradient(180deg, #000 40%, transparent 95%); }
+/* the page colour rising up from the bottom and in from the left, where the words sit: black at night, white by day */
+.splash::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
   background:
-    radial-gradient(130% 80% at 20% 100%, rgba(0,0,0,.92) 0%, rgba(0,0,0,.55) 45%, transparent 75%),
-    linear-gradient(90deg, rgba(0,0,0,.6) 0%, rgba(0,0,0,.15) 55%, transparent 80%),
-    linear-gradient(180deg, rgba(0,0,0,.35) 0%, transparent 22%, transparent 55%, #000 99%); }
-.sp-grain { position: absolute; inset: 0; z-index: -1; opacity: .12; mix-blend-mode: overlay; pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
-.sp-copy { width: 100%; max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter-r) 20vh calc(var(--gutter) + 12px); color: #fff; }
-.sp-logo { width: 72px; height: 72px; border-radius: 17px; display: block; margin-bottom: 22px; box-shadow: 0 0 0 .5px rgba(255,255,255,.25), 0 18px 50px rgba(0,0,0,.6); }
-.sp-eye { margin: 0 0 12px; font: 600 14px/1 var(--font); letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.78); }
-.splash h1 { margin: 0; max-width: 11ch; font: 800 clamp(52px, 7.6vw, 116px)/.95 var(--font-display); letter-spacing: -.035em; color: #fff; text-shadow: 0 6px 40px rgba(0,0,0,.35); }
-.sp-lead { margin: 22px 0 0; max-width: 560px; font: 400 clamp(17px, 1.5vw, 20px)/1.45 var(--font); letter-spacing: -.015em; color: rgba(255,255,255,.88); }
+    linear-gradient(90deg, color-mix(in srgb, var(--fade) 82%, transparent) 0%, color-mix(in srgb, var(--fade) 45%, transparent) 38%, transparent 68%),
+    linear-gradient(180deg, transparent 30%, color-mix(in srgb, var(--fade) 55%, transparent) 62%, var(--fade) 96%); }
+.sp-copy { width: 100%; max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter-r) 16vh calc(var(--gutter) + 12px); color: var(--label); }
+.sp-logo { width: 72px; height: 72px; border-radius: 17px; display: block; margin-bottom: 22px; box-shadow: 0 0 0 .5px rgba(127,127,127,.3), 0 18px 50px rgba(0,0,0,.35); }
+.sp-eye { margin: 0 0 12px; font: 600 14px/1 var(--font); letter-spacing: .14em; text-transform: uppercase; color: var(--label2); }
+.splash h1 { margin: 0; max-width: 11ch; font: 800 clamp(52px, 7.6vw, 116px)/.95 var(--font-display); letter-spacing: -.035em; }
+.sp-lead { margin: 22px 0 0; max-width: 560px; font: 400 clamp(17px, 1.5vw, 20px)/1.45 var(--font); letter-spacing: -.015em; color: var(--label2); }
 .sp-ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 30px; }
-.sp-cta { display: inline-flex; align-items: center; height: 48px; padding: 0 24px; border-radius: 14px; font: 600 17px/1 var(--font); letter-spacing: -.02em; color: #fff; text-decoration: none;
-  background: rgba(255,255,255,.14); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.3), inset 0 1px 0 rgba(255,255,255,.18); -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%); }
+.sp-cta { display: inline-flex; align-items: center; height: 48px; padding: 0 24px; border-radius: 14px; font: 600 17px/1 var(--font); letter-spacing: -.02em; color: var(--label); text-decoration: none;
+  background: var(--frost); box-shadow: var(--frost-line); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); }
 .sp-cta:hover { text-decoration: none; }
-.sp-cta.primary { background: #fff; color: #000; box-shadow: 0 12px 40px rgba(0,0,0,.35); }
+.sp-cta.primary { background: var(--label); color: var(--bg); box-shadow: 0 12px 40px rgba(0,0,0,.25); }
 /* what's on the poster: a small frosted caption, bottom right */
-.sp-now { position: absolute; right: calc(var(--gutter-r) + 8px); bottom: 20vh; display: flex; align-items: center; gap: 12px; padding: 8px 14px 8px 8px; border-radius: 14px; color: #fff; text-decoration: none;
-  background: rgba(20,20,24,.42); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.22); -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%); }
+.sp-now { position: absolute; right: calc(var(--gutter-r) + 8px); bottom: 16vh; display: flex; align-items: center; gap: 12px; padding: 8px 14px 8px 8px; border-radius: 14px; color: var(--label); text-decoration: none;
+  background: var(--frost); box-shadow: var(--frost-line); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); }
 .sp-now:hover { text-decoration: none; }
 .sp-now img { width: 40px; height: 60px; border-radius: 6px; object-fit: cover; }
-.sp-now small { display: block; font: 600 11px/1.3 var(--font); letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.7); }
+.sp-now small { display: block; font: 600 11px/1.3 var(--font); letter-spacing: .08em; text-transform: uppercase; color: var(--label2); }
 .sp-now b { display: block; font: 600 15px/1.3 var(--font); letter-spacing: -.016em; }
-.sp-dots { display: flex; gap: 6px; margin-top: 8px; } .sp-dots i { width: 6px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.35); transition: width .4s, background .4s; } .sp-dots i.on { width: 18px; background: #fff; }
+.sp-dots { display: flex; gap: 6px; margin-top: 8px; } .sp-dots i { width: 6px; height: 6px; border-radius: 3px; background: var(--label3); transition: width .4s, background .4s; } .sp-dots i.on { width: 18px; background: var(--label); }
+@media (max-width: 999px) { .sp-art { -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 34%, rgba(0,0,0,.5) 58%, rgba(0,0,0,.12) 78%, transparent 92%); mask-image: linear-gradient(180deg, #000 0%, #000 34%, rgba(0,0,0,.5) 58%, rgba(0,0,0,.12) 78%, transparent 92%); } }
 @media (max-width: 720px) {
   .splash { min-height: 94svh; }
   .sp-art img { object-position: 60% 20%; }
-  .sp-copy { padding-bottom: 22vh; }
+  .sp-copy { padding-bottom: 18vh; }
   .sp-logo { display: none; }   /* the bar above already shows it */
   .sp-now { left: var(--gutter); right: auto; bottom: auto; top: calc(env(safe-area-inset-top, 0px) + 84px); }
-  .splash::before { background: linear-gradient(180deg, rgba(0,0,0,.2) 0%, rgba(0,0,0,.35) 35%, rgba(0,0,0,.82) 62%, #000 98%); }
+  .splash::before { background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--fade) 30%, transparent) 30%, color-mix(in srgb, var(--fade) 80%, transparent) 55%, var(--fade) 80%); }
 }
 @media (prefers-reduced-motion: reduce) { .sp-art img { transition: none; scale: 1; } }
 </style>
@@ -144,7 +147,6 @@
   <section class="splash" aria-labelledby="h-about">
     <div class="sp-art" id="spArt" aria-hidden="true"></div>
     <div class="sp-wash" aria-hidden="true"></div>
-    <div class="sp-grain" aria-hidden="true"></div>
     <div class="sp-copy">
       <img class="sp-logo" src="logo.svg" alt="" width="72" height="72">
       <p class="sp-eye">About Tenner</p>
