@@ -31,7 +31,9 @@
     const q = new URLSearchParams(location.hash.slice(1));
     state.c = COLLECTIONS.some((c) => c.key === q.get('c')) ? q.get('c') : 'popular';
     state.k = ['movie', 'both'].includes(q.get('k')) ? q.get('k') : 'tv';
-    state.s = (q.get('s') || '').split(',').filter((k) => labels[k]);
+    // no services in the address: your own (My services), if you've chosen them; "all" means all five
+    const mine = window.tn.mine.get().filter((k) => labels[k]);
+    state.s = q.get('s') === 'all' ? [] : q.has('s') ? q.get('s').split(',').filter((k) => labels[k]) : mine;
     state.g = (q.get('g') || '').split(',').map(Number).filter((g) => cat.genres[g]);
     state.sort = SORTS.some((s) => s.key === q.get('sort')) ? q.get('sort') : null;
     state.r = Math.min(9, Math.max(0, parseFloat(q.get('r')) || 0));
@@ -42,7 +44,9 @@
     const q = new URLSearchParams();
     if (state.c !== 'popular') q.set('c', state.c);
     if (state.k !== 'tv') q.set('k', state.k);
-    if (state.s.length) q.set('s', state.s.join(','));
+    const mine = window.tn.mine.get().filter((k) => labels[k]);
+    const same = state.s.length === mine.length && state.s.every((k) => mine.includes(k));
+    if (!same) q.set('s', state.s.length ? state.s.join(',') : 'all');
     if (state.g.length) q.set('g', state.g.join(','));
     if (state.sort) q.set('sort', state.sort);
     if (state.r) q.set('r', state.r);
@@ -108,6 +112,8 @@
 
     $('#where').innerHTML = Object.keys(labels).map((k) => `<button type="button" class="w-b" data-s="${k}" aria-pressed="false" title="${esc(labels[k])}">
       <span class="w-ic">${logos[k] ? `<img src="${esc(logos[k])}" alt="">` : esc(labels[k][0])}</span><span>${esc(labels[k])}</span></button>`).join('');
+    $('#mineLink').addEventListener('click', () => window.tn.pickMine(Object.keys(labels).map((k) => ({ key: k, label: labels[k], logo: logos[k] }))));
+    addEventListener('tn:mine', () => { readHash(); apply(false); });
     $('#where').addEventListener('click', (e) => { const b = e.target.closest('.w-b'); if (!b) return;
       const k = b.dataset.s; state.s = state.s.includes(k) ? state.s.filter((x) => x !== k) : [...state.s, k]; apply(true); });
 

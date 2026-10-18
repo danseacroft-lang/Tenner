@@ -242,3 +242,6 @@
 .web-hd .count { margin: 0; }
 .web.solo { margin-top: 0; }
 .web.solo .web-hd { border-top: 0; padding-top: 0; }
+/* "My services": choose the ones you pay for (they become Browse's starting filter) */
+.mine-link { border: 0; padding: 0; background: none; color: var(--accent); font: 500 13px/1.2 var(--font); letter-spacing: -.01em; cursor: pointer; }
+@media (hover: hover) { .mine-link:hover { text-decoration: underline; } }

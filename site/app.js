@@ -41,20 +41,47 @@ async function load() {
 }
 
 const services = () => state.trending.services;
-const svc = (k) => services().find((s) => s.key === k);
+const svc = (k) => (k === 'mine' ? mineScope() : services().find((s) => s.key === k));
+// My services as a chart of its own: the UK chart kept to titles on your services, topped up from your services' own
+// charts (best ranks first) until there are ten. Movement arrows are left off, since it isn't a chart anyone else sees.
+function mineScope() {
+  const keys = window.tn.mine.get(); if (!keys.length) return null;
+  const mine = services().filter((s) => keys.includes(s.key));
+  const build = (k) => {
+    const out = [], seen = new Set(), add = (it) => { const id = `${it.type}${it.id}`; if (!seen.has(id) && out.length < 10) { seen.add(id); out.push({ ...it, mv: undefined, top: undefined }); } };
+    (state.trending.overall[k] || []).filter((it) => (it.on || []).some((s) => keys.includes(s))).forEach(add);
+    for (let i = 0; i < 10 && out.length < 10; i++) mine.forEach((s) => s[k]?.[i] && add(s[k][i]));
+    return out;
+  };
+  const names = mine.map((s) => s.label);
+  return { key: 'mine', mine: true, keys, label: 'your services', names: names.length > 2 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names.join(' and '), tv: build('tv'), movie: build('movie') };
+}
 
 // ---------- the service bar: each service as its own app icon in a glass capsule, a pill gliding to the chosen one ----------
 const ICON_STORE = '<span class="svc-glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12.5H7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>';
 function buildServiceBar() {
   const bar = $('#svc');
+  bar.querySelectorAll(':scope > :not(#svcInd)').forEach((el) => el.remove());
+  if (buildServiceBar.done) { fillServiceBar(bar); return; }
+  buildServiceBar.done = true;
+  fillServiceBar(bar);
+  wireServiceBar(bar);
+}
+const SLIDERS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="17" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+function fillServiceBar(bar) {
   const item = (key, label, icon, extra = '') =>
     `<button type="button" role="radio" class="svc-b${extra}${icon ? '' : ' txt'}" data-svc="${key}" aria-checked="false" tabindex="-1">${icon ? `<span class="svc-ic">${icon}</span>` : ''}<span class="svc-l">${esc(label)}</span></button>`;
   const iconFor = (s) => s.logo ? `<img src="${esc(s.logo)}" alt="" loading="lazy">` : `<span class="svc-glyph">${esc(s.label[0])}</span>`;
   bar.insertAdjacentHTML('beforeend',
     item('top', 'All', '') +   // just the word, to keep the bar clean
+    (window.tn.mine.get().length ? item('mine', 'Mine', '') : '') +
     services().filter((s) => !s.store).map((s) => item(s.key, s.label, iconFor(s))).join('') +
-    services().filter((s) => s.store).map((s) => `<span class="svc-sep" aria-hidden="true"></span>` + item(s.key, s.label, ICON_STORE, ' store')).join(''));
-  bar.addEventListener('click', (e) => { const b = e.target.closest('.svc-b'); if (b) location.hash = b.dataset.svc; });
+    services().filter((s) => s.store).map((s) => `<span class="svc-sep" aria-hidden="true"></span>` + item(s.key, s.label, ICON_STORE, ' store')).join('') +
+    `<button type="button" class="svc-edit" data-pick aria-label="Choose my services" title="Choose my services">${SLIDERS}</button>`);
+}
+const pickMine = () => window.tn.pickMine(services().filter((s) => !s.store).map((s) => ({ key: s.key, label: s.label, logo: s.logo })));
+function wireServiceBar(bar) {
+  bar.addEventListener('click', (e) => { if (e.target.closest('[data-pick]')) { pickMine(); return; } const b = e.target.closest('.svc-b'); if (b) location.hash = b.dataset.svc; });
   arrows(bar, () => [...bar.querySelectorAll('.svc-b')], (n) => { location.hash = n.dataset.svc; });
   // fade whichever end has more to scroll to
   const edges = () => { const w = bar.parentElement;
@@ -82,11 +109,13 @@ function markService(key) {
 // ---------- phones: the service bar as a pull-down menu ----------
 const ddPop = $('#ddPop'), ddList = $('#ddList');
 let ddBtn = null;
-const iconOf = (key) => key === 'top' ? '' : key === 'store' ? ICON_STORE
+const iconOf = (key) => key === 'top' || key === 'mine' ? '' : key === 'store' ? ICON_STORE
   : svc(key)?.logo ? `<img src="${esc(svc(key).logo)}" alt="">` : `<span class="svc-glyph">${esc(svc(key)?.label[0] || '')}</span>`;
 function ddItems() {
-  const keys = ['top', ...services().filter((x) => !x.store).map((x) => x.key), ...(state.kind === 'movie' ? services().filter((x) => x.store).map((x) => x.key) : [])];
-  return keys.map((k) => ({ act: () => { location.hash = k; }, on: state.route === k, label: k === 'top' ? 'All services' : svc(k).label, icon: iconOf(k), sep: k === 'store' }));
+  const has = window.tn.mine.get().length;
+  const keys = ['top', ...(has ? ['mine'] : []), ...services().filter((x) => !x.store).map((x) => x.key), ...(state.kind === 'movie' ? services().filter((x) => x.store).map((x) => x.key) : [])];
+  return [...keys.map((k) => ({ act: () => { location.hash = k; }, on: state.route === k, label: k === 'top' ? 'All services' : k === 'mine' ? 'My services' : svc(k).label, icon: iconOf(k), sep: k === 'store' })),
+    { act: pickMine, on: null, label: has ? 'Change my services…' : 'Choose my services…', icon: SLIDERS, sep: true }];
 }
 function ddClose(focus) {
   if (!ddBtn) return;
@@ -100,7 +129,7 @@ function ddOpen(btn) {
   if (ddBtn === btn) { ddClose(); return; }
   ddBtn = btn; btn.setAttribute('aria-expanded', 'true');
   const items = ddItems();
-  ddList.innerHTML = items.map((it, i) => `${it.sep ? '<div class="dd-sep" role="separator"></div>' : ''}<button type="button" role="menuitemradio" aria-checked="${it.on}" data-i="${i}">${it.icon ? `<i>${it.icon}</i>` : ''}<span><b>${esc(it.label)}</b></span><em aria-hidden="true"></em></button>`).join('');
+  ddList.innerHTML = items.map((it, i) => `${it.sep ? '<div class="dd-sep" role="separator"></div>' : ''}<button type="button" role="${it.on === null ? 'menuitem' : 'menuitemradio'}"${it.on === null ? '' : ` aria-checked="${it.on}"`} data-i="${i}">${it.icon ? `<i>${it.icon}</i>` : ''}<span><b>${esc(it.label)}</b></span><em aria-hidden="true"></em></button>`).join('');
   ddList.onclick = (e) => { const b = e.target.closest('[data-i]'); if (!b) return; ddClose(); items[b.dataset.i].act(); };
   ddPop.classList.remove('out'); ddPop.hidden = false;
   const r = btn.getBoundingClientRect(), w = ddPop.offsetWidth, left = Math.max(12, Math.min(r.left, innerWidth - w - 12));
@@ -116,7 +145,7 @@ arrows(ddList, () => [...ddList.querySelectorAll('button')]);   // arrow keys mo
 addEventListener('resize', () => ddClose());
 addEventListener('scroll', () => ddClose(), { passive: true });
 function markDropdowns() {
-  $('#svcDD .dd-l').textContent = state.route === 'top' ? 'All services' : svc(state.route)?.label || 'All services';
+  $('#svcDD .dd-l').textContent = state.route === 'top' ? 'All services' : state.route === 'mine' ? 'My services' : svc(state.route)?.label || 'All services';
   const ic = iconOf(state.route); $('#svcDD .dd-ic').innerHTML = ic; $('#svcDD .dd-ic').hidden = !ic;
 }
 
@@ -161,12 +190,85 @@ async function refresh(quiet) {
   btn.classList.remove('busy'); showUpdated();
 }
 $('#refresh').addEventListener('click', () => refresh(false));
+
+// ---------- share a chart: a picture of this Top 10 (made here, in the browser) plus a link back ----------
+// Phones get the share sheet with the image attached; elsewhere the image downloads and the link is copied.
+$('#shareChart').addEventListener('click', async () => {
+  const btn = $('#shareChart'), s = state.route === 'top' ? null : svc(state.route);
+  const kind = state.kind === 'both' ? 'tv' : state.kind;
+  const list = ((s ? s[kind] : state.trending.overall[kind]) || []).slice(0, 10);
+  if (!list.length) return;
+  const title = s?.store ? 'Top 10 to buy or rent' : `Top 10 ${words(kind)}`;
+  const where = s?.mine ? 'On my services' : s?.store ? 'Apple TV, Sky Store and others' : s ? `On ${s.label}` : 'In the UK, on all five services';
+  const url = new URL(location.href); url.search = ''; url.hash = s && !s.mine ? s.key : '';
+  const text = `${title} ${s && !s.mine && !s.store ? `on ${s.label}` : 'in the UK'} right now, from Tenner`;
+  btn.disabled = true;
+  try {
+    const blob = await chartImage(list, title, where);
+    const file = blob && new File([blob], `tenner-${(s?.key || 'uk')}-${kind}.png`, { type: 'image/png' });
+    if (file && navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: 'Tenner', text: `${text}: ${url}` });
+    else if (navigator.share && matchMedia('(hover: none)').matches) await navigator.share({ title: 'Tenner', text, url: url.toString() });
+    else {
+      if (file) { const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = file.name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
+      try { await navigator.clipboard.writeText(url.toString()); toast(file ? 'Picture saved and link copied' : 'Link copied'); } catch { toast(file ? 'Picture saved' : "Couldn't share right now"); }
+    }
+  } catch { /* the share sheet was closed */ }
+  btn.disabled = false;
+});
+// The picture: 1080×1350 (a portrait post), night colours, ranks, posters where they'll load, titles and where they're on
+async function chartImage(list, title, where) {
+  const W = 1080, H = 1350, c = Object.assign(document.createElement('canvas'), { width: W, height: H }), g = c.getContext('2d');
+  await document.fonts?.ready;
+  const font = (w, px, fam = 'Inter') => `${w} ${px}px "${fam}", -apple-system, system-ui, sans-serif`;
+  g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+  [['#0a84ff', 180, 120, 620], ['#bf5af2', 960, 200, 560], ['#ff375f', 860, 1300, 520]].forEach(([col, x, y, r]) => {
+    const rg = g.createRadialGradient(x, y, 0, x, y, r); rg.addColorStop(0, col + '55'); rg.addColorStop(1, col + '00'); g.fillStyle = rg; g.fillRect(0, 0, W, H); });
+  const logo = await loadImg('logo.svg'); if (logo) g.drawImage(logo, 72, 64, 64, 64);
+  g.fillStyle = '#fff'; g.font = font(700, 40, 'Inter Tight'); g.textBaseline = 'middle'; g.fillText('Tenner', 152, 98);
+  g.font = font(500, 26); g.fillStyle = 'rgba(235,235,245,.6)'; g.textAlign = 'right';
+  g.fillText(new Date(state.trending.generatedAt).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'long' }), W - 72, 98); g.textAlign = 'left';
+  g.fillStyle = '#fff'; g.font = font(800, 76, 'Inter Tight'); g.fillText(title, 72, 210);
+  g.font = font(500, 30); g.fillStyle = 'rgba(235,235,245,.7)'; g.fillText(where, 72, 272);
+  const grad = g.createLinearGradient(0, 0, 160, 0); ['#ff375f', '#ff9f0a', '#ffd60a', '#30d158', '#0a84ff', '#bf5af2'].forEach((col, i) => grad.addColorStop(i / 5, col));
+  const posters = await Promise.all(list.map((it) => (it.poster ? loadImg(it.poster.replace('/w342/', '/w154/'), true) : null)));
+  const top = 330, rowH = 92;
+  list.forEach((it, i) => {
+    const y = top + i * rowH;
+    g.font = font(800, 54, 'Inter Tight'); g.lineWidth = 2.4; g.strokeStyle = grad; g.textBaseline = 'middle';
+    g.strokeText(String(i + 1).padStart(2, '0'), 72, y + rowH / 2 - 4);
+    const px = 190;
+    if (posters[i]) { g.save(); roundRect(g, px, y + 6, 52, 78, 8); g.clip(); g.drawImage(posters[i], px, y + 6, 52, 78); g.restore(); }
+    else { g.fillStyle = `hsl(${hue(it.title)} 45% 35%)`; roundRect(g, px, y + 6, 52, 78, 8); g.fill(); }
+    g.fillStyle = '#fff'; g.font = font(600, 34); g.fillText(clip(g, it.title, W - 72 - (px + 76)), px + 76, y + 32);
+    g.fillStyle = 'rgba(235,235,245,.6)'; g.font = font(500, 24);
+    g.fillText([onText(it), it.season, it.year].filter(Boolean).join(' · '), px + 76, y + 66);
+    if (i < list.length - 1) { g.fillStyle = 'rgba(84,84,88,.6)'; g.fillRect(px + 76, y + rowH - 1, W - 72 - px - 76, 1); }
+  });
+  g.font = font(500, 24); g.fillStyle = 'rgba(235,235,245,.55)'; g.textBaseline = 'alphabetic';
+  g.fillText('Updated every hour · ' + location.host + location.pathname.replace(/index\.html$/, ''), 72, H - 56);
+  return new Promise((res) => { try { c.toBlob((b) => res(b), 'image/png'); } catch { res(null); } });   // a poster that blocks the picture: no picture, just the link
+}
+function loadImg(src, cors) {
+  return new Promise((res) => { const im = new Image(); if (cors) im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = () => res(null); im.src = src; setTimeout(() => res(null), 4000); });
+}
+function roundRect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+function clip(g, t, max) { if (g.measureText(t).width <= max) return t; while (t.length > 1 && g.measureText(t + '…').width > max) t = t.slice(0, -1); return t.trimEnd() + '…'; }
+// choosing your services: rebuild the bar and show your own chart (or the UK's, if you went back to all five)
+addEventListener('tn:mine', () => {
+  if (!state.trending) return;
+  buildServiceBar(); svcPlaced = false;
+  const has = window.tn.mine.get().length;
+  if (has && location.hash !== '#mine') location.hash = 'mine';
+  else if (!has && state.route === 'mine') location.hash = 'top';
+  else route();
+});
 addEventListener('tn:check', () => refresh(true));
 
 // ---------- routing ----------
 function route() {
   const h = location.hash.slice(1);
-  state.route = h === 'new' || h === 'watchlist' || h === 'week' || svc(h) ? h : 'top';
+  const mine = window.tn.mine.get();
+  state.route = h === 'new' || h === 'watchlist' || h === 'week' || svc(h) ? h : h === 'mine' && mine.length ? 'mine' : !h && mine.length ? 'mine' : 'top';
   if (svc(state.route)?.store) state.kind = 'movie';
   if (!['new', 'watchlist', 'week'].includes(state.route)) state.lastChart = state.route;
   render();
@@ -202,9 +304,10 @@ function draw() {
   const list = picks.map((p) => p.it);
   const where = s ? s.label : 'UK streaming';
   $('#heading').textContent = s?.store ? `Top 10 ${words()} to buy or rent` : `Top 10 ${words()}`;
-  $('#lede').innerHTML = s?.store ? 'New releases from Apple TV, Sky Store and others'
+  $('#lede').innerHTML = s?.mine ? `On your services: ${esc(s.names)}`
+    : s?.store ? 'New releases from Apple TV, Sky Store and others'
     : s ? `On ${s.logo ? `<img class="sub-logo" src="${esc(s.logo)}" alt="">` : ''}${esc(s.label)}${s.official ? ` · ${esc(officialLine(s.official))}` : ''}` : 'On all five services in the UK';
-  document.title = s ? `${s.label} Top 10 | Tenner` : 'Tenner';
+  document.title = s?.mine ? 'My Top 10 | Tenner' : s ? `${s.label} Top 10 | Tenner` : 'Tenner';
 
   const chart = list.length
     ? `${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up. Add your TMDB key and run the workflow to see the real chart.</p>` : ''}
@@ -212,7 +315,7 @@ function draw() {
        ${kinds.map((k, r) => `${kinds.length > 1 ? `<h2 class="row-h kind-h">Top 10 ${words(k)}</h2>` : ''}${posterRow(listOf(k), k, r === 0)}`).join('')}
        ${s?.store ? '' : features(s)}
        ${kinds.map((k) => chartList(listOf(k), s, k)).join('')}
-       ${s?.store ? '' : savedRow()}${s ? '' : weekRow()}${s?.store ? '' : newRow(s)}`
+       ${s?.store ? '' : savedRow()}${s && !s.mine ? '' : weekRow()}${s?.store ? '' : newRow(s)}`
     : `<div class="empty"><h2>Nothing here right now</h2><p>The chart for ${esc(where)} will be back after the next hourly update.</p><a class="btn btn-tinted" href="#top">See all five services</a></div>`;
   view.innerHTML = `<div class="wrap chart">${chart}</div>`;
   openFromUrl();
@@ -232,13 +335,13 @@ function heroCopy({ it, n }) {
   // on a service's page it's that service's chart; on All it's the UK-wide chart, and the details say where to find it
   const s = heroScope, kind = it.type === 'tv' ? 'show' : 'film';
   const eye = [s?.store ? `No. ${n} to buy or rent` : s ? `No. ${n} ${kind} on ${s.label}` : `No. ${n} ${kind} in the UK`, n === 1 ? topText(it) : ''].filter(Boolean).join(' · ');
-  const where = s ? '' : onText(it);
+  const where = s && !s.mine ? '' : onText(it);
   const bits = [it.season || (it.type === 'tv' ? 'Series' : 'Film'), it.year, it.rating ? `★ ${it.rating.toFixed(1)}` : '', weeksText(it), where ? `On ${where}` : ''].filter(Boolean);
   return `<p class="h-eye">${s?.logo ? `<img src="${esc(s.logo)}" alt="">` : ''}${esc(eye)}</p>
     <h2 class="h-title">${esc(it.title)}</h2>
     <p class="h-meta">${bits.map(esc).join(' · ')}</p>
     ${it.overview ? `<p class="h-blurb">${esc(firstSentence(it.overview))}</p>` : ''}
-    <a class="h-cta" href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(infoFor(it, it.type, eye, s && !s.store ? [s] : null))}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>Where to watch</a>`;
+    <a class="h-cta" href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(infoFor(it, it.type, eye, s && !s.store && !s.mine ? [s] : null))}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>Where to watch</a>`;
 }
 function hero(picks, s) {   // picks: [{ it, n }] where n is the title's rank in its own chart
   if (!heroOn() || !picks.length) return '';
@@ -386,7 +489,7 @@ function wireRanks() {
 const scope = () => (state.route === 'top' ? null : svc(state.route));
 const eyeFor = (n, type) => { const s = scope(), what = type === 'tv' ? 'show' : 'film';
   return s?.store ? `No. ${n} to buy or rent` : s ? `No. ${n} ${what} on ${s.label}` : `No. ${n} ${what} in the UK`; };
-const chartInfo = (it, i, type) => infoFor(it, type, [eyeFor(i + 1, type), i === 0 ? topText(it) : ''].filter(Boolean).join(' · '), scope() && !scope().store ? [scope()] : null);
+const chartInfo = (it, i, type) => infoFor(it, type, [eyeFor(i + 1, type), i === 0 ? topText(it) : ''].filter(Boolean).join(' · '), scope() && !scope().store && !scope().mine ? [scope()] : null);
 function posterRow(list, kind = state.kind, first = true) {
   const edge = (side) => `<div class="edge ${side}" aria-hidden="true">${'<i></i>'.repeat(6)}</div>`;
   return `<div class="row-wrap at-start">
@@ -418,20 +521,31 @@ function features(s) {
   // Elsewhere on the charts: what the chart you're looking at doesn't already show (the other kind's No. 1, the No. 1 to
   // buy or rent, this week's biggest climber), never the No. 1 that's already in the hero and the posters
   const showing = state.kind === 'both' ? ['tv', 'movie'] : [state.kind];
-  const climb = !s && state.week?.climbers?.find((x) => x.c.startsWith('all:'));
-  const climbIt = climb && (state.trending.overall[climb.c.split(':')[1]] || []).find((it) => wlKey(it, it.type) === climb.k);
-  const picks = [
-    !showing.includes('tv') && shows[0] && { eye: s ? `No. 1 show on ${s.label}` : 'No. 1 show', it: shows[0], type: 'tv', sub: s ? `${shows[0].year || ''}` : `On ${onText(shows[0], 'UK streaming')}` },
-    !showing.includes('movie') && films[0] && { eye: s ? `No. 1 film on ${s.label}` : 'No. 1 film', it: films[0], type: 'movie', sub: s ? `${films[0].year || ''}` : `On ${onText(films[0], 'UK streaming')}` },
+  // this week's biggest climber, in the UK chart if there's one there, else on any service (with its full details)
+  const lists = [...['tv', 'movie'].map((t) => state.trending.overall[t] || []), ...services().filter((x) => !x.store).flatMap((x) => [x.tv || [], x.movie || []])];
+  const findIt = (k) => lists.flat().find((it) => wlKey(it, it.type) === k);
+  const climbs = (state.week?.climbers || []).filter((x) => !s || s.mine ? true : x.c.startsWith(`${s.key}:`)).sort((a, b) => b.c.startsWith('all:') - a.c.startsWith('all:'));
+  const climb = climbs.find((x) => findIt(x.k)), climbIt = climb && findIt(climb.k);
+  const fresh = (state.fresh?.items || []).filter((x) => !s || (s.mine ? s.keys.includes(x.service) : x.service === s.key))
+    .filter((x) => x.date <= new Date().toISOString().slice(0, 10)).reverse()[0];
+  const where = s ? `on ${s.label}` : 'in the UK';
+  // always three: the best of these, never one that's already the No. 1 above
+  const cands = [
+    !showing.includes('tv') && shows[0] && { eye: `No. 1 show ${where}`, it: shows[0], type: 'tv', sub: s ? `${shows[0].year || ''}` : `On ${onText(shows[0], 'UK streaming')}` },
+    !showing.includes('movie') && films[0] && { eye: `No. 1 film ${where}`, it: films[0], type: 'movie', sub: s ? `${films[0].year || ''}` : `On ${onText(films[0], 'UK streaming')}` },
     !s && store[0] && { eye: 'No. 1 to buy or rent', it: store[0], type: 'movie', sub: 'Apple TV, Sky Store and others', href: '#store' },
-    climbIt && { eye: 'Biggest climber this week', it: climbIt, type: climbIt.type, sub: `Up ${climb.by} to No. ${climb.to} in the UK` },
-    s && shows[1] && showing.includes('tv') && { eye: `No. 2 show on ${s.label}`, it: shows[1], type: 'tv', sub: `${shows[1].year || ''}` },
-    s && films[1] && showing.includes('movie') && { eye: `No. 2 film on ${s.label}`, it: films[1], type: 'movie', sub: `${films[1].year || ''}` },
-  ].filter(Boolean).slice(0, 3);
+    climbIt && { eye: 'Biggest climber this week', it: climbIt, type: climbIt.type, sub: `Up ${climb.by} to No. ${climb.to} ${chartName(climb.c).replace(/^(show|film) /, '')}` },
+    fresh && { eye: `New on ${svc(fresh.service)?.label || 'streaming'}`, it: fresh, type: fresh.type, sub: [fresh.type === 'movie' ? 'Film' : fresh.season ? `Season ${fresh.season}` : 'Series', fresh.date === new Date().toISOString().slice(0, 10) ? 'Today' : ''].filter(Boolean).join(' · '), svcs: svc(fresh.service) ? [svc(fresh.service)] : [] },
+    showing.includes('tv') && shows[1] && { eye: `No. 2 show ${where}`, it: shows[1], type: 'tv', sub: s ? `${shows[1].year || ''}` : `On ${onText(shows[1], 'UK streaming')}` },
+    showing.includes('movie') && films[1] && { eye: `No. 2 film ${where}`, it: films[1], type: 'movie', sub: s ? `${films[1].year || ''}` : `On ${onText(films[1], 'UK streaming')}` },
+    shows[2] && { eye: `No. 3 show ${where}`, it: shows[2], type: 'tv', sub: s ? `${shows[2].year || ''}` : `On ${onText(shows[2], 'UK streaming')}` },
+  ].filter(Boolean);
+  const seen = new Set(), picks = [];
+  for (const p of cands) { const id = p.it.title.toLowerCase(); if (!seen.has(id) && picks.length < 3) { seen.add(id); picks.push(p); } }
   if (!picks.length) return '';
   return `<section class="feats" aria-label="Highlights"><div class="feat-row">${picks.map((p) => {
     const it = p.it, wide = it.backdrop ? it.backdrop.replace('/w1280/', '/w780/') : null;
-    return `<a class="feat" href="${esc(p.href || it.url)}" ${p.href ? '' : `target="_blank" rel="noopener" ${reg(infoFor(it, p.type, p.eye, s ? [s] : null))}`}>
+    return `<a class="feat" href="${esc(p.href || it.url || "#new")}" ${p.href ? '' : `target="_blank" rel="noopener" ${reg(infoFor(it, p.type, p.eye, p.svcs || (s && !s.mine ? [s] : null)))}`}>
       <span class="f-eye">${esc(p.eye)}</span>
       <span class="f-title">${esc(it.title)}</span>
       <span class="f-sub">${esc(p.sub)}</span>
@@ -449,7 +563,7 @@ function features(s) {
 // The buy-or-rent chart has no catalogue behind it, so there it stays a list of that chart.
 function topRated(k, s) {
   const c = state.cat; if (!c?.items) return [];
-  const pass = (min) => c.items.filter((x) => x.t === k && x.r && x.v >= min && (s?.store ? x.b : s ? x.s.includes(s.key) : x.s.length));
+  const pass = (min) => c.items.filter((x) => x.t === k && x.r && x.v >= min && (s?.store ? x.b : s?.mine ? x.s.some((k) => s.keys.includes(k)) : s ? x.s.includes(s.key) : x.s.length));
   let l = pass(300); if (l.length < 10) l = pass(100);   // a smaller service may need a lower bar to fill ten
   return l.sort((a, b) => b.r - a.r || b.v - a.v).slice(0, 10).map((x) => ({
     id: x.i, title: x.n, year: (x.d || '').slice(0, 4), rating: x.r, on: x.s, url: tmdbUrl(k, x.i),
@@ -461,7 +575,7 @@ function chartList(list, s, k = state.kind) {
   // rather than repeating the posters above
   list = topRated(k, s);
   if (!list.length) return '';
-  const q = s?.store ? { c: 'store', k: 'movie', sort: 'rating' } : { c: 'top', ...(k === 'movie' ? { k: 'movie' } : {}), ...(s ? { s: s.key } : {}) };
+  const q = s?.store ? { c: 'store', k: 'movie', sort: 'rating' } : { c: 'top', ...(k === 'movie' ? { k: 'movie' } : {}), ...(s ? { s: s.mine ? s.keys.join(',') : s.key } : {}) };
   const browse = `browse.html#${new URLSearchParams(q)}`;
   return `<section class="clist" aria-labelledby="cl-h-${k}">
     <div class="row-hd"><h2 class="row-h" id="cl-h-${k}">${s?.store ? 'Top rated to buy or rent' : `Top rated ${words(k).toLowerCase()} at a glance`}</h2>
@@ -469,7 +583,7 @@ function chartList(list, s, k = state.kind) {
     <ol class="cl">${list.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(infoFor(it, k, `No. ${i + 1} top rated${s?.store ? ' to buy or rent' : s ? ` on ${s.label}` : ''}`))}>
       <span class="cl-n">${i + 1}</span>
       ${it.poster ? `<img src="${esc(thumb(it.poster))}" alt="" loading="lazy" decoding="async">` : `<span class="cl-ph" style="background:hsl(${hue(it.title)} 45% 35%)"></span>`}
-      <span class="cl-t"><b>${esc(it.title)}</b><small>${esc([s ? '' : onText(it), it.season, it.year].filter(Boolean).join(' · '))}</small></span>
+      <span class="cl-t"><b>${esc(it.title)}</b><small>${esc([s && !s.mine ? '' : onText(it), it.season, it.year].filter(Boolean).join(' · '))}</small></span>
       ${it.rating ? `<span class="cl-r">★ ${it.rating.toFixed(1)}</span>` : ''}
     </a></li>`).join('')}</ol>
   </section>`;
@@ -479,7 +593,7 @@ function chartList(list, s, k = state.kind) {
 function newRow(s) {
   const f = state.fresh; if (!f?.items?.length) return '';
   const today = new Date().toISOString().slice(0, 10);
-  let items = f.items.filter((x) => !s || x.service === s.key);
+  let items = f.items.filter((x) => !s || (s.mine ? s.keys.includes(x.service) : x.service === s.key));
   items = [...items.filter((x) => x.date <= today).reverse(), ...items.filter((x) => x.date > today)].slice(0, 14);
   if (!items.length) return '';
   const when = (d) => d === today ? 'Today' : new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });

@@ -104,12 +104,45 @@
     return n <= 0 ? (n === 0 ? 'Today' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })) : n === 1 ? 'Tomorrow'
       : n < 7 ? d.toLocaleDateString('en-GB', { weekday: 'long' }) : d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
   };
-  addEventListener('storage', (e) => { if (e.key === WL || e.key === PR) dispatchEvent(new Event('tn:saved')); });
+  addEventListener('storage', (e) => { if (e.key === WL || e.key === PR) dispatchEvent(new Event('tn:saved')); if (e.key === MS) dispatchEvent(new Event('tn:mine')); });
+
+  // ---------- My services: the ones you pay for, on this device. The Top 10 gets a chart of just those, and Browse
+  // starts filtered to them. Empty means "all five". ----------
+  const MS = 'tenner-services';
+  const mine = {
+    get() { try { const l = JSON.parse(localStorage.getItem(MS) || '[]'); return Array.isArray(l) ? l : []; } catch { return []; } },
+    set(l) { try { if (l.length) localStorage.setItem(MS, JSON.stringify(l)); else localStorage.removeItem(MS); } catch {} dispatchEvent(new Event('tn:mine')); },
+  };
+  // the picker: a small sheet of switches, one per service
+  function pickMine(list) {
+    let dlg = document.getElementById('mineDlg');
+    if (!dlg) {
+      document.body.insertAdjacentHTML('beforeend', `<dialog class="mine-dlg" id="mineDlg" aria-labelledby="mineH">
+        <form method="dialog"><h2 id="mineH">My services</h2>
+          <p>Pick the services you pay for. Tenner makes you a Top 10 of just those, and Browse starts with them. Saved on this device only.</p>
+          <div class="mine-list" id="mineList"></div>
+          <div class="mine-acts"><button type="button" class="btn btn-tinted" id="mineClear">Use all five</button><button class="btn btn-tinted mine-done" value="done">Done</button></div>
+        </form></dialog>`);
+      dlg = document.getElementById('mineDlg');
+      dlg.addEventListener('close', () => {
+        if (dlg.returnValue !== 'done') return;
+        const on = [...dlg.querySelectorAll('input:checked')].map((i) => i.value);
+        mine.set(on.length === dlg.querySelectorAll('input').length ? [] : on);   // all five is the same as none chosen
+      });
+      dlg.querySelector('#mineClear').addEventListener('click', () => { dlg.querySelectorAll('input').forEach((i) => { i.checked = false; }); dlg.returnValue = 'done'; dlg.close('done'); });
+      dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });   // a tap outside the card closes it
+    }
+    const cur = mine.get();
+    dlg.querySelector('#mineList').innerHTML = list.map((s) => `<label class="mine-row">
+      <span class="mine-ic">${s.logo ? `<img src="${esc(s.logo)}" alt="">` : esc(s.label[0])}</span><span class="mine-l">${esc(s.label)}</span>
+      <input type="checkbox" role="switch" value="${esc(s.key)}"${cur.includes(s.key) ? ' checked' : ''}><i class="sw" aria-hidden="true"></i></label>`).join('');
+    dlg.returnValue = ''; dlg.showModal();
+  }
 
   // ---------- the search API (worker/, on Cloudflare): every film and show on TMDB. Empty until it's deployed ----------
   const api = 'https://tenner-api.danseacroft.workers.dev';
 
-  window.tn = { esc, hue, glide, arrows, segment, reduce, contact, saved, progress, nextUp, whenText, api };
+  window.tn = { esc, hue, glide, arrows, segment, reduce, contact, saved, progress, nextUp, whenText, mine, pickMine, api };
 
   // ---------- tabs ----------
   const tabs = [...document.querySelectorAll('#tabs [role=tab]')], ind = $('#tabInd'), names = tabs.map((t) => t.dataset.tab);
