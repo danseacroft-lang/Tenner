@@ -213,7 +213,7 @@ a.tb-btn:hover { text-decoration: none; }
 
 /* the Theme card that drops from the round button: Auto, Day or Night */
 .tb-pop {
-  position: fixed; z-index: 65; box-sizing: border-box; width: min(300px, calc(100vw - 24px)); overflow-y: auto; overscroll-behavior: contain; max-height: calc(100dvh - 90px);
+  position: fixed; inset: auto; margin: 0; border: 0; z-index: 65; box-sizing: border-box; width: min(300px, calc(100vw - 24px)); overflow-y: auto; overscroll-behavior: contain; max-height: calc(100dvh - 90px);
   border-radius: 24px; padding: 18px 18px 12px; color: var(--label);
   background: color-mix(in srgb, var(--card) 86%, transparent); -webkit-backdrop-filter: blur(30px) saturate(190%); backdrop-filter: blur(30px) saturate(190%);
   box-shadow: inset 0 0 0 .5px var(--glass-hi), 0 0 0 .5px var(--glass-line), 0 24px 60px rgba(0, 0, 0, .22);
@@ -225,9 +225,6 @@ a.tb-btn:hover { text-decoration: none; }
 @keyframes tbDrop { 0% { opacity: 0; transform: translateY(-10px) scale(.6); filter: blur(4px); } 55% { opacity: 1; filter: blur(0); } 100% { transform: none; } }
 .tb-pop > * { animation: tbRise .45s cubic-bezier(.2, .85, .25, 1) both; animation-delay: calc(70ms + var(--i, 0) * 40ms); }
 @keyframes tbRise { from { opacity: 0; transform: translateY(10px); } }
-.tb-pop.out { animation: tbOut .18s cubic-bezier(.4, 0, 1, 1) both; pointer-events: none; }
-.tb-pop.out > * { animation: none; }
-@keyframes tbOut { to { opacity: 0; transform: translateY(-6px) scale(.92); } }
 .tb-btn[aria-expanded="true"] .ic-sun { animation: tbSpin .7s cubic-bezier(.3, 1.4, .5, 1) both; }
 @keyframes tbSpin { from { transform: rotate(-90deg) scale(.7); } }
 .tb-btn[aria-expanded="true"] .ic-moon { transform-origin: 60% 60%; animation: tbRock .7s cubic-bezier(.3, 1.4, .5, 1) both; }
@@ -687,6 +684,9 @@ a.tb-btn:hover { text-decoration: none; }
 .mine-row input:checked + .sw { background: var(--green); }
 .mine-row input:checked + .sw::after { translate: 20px 0; }
 .mine-row input:focus-visible + .sw { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Safari's own iOS switch (<input type="checkbox" switch>) where it exists; the drawn one elsewhere */
+.mine-dlg.native-sw .mine-row input { position: static; opacity: 1; width: auto; height: auto; margin: 0; accent-color: var(--green); font-size: 17px; }
+.mine-dlg.native-sw .sw { display: none; }
 .mine-acts { display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; }
 .mine-acts .btn { height: 40px; padding: 0 16px; }
 .mine-done { color: var(--accent); font-weight: 600; }

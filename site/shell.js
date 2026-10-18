@@ -68,7 +68,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.1.2';
+  const version = '1.1.3';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -139,7 +139,8 @@
     const cur = mine.get();
     dlg.querySelector('#mineList').innerHTML = list.map((s) => `<label class="mine-row">
       <span class="mine-ic">${s.logo ? `<img src="${esc(s.logo)}" alt="">` : esc(s.label[0])}</span><span class="mine-l">${esc(s.label)}</span>
-      <input type="checkbox" role="switch" value="${esc(s.key)}"${cur.includes(s.key) ? ' checked' : ''}><i class="sw" aria-hidden="true"></i></label>`).join('');
+      <input type="checkbox" switch role="switch" value="${esc(s.key)}"${cur.includes(s.key) ? ' checked' : ''}><i class="sw" aria-hidden="true"></i></label>`).join('');
+    dlg.classList.toggle('native-sw', 'switch' in HTMLInputElement.prototype);   // Safari 17.4+: the real iOS switch
     dlg.returnValue = ''; dlg.showModal();
   }
 
@@ -196,6 +197,7 @@
     $('#thIc').innerHTML = $(`.th-list [data-mode="${dark ? 'dark' : 'light'}"] i`).innerHTML; // the round button: a moon by night, a sun by day
   }
   // the round button opens a card just under it, lined up with its right edge
+  // The card is a native popover (the browser's top layer, with its own tap-outside and Escape to close)
   function tbMenu(btn, pop, onOpen) {
     const place = () => {
       const r = btn.getBoundingClientRect(), w = pop.offsetWidth, left = Math.max(12, Math.min(r.right - w, innerWidth - w - 12));
@@ -205,20 +207,14 @@
       pop.style.left = left + 'px';
       pop.style.setProperty('--tb-o', `${r.left + r.width / 2 - left}px ${up ? 'calc(100% + 14px)' : '-14px'}`); // it grows out of its own button
     };
-    const set = (on) => {
-      if (on === !pop.hidden && !pop.classList.contains('out')) return;
+    btn.setAttribute('popovertarget', pop.id);
+    pop.addEventListener('toggle', (e) => {
+      const on = e.newState === 'open';
       btn.setAttribute('aria-expanded', on);
-      if (on) {
-        pop.classList.remove('out'); pop.hidden = false;
-        [...pop.children].forEach((c, i) => c.style.setProperty('--i', i));
-        place(); onOpen?.();
-      } else if (reduce) pop.hidden = true;
-      else { pop.classList.add('out'); setTimeout(() => { if (pop.classList.contains('out')) { pop.hidden = true; pop.classList.remove('out'); } }, 190); }
-    };
-    btn.addEventListener('click', (e) => { e.stopPropagation(); set(pop.hidden || pop.classList.contains('out')); });
-    document.addEventListener('click', (e) => { if (!pop.hidden && !pop.contains(e.target) && e.target.isConnected) set(false); });
-    addEventListener('keydown', (e) => { if (e.key === 'Escape' && !pop.hidden) { set(false); btn.focus({ preventScroll: true }); } });
-    addEventListener('resize', () => { if (!pop.hidden) place(); });
+      if (on) { [...pop.children].forEach((c, i) => c.style.setProperty('--i', i)); place(); onOpen?.(); }
+      else if (pop.contains(document.activeElement) || document.activeElement === document.body) btn.focus({ preventScroll: true });
+    });
+    addEventListener('resize', () => { if (pop.matches(':popover-open')) place(); });
   }
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', showTheme); // Auto: the icon follows the device
   tbMenu($('#thBtn'), $('#thPop'), () => $('#thPop [aria-checked="true"]')?.focus({ preventScroll: true }));
