@@ -99,7 +99,7 @@
 
     const setKind = (k) => {
       if (collection().films && k !== 'movie') state.c = 'popular';
-      state.k = k; state.g = state.g.filter((g) => genreSet().has(g)); apply(true);
+      state.k = k; state.g = state.g.filter((g) => genreSet().has(g)); apply(true, false, true);   // no crossfade
     };
     document.querySelectorAll('[data-kind]').forEach((b) => b.addEventListener('click', () => setKind(b.dataset.kind)));
     arrows($('.b-head .segmented'), () => [...document.querySelectorAll('[data-kind]')], (b) => setKind(b.dataset.kind));
@@ -185,7 +185,7 @@
   // ---------- filtering ----------
   let certs = null;
   const ok18 = (x) => !certs || certs.items?.[`${x.t[0]}${x.i}`]?.c !== '18';
-  function apply(user, quiet) {
+  function apply(user, quiet, instant) {
     const col = collection();
     const sortFn = SORTS.find((s) => s.key === sortKey()).fn;
     const q = fold(state.q);
@@ -226,7 +226,7 @@
     // swap the grid (a quick crossfade where the browser can)
     const draw = () => { shown = 0; $('#grid').innerHTML = ''; more(); empty(); };
     webSearch();
-    if (user && !quiet && document.startViewTransition && !reduce) document.startViewTransition(draw); else draw();
+    if (user && !quiet && !instant && document.startViewTransition && !reduce) document.startViewTransition(draw); else draw();
   }
 
   function empty() {

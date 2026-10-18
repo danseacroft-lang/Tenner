@@ -852,7 +852,7 @@ function setKind(k) {
   try { localStorage.setItem('tenner-kind', k); } catch {}
   // Buy or rent is films only, so switching to shows takes you back to all services
   if (k !== 'movie' && svc(state.route)?.store) { location.hash = 'top'; return; }
-  render();
+  draw();   // straight away, no crossfade: it feels quicker
 }
 document.querySelectorAll('.kind [data-kind]').forEach((b) => b.addEventListener('click', () => setKind(b.dataset.kind)));
 arrows($('.kind'), () => [...document.querySelectorAll('.kind [data-kind]')], (b) => setKind(b.dataset.kind));
