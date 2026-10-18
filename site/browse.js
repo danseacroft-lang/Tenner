@@ -219,6 +219,70 @@
       <button type="button" class="btn btn-tinted" data-clear="${state.q ? 'q' : 'filters'}">${state.q ? 'Clear search' : 'Clear filters'}</button></li>`;
   }
 
+  // ---------- hover preview (computers): rest the pointer on a poster and its details pop up beside it ----------
+  // Title, show or film, year, rating, genres, the description and where to watch, without leaving Browse. The
+  // descriptions and artwork live in data/browse-more.json, fetched the first time someone hovers.
+  const fine = matchMedia('(hover: hover) and (pointer: fine)');
+  let moreP = null, pvTimer = 0, pvFor = null;
+  const moreData = () => (moreP ||= fetch('data/browse-more.json').then((r) => (r.ok ? r.json() : null)).catch(() => null));
+  const pv = Object.assign(document.createElement('div'), { className: 'pv', id: 'pv', hidden: true });
+  pv.setAttribute('role', 'tooltip'); document.body.append(pv);
+  const item = (k) => cat?.items.find((x) => `${x.t[0]}${x.i}` === k);
+  function pvHtml(x, extra) {
+    const [ov, bd] = extra || [];
+    const art = bd && extra.base ? `<img src="${esc(extra.base + bd)}" alt="" decoding="async">`
+      : x.img ? `<img class="soft" src="${esc(x.img.startsWith('/') ? cat.img + x.img : x.img)}" alt="" decoding="async">`
+      : `<span class="ph" style="background:linear-gradient(160deg,hsl(${hue(x.n)} 45% 42%),hsl(${(hue(x.n) + 40) % 360} 55% 18%))"></span>`;
+    const meta = [x.t === 'tv' ? 'Show' : 'Film', (x.d || '').slice(0, 4), x.r ? `★ ${x.r.toFixed(1)}${x.v ? ` (${x.v.toLocaleString('en-GB')})` : ''}` : ''].filter(Boolean);
+    const genres = [...new Set(x.g.map((g) => cat.genres[g]).filter(Boolean))].slice(0, 3).join(' · ');
+    const where = x.s.map((k) => `<span class="pv-svc">${logos[k] ? `<img src="${esc(logos[k])}" alt="">` : ''}${esc(labels[k] || k)}</span>`).join('')
+      + (x.b ? '<span class="pv-svc buy">Buy or rent</span>' : '');
+    return `<div class="pv-art">${art}</div>
+      <div class="pv-body">
+        <h3>${esc(x.n)}</h3>
+        <p class="pv-meta">${meta.map(esc).join(' · ')}</p>
+        ${genres ? `<p class="pv-genres">${esc(genres)}</p>` : ''}
+        <p class="pv-ov">${extra ? esc(ov || 'No description yet.') : '<span class="pv-wait"></span><span class="pv-wait short"></span>'}</p>
+        ${where ? `<div class="pv-where"><span class="pv-l">Where to watch</span><div>${where}</div></div>` : ''}
+        <p class="pv-hint">Click to open on TMDB</p>
+      </div>`;
+  }
+  function placePv(tile) {
+    const r = tile.querySelector('.art').getBoundingClientRect(), w = pv.offsetWidth, h = pv.offsetHeight, gap = 14;
+    const right = r.right + gap + w <= innerWidth - 12;
+    const left = right ? r.right + gap : Math.max(12, r.left - gap - w);
+    pv.style.left = left + 'px';
+    pv.style.top = Math.min(Math.max(12, r.top - 8), innerHeight - h - 12) + 'px';
+    pv.style.transformOrigin = right ? 'left center' : 'right center';
+  }
+  async function showPv(tile) {
+    const x = item(tile.dataset.k); if (!x) return;
+    pvFor = tile; tile.querySelector('a')?.setAttribute('aria-describedby', 'pv');
+    const m = moreP && await Promise.race([moreData(), Promise.resolve(undefined)]);   // already here? use it now
+    pv.innerHTML = pvHtml(x, m?.items?.[tile.dataset.k] && Object.assign([...m.items[tile.dataset.k]], { base: m.img }));
+    pv.hidden = false; pv.classList.remove('in'); placePv(tile); requestAnimationFrame(() => pv.classList.add('in'));
+    if (!m) moreData().then((d) => {   // the first time: fill in the description and artwork as soon as they arrive
+      if (pvFor !== tile) return;
+      const e = d?.items?.[tile.dataset.k];
+      pv.innerHTML = pvHtml(x, Object.assign([...(e || ['', ''])], { base: d?.img })); placePv(tile);
+    });
+  }
+  function hidePv() {
+    clearTimeout(pvTimer); if (!pvFor) return;
+    pvFor.querySelector('a')?.removeAttribute('aria-describedby'); pvFor = null; pv.hidden = true; pv.classList.remove('in');
+  }
+  const grid = $('#grid');
+  grid.addEventListener('mouseover', (e) => {
+    const t = e.target.closest('.tile'); if (!fine.matches || !t || t === pvFor) return;
+    clearTimeout(pvTimer); if (pvFor) hidePv();
+    pvTimer = setTimeout(() => showPv(t), pvFor === null && !pv.dataset.warm ? 420 : 120);   // quicker once one is open
+  });
+  grid.addEventListener('mouseout', (e) => { const t = e.target.closest('.tile'); if (t && !t.contains(e.relatedTarget)) { hidePv(); pv.dataset.warm = '1'; clearTimeout(pv.coolT); pv.coolT = setTimeout(() => delete pv.dataset.warm, 600); } });
+  grid.addEventListener('focusin', (e) => { const t = e.target.closest('.tile'); if (t && e.target.matches(':focus-visible')) showPv(t); });
+  grid.addEventListener('focusout', hidePv);
+  addEventListener('scroll', hidePv, { passive: true });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') hidePv(); });
+
   // ---------- the grid ----------
   const fmt = (d) => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
   function card(x, i) {
@@ -228,7 +292,7 @@
       ? `<img src="${esc(x.img.startsWith('/') ? cat.img + x.img : x.img)}" alt="" loading="lazy" decoding="async" width="342" height="513">`
       : `<span class="ph" style="background:linear-gradient(160deg,hsl(${h} 45% 42%),hsl(${(h + 40) % 360} 55% 18%))">${esc(x.n)}</span>`;
     const where = x.s.slice(0, 3).map((k) => logos[k] ? `<img src="${esc(logos[k])}" alt="${esc(labels[k])}" title="${esc(labels[k])}">` : '').join('');
-    return `<li class="tile" style="--d:${i % PAGE}">
+    return `<li class="tile" style="--d:${i % PAGE}" data-k="${x.t[0]}${x.i}">
       <a href="${esc(url)}" target="_blank" rel="noopener">
         <span class="art">${art}${x.r ? `<span class="score" aria-label="Rated ${x.r} out of 10"><b>${x.r.toFixed(1)}</b></span>` : ''}</span>
         <span class="t">${esc(x.n)}</span>

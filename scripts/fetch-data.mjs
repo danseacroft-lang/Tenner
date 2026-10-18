@@ -367,12 +367,15 @@ export async function buildCatalogue(ids) {
     jobs.push(async () => ({ type: 'movie', key: 'store', res: await tmdb('/discover/movie', { ...base, page, with_watch_monetization_types: 'rent|buy', region: REGION, with_release_type: '4', 'release_date.gte': since }) }));
   const [results, gm, gt] = await Promise.all([pool(jobs), tmdb('/genre/movie/list', { language: 'en-GB' }), tmdb('/genre/tv/list', { language: 'en-GB' })]);
 
-  const byId = new Map();
+  const byId = new Map(), more = {};
   for (const { type, key, res } of results) for (const r of res.results || []) {
     if (!r.poster_path) continue;
     const id = `${type[0]}${r.id}`;
     let it = byId.get(id);
     if (!it) {
+      // the details Browse shows when you hover a poster (description and artwork), kept in their own file so the
+      // catalogue stays small; Browse fetches them only when someone first hovers
+      more[id] = [clip(r.overview), r.backdrop_path || ''];
       it = { i: r.id, t: type, n: type === 'movie' ? r.title : r.name, d: (type === 'movie' ? r.release_date : r.first_air_date) || '',
         r: r.vote_count >= 20 ? Math.round(r.vote_average * 10) / 10 : 0, v: r.vote_count, p: Math.round(r.popularity), img: r.poster_path, g: r.genre_ids || [], s: [] };
       byId.set(id, it);
@@ -381,7 +384,15 @@ export async function buildCatalogue(ids) {
   }
   const genres = {};
   for (const g of [...gm.genres, ...gt.genres]) genres[g.id] = g.name;
-  return { generatedAt: new Date().toISOString(), region: REGION, img: `${IMG}/w342`, genres, items: [...byId.values()] };
+  const cat = { generatedAt: new Date().toISOString(), region: REGION, img: `${IMG}/w342`, genres, items: [...byId.values()] };
+  return { cat, more: { generatedAt: cat.generatedAt, img: `${IMG}/w780`, items: more } };
+}
+// a description cut to its first sentences, about 320 characters at most, ending cleanly
+function clip(t) {
+  t = String(t || '').replace(/\s+/g, ' ').trim();
+  if (t.length <= 320) return t;
+  const cut = t.slice(0, 320), end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? '));
+  return end > 120 ? cut.slice(0, end + 1) : cut.slice(0, cut.lastIndexOf(' ')) + '…';
 }
 
 // ---------- Sample data ----------
@@ -450,7 +461,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const { trending, fresh } = sample();
     await write('trending.json', trending);
     await write('new.json', fresh);
-    await write('browse.json', sampleCatalogue());
+    const sc = sampleCatalogue();
+    await write('browse.json', sc);
+    await write('browse-more.json', { generatedAt: sc.generatedAt, img: '', sample: true,
+      items: Object.fromEntries(sc.items.map((x) => [`${x.t[0]}${x.i}`, ['Fictional sample title. Add your TMDB key and run the workflow to see real descriptions and artwork.', '']])) });
   } else if (!process.env.TMDB_TOKEN && !process.env.TMDB_API_KEY) {
     const msg = 'No TMDB_TOKEN secret found, so the site is still showing sample data. Add it under Settings > Secrets and variables > Actions.';
     console.warn(process.env.GITHUB_ACTIONS ? `::warning title=Sample data::${msg}` : msg);
@@ -496,14 +510,16 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     // 2. The Browse catalogue, rebuilt with the chart; otherwise the live one carries on.
     try {
       if (!built) throw new Error('the chart was not rebuilt this hour');
-      const cat = await buildCatalogue(built.ids);
+      const { cat, more } = await buildCatalogue(built.ids);
       if (cat.items.length < 100) throw new Error(`only ${cat.items.length} titles came back`);
       await write('browse.json', cat);
+      await write('browse-more.json', more);
       console.log(`Browse catalogue: ${cat.items.length} titles`);
     } catch (err) {
-      const prev = await liveCopy('browse.json');
+      const prev = await liveCopy('browse.json'), prevMore = await liveCopy('browse-more.json');
       warn('Browse', `catalogue not rebuilt (${err.message}), ${prev ? 'keeping the live one' : 'and there is no live one yet'}`);
       if (prev) await write('browse.json', prev);
+      if (prevMore) await write('browse-more.json', prevMore);
     }
 
     // 3. New this week (Watchmode, once a day). If it fails, the live list carries on for up to three days.
