@@ -1,0 +1,31 @@
+# Deploys the search go-between (worker/) to Cloudflare Workers whenever it changes, or when run by hand.
+# Needs two GitHub secrets: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID. It also copies the existing TMDB_TOKEN
+# secret into the Worker, so the key lives only in GitHub and Cloudflare.
+name: Deploy search API
+on:
+  push:
+    branches: [main]
+    paths: ['worker/**', '.github/workflows/api.yml']
+  workflow_dispatch:
+concurrency: { group: api, cancel-in-progress: true }
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the Cloudflare secrets are there
+        id: ready
+        env: { T: '${{ secrets.CLOUDFLARE_API_TOKEN }}', A: '${{ secrets.CLOUDFLARE_ACCOUNT_ID }}' }
+        run: |
+          if [ -z "$T" ] || [ -z "$A" ]; then echo "::notice title=Search API not deployed::Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID under Settings > Secrets and variables > Actions."; echo "go=no" >> "$GITHUB_OUTPUT"; else echo "go=yes" >> "$GITHUB_OUTPUT"; fi
+      - name: Deploy to Cloudflare
+        if: steps.ready.outputs.go == 'yes'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
+          secrets: TMDB_TOKEN
+        env:
+          TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}

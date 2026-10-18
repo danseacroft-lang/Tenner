@@ -1,0 +1,10 @@
+# Tenner's search go-between on Cloudflare Workers. Deployed by .github/workflows/api.yml whenever worker/ changes.
+# The TMDB key is a Worker secret (TMDB_TOKEN), copied in from GitHub's secret by that workflow: it never appears here.
+name = "tenner-api"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+[vars]
+# Sites allowed to use it (comma-separated). Add the new domain here when it's attached.
+ALLOWED_ORIGINS = "https://danseacroft-lang.github.io,http://localhost:8777,http://localhost:8778,http://localhost:8779,http://localhost:8780,http://127.0.0.1:8780"
