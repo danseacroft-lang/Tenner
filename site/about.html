@@ -35,6 +35,7 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}</script>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="about.css">
+
 </head>
 <body class="about">
   <a class="skip" href="#main">Skip to the page</a>
@@ -96,19 +97,44 @@
   </div>
 
 
+  <section class="splash" aria-labelledby="h-about">
+    <div class="sp-bg" aria-hidden="true"><div class="sp-art" id="spArt"></div><div class="sp-wash"></div><div class="sp-shade"></div></div>
+    <div class="sp-copy">
+      <img class="sp-logo" src="logo.svg" alt="" width="72" height="72">
+      <p class="sp-eye">About Tenner</p>
+      <h1 id="h-about">Your top ten, every hour.</h1>
+      <p class="sp-lead">What the UK is watching right now on Netflix, Disney+, Prime Video, HBO Max and Paramount+. One page, five services, refreshed every hour.</p>
+      <div class="sp-ctas"><a class="sp-cta primary" href="./">See the top 10</a><a class="sp-cta" href="browse.html">Browse everything</a></div>
+    </div>
+    <a class="sp-now" id="spNow" href="./" hidden></a>
+  </section>
+  <script>/* the splash: this hour's top shows and films, each a full poster for a few seconds */
+  (function(){
+    var art=document.getElementById('spArt'), now=document.getElementById('spNow');
+    var still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var timer=0;
+    function load(bust){ fetch('data/trending.json'+(bust?'?v='+Date.now():'')).then(function(r){return r.json()}).then(function(d){
+      var o=d.overall||{}, pick=[], seen={};
+      [o.tv&&o.tv[0],o.movie&&o.movie[0],o.tv&&o.tv[1],o.movie&&o.movie[1],o.tv&&o.tv[2]].forEach(function(x){ if(x&&x.backdrop&&!seen[x.title]){seen[x.title]=1;pick.push(x);} });
+      if(!pick.length) return;
+      var big=function(u){return u.replace('/t/p/w1280/','/t/p/original/');};
+      art.innerHTML=pick.map(function(x,i){return '<img src="'+big(x.backdrop)+'" alt="" decoding="async"'+(i?' loading="lazy"':' fetchpriority="high"')+'>';}).join('');
+      var imgs=art.querySelectorAll('img'), i=0;
+      function show(n){
+        imgs.forEach(function(m,k){m.classList.toggle('on',k===n);});
+        var x=pick[n], on=(x.on||[])[0];
+        now.hidden=false; now.href='./?t='+(x.type==='movie'?'m':'t')+x.id;
+        now.innerHTML=(x.poster?'<img src="'+x.poster+'" alt="">':'')+'<span><small>No. 1 '+(x.type==='movie'?'film':'show')+' in the UK</small><b>'+x.title.replace(/</g,'&lt;')+'</b>'
+          +'<span class="sp-dots">'+pick.map(function(_,k){return '<i class="'+(k===n?'on':'')+'"></i>';}).join('')+'</span></span>';
+        if(o.tv&&o.tv.indexOf(x)>0||o.movie&&o.movie.indexOf(x)>0) now.querySelector('small').textContent='No. '+((o.tv.indexOf(x)+1)||(o.movie.indexOf(x)+1))+' '+(x.type==='movie'?'film':'show')+' in the UK';
+      }
+      show(0); clearInterval(timer);
+      if(!still&&pick.length>1) timer=setInterval(function(){ if(document.visibilityState==='visible'){i=(i+1)%pick.length; show(i);} }, 7000);
+    }).catch(function(){});}
+    load(false); addEventListener('tn:check', function(){ load(true); });   /* a new hour, a new No. 1 */
+  })();</script>
   <main id="main" class="awrap" tabindex="-1">
-    <section class="banner" aria-labelledby="h-about">
-      <div class="wall" id="wall" aria-hidden="true"></div>
-      <div class="veil" aria-hidden="true"></div>
-      <div class="b-copy">
-        <img class="b-logo" src="logo.svg" alt="" width="56" height="56">
-        <p class="eyebrow">About Tenner</p>
-        <h1 id="h-about">Your top ten, every&nbsp;hour.</h1>
-        <p class="b-lead">What the UK is watching right now on Netflix, Disney+, Prime Video, HBO Max and Paramount+. One page, five services, refreshed every hour.</p>
-        <a class="b-cta" href="./">See the top 10</a>
-        <p class="b-note">Free to use. No sign-up. <span id="bUpd">Updated every hour.</span></p>
-      </div>
-    </section>
+
 
     <section class="sec" aria-labelledby="h-stages">
       <div class="sec-h">
@@ -234,28 +260,12 @@
     var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { rootMargin: '0px 0px -12% 0px' });
     document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
   })();</script>
-  <script>/* the banner's wall: this hour's posters, laid out once (static: no animation, nothing runs after) */
+  <script>/* the "Updated" label on the hourly card: this hour's real time */
   (function(){
-    var wall=document.getElementById('wall'); if(!wall) return;
-    function hue(t){var h=0;for(var i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))%360;return h}
-    function draw(list){
-      var rows=[[],[]]; list.slice(0,16).forEach(function(x,i){rows[i%2].push(x)});
-      wall.innerHTML=rows.map(function(r,ri){return '<div class="row r'+ri+'">'+r.map(function(x){
-        return x.src ? '<img src="'+x.src+'" alt="" loading="lazy" decoding="async">'
-          : '<span class="ph" style="background:linear-gradient(160deg,hsl('+hue(x.n)+' 50% 42%),hsl('+((hue(x.n)+40)%360)+' 55% 16%))"></span>';
-      }).join('')+'</div>'}).join('');
-    }
-    var stamp=null;
     function load(bust){ fetch('data/browse.json'+(bust?'?v='+Date.now():''),bust?{cache:'no-store'}:{}).then(function(r){return r.ok?r.json():null}).then(function(d){
-      if(bust&&(!d||d.generatedAt===stamp)) return; if(d) stamp=d.generatedAt;
       if(d&&d.generatedAt&&!d.sample){ var t=new Date(d.generatedAt); document.getElementById('lastUpd').textContent='Updated '+t.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
-      if(!d||!d.items) throw 0;
-      var top=d.items.filter(function(x){return x.img&&x.s&&x.s.length}).sort(function(a,b){return b.p-a.p});
-      if(top.length<8) throw 0;
-      draw(top.map(function(x){return {n:x.n, src: x.img.charAt(0)==='/' ? d.img+x.img : x.img}}));
-    }).catch(function(){ if(bust) return; draw(['Lighthouse','Marrow','Signal','Ferryman','Kiln','Fenland','Saltmarsh','Overcast','Ivy','Cobble','Grammar','Pier','Duck','Post','Brass','Weekend'].map(function(n){return {n:n}})); }); }
-    load(false);
-    addEventListener('tn:check', function(){ load(true); });   /* this hour's posters, even if the page was left open */
+    }).catch(function(){});}
+    load(false); addEventListener('tn:check', function(){ load(true); });
   })();</script>
   <script src="shell.js" defer></script>
 </body>

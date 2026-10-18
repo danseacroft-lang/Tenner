@@ -1,4 +1,4 @@
-/* About Tenner: an Apple TV-style banner (a wall of this hour's posters behind a dark veil), four illustrated cards,
+/* About Tenner: a full-height splash (this hour's top shows and films as a poster, dissolving into the page), four illustrated cards,
    then the FAQ. Static at rest: each card performs once as it arrives and nothing loops. */
 
 :root {
@@ -35,48 +35,58 @@
 .neon01s { font: 800 26px var(--font-display); letter-spacing: -.05em; }
 .about .credits { text-align: left; }
 
-/* ============================================================ the banner, the Apple TV way
-   A wall of this hour's posters, tilted, on the right; on the left a dark veil that blurs and fades into them, with
-   the logo, the headline, a button and a note. Laid out once: no animation, one blur layer. */
-.banner {
-  position: relative; isolation: isolate; overflow: hidden; margin-top: 18px;
-  min-height: clamp(380px, 40vw, 470px); border-radius: 28px; background: #0c0c10;
-  box-shadow: 0 0 0 .5px rgba(255, 255, 255, .1), 0 30px 70px -36px rgba(0, 0, 0, .7);
-  display: flex; align-items: center;
+/* ============================================================ the splash
+   This hour's top shows and films, each a full poster for a few seconds, washed with Tenner's colours and dissolving
+   into the page: black at night, white by day. */
+.splash { --fade: var(--bg); position: relative; isolation: isolate; min-height: 100svh; display: flex; align-items: flex-end; margin-bottom: -6vh; }
+/* everything behind the words lives in one layer that fades to nothing at the bottom, so the page's own background
+   (and its soft tint) carries straight on: no line where the splash ends */
+.sp-bg { position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 50%, rgba(0,0,0,.6) 70%, rgba(0,0,0,.2) 86%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 50%, rgba(0,0,0,.6) 70%, rgba(0,0,0,.2) 86%, transparent 100%); }
+/* the artwork itself fades out at its edges (a mask), so there's no hard line anywhere: it melts into the page */
+.sp-art { position: absolute; inset: 0; overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 22%); mask-image: linear-gradient(90deg, transparent 0%, #000 22%); }
+.sp-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; opacity: 0; transition: opacity 1.6s ease, scale 9s linear; scale: 1.06; }
+.sp-art img.on { opacity: 1; scale: 1; }
+/* Tenner's colours washed through it, softly */
+.sp-wash { position: absolute; inset: 0; mix-blend-mode: soft-light; opacity: .8; pointer-events: none;
+  background: linear-gradient(125deg, #ff375f 0%, #ff9f0a 22%, transparent 45%, #0a84ff 75%, #bf5af2 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 40%, transparent 95%); mask-image: linear-gradient(180deg, #000 40%, transparent 95%); }
+/* the page colour rising up from the bottom and in from the left, where the words sit: black at night, white by day */
+.sp-shade { position: absolute; inset: 0;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--fade) 78%, transparent) 0%, color-mix(in srgb, var(--fade) 40%, transparent) 38%, transparent 68%),
+    linear-gradient(180deg, transparent 30%, color-mix(in srgb, var(--fade) 45%, transparent) 62%, color-mix(in srgb, var(--fade) 70%, transparent) 90%); }
+.sp-copy { width: 100%; max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter-r) 16vh calc(var(--gutter) + 12px); color: var(--label); }
+.sp-logo { width: 72px; height: 72px; border-radius: 17px; display: block; margin-bottom: 22px; box-shadow: 0 0 0 .5px rgba(127,127,127,.3), 0 18px 50px rgba(0,0,0,.35); }
+.sp-eye { margin: 0 0 12px; font: 600 14px/1 var(--font); letter-spacing: .14em; text-transform: uppercase; color: var(--label2); }
+.splash h1 { margin: 0; max-width: 11ch; font: 800 clamp(52px, 7.6vw, 116px)/.95 var(--font-display); letter-spacing: -.035em; }
+.sp-lead { margin: 22px 0 0; max-width: 560px; font: 400 clamp(17px, 1.5vw, 20px)/1.45 var(--font); letter-spacing: -.015em; color: var(--label2); }
+.sp-ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 30px; }
+.sp-cta { display: inline-flex; align-items: center; height: 48px; padding: 0 24px; border-radius: 14px; font: 600 17px/1 var(--font); letter-spacing: -.02em; color: var(--label); text-decoration: none;
+  background: var(--frost); box-shadow: var(--frost-line); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); }
+.sp-cta:hover { text-decoration: none; }
+.sp-cta.primary { background: var(--label); color: var(--bg); box-shadow: 0 12px 40px rgba(0,0,0,.25); }
+/* what's on the poster: a small frosted caption, bottom right */
+.sp-now { position: absolute; right: calc(var(--gutter-r) + 8px); bottom: 16vh; display: flex; align-items: center; gap: 12px; padding: 8px 14px 8px 8px; border-radius: 14px; color: var(--label); text-decoration: none;
+  background: var(--frost); box-shadow: var(--frost-line); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); }
+.sp-now:hover { text-decoration: none; }
+.sp-now img { width: 40px; height: 60px; border-radius: 6px; object-fit: cover; }
+.sp-now small { display: block; font: 600 11px/1.3 var(--font); letter-spacing: .08em; text-transform: uppercase; color: var(--label2); }
+.sp-now b { display: block; font: 600 15px/1.3 var(--font); letter-spacing: -.016em; }
+.sp-dots { display: flex; gap: 6px; margin-top: 8px; } .sp-dots i { width: 6px; height: 6px; border-radius: 3px; background: var(--label3); transition: width .4s, background .4s; } .sp-dots i.on { width: 18px; background: var(--label); }
+@media (max-width: 999px) { .sp-art { -webkit-mask-image: none; mask-image: none; }
+  .sp-bg { -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 34%, rgba(0,0,0,.5) 58%, rgba(0,0,0,.12) 80%, transparent 96%); mask-image: linear-gradient(180deg, #000 0%, #000 34%, rgba(0,0,0,.5) 58%, rgba(0,0,0,.12) 80%, transparent 96%); } }
+@media (max-width: 720px) {
+  .splash { min-height: 94svh; }
+  .sp-art img { object-position: 60% 20%; }
+  .sp-copy { padding-bottom: 18vh; }
+  .sp-logo { display: none; }   /* the bar above already shows it */
+  .sp-now { left: var(--gutter); right: auto; bottom: auto; top: calc(env(safe-area-inset-top, 0px) + 84px); }
+  .sp-shade { background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--fade) 30%, transparent) 30%, color-mix(in srgb, var(--fade) 75%, transparent) 55%, color-mix(in srgb, var(--fade) 85%, transparent) 80%); }
 }
-.wall {
-  position: absolute; z-index: 0; top: -16%; bottom: -16%; left: 30%; right: -10%;
-  display: grid; align-content: center; gap: 16px; transform: rotate(-8deg);
-}
-.wall .row { display: flex; gap: 16px; }
-.wall .r1 { margin-left: -90px; }
-.wall img, .wall .ph {
-  flex: none; width: clamp(130px, 13vw, 176px); aspect-ratio: 2 / 3; height: auto; object-fit: cover; border-radius: 12px;
-  box-shadow: 0 0 0 .5px rgba(255, 255, 255, .14), 0 14px 30px -12px rgba(0, 0, 0, .8); background: #1c1c22;
-}
-/* the veil: solid dark on the left, a frosted band, then clear over the posters */
-.veil {
-  position: absolute; z-index: 1; inset: 0 auto 0 0; width: 72%; pointer-events: none;
-  -webkit-backdrop-filter: blur(22px) saturate(140%); backdrop-filter: blur(22px) saturate(140%);
-  background: linear-gradient(90deg, rgba(12, 12, 16, .96) 0%, rgba(12, 12, 16, .9) 34%, rgba(12, 12, 16, .55) 62%, rgba(12, 12, 16, 0) 100%);
-  -webkit-mask-image: linear-gradient(90deg, #000 55%, transparent); mask-image: linear-gradient(90deg, #000 55%, transparent);
-}
-.b-copy { position: relative; z-index: 2; max-width: 460px; padding: 40px 0 40px clamp(28px, 5vw, 56px); color: #fff; }
-.b-logo { width: 56px; height: 56px; border-radius: 13px; box-shadow: 0 8px 24px rgba(0, 0, 0, .5); margin-bottom: 18px; }
-.banner .eyebrow { color: #4ea1ff; margin: 0 0 8px; font-size: 15px; }
-.about .banner h1 { margin: 0; color: #fff; font: 700 clamp(36px, 4.6vw, 52px)/1.05 var(--font-display); letter-spacing: -.015em; text-wrap: balance; }
-.b-lead { margin: 14px 0 0; color: rgba(255, 255, 255, .72); font-size: 17px; line-height: 1.47; max-width: 40ch; }
-.b-cta {
-  display: inline-flex; align-items: center; height: 44px; margin-top: 24px; padding: 0 20px; border-radius: 11px;
-  color: #fff; font: 600 16px/1 var(--font); letter-spacing: -.016em; text-decoration: none;
-  /* the frosted material, always in its night form here: the banner is dark in both themes */
-  background: rgba(255, 255, 255, .14); -webkit-backdrop-filter: blur(14px) saturate(180%); backdrop-filter: blur(14px) saturate(180%);
-  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .22), inset 0 1px 0 rgba(255, 255, 255, .1);
-  transition: transform .4s var(--ease-spring), filter .1s ease;
-}
-.b-cta:hover { text-decoration: none; }
-.b-cta:active { transform: scale(.96); }
-.b-note { margin: 12px 0 0; color: rgba(255, 255, 255, .55); font-size: 13px; letter-spacing: -.01em; }
+@media (prefers-reduced-motion: reduce) { .sp-art img { transition: none; scale: 1; } }
 
 /* ============================================================ sections */
 .sec { margin: 80px 0 0; }
@@ -93,7 +103,7 @@
 .step h3 { font: 700 21px/1.19 var(--font-display); letter-spacing: .004em; margin: 0 0 8px; }
 .step p { margin: 0; color: var(--label2); font-size: 16px; line-height: 1.5; letter-spacing: -.016em; }
 .step p strong { color: var(--label); font-weight: 600; }
-@media (min-width: 1000px) { .awrap { padding-top: 22px; } .banner { margin-top: 0; } }
+@media (min-width: 1000px) { .awrap { padding-top: 22px; } }
 @media (min-width: 1240px) {
   .steps { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
   .step .txt { padding: 18px 20px 22px; }
@@ -162,17 +172,6 @@
   .step .txt { padding: 18px 20px 20px; }
   .step p { font-size: 15px; }
 
-  .banner { flex-direction: column; align-items: stretch; min-height: 0; margin-inline: -4px; border-radius: 22px; }
-  .wall { position: relative; inset: auto; height: 230px; margin: -30px -40px 0; order: -1; }
-  .wall .r1 { margin-left: -60px; }
-  /* the posters melt into the card: the veil covers the whole banner and fades in from the top, so there's no seam */
-  .veil { inset: 0; width: auto; background: #0c0c10; -webkit-backdrop-filter: none; backdrop-filter: none;
-    -webkit-mask-image: linear-gradient(180deg, transparent 90px, rgba(0, 0, 0, .55) 170px, #000 230px);
-    mask-image: linear-gradient(180deg, transparent 90px, rgba(0, 0, 0, .55) 170px, #000 230px); }
-  .b-copy { padding: 0 22px 28px; margin-top: -10px; }
-  .about .banner h1 { font-size: 34px; }
-  .b-lead { font-size: 16px; }
-  .b-logo { width: 48px; height: 48px; border-radius: 11px; }
   .faq-list summary { padding: 20px 2px; }
   .faq-list .a { padding: 0 8px 22px 2px; }
 }
@@ -190,8 +189,5 @@
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tag { background: rgba(40, 40, 46, .42); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .16), inset 0 1px 0 rgba(255, 255, 255, .08); } }
 @media (prefers-reduced-transparency: reduce) { .tag { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--a-paper); } }
 
-/* with a mouse or trackpad: a push button shades when pressed and doesn't react to hover (the macOS way) */
-@media (hover: hover) and (pointer: fine) {
-  .b-cta:active { transform: none; filter: brightness(1.3); }
-  .b-cta { transition-duration: .1s; }
-}
+/* with a mouse or trackpad: a push button shades when pressed (the macOS way) */
+@media (hover: hover) and (pointer: fine) { .sp-cta:active { filter: var(--press); } }
