@@ -165,9 +165,9 @@ addEventListener('tn:check', () => refresh(true));
 // ---------- routing ----------
 function route() {
   const h = location.hash.slice(1);
-  state.route = h === 'new' || svc(h) ? h : 'top';
+  state.route = h === 'new' || h === 'watchlist' || svc(h) ? h : 'top';
   if (svc(state.route)?.store) state.kind = 'movie';
-  if (state.route !== 'new') state.lastChart = state.route;
+  if (state.route !== 'new' && state.route !== 'watchlist') state.lastChart = state.route;
   render();
 }
 
@@ -180,10 +180,11 @@ function morph(fn) {
   document.startViewTransition(fn);
 }
 function draw() {
-  selectTab(state.route === 'new' ? 'new' : 'top');
+  selectTab(state.route === 'new' || state.route === 'watchlist' ? state.route : 'top');
   document.querySelectorAll('.kind [data-kind]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.kind === state.kind)));
   const isNew = state.route === 'new';
-  $('#controls').hidden = isNew;
+  $('#controls').hidden = isNew || state.route === 'watchlist';
+  if (state.route === 'watchlist') { shown = new Map(); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWatchlist()}</div>`; document.title = 'Watchlist | Tenner'; openFromUrl(); wantTitles(); return; }
   if (isNew) { shown = new Map(); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; document.title = 'New This Week | Tenner'; openFromUrl(); return; }
 
   markService(state.route); markDropdowns();
@@ -207,7 +208,7 @@ function draw() {
     ? `${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up. Add your TMDB key and run the workflow to see the real chart.</p>` : ''}
        ${hero(picks, s)}${s?.store ? '' : features(s)}
        ${kinds.map((k, r) => `${kinds.length > 1 ? `<h2 class="row-h kind-h">Top 10 ${words(k)}</h2>` : ''}${posterRow(listOf(k), k, r === 0)}${chartList(listOf(k), s, k)}`).join('')}
-       ${s?.store ? '' : newRow(s)}`
+       ${s?.store ? '' : savedRow()}${s?.store ? '' : newRow(s)}`
     : `<div class="empty"><h2>Nothing here right now</h2><p>The chart for ${esc(where)} will be back after the next hourly update.</p><a class="btn btn-tinted" href="#top">See all five services</a></div>`;
   view.innerHTML = `<div class="wrap chart">${chart}</div>`;
   openFromUrl();
@@ -479,6 +480,69 @@ function newRow(s) {
   </section>`;
 }
 
+// ---------- the Watchlist: titles you've saved from a title sheet, kept on this device only ----------
+const wlKey = (it, type) => (/^\d+$/.test(String(it.id ?? '')) ? `${type === 'movie' ? 'm' : 't'}${it.id}` : null);
+// where each saved title sits in today's charts, e.g. "No. 3 on Netflix"
+function chartSpots() {
+  const spots = new Map(), t = state.trending; if (!t) return spots;
+  const add = (list, type, where) => (list || []).forEach((it, i) => { const k = wlKey(it, type); if (k && !spots.has(k)) spots.set(k, `No. ${i + 1} ${where}`); });
+  ['tv', 'movie'].forEach((type) => add(t.overall?.[type], type, 'in the UK'));
+  services().filter((s) => !s.store).forEach((s) => ['tv', 'movie'].forEach((type) => add(s[type], type, `on ${s.label}`)));
+  return spots;
+}
+const wlInfo = (x, eye) => ({ k: x.k, type: x.type, eye, title: x.title, year: x.year, poster: x.poster, tmdb: tmdbUrl(x.type, x.k.slice(1)), services: [] });
+function wantTitles() {   // where-to-watch for the list comes from the title details, loaded once
+  if (state.titles || !window.tnSheet?.details) return;
+  window.tnSheet.details().then((d) => { if (d && !state.titles) { state.titles = d; if (state.route === 'watchlist') render(); } });
+}
+function pageWatchlist() {
+  const list = window.tn.saved.all(), spots = chartSpots(), d = state.titles;
+  const onLogos = (k) => {
+    const x = d?.items?.[k]; if (!x?.f?.length) return '';
+    const seen = new Set();
+    return x.f.map((id) => d.providers[id]).filter((p) => p && !seen.has(p[0].split(' ')[0]) && seen.add(p[0].split(' ')[0])).slice(0, 3)
+      .map(([n, logo]) => (logo && d.logo ? `<img src="${esc(d.logo + logo)}" alt="${esc(n)}" title="${esc(n)}">` : '')).join('');
+  };
+  const body = !list.length
+    ? `<div class="empty"><span class="empty-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12v18.4l-6-4.2-6 4.2z" fill="currentColor"/></svg></span>
+        <h2>Nothing saved yet</h2><p>Open any title and press Watchlist to keep it here, with where to watch it.</p>
+        <a class="btn btn-tinted" href="#top">See the top 10</a></div>`
+    : `<ul class="list wl">${list.map((x) => {
+        const spot = spots.get(x.k), sh = reg(wlInfo(x, spot || 'In your Watchlist'));
+        const what = [x.type === 'movie' ? 'Film' : 'Series', x.year].filter(Boolean).join(' · ');
+        const thumb = x.poster ? `<img class="nl-art" src="${esc(x.poster)}" alt="" loading="lazy">` : `<span class="nl-art" style="background:hsl(${hue(x.title)} 45% 35%)"></span>`;
+        return `<li>${thumb}<div class="grow">
+          <a class="title" href="${esc(tmdbUrl(x.type, x.k.slice(1)))}" target="_blank" rel="noopener" ${sh}>${esc(x.title)}</a>
+          <span class="what">${esc(what)}${spot ? ` · <b class="wl-spot">${esc(spot)}</b>` : ''}</span></div>
+          <span class="wl-on">${onLogos(x.k)}</span>
+          <button type="button" class="btn btn-icon wl-x" data-unsave="${esc(x.k)}" aria-label="Remove ${esc(x.title)} from your Watchlist" title="Remove">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></li>`;
+      }).join('')}</ul>`;
+  return `<h1 class="large-title page-title">Watchlist</h1>
+    <p class="lede">${list.length ? `${list.length} title${list.length === 1 ? '' : 's'}, newest first. ` : ''}Saved on this device only: no account, nothing sent anywhere.</p>
+    ${body}`;
+}
+// On the Top 10: your saved titles as a row of posters, the way into the Watchlist on phones
+function savedRow() {
+  const list = window.tn.saved.all().slice(0, 14); if (!list.length) return '';
+  const spots = chartSpots();
+  return `<section class="nrow" aria-labelledby="wl-h">
+    <h2 class="row-h" id="wl-h"><a href="#watchlist">Your Watchlist<span class="chev" aria-hidden="true"></span></a></h2>
+    <ul class="nr">${list.map((x) => `<li><a href="${esc(tmdbUrl(x.type, x.k.slice(1)))}" target="_blank" rel="noopener" ${reg(wlInfo(x, spots.get(x.k) || 'In your Watchlist'))}>
+      <span class="nr-art">${x.poster ? `<img src="${esc(x.poster)}" alt="" loading="lazy">` : placeholder({ title: x.title })}</span>
+      <b>${esc(x.title)}</b><small>${esc(spots.get(x.k) || [x.type === 'movie' ? 'Film' : 'Series', x.year].filter(Boolean).join(' · '))}</small></a></li>`).join('')}</ul>
+  </section>`;
+}
+view.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-unsave]'); if (!b) return;
+  const li = b.closest('li'), next = li.nextElementSibling || li.previousElementSibling;
+  window.tn.saved.remove(b.dataset.unsave);
+  requestAnimationFrame(() => next?.querySelector('[data-unsave]')?.focus({ preventScroll: true }));
+});
+// saving or removing (here, in a sheet or in another tab) redraws the Watchlist and the row
+addEventListener('tn:sheet-closed', () => { if (state.savedDirty) { state.savedDirty = false; const y = scrollY; draw(); scrollTo(0, y); } });
+addEventListener('tn:saved', () => { if (state.trending && !window.tnSheet?.isOpen?.()) { const y = scrollY; draw(); scrollTo(0, y); } else state.savedDirty = true; });
+
 function pageNew() {
   const f = state.fresh;
   let body;
@@ -594,9 +658,9 @@ function openTab(name) {
   if (name === 'about') { location.href = 'about.html'; return; }
   if (name === 'browse') { location.href = 'browse.html'; return; }
   if (name === 'search') { location.href = 'browse.html#search'; return; }
-  const onNew = state.route === 'new';
-  if ((name === 'new') === onNew) { scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }); return; } // tap the open tab: back to the top
-  location.hash = name === 'new' ? 'new' : (state.lastChart || 'top');
+  const at = state.route === 'new' || state.route === 'watchlist' ? state.route : 'top';
+  if (name === at) { scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }); return; } // tap the open tab: back to the top
+  location.hash = name === 'new' || name === 'watchlist' ? name : (state.lastChart || 'top');
 }
 window.tnOnTab = openTab;
 

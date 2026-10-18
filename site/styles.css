@@ -163,6 +163,7 @@ main:focus { outline: none; }
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }
+.tabs button[data-tab="watchlist"] { display: none; }   /* phones: reached from the "Your Watchlist" row instead */
 .tabs button {
   position: relative; z-index: 1; appearance: none; border: 0; background: none; display: flex; align-items: center; gap: 7px; height: 36px; padding: 0 16px;
   border-radius: 999px; font: 600 15px/1 var(--font); letter-spacing: -.016em; color: var(--label); cursor: pointer; touch-action: manipulation;
@@ -644,6 +645,16 @@ main:focus { outline: none; }
 .list .grow { flex: 1; min-width: 0; }
 .list .title { color: var(--label); font-weight: 500; }
 .list .what { display: block; color: var(--label2); font-size: 14px; }
+/* Watchlist rows: where it's included, then remove */
+.list.wl { margin-top: 16px; }
+.wl-spot { color: var(--accent); font-weight: 500; }
+.wl-on { display: flex; gap: 6px; flex: none; }
+.wl-on img { width: 26px; height: 26px; border-radius: 6px; box-shadow: 0 0 0 .5px var(--sep); }
+.wl-x { flex: none; width: 30px; height: 30px; color: var(--label2); }
+.wl-x svg { width: 14px; height: 14px; }
+@media (max-width: 420px) { .wl-on img:nth-child(n+2) { display: none; } }
+/* the sheet's Watchlist button, once saved */
+.sh-save.on { color: var(--accent); }
 
 /* empty states */
 .empty { margin: 34px 0 0; padding: 40px 24px 36px; border-radius: 26px; background: var(--bg2); text-align: center; animation: riseIn .7s var(--ease-out) both; }
@@ -720,6 +731,7 @@ main:focus { outline: none; }
   .tabs button:active { transform: none; filter: none; background: var(--fill-strong); }
   @media (hover: hover) { .tabs button[aria-selected="false"]:hover { color: var(--label); background: var(--fill); } }
   .tabs button[data-tab="about"] { display: none; }
+  .tabs button[data-tab="watchlist"] { display: flex; }
   /* About, the small print (not linked yet) and the version, then Theme at the foot */
   .side-links { margin-top: auto; display: flex; flex-wrap: wrap; gap: 2px 12px; padding: 0 10px; }
   .side-link { padding: 3px 0; border: 0; background: none; color: var(--label2); font: 400 12px/1.3 var(--font); letter-spacing: -.01em; cursor: default; }

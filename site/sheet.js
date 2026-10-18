@@ -4,7 +4,10 @@
 // card on computers. The address gains ?t=… so a title can be shared, and Back closes it.
 // Details come from data/titles.json (rebuilt hourly), fetched the first time a sheet opens.
 (() => {
-  const { esc, hue, reduce } = window.tn;
+  const { esc, hue, reduce, saved } = window.tn;
+  // the Watchlist button: a bookmark that fills in once saved
+  const saveBtn = (on) => `<button type="button" class="btn btn-tinted sh-save${on ? ' on' : ''}" data-act="save" aria-pressed="${on}">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h11v17L12 16.6 6.5 20.5z" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>${on ? 'In Watchlist' : 'Watchlist'}</button>`;
   const $ = (s, el = document) => el.querySelector(s);
   let dataP = null;
   const details = () => (dataP ||= fetch(`data/titles.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
@@ -67,6 +70,7 @@
         ${genres ? `<p class="sh-genres">${esc(genres)}</p>` : ''}
         <div class="sh-btns">
           ${x.tr ? `<button type="button" class="btn btn-tinted" data-act="trailer"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>Trailer</button>` : ''}
+          ${info.k ? saveBtn(saved.has(info.k)) : ''}
           ${info.netflix ? `<a class="btn btn-tinted" href="${esc(info.netflix)}" target="_blank" rel="noopener">Watch on Netflix</a>` : ''}
           <button type="button" class="btn btn-tinted" data-act="share"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M6 11v8.5h12V11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Share</button>
         </div>
@@ -107,6 +111,7 @@
     pushed = fromHistory ? false : pushed;
     document.title = pageTitle;
     opener?.focus?.({ preventScroll: true });
+    dispatchEvent(new Event('tn:sheet-closed'));
   }
   addEventListener('popstate', () => { if (current && !new URL(location.href).searchParams.get('t')) close(true); });
   $('#shX').addEventListener('click', () => close());
@@ -130,6 +135,10 @@
       // played in place, from YouTube's privacy-enhanced player, only when asked
       $('#shArt').innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(key)}?autoplay=1&rel=0&playsinline=1" title="Trailer: ${esc(current.title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
       $('#shArt').classList.add('playing'); body.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+    }
+    if (b.dataset.act === 'save') {
+      const on = saved.toggle(current);
+      b.outerHTML = saveBtn(on); sheet.querySelector('.sh-save')?.focus({ preventScroll: true });
     }
     if (b.dataset.act === 'share') {
       const url = new URL(location.href); if (current.k) url.searchParams.set('t', current.k);

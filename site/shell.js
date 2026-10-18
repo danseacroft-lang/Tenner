@@ -72,7 +72,25 @@
   document.querySelectorAll('a.contact-email').forEach((a) => { a.href = `mailto:${contact}`; a.textContent = contact; });
   document.querySelectorAll('.contact-email-text').forEach((el) => { el.textContent = contact; });
 
-  window.tn = { esc, hue, glide, arrows, segment, reduce, contact };
+  // ---------- the watchlist: kept on this device only (local storage), never sent anywhere ----------
+  // Each entry: { k, type, title, year, poster, at }. Pages hear "tn:saved" whenever it changes, here or in another tab.
+  const WL = 'tenner-watchlist';
+  const saved = {
+    all() { try { const l = JSON.parse(localStorage.getItem(WL) || '[]'); return Array.isArray(l) ? l.filter((x) => x?.k) : []; } catch { return []; } },
+    has(k) { return !!k && saved.all().some((x) => x.k === k); },
+    set(l) { try { localStorage.setItem(WL, JSON.stringify(l)); } catch {} dispatchEvent(new Event('tn:saved')); },
+    toggle(info) {
+      if (!info?.k) return false;
+      const l = saved.all(), on = l.some((x) => x.k === info.k);
+      saved.set(on ? l.filter((x) => x.k !== info.k)
+        : [{ k: info.k, type: info.type, title: info.title, year: info.year || null, poster: info.poster || null, at: Date.now() }, ...l].slice(0, 500));
+      return !on;
+    },
+    remove(k) { saved.set(saved.all().filter((x) => x.k !== k)); },
+  };
+  addEventListener('storage', (e) => { if (e.key === WL) dispatchEvent(new Event('tn:saved')); });
+
+  window.tn = { esc, hue, glide, arrows, segment, reduce, contact, saved };
 
   // ---------- tabs ----------
   const tabs = [...document.querySelectorAll('#tabs [role=tab]')], ind = $('#tabInd'), names = tabs.map((t) => t.dataset.tab);
@@ -95,6 +113,7 @@
     if (name === 'about') { location.href = 'about.html'; return; }
     if (name === 'browse') { location.href = 'browse.html'; return; }
     if (name === 'new') { location.href = './#new'; return; }
+    if (name === 'watchlist') { location.href = './#watchlist'; return; }
     location.href = './';
   }
   tabs.forEach((t) => t.addEventListener('click', () => open(t.dataset.tab)));
