@@ -1,0 +1,12 @@
+name: Probe Wikidata
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for q in "Netflix ID" "Disney+ movie ID" "Disney+ series ID" "Amazon Prime Video ID" "Max ID" "HBO Max ID" "Paramount+ ID" "Apple TV movie ID" "Apple TV show ID" "TMDB movie ID" "TMDB TV series ID" "Now TV ID" "BBC iPlayer"; do
+            r=$(curl -s -G "https://www.wikidata.org/w/api.php" --data-urlencode "action=wbsearchentities" --data-urlencode "type=property" --data-urlencode "language=en" --data-urlencode "format=json" --data-urlencode "limit=4" --data-urlencode "search=$q" -H "User-Agent: Tenner/1.0 (github.com/danseacroft-lang/Tenner)" | jq -r '[.search[] | "\(.id)=\(.label)"] | join("; ")')
+            echo "::notice title=$q::$r"
+          done
+          ids=$(curl -s -G "https://www.wikidata.org/w/api.php" --data-urlencode "action=wbsearchentities" --data-urlencode "type=property" --data-urlencode "language=en" --data-urlencode "format=json" --data-urlencode "limit=50" --data-urlencode "search=ID" -H "User-Agent: Tenner/1.0" >/dev/null; echo)
