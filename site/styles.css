@@ -144,6 +144,9 @@ main:focus { outline: none; }
 .tb-btn[aria-expanded="true"] { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
 @media (hover: hover) { .tb-btn:not([aria-expanded="true"]):hover { background: var(--pill); } }
 .tb-btn svg { width: 21px; height: 21px; }
+.th-wrap { position: relative; display: grid; }
+.th-sel { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; border: 0; appearance: none; cursor: pointer; }
+.th-wrap:has(.th-sel:focus-visible) .tb-btn { outline: 2px solid var(--accent); outline-offset: 2px; }
 a.tb-btn:hover { text-decoration: none; }
 .tb-about[aria-current] { color: var(--accent); }
 
@@ -355,26 +358,16 @@ a.tb-btn:hover { text-decoration: none; }
   #svcDD { flex: 1 1 100%; padding-left: 6px; }
   #svcDD:has(.dd-ic[hidden]) { padding-left: 16px; }
   .dd:active { transform: scale(1.04); }
-  .dd[aria-expanded="true"] { color: var(--accent); }
+  .dd { position: relative; }
+  /* the native picker sits invisibly over the button: a tap opens the phone's own list */
+  .dd select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; appearance: none; border: 0; cursor: pointer; }
+  .dd:has(select:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
   .dd-l { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: left; }
   .dd-ic { flex: none; width: 28px; height: 28px; border-radius: 8px; overflow: hidden; box-shadow: 0 0 0 .5px var(--sep); }
   .dd-ic img, .dd-ic .svc-glyph { width: 100%; height: 100%; object-fit: cover; }
   .dd-ic .svc-glyph svg { width: 16px; height: 16px; }
   .dd-chev { flex: none; width: 7px; height: 7px; margin: -4px 2px 0 2px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); opacity: .6; transition: transform .3s var(--ease-spring); }
-  .dd[aria-expanded="true"] .dd-chev { transform: translateY(3px) rotate(-135deg); }
 }
-.dd-pop { width: min(260px, calc(100vw - 24px)); padding: 8px 8px 6px; }
-/* a solid card, so the chart underneath never shows through the menu */
-:root .dd-pop { background: var(--card); -webkit-backdrop-filter: none; backdrop-filter: none; }
-:root[data-theme="dark"] .dd-pop { background: #2c2c2e; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .dd-pop { background: #2c2c2e; } }
-.dd-pop .th-list { margin: 0; }
-.dd-pop .th-list i { width: 30px; height: 30px; border-radius: 8px; overflow: hidden; background: var(--fill-strong); box-shadow: 0 0 0 .5px var(--sep); }
-.dd-pop .th-list i img, .dd-pop .th-list i .svc-glyph { width: 100%; height: 100%; object-fit: cover; }
-.dd-pop .th-list i .svc-glyph svg { width: 16px; height: 16px; }
-.dd-pop .th-list b { font-weight: 500; }
-.dd-pop .th-list [aria-checked="true"] b { font-weight: 600; }
-.dd-pop .dd-sep { height: .5px; margin: 4px 8px; background: var(--sep); }
 
 .notice { margin: 18px 0 0; padding: 12px 16px; border-radius: var(--radius); background: color-mix(in srgb, var(--accent) 12%, transparent); font-size: 15px; }
 .chart { min-width: 0; padding-top: 6px; }
@@ -787,6 +780,8 @@ main { padding-bottom: 56px; }   /* breathing room at the end of every page */
   .tabs button:active { transform: none; filter: none; background: var(--fill-strong); }
   @media (hover: hover) { .tabs button[aria-selected="false"]:hover { color: var(--label); background: var(--fill); } }
   .top-act > .tb-about { display: none; }   /* About is at the foot of the sidebar */
+  .th-wrap { display: contents; }   /* computers: the round button opens its own card instead */
+  .th-sel { display: none; }
   /* the small print and the version, then About and Theme at the foot */
   .side-links { margin-top: auto; display: flex; flex-wrap: wrap; gap: 2px 12px; padding: 0 10px; }
   .side-link { padding: 3px 0; border: 0; background: none; color: var(--label2); font: 400 12px/1.3 var(--font); letter-spacing: -.01em; cursor: default; }
@@ -827,11 +822,10 @@ main { padding-bottom: 56px; }   /* breathing room at the end of every page */
 /* ============================================================ the title sheet (sheet.js): where to watch, in Tenner
    A centred card on computers, a bottom sheet on phones; the Apple TV app's layout: artwork, title, details, actions,
    then Where to Watch grouped as Included with, Free, Rent and Buy. */
-.sh-scrim { position: fixed; inset: 0; z-index: 80; background: rgba(0, 0, 0, .42); opacity: 0; transition: opacity .25s ease;
-  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
-.sh-scrim.in { opacity: 1; }
+.sheet::backdrop { background: rgba(0, 0, 0, 0); transition: background-color .25s ease; }
+.sheet.in::backdrop { background: rgba(0, 0, 0, .42); }
 .sheet {
-  position: fixed; z-index: 81; left: 50%; top: 50%; width: min(680px, calc(100vw - 48px)); max-height: min(88vh, 860px);
+  position: fixed; inset: auto; margin: 0; padding: 0; border: 0; max-width: none; left: 50%; top: 50%; width: min(680px, calc(100vw - 48px)); max-height: min(88vh, 860px);
   display: flex; flex-direction: column; border-radius: 20px; overflow: hidden; color: var(--label);
   background: color-mix(in srgb, var(--card) 94%, transparent); -webkit-backdrop-filter: blur(30px) saturate(190%); backdrop-filter: blur(30px) saturate(190%);
   box-shadow: inset 0 0 0 .5px var(--frost-edge), 0 30px 80px rgba(0, 0, 0, .35);
@@ -893,7 +887,7 @@ a.sh-prov:hover { text-decoration: none; }
 
 /* phones: a bottom sheet that slides up, with a handle; swipe it down to close */
 @media (max-width: 719px) {
-  .sheet { left: 0; right: 0; top: auto; bottom: 0; width: auto; max-height: 92dvh; border-radius: 20px 20px 0 0;
+  .sheet { left: 0; right: 0; top: auto; bottom: 0; width: 100%; max-height: 92dvh; border-radius: 20px 20px 0 0;
     transform: translateY(100%); opacity: 1; padding-bottom: env(safe-area-inset-bottom, 0px); }
   .sheet.in { transform: none; }
   .sh-grab { display: block; position: absolute; z-index: 3; top: 6px; left: 50%; width: 38px; height: 5px; margin-left: -19px; border-radius: 3px;
@@ -903,8 +897,8 @@ a.sh-prov:hover { text-decoration: none; }
   .sh-poster { left: 18px; width: 76px; }
   .sheet h2 { font-size: 24px; }
 }
-@media (prefers-reduced-motion: reduce) { .sheet, .sh-scrim { transition: none; } }
-@media (prefers-reduced-transparency: reduce) { .sheet, .sh-scrim { -webkit-backdrop-filter: none; backdrop-filter: none; } .sheet { background: var(--card); } }
+@media (prefers-reduced-motion: reduce) { .sheet, .sheet::backdrop { transition: none; } }
+@media (prefers-reduced-transparency: reduce) { .sheet { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--card); } }
 @media (hover: hover) and (pointer: fine) { a.sh-prov:active { filter: var(--press); } }
 
 /* ============================================================ pointer interactions, the macOS way

@@ -78,13 +78,14 @@
 
   // ---------- the sheet, built once ----------
   document.body.insertAdjacentHTML('beforeend', `
-    <div class="sh-scrim" id="shScrim" hidden></div>
-    <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="shT" hidden>
+    <dialog class="sheet" id="sheet" aria-labelledby="shT">
       <div class="sh-grab" aria-hidden="true"></div>
       <button type="button" class="sh-x" id="shX" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
       <div class="sh-scroll" id="shScroll"></div>
-    </div>`);
-  const sheet = $('#sheet'), scrim = $('#shScrim'), body = $('#shScroll');
+    </dialog>`);
+  // a native modal <dialog>: the browser keeps focus inside it, shuts the page behind off from taps and screen readers,
+  // and closes it with Escape (or the back gesture on Android); the dimmed page behind is its ::backdrop
+  const sheet = $('#sheet'), body = $('#shScroll');
   let current = null, opener = null, pushed = false, pageTitle = document.title;
 
   const runtime = (m) => !m ? '' : m < 60 ? `${m}m` : `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}`;
@@ -172,9 +173,10 @@
     if (!current) pageTitle = document.title;
     current = info; opener = fromUrl ? null : document.activeElement;
     render(info, null);
-    scrim.hidden = false; sheet.hidden = false; sheet.style.translate = '';
+    sheet.style.translate = '';
+    if (!sheet.open) sheet.showModal();
     document.documentElement.classList.add('sheet-up');
-    requestAnimationFrame(() => { scrim.classList.add('in'); sheet.classList.add('in'); });
+    requestAnimationFrame(() => sheet.classList.add('in'));
     body.scrollTop = 0; $('#shX').focus({ preventScroll: true });
     if (!fromUrl && info.k) {
       const u = new URL(location.href); u.searchParams.set('t', info.k);
@@ -198,9 +200,9 @@
   }
   function close(fromHistory) {
     if (!current) return;
-    current = null; scrim.classList.remove('in'); sheet.classList.remove('in');
+    current = null; sheet.classList.remove('in');
     document.documentElement.classList.remove('sheet-up');
-    const done = () => { if (!current) { sheet.hidden = true; scrim.hidden = true; body.innerHTML = ''; } };
+    const done = () => { if (!current) { sheet.close(); body.innerHTML = ''; } };
     reduce ? done() : setTimeout(done, 320);
     if (!fromHistory && pushed) { pushed = false; history.back(); }
     else if (!fromHistory) { const u = new URL(location.href); u.searchParams.delete('t'); history.replaceState(null, '', u); }
@@ -211,17 +213,13 @@
   }
   addEventListener('popstate', () => { if (current && !new URL(location.href).searchParams.get('t')) close(true); });
   $('#shX').addEventListener('click', () => close());
-  scrim.addEventListener('click', () => close());
-  addEventListener('keydown', (e) => {
-    if (!current) return;
-    if (e.key === 'Escape') { e.preventDefault(); close(); }
-    if (e.key === 'Tab') {   // keep the keyboard inside the sheet while it's open
-      const f = [...sheet.querySelectorAll('a[href], button:not([disabled]), iframe')].filter((n) => n.offsetParent);
-      if (!f.length) return;
-      if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f.at(-1).focus(); }
-      else if (!e.shiftKey && document.activeElement === f.at(-1)) { e.preventDefault(); f[0].focus(); }
-    }
+  // a tap on the dimmed page closes it; Escape (the dialog's own "cancel") too, with the slide-away
+  sheet.addEventListener('click', (e) => {
+    if (e.target !== sheet) return;
+    const r = sheet.getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) close();
   });
+  sheet.addEventListener('cancel', (e) => { e.preventDefault(); close(); });
 
   // ---------- trailer and share ----------
   sheet.addEventListener('click', async (e) => {

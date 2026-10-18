@@ -106,45 +106,20 @@ function markService(key) {
   svcPlaced = true;
 }
 
-// ---------- phones: the service bar as a pull-down menu ----------
-const ddPop = $('#ddPop'), ddList = $('#ddList');
-let ddBtn = null;
+// ---------- phones: the services as the phone's own picker (a native <select> under the styled button) ----------
 const iconOf = (key) => key === 'top' || key === 'mine' ? '' : key === 'store' ? ICON_STORE
   : svc(key)?.logo ? `<img src="${esc(svc(key).logo)}" alt="">` : `<span class="svc-glyph">${esc(svc(key)?.label[0] || '')}</span>`;
-function ddItems() {
-  const has = window.tn.mine.get().length;
-  const keys = ['top', ...(has ? ['mine'] : []), ...services().filter((x) => !x.store).map((x) => x.key), ...(state.kind === 'movie' ? services().filter((x) => x.store).map((x) => x.key) : [])];
-  return [...keys.map((k) => ({ act: () => { location.hash = k; }, on: state.route === k, label: k === 'top' ? 'All services' : k === 'mine' ? 'My services' : svc(k).label, icon: iconOf(k), sep: k === 'store' })),
-    { act: pickMine, on: null, label: has ? 'Change my services…' : 'Choose my services…', icon: SLIDERS, sep: true }];
-}
-function ddClose(focus) {
-  if (!ddBtn) return;
-  const btn = ddBtn; ddBtn = null; btn.setAttribute('aria-expanded', 'false');
-  if (focus) btn.focus({ preventScroll: true });
-  if (reduceMotion) { ddPop.hidden = true; return; }
-  ddPop.classList.add('out');
-  setTimeout(() => { if (!ddBtn) { ddPop.hidden = true; ddPop.classList.remove('out'); } }, 190);
-}
-function ddOpen(btn) {
-  if (ddBtn === btn) { ddClose(); return; }
-  ddBtn = btn; btn.setAttribute('aria-expanded', 'true');
-  const items = ddItems();
-  ddList.innerHTML = items.map((it, i) => `${it.sep ? '<div class="dd-sep" role="separator"></div>' : ''}<button type="button" role="${it.on === null ? 'menuitem' : 'menuitemradio'}"${it.on === null ? '' : ` aria-checked="${it.on}"`} data-i="${i}">${it.icon ? `<i>${it.icon}</i>` : ''}<span><b>${esc(it.label)}</b></span><em aria-hidden="true"></em></button>`).join('');
-  ddList.onclick = (e) => { const b = e.target.closest('[data-i]'); if (!b) return; ddClose(); items[b.dataset.i].act(); };
-  ddPop.classList.remove('out'); ddPop.hidden = false;
-  const r = btn.getBoundingClientRect(), w = ddPop.offsetWidth, left = Math.max(12, Math.min(r.left, innerWidth - w - 12));
-  ddPop.style.left = left + 'px'; ddPop.style.top = r.bottom + 8 + 'px';
-  ddPop.style.maxHeight = Math.max(200, innerHeight - r.bottom - 120) + 'px';   // clear of the tab bar
-  ddPop.style.setProperty('--tb-o', `${r.left + r.width / 2 - left}px -14px`);    // it grows out of its own button
-  ddList.querySelector('[aria-checked="true"]')?.focus({ preventScroll: true });
-}
-document.querySelectorAll('.dd').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); ddOpen(b); }));
-document.addEventListener('click', (e) => { if (ddBtn && !ddPop.contains(e.target)) ddClose(); });
-addEventListener('keydown', (e) => { if (ddBtn && e.key === 'Escape') ddClose(true); });
-arrows(ddList, () => [...ddList.querySelectorAll('button')]);   // arrow keys move through the menu
-addEventListener('resize', () => ddClose());
-addEventListener('scroll', () => ddClose(), { passive: true });
+const svcSel = $('#svcSel');
+svcSel.addEventListener('change', () => {
+  if (svcSel.value === 'pick') { svcSel.value = state.route; pickMine(); return; }
+  location.hash = svcSel.value;
+});
 function markDropdowns() {
+  const has = window.tn.mine.get().length, opt = (v, l) => `<option value="${v}"${v === state.route ? ' selected' : ''}>${esc(l)}</option>`;
+  svcSel.innerHTML = opt('top', 'All services') + (has ? opt('mine', 'My services') : '')
+    + services().filter((x) => !x.store).map((x) => opt(x.key, x.label)).join('')
+    + (state.kind === 'movie' ? services().filter((x) => x.store).map((x) => opt(x.key, x.label)).join('') : '')
+    + `<option value="pick">${has ? 'Change my services…' : 'Choose my services…'}</option>`;
   $('#svcDD .dd-l').textContent = state.route === 'top' ? 'All services' : state.route === 'mine' ? 'My services' : svc(state.route)?.label || 'All services';
   const ic = iconOf(state.route); $('#svcDD .dd-ic').innerHTML = ic; $('#svcDD .dd-ic').hidden = !ic;
 }
@@ -177,7 +152,7 @@ setInterval(() => state.trending && showUpdated(), 30000);
 async function refresh(quiet) {
   const btn = $('#refresh');
   if (!state.trending || btn.classList.contains('busy')) return;
-  if (quiet && (ddBtn || $('.posters.dragging'))) return;
+  if (quiet && (document.activeElement === svcSel || $('.posters.dragging'))) return;
   if (!quiet) { btn.classList.add('busy'); $('#ago').textContent = 'Checking…'; }
   try {
     const d = await fetchData(true);

@@ -139,6 +139,9 @@
     const setSheet = (on) => {
       sheet.classList.toggle('open', on); scrim.hidden = !on; openBtn.setAttribute('aria-expanded', on);
       document.documentElement.classList.toggle('sheet-open', on);
+      // the rest of the page goes inert (the browser's own way to keep taps, focus and screen readers in the sheet)
+      for (let el = sheet; el && el !== document.body; el = el.parentElement)
+        for (const sib of el.parentElement.children) if (sib !== el && sib !== scrim && !sib.contains(scrim)) sib.inert = on;
       if (on) sheet.querySelector('button')?.focus({ preventScroll: true });
     };
     openBtn.addEventListener('click', () => setSheet(true));

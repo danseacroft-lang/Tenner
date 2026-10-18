@@ -68,7 +68,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.1.1';
+  const version = '1.1.2';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -229,6 +229,15 @@
     try { localStorage.setItem('tenner-theme', n); } catch {}
     showTheme();
   }));
+  // phones: the phone's own picker instead of the card (a native <select> laid invisibly over the round button)
+  const thWrap = document.createElement('span'), thSel = document.createElement('select');
+  thWrap.className = 'th-wrap'; thSel.className = 'th-sel'; thSel.setAttribute('aria-label', 'Theme');
+  thSel.innerHTML = '<option value="auto">Auto (follows your device)</option><option value="light">Day</option><option value="dark">Night</option>';
+  $('#thBtn').before(thWrap); thWrap.append($('#thBtn'), thSel);
+  thSel.addEventListener('change', () => { window.tnTheme?.(thSel.value); try { localStorage.setItem('tenner-theme', thSel.value); } catch {} showTheme(); });
+  const syncSel = () => { thSel.value = mode(); };
+  modeBtns.forEach((b) => b.addEventListener('click', syncSel));
+  syncSel();
   showTheme();
 
   // ---------- a fade behind the floating bar once the page has scrolled ----------
