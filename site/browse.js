@@ -62,8 +62,9 @@
   Promise.all([
     fetch('data/browse.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))),
     fetch('data/trending.json').then((r) => (r.ok ? r.json() : null)).catch(() => null),
-  ]).then(([c, t]) => {
-    cat = c;
+    window.tn.prefs.get().no18 ? window.tnSheet?.details() : null,   // Settings: "Hide titles rated 18" needs the certificates
+  ]).then(([c, t, d]) => {
+    cat = c; certs = d;
     for (const s of t?.services || []) if (!s.store) { logos[s.key] = s.logo; labels[s.key] = s.label; }
     if (!Object.keys(labels).length) Object.assign(labels, { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+' });
     const wantSearch = location.hash === '#search';
@@ -182,18 +183,20 @@
   }
 
   // ---------- filtering ----------
+  let certs = null;
+  const ok18 = (x) => !certs || certs.items?.[`${x.t[0]}${x.i}`]?.c !== '18';
   function apply(user, quiet) {
     const col = collection();
     const sortFn = SORTS.find((s) => s.key === sortKey()).fn;
     const q = fold(state.q);
     if (q) {
       // searching looks across shows and films and every collection, closest matches first
-      list = cat.items.map((x) => [x, score(x, q)]).filter(([x, sc]) => sc
+      list = cat.items.map((x) => [x, score(x, q)]).filter(([x, sc]) => sc && ok18(x)
         && (!state.s.length || x.s.some((k) => state.s.includes(k)))
         && (!state.g.length || x.g.some((g) => state.g.includes(g)))
         && (!state.r || x.r >= state.r))
         .sort((a, b) => (state.sort ? sortFn(a[0], b[0]) : (b[1] - a[1] || b[0].p - a[0].p))).map(([x]) => x);
-    } else list = cat.items.filter((x) => kindOk(x) && col.test(x)
+    } else list = cat.items.filter((x) => kindOk(x) && col.test(x) && ok18(x)
       && (!state.s.length || col.key === 'store' || x.s.some((k) => state.s.includes(k)))
       && (!state.g.length || x.g.some((g) => state.g.includes(g)))
       && (!state.r || x.r >= state.r)).sort(sortFn);

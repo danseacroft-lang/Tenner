@@ -34,6 +34,8 @@ async function load() {
     return;
   }
   try { const k = localStorage.getItem('tenner-kind'); if (k in KIND_WORDS) state.kind = k; } catch {}
+  if (window.tn.prefs.get().no18) state.titles = await window.tnSheet?.details();   // certificates, before the first chart
+  addEventListener('tn:prefs', () => { if (window.tn.prefs.get().no18 && !state.titles) window.tnSheet?.details().then((d) => { state.titles = d; render(); }); else render(); });
 
   buildServiceBar();
   showUpdated();
@@ -242,8 +244,9 @@ addEventListener('tn:check', () => refresh(true));
 // ---------- routing ----------
 function route() {
   const h = location.hash.slice(1);
-  const mine = window.tn.mine.get();
-  state.route = h === 'new' || h === 'watchlist' || h === 'week' || svc(h) ? h : h === 'mine' && mine.length ? 'mine' : !h && mine.length ? 'mine' : 'top';
+  const mine = window.tn.mine.get(), start = window.tn.prefs.get().start;   // Settings: "Open Tenner on"
+  const first = !h ? (start === 'auto' || start === 'mine' ? (mine.length ? 'mine' : 'top') : start) : h;
+  state.route = ['new', 'watchlist', 'week'].includes(first) || (first !== 'mine' && svc(first)) ? first : first === 'mine' && mine.length ? 'mine' : 'top';
   if (svc(state.route)?.store) state.kind = 'movie';
   if (!['new', 'watchlist', 'week'].includes(state.route)) state.lastChart = state.route;
   render();
@@ -256,6 +259,11 @@ function render() {
 function morph(fn) {
   if (!document.startViewTransition || reduceMotion || !view.firstElementChild || view.querySelector('.loading')) { fn(); return; }
   document.startViewTransition(fn);
+}
+// Settings: "Hide titles rated 18" (UK certificates come from the title details)
+function adult(list, k) {
+  if (!window.tn.prefs.get().no18 || !state.titles) return list;
+  return list.filter((it) => det(wlKey(it, it.type || k))?.c !== '18');
 }
 function draw() {
   selectTab(state.route === 'new' || state.route === 'watchlist' ? state.route : state.route === 'week' ? 'new' : 'top');
@@ -270,7 +278,7 @@ function draw() {
   shown = new Map();
 
   const s = state.route === 'top' ? null : svc(state.route);
-  const listOf = (k) => (s ? s[k] : state.trending.overall[k]) || [];
+  const listOf = (k) => adult((s ? s[k] : state.trending.overall[k]) || [], k);
   // "Both" shows the two charts one after the other; the hero takes turns between them
   const kinds = state.kind === 'both' ? ['tv', 'movie'] : [state.kind];
   const zip = (a, b) => Array.from({ length: Math.max(a.length, b.length) }, (_, i) => [a[i], b[i]]).flat().filter(Boolean);
@@ -304,14 +312,14 @@ function draw() {
 // its own, so an idle page still costs nothing. Phones and tablets skip it (and never download the artwork).
 const wide = matchMedia('(min-width: 1000px)');
 wide.addEventListener('change', () => state.trending && state.route !== 'new' && render());
-const heroOn = () => wide.matches;
+const heroOn = () => wide.matches && window.tn.prefs.get().hero;   // Settings: "Featured artwork"
 let heroList = [], heroAt = 0, heroScope = null;
 function heroCopy({ it, n }) {
   // on a service's page it's that service's chart; on All it's the UK-wide chart, and the details say where to find it
   const s = heroScope, kind = it.type === 'tv' ? 'show' : 'film';
   const eye = [s?.store ? `No. ${n} to buy or rent` : s ? `No. ${n} ${kind} on ${s.label}` : `No. ${n} ${kind} in the UK`, n === 1 ? topText(it) : ''].filter(Boolean).join(' · ');
   const where = s && !s.mine ? '' : onText(it);
-  const bits = [it.season || (it.type === 'tv' ? 'Series' : 'Film'), it.year, it.rating ? `★ ${it.rating.toFixed(1)}` : '', weeksText(it), where ? `On ${where}` : ''].filter(Boolean);
+  const bits = [it.season || (it.type === 'tv' ? 'Series' : 'Film'), it.year, it.rating && window.tn.prefs.get().ratings ? `★ ${it.rating.toFixed(1)}` : '', weeksText(it), where ? `On ${where}` : ''].filter(Boolean);
   return `<p class="h-eye">${s?.logo ? `<img src="${esc(s.logo)}" alt="">` : ''}${esc(eye)}</p>
     <h2 class="h-title">${esc(it.title)}</h2>
     <p class="h-meta">${bits.map(esc).join(' · ')}</p>

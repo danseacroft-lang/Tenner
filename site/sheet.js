@@ -226,6 +226,7 @@
     const b = e.target.closest('[data-act]'); if (!b || !current) return;
     if (b.dataset.act === 'trailer') {
       const key = (shown || await details())?.items?.[current.k]?.tr; if (!key) return;
+      if (window.tn.prefs.get().trailers === 'youtube') { window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(key)}`, '_blank', 'noopener'); return; }   // Settings: "Play trailers"
       // played in place, from YouTube's privacy-enhanced player, only when asked
       $('#shArt').innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(key)}?autoplay=1&rel=0&playsinline=1" title="Trailer: ${esc(current.title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
       $('#shArt').classList.add('playing'); body.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });

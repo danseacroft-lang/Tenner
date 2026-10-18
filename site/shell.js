@@ -3,8 +3,16 @@
 // pages share (window.tn), so each exists once.
 (() => {
   const $ = (s) => document.querySelector(s);
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const root = document.documentElement;
+  // ---------- settings (settings.html), on this device only ----------
+  const PREFS = 'tenner-settings', DEF = { start: 'auto', still: false, moves: true, ratings: true, hero: true, trailers: 'here', no18: false };
+  const prefs = {
+    get() { try { return { ...DEF, ...JSON.parse(localStorage.getItem(PREFS) || '{}') }; } catch { return { ...DEF }; } },
+    set(k, v) { const p = prefs.get(); p[k] = v; try { localStorage.setItem(PREFS, JSON.stringify(p)); } catch {} apply(); dispatchEvent(new Event('tn:prefs')); },
+  };
+  const apply = () => { const p = prefs.get(); root.classList.toggle('still', p.still); root.classList.toggle('no-moves', !p.moves); root.classList.toggle('no-ratings', !p.ratings); root.classList.toggle('no-hero', !p.hero); };
+  apply();
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches || prefs.get().still;
 
   // ---------- shared helpers ----------
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -68,7 +76,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.1.3';
+  const version = '1.2.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -108,7 +116,7 @@
     return n <= 0 ? (n === 0 ? 'Today' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })) : n === 1 ? 'Tomorrow'
       : n < 7 ? d.toLocaleDateString('en-GB', { weekday: 'long' }) : d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
   };
-  addEventListener('storage', (e) => { if (e.key === WL || e.key === PR) dispatchEvent(new Event('tn:saved')); if (e.key === MS) dispatchEvent(new Event('tn:mine')); });
+  addEventListener('storage', (e) => { if (e.key === WL || e.key === PR) dispatchEvent(new Event('tn:saved')); if (e.key === MS) dispatchEvent(new Event('tn:mine')); if (e.key === PREFS) { apply(); dispatchEvent(new Event('tn:prefs')); } });
 
   // ---------- My services: the ones you pay for, on this device. The Top 10 gets a chart of just those, and Browse
   // starts filtered to them. Empty means "all five". ----------
@@ -147,7 +155,7 @@
   // ---------- the search API (worker/, on Cloudflare): every film and show on TMDB. Empty until it's deployed ----------
   const api = 'https://tenner-api.danseacroft.workers.dev';
 
-  window.tn = { version, esc, hue, glide, arrows, segment, reduce, contact, saved, progress, nextUp, whenText, mine, pickMine, api };
+  window.tn = { prefs, version, esc, hue, glide, arrows, segment, reduce, contact, saved, progress, nextUp, whenText, mine, pickMine, api };
 
   // ---------- tabs ----------
   const tabs = [...document.querySelectorAll('#tabs [role=tab]')], ind = $('#tabInd'), names = tabs.map((t) => t.dataset.tab);

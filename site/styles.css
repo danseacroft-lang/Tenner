@@ -797,6 +797,7 @@ main { padding-bottom: 56px; }   /* breathing room at the end of every page */
   .side-about:hover { text-decoration: none; background: var(--fill); }
   .side-about[aria-current] { background: var(--fill); font-weight: 600; }
   .side-about[aria-current] svg { color: var(--accent); }
+  .side-about + .side-about { margin-top: 0; }   /* Settings, About, then Theme: each 2px apart, like the tabs */
   .side-ver { flex-basis: 100%; margin-top: 6px; color: var(--label3); font-size: 12px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
   .top-act { margin-top: 0; justify-self: auto; align-self: stretch; padding: 0; border-radius: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
   .tb-btn { width: 100%; height: 40px; border-radius: 9px; display: flex; justify-content: flex-start; gap: 12px; padding: 0 10px; font: 500 15px/1 var(--font); letter-spacing: -.016em; }
@@ -946,3 +947,8 @@ a.sh-prov:hover { text-decoration: none; }
   .pcard a.cover, .f-img, .nr-art, .svc, .dd, .segmented { outline: 1px solid var(--sep); outline-offset: -1px; }
   @media (max-width: 999px) { .tabs { outline: 1px solid var(--sep); outline-offset: -1px; } }   /* the floating tab bar, not the sidebar */
 }
+
+/* ============================================================ Settings, applied on every page */
+.still *, .still *::before, .still *::after { animation-duration: .001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+.no-moves .mv { display: none !important; }
+.no-ratings .star, .no-ratings .cl-r, .no-ratings .score { display: none !important; }

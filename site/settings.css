@@ -1,0 +1,27 @@
+/* Settings: grouped lists the iOS Settings way, every control the browser's own (selects, switches, a file picker) */
+.set h1 { margin-bottom: 6px; }
+.set-form { width: 100%; }
+.set .section-label { margin-top: 26px; }
+.set-group { width: 100%; border-radius: 12px; background: var(--bg2); overflow: hidden; }
+.set-row { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 14px; width: 100%; min-height: 52px;
+  padding: 8px 16px; border: 0; background: none; color: var(--label); font: 400 16px/1.3 var(--font); letter-spacing: -.016em; text-align: left; cursor: pointer; }
+.set-row + .set-row { border-top: .5px solid var(--sep); }
+.set-l { display: grid; gap: 2px; min-width: 0; }
+.set-l small { color: var(--label2); font-size: 13px; }
+.set-row select { flex: none; max-width: 55%; height: 34px; padding: 0 28px 0 12px; border: 0; border-radius: var(--r-ctl); font: 500 15px/1 var(--font); color: var(--label); appearance: none; cursor: pointer;
+  background: var(--frost) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238e8e93' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center; box-shadow: var(--frost-line); }
+.set-row input[type="checkbox"] { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.set-row input:checked + .sw { background: var(--green); }
+.set-row input:checked + .sw::after { translate: 20px 0; }
+.set-row input:focus-visible + .sw { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Safari's own iOS switch where it exists */
+.native-sw .set-row input[type="checkbox"] { position: static; opacity: 1; width: auto; height: auto; margin: 0; accent-color: var(--green); font-size: 17px; }
+.native-sw .set-row .sw { display: none; }
+.set-chev { flex: none; width: 8px; height: 8px; border-right: 2px solid var(--label3); border-bottom: 2px solid var(--label3); transform: rotate(-45deg); }
+.set-file { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.set-danger .set-l { color: #ff3b30; }
+@media (hover: hover) { .set-link:hover { background: var(--fill); } }
+.set-row:focus-visible, .set-row:has(.set-file:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+.set-note { min-height: 20px; margin: 12px 4px 0; font-size: 14px; color: var(--green); }
+.set-ver { margin: 24px 0 0; color: var(--label3); font-size: 13px; }
+@media (max-width: 999px) { .set-wide { display: none; } }   /* the featured artwork is a computer thing */
