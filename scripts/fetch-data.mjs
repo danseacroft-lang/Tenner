@@ -761,7 +761,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         const oldLn = Object.fromEntries(Object.entries(prevTitles?.items || {}).filter(([, x]) => x.ln).map(([k, x]) => [k, x.ln]));
         const ln = await buildLinks(Object.keys(titles.items), oldLn);
         for (const [k, x] of Object.entries(titles.items)) if (ln[k]) x.ln = ln[k];
-        console.log(`Links: ${Object.values(ln).filter((x) => Object.keys(x).length > 1).length} of ${Object.keys(titles.items).length} titles have direct links`);
+        const msg = `${Object.values(ln).filter((x) => Object.keys(x).length > 1).length} of ${Object.keys(titles.items).length} titles have direct links`;
+        console.log(process.env.GITHUB_ACTIONS ? `::notice title=Links::${msg}` : `Links: ${msg}`);
       } catch (err) { warn('Links', err.message); }
       await write('titles.json', titles);
       console.log(`Title details: ${Object.keys(titles.items).length} titles (${titles.refreshed} refreshed this run)`);
