@@ -8,24 +8,21 @@
 .b-head .large-title { margin-top: 10px; }
 /* Shows | Films uses the shared segmented control in styles.css */
 
-/* ---------- collections capsule (same glass and gliding pill as the service bar) ---------- */
+/* ---------- collections (the same frosted bar and gliding tile as the service bar) ---------- */
 .coll {
-  position: relative; margin-top: 18px; padding: 3px; border-radius: 999px; overflow: hidden; display: flex; max-width: 100%; width: max-content;
-  background: var(--glass); -webkit-backdrop-filter: blur(24px) saturate(190%); backdrop-filter: blur(24px) saturate(190%);
-  box-shadow: inset 0 0 0 .5px var(--glass-hi), var(--glass-shadow);
+  position: relative; margin-top: 18px; padding: 3px; border-radius: var(--r-ctl); overflow: hidden; display: flex; max-width: 100%; width: max-content;
+  background: var(--frost); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); box-shadow: var(--frost-line);
 }
-.coll-track { --fl: 28px; --fr: 28px; position: relative; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; border-radius: 999px; min-width: 0;
+.coll-track { --fl: 28px; --fr: 28px; position: relative; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; border-radius: var(--r-in); min-width: 0;
   -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--fl), #000 calc(100% - var(--fr)), transparent);
   mask-image: linear-gradient(to right, transparent, #000 var(--fl), #000 calc(100% - var(--fr)), transparent); transition: --fl .35s ease, --fr .35s ease; }
 .coll.at-start .coll-track { --fl: 0px; }
 .coll.at-end .coll-track { --fr: 0px; }
 .coll-track::-webkit-scrollbar { display: none; }
-.coll-ind { position: absolute; z-index: 0; left: 0; top: 0; bottom: 0; width: 0; border-radius: 999px; pointer-events: none;
-  background: var(--card); box-shadow: 0 2px 8px rgba(0, 0, 0, .14), inset 0 0 0 .5px var(--sep); }
-:root[data-theme="dark"] .coll-ind { background: rgba(255, 255, 255, .13); box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .22); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .coll-ind { background: rgba(255, 255, 255, .13); box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .22); } }
+.coll-ind { position: absolute; z-index: 0; left: 0; top: 0; bottom: 0; width: 0; border-radius: var(--r-in); pointer-events: none;
+  background: var(--frost-on); box-shadow: inset 0 0 0 .5px var(--frost-edge); }
 .coll-b {
-  position: relative; z-index: 1; flex: none; height: 30px; padding: 0 13px; border: 0; border-radius: 999px; background: none; cursor: pointer;
+  position: relative; z-index: 1; flex: none; height: 30px; padding: 0 13px; border: 0; border-radius: var(--r-in); background: none; cursor: pointer;
   font: 600 14px/1 var(--font); letter-spacing: -.01em; color: var(--label2); white-space: nowrap;
   transition: color .25s ease, transform .4s var(--ease-spring);
 }
@@ -69,12 +66,12 @@
 /* genres: pills */
 .genres { display: flex; flex-wrap: wrap; gap: 6px; }
 .g-b {
-  height: 32px; padding: 0 12px; border: 0; border-radius: 999px; cursor: pointer; background: var(--fill); color: var(--label);
+  height: 30px; padding: 0 11px; border: 0; border-radius: 8px; cursor: pointer; color: var(--label);
+  background: var(--frost); box-shadow: var(--frost-line);
   font: 500 14px/1 var(--font); transition: background-color .2s ease, color .2s ease, transform .35s var(--ease-spring);
 }
-.g-b[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.g-b[aria-pressed="true"] { background: var(--accent); color: #fff; box-shadow: none; }
 .g-b:active { transform: scale(.94); }
-@media (hover: hover) { .g-b[aria-pressed="false"]:hover { background: var(--fill-strong); } }
 
 /* rating: a slider with a rainbow track up to the thumb */
 #rating { --fill: 0%; width: 100%; height: 28px; margin: 0; background: none; -webkit-appearance: none; appearance: none; cursor: pointer; }
@@ -110,7 +107,7 @@
 .tile a:focus-visible .art { outline: 3px solid var(--accent); outline-offset: 3px; }
 /* the score: a small glass disc on the poster's corner */
 .score {
-  position: absolute; right: 8px; top: 8px; display: grid; place-items: center; min-width: 38px; height: 26px; padding: 0 8px; border-radius: 13px;
+  position: absolute; right: 8px; top: 8px; display: grid; place-items: center; min-width: 38px; height: 24px; padding: 0 7px; border-radius: 8px;
   background: rgba(20, 20, 24, .62); -webkit-backdrop-filter: blur(12px) saturate(160%); backdrop-filter: blur(12px) saturate(160%);
   box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .22); color: #fff; font: 700 13px/1 var(--font); font-variant-numeric: tabular-nums;
 }
@@ -171,7 +168,7 @@
 /* ---------- search ---------- */
 .search { position: relative; display: flex; align-items: center; max-width: 560px; margin-top: 20px; }
 .search input {
-  width: 100%; height: 42px; padding: 0 40px 0 42px; border: 0; border-radius: 12px; background: var(--fill);
+  width: 100%; height: 42px; padding: 0 40px 0 42px; border: 0; border-radius: var(--r-ctl); background: var(--fill);
   color: var(--label); font: 400 16px/1 var(--font); letter-spacing: -.01em; -webkit-appearance: none; appearance: none;
   transition: background-color .2s ease, box-shadow .25s ease;
 }
