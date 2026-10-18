@@ -6,10 +6,7 @@ jobs:
     steps:
       - run: |
           UA="Tenner/1.0 (github.com/danseacroft-lang/Tenner)"
-          for p in P4983 P4947 P1874 P7595 P7596 P8055 P14440 P8298 P13147 P9586 P9751; do
-            r=$(curl -s "https://www.wikidata.org/wiki/Special:EntityData/$p.json" -H "User-Agent: $UA" | jq -r --arg p "$p" '.entities[$p] | "\(.labels.en.value) | " + ([.claims.P1630[]?.mainsnak.datavalue.value] | join(" , "))')
-            echo "::notice title=$p::$r"
-          done
           Q='SELECT ?t ?nf ?dp ?pv ?pv2 ?hb ?pp ?at WHERE { VALUES ?t {"66732" "1396" "100088"} ?i wdt:P4983 ?t . OPTIONAL{?i wdt:P1874 ?nf} OPTIONAL{?i wdt:P7596 ?dp} OPTIONAL{?i wdt:P8055 ?pv} OPTIONAL{?i wdt:P14440 ?pv2} OPTIONAL{?i wdt:P8298 ?hb} OPTIONAL{?i wdt:P13147 ?pp} OPTIONAL{?i wdt:P9751 ?at} }'
-          r=$(curl -s -G https://query.wikidata.org/sparql --data-urlencode "query=$Q" -H "Accept: application/sparql-results+json" -H "User-Agent: $UA" | jq -c '[.results.bindings[] | with_entries(.value |= .value)]')
-          echo "::notice title=sparql::$r"
+          curl -s -G https://query.wikidata.org/sparql --data-urlencode "query=$Q" -H "Accept: application/sparql-results+json" -H "User-Agent: $UA" -o out.json -w "%{http_code}" > code.txt
+          echo "::notice title=code::$(cat code.txt) $(head -c 300 out.json | tr '\n' ' ')"
+          echo "::notice title=sparql::$(jq -c '[.results.bindings[] | with_entries(.value |= .value)]' out.json | head -c 900)"
