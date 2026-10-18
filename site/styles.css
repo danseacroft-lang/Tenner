@@ -949,6 +949,9 @@ a.sh-prov:hover { text-decoration: none; }
 }
 
 /* ============================================================ Settings, applied on every page */
-.still *, .still *::before, .still *::after { animation-duration: .001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+/* Animations (off unless switched on in Settings): nothing animates or transitions at all, not even for a moment,
+   so the browser has no motion to set up and every change lands at once */
+.still, .still *, .still *::before, .still *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+.still ::view-transition-group(*), .still ::view-transition-old(*), .still ::view-transition-new(*) { animation: none !important; }
 .no-moves .mv { display: none !important; }
 .no-ratings .star, .no-ratings .cl-r, .no-ratings .score { display: none !important; }
