@@ -76,7 +76,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.2.0';
+  const version = '1.2.1';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -160,7 +160,11 @@
   // ---------- tabs ----------
   const tabs = [...document.querySelectorAll('#tabs [role=tab]')], ind = $('#tabInd'), names = tabs.map((t) => t.dataset.tab);
   let cur = tabs.find((t) => t.getAttribute('aria-selected') === 'true')?.dataset.tab ?? null, placed = false;
-  const placeInd = (animate) => glide(ind, tabs[names.indexOf(cur)], animate, 1.18);
+  // phones: the pill under the chosen tab is a circle, centred on it (computers use the sidebar instead)
+  const placeInd = (animate) => {
+    const b = tabs[names.indexOf(cur)], d = ind?.offsetHeight;
+    glide(ind, b && d ? { offsetLeft: b.offsetLeft + (b.offsetWidth - d) / 2, offsetWidth: d } : b, animate, 1.18);
+  };
   function select(name) {
     cur = name;
     tabs.forEach((t) => { const on = t.dataset.tab === name; t.setAttribute('aria-selected', on); t.tabIndex = on ? 0 : -1; });

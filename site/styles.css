@@ -204,7 +204,7 @@ a.tb-btn:hover { text-decoration: none; }
   }
   .tabbar > * { pointer-events: auto; }
   .tabs { flex: 1; max-width: 340px; padding: 5px; }
-  .tab-ind { top: 5px; bottom: 5px; }
+  .tab-ind { top: 5px; bottom: 5px; border-radius: 50%; }   /* a circle: placed square by shell.js */
   .tabs button { flex: 1; flex-direction: column; justify-content: center; height: 54px; padding: 2px 6px 0; gap: 4px; font-size: 11px; font-weight: 600; }
   .tabs button svg { width: 25px; height: 25px; stroke-width: 1.8; }
   body { padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px)); }   /* the end of every page clears the floating tab bar */
@@ -339,10 +339,10 @@ a.tb-btn:hover { text-decoration: none; }
 .svc-edit:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .svc-sep { flex: none; width: 1px; height: 18px; margin: 0 3px; background: var(--sep); }
 
-/* phones: the service bar folds into a pull-down button, iOS style, under Shows | Films */
+/* phones: the service bar folds into one button over the phone's own picker (a native <select>), under Shows | Films */
 .dd { display: none; }
 @media (max-width: 560px) {
-  /* Shows | Films stays the switch, sitting neatly on top of the services pull-down, the two the same width */
+  /* Shows | Films stays the switch, sitting neatly on top of the services picker, the two the same width */
   .controls .svc { display: none; }
   .controls { flex-wrap: wrap; gap: 8px; }
   .controls .segmented { display: grid; width: 100%; height: 40px; }
@@ -720,7 +720,7 @@ a.tb-btn:hover { text-decoration: none; }
 .empty h2 { margin: 16px 0 6px; font: 700 26px/1.15 var(--font-display); letter-spacing: .004em; }
 .empty p { margin: 0 auto 18px; max-width: 40ch; color: var(--label2); font-size: 16px; text-wrap: balance; }
 
-/* toast and footer */
+/* the toast */
 .toast {
   position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); z-index: 40;
   transform: translateX(-50%); padding: 12px 18px; border-radius: 999px;
