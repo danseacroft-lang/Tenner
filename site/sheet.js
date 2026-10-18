@@ -12,6 +12,14 @@
   let dataP = null;
   const details = () => (dataP ||= fetch(`data/titles.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
   addEventListener('tn:check', () => { dataP = null; });   // the next sheet picks up the new hour's details
+  // titles Tenner doesn't follow (from searching everything) come live from the search API instead
+  const apiCache = new Map();
+  const fromApi = (k) => {
+    if (!window.tn.api || !/^[mt]\d+$/.test(k || '')) return Promise.resolve(null);
+    if (!apiCache.has(k)) apiCache.set(k, fetch(`${window.tn.api}/title/${k}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
+    return apiCache.get(k);
+  };
+  let shown = null;   // the details the open sheet was drawn from
 
   // ---------- the sheet, built once ----------
   document.body.insertAdjacentHTML('beforeend', `
@@ -47,7 +55,7 @@
     const x = d?.items?.[info.k];
     if (!x) {   // no details (yet): what we know from the chart or catalogue
       const on = (info.services || []).map((s) => `<span class="sh-prov flat">${s.logo ? `<img src="${esc(s.logo)}" alt="">` : ''}<span>${esc(s.label)}</span></span>`).join('');
-      return on ? `<div class="sh-grp"><h4>Included with</h4><div class="sh-provs">${on}</div></div>` : `<p class="sh-none">${d ? 'We don’t have where-to-watch details for this one yet.' : 'Loading where to watch…'}</p>`;
+      return on ? `<div class="sh-grp"><h4>Included with</h4><div class="sh-provs">${on}</div></div>` : `<p class="sh-none">${d && !d.pending ? 'We don’t have where-to-watch details for this one yet.' : 'Loading where to watch…'}</p>`;
     }
     const groups = [['Included with', x.f], ['Free', x.fr], ['Rent', x.re], ['Buy', x.bu]]
       .map(([label, ids]) => { const list = providerList(ids, d, info); return list ? `<div class="sh-grp"><h4>${label}</h4><div class="sh-provs">${list}</div></div>` : ''; }).join('');
@@ -97,8 +105,20 @@
       history.pushState({ sheet: info.k }, '', u); pushed = true;
     }
     document.title = `${info.title} | Tenner`;
-    const d = await details();
-    if (current === info) render(info, d);
+    let d = await details();
+    if (current !== info) return;
+    if (!d?.items?.[info.k] && window.tn.api) {
+      render(info, { ...(d || {}), items: {}, pending: true });   // "Loading…" stays until the live details arrive
+      const a = await fromApi(info.k);
+      if (current !== info) return;
+      if (a) { for (const [f, v] of Object.entries(a.info || {})) if (v && !info[f]) info[f] = v; d = a; }
+    }
+    shown = d; render(info, d);
+  }
+  // open a title by its key alone (a shared link to something Tenner doesn't follow)
+  async function openKey(k) {
+    const a = await fromApi(k); if (!a?.info || current) return false;
+    open({ ...a.info, tmdb: `https://www.themoviedb.org/${a.info.type}/${k.slice(1)}` }, true); return true;
   }
   function close(fromHistory) {
     if (!current) return;
@@ -131,7 +151,7 @@
   sheet.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-act]'); if (!b || !current) return;
     if (b.dataset.act === 'trailer') {
-      const d = await details(), key = d?.items?.[current.k]?.tr; if (!key) return;
+      const key = (shown || await details())?.items?.[current.k]?.tr; if (!key) return;
       // played in place, from YouTube's privacy-enhanced player, only when asked
       $('#shArt').innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(key)}?autoplay=1&rel=0&playsinline=1" title="Trailer: ${esc(current.title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
       $('#shArt').classList.add('playing'); body.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
@@ -166,5 +186,5 @@
   };
   sheet.addEventListener('pointerup', endDrag); sheet.addEventListener('pointercancel', endDrag);
 
-  window.tnSheet = { open, close, isOpen: () => !!current, details };
+  window.tnSheet = { open, openKey, close, isOpen: () => !!current, details };
 })();

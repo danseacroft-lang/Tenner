@@ -315,6 +315,7 @@ function openFromUrl() {
   const type = k[0] === 'm' ? 'movie' : 'tv', all = [...services().flatMap((s) => [...(s.tv || []), ...(s.movie || [])]), ...(state.fresh?.items || [])];
   const it = all.find((x) => `${(x.type || type) === 'movie' ? 'm' : 't'}${x.id}` === k);
   if (it) window.tnSheet.open(infoFor(it, it.type || type), true);
+  else window.tnSheet.openKey?.(k);   // something Tenner doesn't follow: the search API has it
 }
 
 // ---------- chart movement: ▲ up, ▼ down or NEW since about a day ago (worked out hourly, see fetch-data.mjs) ----------

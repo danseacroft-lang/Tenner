@@ -68,6 +68,7 @@
     if (wantSearch) $('#q').focus();
     const shared = new URL(location.href).searchParams.get('t'), sx = shared && item(shared);
     if (sx) sheetFor(sx).then((info) => window.tnSheet?.open(info, true));
+    else if (shared) window.tnSheet?.openKey?.(shared);
   }).catch((err) => {
     $('#count').textContent = `The catalogue didn't load (${err.message}). It's rebuilt every hour, so try again shortly.`;
   });
@@ -212,11 +213,13 @@
 
     // swap the grid (a quick crossfade where the browser can)
     const draw = () => { shown = 0; $('#grid').innerHTML = ''; more(); empty(); };
+    webSearch();
     if (user && !quiet && document.startViewTransition && !reduce) document.startViewTransition(draw); else draw();
   }
 
   function empty() {
     if (list.length) return;
+    if (web.on) { $('#grid').innerHTML = ''; return; }   // searching everything: the results below say it
     $('#grid').innerHTML = `<li class="none"><h2>No matches</h2><p>${state.q ? 'Nothing in this hour\'s catalogue matches that. Try a shorter search, or fewer filters.' : 'Try fewer filters, or a different collection.'}</p>
       <button type="button" class="btn btn-tinted" data-clear="${state.q ? 'q' : 'filters'}">${state.q ? 'Clear search' : 'Clear filters'}</button></li>`;
   }
@@ -299,6 +302,51 @@
   grid.addEventListener('focusout', hidePv);
   addEventListener('scroll', hidePv, { passive: true });
   addEventListener('keydown', (e) => { if (e.key === 'Escape') hidePv(); });
+
+  // ---------- searching everything: films and shows Tenner doesn't follow, from TMDB via the search API ----------
+  // Below this hour's catalogue matches, as you type (after a short pause). Each opens the same title sheet.
+  const web = { on: false, q: '', t: 0, ctl: null, items: new Map() };
+  function webSearch() {
+    const q = state.q.trim(), box = $('#web');
+    web.on = !!window.tn.api && q.length >= 2;
+    if (!web.on) { box.hidden = true; web.q = ''; web.ctl?.abort(); return; }
+    if (q === web.q) return;
+    web.q = q; clearTimeout(web.t); web.ctl?.abort();
+    box.hidden = false; $('#webNote').textContent = 'Searching…';
+    web.t = setTimeout(async () => {
+      web.ctl = new AbortController();
+      try {
+        const r = await fetch(`${window.tn.api}/search?q=${encodeURIComponent(q)}`, { signal: web.ctl.signal });
+        const d = r.ok ? await r.json() : null; if (web.q !== q) return;
+        const have = new Set(list.map((x) => `${x.t[0]}${x.i}`));
+        const res = (d?.results || []).filter((x) => !have.has(x.k));
+        web.items = new Map(res.map((x) => [x.k, { ...x, poster: x.poster ? d.img + x.poster : null, backdrop: x.backdrop ? d.bd + x.backdrop : null }]));
+        $('#webGrid').innerHTML = [...web.items.values()].map(webCard).join('');
+        $('#web').classList.toggle('solo', !list.length);   // nothing in the catalogue: these are the results
+        $('#webNote').textContent = !d ? 'Couldn’t search everything right now.' : res.length ? `${res.length} ${list.length ? 'more ' : ''}from TMDB` : list.length ? 'Nothing more on TMDB.' : `Nothing found for “${q}”. Try another spelling.`;
+        if (!list.length && !res.length) { web.on = false; $('#web').hidden = true; empty(); }
+      } catch (e) { if (e.name !== 'AbortError') $('#webNote').textContent = 'Couldn’t search everything right now.'; }
+    }, 280);
+  }
+  function webCard(x, i) {
+    const h = hue(x.title);
+    const art = x.poster ? `<img src="${esc(x.poster)}" alt="" loading="lazy" decoding="async" width="342" height="513">`
+      : `<span class="ph" style="background:linear-gradient(160deg,hsl(${h} 45% 42%),hsl(${(h + 40) % 360} 55% 18%))">${esc(x.title)}</span>`;
+    return `<li class="tile" style="--d:${i}" data-wk="${esc(x.k)}">
+      <a href="https://www.themoviedb.org/${x.type}/${x.k.slice(1)}" target="_blank" rel="noopener">
+        <span class="art">${art}${x.rating ? `<span class="score" aria-label="Rated ${x.rating} out of 10"><b>${x.rating.toFixed(1)}</b></span>` : ''}</span>
+        <span class="t">${esc(x.title)}</span>
+        <span class="kind-l">${x.type === 'tv' ? 'Show' : 'Film'}</span>
+        <span class="m"><span>${esc(x.year || '')}</span></span>
+      </a></li>`;
+  }
+  $('#webGrid').addEventListener('click', (e) => {
+    const a = e.target.closest('.tile a'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
+    const x = web.items.get(a.closest('.tile').dataset.wk); if (!x) return;
+    e.preventDefault();
+    window.tnSheet?.open({ k: x.k, type: x.type, title: x.title, year: x.year, rating: x.rating, poster: x.poster, backdrop: x.backdrop, overview: x.overview,
+      tmdb: `https://www.themoviedb.org/${x.type}/${x.k.slice(1)}`, services: [] });
+  });
 
   // ---------- the grid ----------
   const fmt = (d) => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';

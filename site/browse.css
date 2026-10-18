@@ -236,3 +236,11 @@
 .pv-hint { margin: 10px 0 0; font-size: 12px; color: var(--label3); }
 @media (prefers-reduced-motion: reduce) { .pv { transition: none; } }
 @media (prefers-reduced-transparency: reduce) { .pv { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--card); } }
+
+/* searching everything: TMDB's results under this hour's catalogue */
+.web { margin-top: 40px; }
+.web-hd { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 14px; padding-top: 22px; border-top: .5px solid var(--sep); }
+.web-hd h2 { margin: 0; font: 700 22px/1.2 var(--font-display); letter-spacing: .004em; }
+.web-hd .count { margin: 0; }
+.web.solo { margin-top: 0; }
+.web.solo .web-hd { border-top: 0; padding-top: 0; }

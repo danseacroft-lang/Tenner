@@ -90,7 +90,10 @@
   };
   addEventListener('storage', (e) => { if (e.key === WL) dispatchEvent(new Event('tn:saved')); });
 
-  window.tn = { esc, hue, glide, arrows, segment, reduce, contact, saved };
+  // ---------- the search API (worker/, on Cloudflare): every film and show on TMDB. Empty until it's deployed ----------
+  const api = '';
+
+  window.tn = { esc, hue, glide, arrows, segment, reduce, contact, saved, api };
 
   // ---------- tabs ----------
   const tabs = [...document.querySelectorAll('#tabs [role=tab]')], ind = $('#tabInd'), names = tabs.map((t) => t.dataset.tab);
