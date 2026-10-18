@@ -66,6 +66,8 @@
     if (wantSearch) history.replaceState(null, '', location.pathname);
     readHash(); buildControls(); apply(false);
     if (wantSearch) $('#q').focus();
+    const shared = new URL(location.href).searchParams.get('t'), sx = shared && item(shared);
+    if (sx) sheetFor(sx).then((info) => window.tnSheet?.open(info, true));
   }).catch((err) => {
     $('#count').textContent = `The catalogue didn't load (${err.message}). It's rebuilt every hour, so try again shortly.`;
   });
@@ -244,7 +246,7 @@
         ${genres ? `<p class="pv-genres">${esc(genres)}</p>` : ''}
         <p class="pv-ov">${extra ? esc(ov || 'No description yet.') : '<span class="pv-wait"></span><span class="pv-wait short"></span>'}</p>
         ${where ? `<div class="pv-where"><span class="pv-l">Where to watch</span><div>${where}</div></div>` : ''}
-        <p class="pv-hint">Click to open on TMDB</p>
+        <p class="pv-hint">Click for where to watch</p>
       </div>`;
   }
   function placePv(tile) {
@@ -272,6 +274,21 @@
     pvFor.querySelector('a')?.removeAttribute('aria-describedby'); pvFor = null; pv.hidden = true; pv.classList.remove('in');
   }
   const grid = $('#grid');
+  // click a poster: where to watch, in Tenner (sheet.js); Cmd/Ctrl-click still opens TMDB in a new tab
+  async function sheetFor(x) {
+    const k = `${x.t[0]}${x.i}`, m = await moreData(), e = m?.items?.[k] || [];
+    return {
+      k, type: x.t, title: x.n, year: (x.d || '').slice(0, 4) || null, rating: x.r || null,
+      poster: x.img ? (x.img.startsWith('/') ? cat.img + x.img : x.img) : null, backdrop: e[1] && m?.img ? m.img + e[1] : null, overview: e[0] || '',
+      genres: [...new Set(x.g.map((g) => cat.genres[g]).filter(Boolean))].slice(0, 3),
+      tmdb: `https://www.themoviedb.org/${x.t}/${x.i}`, services: x.s.map((s) => ({ label: labels[s] || s, logo: logos[s] })),
+    };
+  }
+  grid.addEventListener('click', async (e) => {
+    const a = e.target.closest('.tile a'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
+    e.preventDefault(); hidePv();
+    const x = item(a.closest('.tile').dataset.k); if (x) window.tnSheet?.open(await sheetFor(x));
+  });
   grid.addEventListener('mouseover', (e) => {
     const t = e.target.closest('.tile'); if (!fine.matches || !t || t === pvFor) return;
     clearTimeout(pvTimer); if (pvFor) hidePv();

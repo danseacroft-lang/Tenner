@@ -294,6 +294,49 @@ export async function buildNetflixOfficial() {
   return out;
 }
 
+// ---------- Title details: where to watch in the UK, runtime, age rating, trailer ----------
+// One TMDB request per title (details plus watch providers, videos and UK certification), so Tenner can show where to
+// watch without sending people elsewhere. Charted titles refresh every hour; the rest of the Browse catalogue at most
+// once a day, a slice per run, reusing the live copy in between. Providers are stored once in a shared table.
+const TITLE_V = 1;
+const hoursAgo = (t) => (Date.now() - t) / 3600e3;
+export async function buildTitles(chartKeys, catalogueKeys, prev) {
+  const old = prev?.v === TITLE_V ? prev : null;
+  const providers = { ...(old?.providers || {}) }, items = {};
+  const want = [...new Set([...chartKeys, ...catalogueKeys])];
+  const due = want.filter((k) => chartKeys.has(k) || !old?.items?.[k] || hoursAgo(old.items[k].at) > 24);
+  // charted titles first, then the catalogue's oldest, up to 350 requests a run
+  const order = due.sort((a, b) => (chartKeys.has(b) - chartKeys.has(a)) || ((old?.items?.[a]?.at || 0) - (old?.items?.[b]?.at || 0))).slice(0, 350);
+  const fetched = await pool(order.map((k) => async () => {
+    const type = k[0] === 'm' ? 'movie' : 'tv', id = k.slice(1);
+    try { return [k, await tmdb(`/${type}/${id}`, { language: 'en-GB', append_to_response: `watch/providers,videos,${type === 'movie' ? 'release_dates' : 'content_ratings'}` })]; }
+    catch { return [k, null]; }
+  }));
+  for (const [k, d] of fetched) {
+    if (!d) { if (old?.items?.[k]) items[k] = old.items[k]; continue; }
+    const type = k[0] === 'm' ? 'movie' : 'tv', gb = d['watch/providers']?.results?.[REGION] || {};
+    const ids = (list) => (list || []).sort((a, b) => a.display_priority - b.display_priority).map((p) => {
+      providers[p.provider_id] = [p.provider_name, p.logo_path || '']; return p.provider_id; });
+    const cert = type === 'movie'
+      ? (d.release_dates?.results || []).find((r) => r.iso_3166_1 === REGION)?.release_dates?.map((x) => x.certification).find(Boolean)
+      : (d.content_ratings?.results || []).find((r) => r.iso_3166_1 === REGION)?.rating;
+    const vids = (d.videos?.results || []).filter((v) => v.site === 'YouTube' && /Trailer|Teaser/.test(v.type));
+    const trailer = (vids.find((v) => v.type === 'Trailer' && v.official) || vids.find((v) => v.type === 'Trailer') || vids[0])?.key;
+    const runtime = type === 'movie' ? d.runtime : (d.episode_run_time?.[0] || d.last_episode_to_air?.runtime || null);
+    items[k] = Object.fromEntries(Object.entries({
+      at: Date.now(), rt: runtime || undefined, se: type === 'tv' ? d.number_of_seasons || undefined : undefined, c: cert || undefined,
+      g: (d.genres || []).map((g) => g.name).slice(0, 3), tl: d.tagline || undefined,
+      f: ids(gb.flatrate), fr: ids([...(gb.free || []), ...(gb.ads || [])]), re: ids(gb.rent), bu: ids(gb.buy), tr: trailer,
+    }).filter(([, v]) => v !== undefined && !(Array.isArray(v) && !v.length)));
+  }
+  // everything else we still want and already had carries over untouched
+  for (const k of want) if (!items[k] && old?.items?.[k]) items[k] = old.items[k];
+  // keep only the services something still uses
+  const used = new Set(Object.values(items).flatMap((x) => [...(x.f || []), ...(x.fr || []), ...(x.re || []), ...(x.bu || [])]));
+  for (const id of Object.keys(providers)) if (!used.has(+id)) delete providers[id];
+  return { v: TITLE_V, generatedAt: new Date().toISOString(), logo: `${IMG}/w92`, providers, items, refreshed: fetched.filter(([, d]) => d).length };
+}
+
 // ---------- Watchmode (daily) ----------
 const realNew = (j) => !!j && Array.isArray(j.items) && !j.disabled && !j.error && !j.sample;
 export async function buildNew() {
@@ -336,6 +379,7 @@ export async function buildNew() {
       service: s.key,
       original: r.is_original === 1,
       poster: r.poster_url || null,
+      id: r.tmdb_id || null,
       url: r.tmdb_id ? `https://www.themoviedb.org/${r.tmdb_type}/${r.tmdb_id}/watch?locale=${REGION}` : null,
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
@@ -461,6 +505,15 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const { trending, fresh } = sample();
     await write('trending.json', trending);
     await write('new.json', fresh);
+    // sample title details: a few made-up services and runtimes, so the title sheet can be tried without keys
+    const sp = { 8: ['Netflix', ''], 337: ['Disney Plus', ''], 9: ['Amazon Prime Video', ''], 2: ['Apple TV', ''], 130: ['Sky Store', ''], 1899: ['HBO Max', ''] };
+    const sItems = {};
+    for (const sv of trending.services) for (const t of ['tv', 'movie']) for (const it of sv[t] || []) {
+      const n = it.id; sItems[`${t[0]}${n}`] = { at: Date.now(), rt: t === 'movie' ? 88 + (n * 7) % 60 : 40 + (n * 3) % 25, se: t === 'tv' ? 1 + n % 4 : undefined,
+        c: ['U', 'PG', '12', '15', '18'][n % 5], g: ['Drama', 'Comedy', 'Crime'].slice(0, 1 + n % 3), tl: n % 2 ? 'A fictional tagline for a sample title.' : undefined,
+        f: sv.store ? [] : [[8, 337, 9, 1899][n % 4]], fr: n % 5 === 0 ? [9] : [], re: [2, 130].slice(0, 1 + n % 2), bu: [2], tr: undefined };
+    }
+    await write('titles.json', { v: 1, generatedAt: trending.generatedAt, logo: '', providers: sp, items: sItems, sample: true });
     const sc = sampleCatalogue();
     await write('browse.json', sc);
     await write('browse-more.json', { generatedAt: sc.generatedAt, img: '', sample: true,
@@ -508,29 +561,51 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     if (built) await write('providers.json', built.providers);
 
     // 2. The Browse catalogue, rebuilt with the chart; otherwise the live one carries on.
+    let catalogue = null, newList = null;
     try {
       if (!built) throw new Error('the chart was not rebuilt this hour');
       const { cat, more } = await buildCatalogue(built.ids);
       if (cat.items.length < 100) throw new Error(`only ${cat.items.length} titles came back`);
       await write('browse.json', cat);
       await write('browse-more.json', more);
+      catalogue = cat;
       console.log(`Browse catalogue: ${cat.items.length} titles`);
     } catch (err) {
       const prev = await liveCopy('browse.json'), prevMore = await liveCopy('browse-more.json');
       warn('Browse', `catalogue not rebuilt (${err.message}), ${prev ? 'keeping the live one' : 'and there is no live one yet'}`);
       if (prev) await write('browse.json', prev);
       if (prevMore) await write('browse-more.json', prevMore);
+      catalogue = prev;
     }
 
     // 3. New this week (Watchmode, once a day). If it fails, the live list carries on for up to three days.
     try {
       const fresh = await buildNew();
       await write('new.json', fresh || { generatedAt: data.generatedAt, disabled: true, items: [] });
+      newList = fresh;
     } catch (err) {
       const prev = await liveCopy('new.json');
       const keep = realNew(prev) && hoursOld(prev) < 72;
       warn('New this week', `Watchmode step failed (${err.message})${keep ? ', keeping the live list' : ''}`);
       await write('new.json', keep ? prev : { generatedAt: data.generatedAt, error: true, items: [] });
+      if (keep) newList = prev;
+    }
+
+    // 4. Title details (where to watch, runtime, age rating, trailer) for everything Tenner shows.
+    try {
+      const key = (type, id) => (typeof id === 'number' || /^\d+$/.test(String(id)) ? `${type === 'movie' ? 'm' : 't'}${id}` : null);
+      const chartKeys = new Set();
+      for (const sv of data.services) for (const t of ['tv', 'movie']) for (const it of sv[t] || []) { const k = key(t, it.id); if (k) chartKeys.add(k); }
+      for (const t of ['tv', 'movie']) for (const it of data.overall?.[t] || []) { const k = key(t, it.id); if (k) chartKeys.add(k); }
+      for (const it of newList?.items || []) { const k = it.id && key(it.type, it.id); if (k) chartKeys.add(k); }
+      const catalogueKeys = new Set((catalogue?.items || []).map((x) => `${x.t[0]}${x.i}`));
+      const titles = await buildTitles(chartKeys, catalogueKeys, await liveCopy('titles.json'));
+      await write('titles.json', titles);
+      console.log(`Title details: ${Object.keys(titles.items).length} titles (${titles.refreshed} refreshed this run)`);
+    } catch (err) {
+      const prev = await liveCopy('titles.json');
+      warn('Title details', `not rebuilt (${err.message})${prev ? ', keeping the live copy' : ''}`);
+      if (prev) await write('titles.json', prev);
     }
   }
 }

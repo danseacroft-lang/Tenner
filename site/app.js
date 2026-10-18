@@ -183,9 +183,10 @@ function draw() {
   document.querySelectorAll('.kind [data-kind]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.kind === state.kind)));
   const isNew = state.route === 'new';
   $('#controls').hidden = isNew;
-  if (isNew) { setBackdrop(null); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; document.title = 'New This Week | Tenner'; return; }
+  if (isNew) { shown = new Map(); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; document.title = 'New This Week | Tenner'; openFromUrl(); return; }
 
   markService(state.route); markDropdowns();
+  shown = new Map();
 
   const s = state.route === 'top' ? null : svc(state.route);
   const listOf = (k) => (s ? s[k] : state.trending.overall[k]) || [];
@@ -208,6 +209,7 @@ function draw() {
        ${s?.store ? '' : newRow(s)}`
     : `<div class="empty"><h2>Nothing here right now</h2><p>The chart for ${esc(where)} will be back after the next hourly update.</p><a class="btn btn-tinted" href="#top">See all five services</a></div>`;
   view.innerHTML = `<div class="wrap chart">${chart}</div>`;
+  openFromUrl();
   setBackdrop(heroOn() && list.length ? list[0] : null);   // the hero's first pick
   wireScroller(); wireRanks();
 }
@@ -230,7 +232,7 @@ function heroCopy({ it, n }) {
     <h2 class="h-title">${esc(it.title)}</h2>
     <p class="h-meta">${bits.map(esc).join(' · ')}</p>
     ${it.overview ? `<p class="h-blurb">${esc(firstSentence(it.overview))}</p>` : ''}
-    <a class="h-cta" href="${esc(it.url)}" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>${/netflix\.com\/title\//.test(it.url) ? 'Watch on Netflix' : 'Where to watch'}</a>`;
+    <a class="h-cta" href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(infoFor(it, it.type, eye, s && !s.store ? [s] : null))}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>Where to watch</a>`;
 }
 function hero(picks, s) {   // picks: [{ it, n }] where n is the title's rank in its own chart
   if (!heroOn() || !picks.length) return '';
@@ -285,6 +287,34 @@ function officialLine(o) {
 }
 const weeksText = (it) => it.weeks > 1 ? `${it.weeks} weeks in the Top 10` : it.weeks === 1 ? 'New to the Top 10' : '';
 
+// ---------- the title sheet (sheet.js): every title on the page opens where-to-watch in Tenner ----------
+// Each drawn title is registered with what the sheet needs; links carry data-sheet="<n>" and keep their TMDB href,
+// so Cmd/Ctrl-click still opens TMDB in a new tab.
+let shown = new Map();
+const tmdbUrl = (type, id) => `https://www.themoviedb.org/${type}/${id}`;
+function infoFor(it, type, eye, svcs) {
+  const id = it.id, k = /^\d+$/.test(String(id ?? '')) ? `${type === 'movie' ? 'm' : 't'}${id}` : null;
+  return {
+    k, type, eye, title: it.title, year: it.year || (it.date || '').slice(0, 4) || null, rating: it.rating, poster: it.poster, backdrop: it.backdrop, overview: it.overview,
+    netflix: /netflix\.com\/title\//.test(it.url || '') ? it.url : null, tmdb: k ? tmdbUrl(type, id) : null,
+    services: (svcs || (it.on || []).map(svc)).filter(Boolean).map((s) => ({ label: s.label, logo: s.logo })),
+  };
+}
+function reg(info) { const n = String(shown.size); shown.set(n, info); return `data-sheet="${n}"`; }
+view.addEventListener('click', (e) => {
+  const a = e.target.closest('[data-sheet]');
+  if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;   // modified clicks open TMDB as usual
+  e.preventDefault(); window.tnSheet?.open(shown.get(a.dataset.sheet));
+});
+// a shared link (?t=m123) opens that title's sheet once the chart has loaded
+function openFromUrl() {
+  const k = new URL(location.href).searchParams.get('t'); if (!k || window.tnSheet?.isOpen()) return;
+  for (const info of shown.values()) if (info.k === k) { window.tnSheet.open(info, true); return; }
+  const type = k[0] === 'm' ? 'movie' : 'tv', all = [...services().flatMap((s) => [...(s.tv || []), ...(s.movie || [])]), ...(state.fresh?.items || [])];
+  const it = all.find((x) => `${(x.type || type) === 'movie' ? 'm' : 't'}${x.id}` === k);
+  if (it) window.tnSheet.open(infoFor(it, it.type || type), true);
+}
+
 // ---------- pieces ----------
 function placeholder(it) {
   const h = hue(it.title);
@@ -329,6 +359,10 @@ function wireRanks() {
   });
 }
 
+const scope = () => (state.route === 'top' ? null : svc(state.route));
+const eyeFor = (n, type) => { const s = scope(), what = type === 'tv' ? 'show' : 'film';
+  return s?.store ? `No. ${n} to buy or rent` : s ? `No. ${n} ${what} on ${s.label}` : `No. ${n} ${what} in the UK`; };
+const chartInfo = (it, i, type) => infoFor(it, type, eyeFor(i + 1, type), scope() && !scope().store ? [scope()] : null);
 function posterRow(list, kind = state.kind, first = true) {
   const edge = (side) => `<div class="edge ${side}" aria-hidden="true">${'<i></i>'.repeat(6)}</div>`;
   return `<div class="row-wrap at-start">
@@ -336,14 +370,14 @@ function posterRow(list, kind = state.kind, first = true) {
     <button type="button" class="btn btn-icon scroller prev" aria-label="Previous titles" title="Previous" disabled>
       <svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><path d="M8 2L2 8l6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <ol class="posters" aria-label="Top 10 ${words(kind)}">
-      ${list.map((it, i) => `<li class="pcard" style="--d:${i}">
+      ${list.map((it, i) => { const sh = reg(chartInfo(it, i, kind)); return `<li class="pcard" style="--d:${i}">
         ${rankSvg(i, kind)}
-        <a class="cover" href="${esc(it.url)}" target="_blank" rel="noopener" aria-label="Number ${i + 1}: ${esc(it.title)}">
+        <a class="cover" href="${esc(it.url)}" target="_blank" rel="noopener" ${sh} aria-label="Number ${i + 1}: ${esc(it.title)}, where to watch">
           ${it.poster ? `<img src="${esc(it.poster)}" alt="" ${first && i < 4 ? `loading="eager"${i === 0 ? ' fetchpriority="high"' : ''}` : 'loading="lazy"'} decoding="async" width="342" height="513">` : placeholder(it)}
         </a>
-        <h3><a href="${esc(it.url)}" target="_blank" rel="noopener" tabindex="-1">${esc(it.title)}</a></h3>
+        <h3><a href="${esc(it.url)}" target="_blank" rel="noopener" tabindex="-1" ${sh}>${esc(it.title)}</a></h3>
         <p class="sub">${meta(it)}</p>
-      </li>`).join('')}
+      </li>`; }).join('')}
     </ol>
     <button type="button" class="btn btn-icon scroller next" aria-label="Next titles" title="Next">
       <svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><path d="M2 2l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -358,15 +392,15 @@ function features(s) {
   const shows = s ? s.tv : state.trending.overall.tv, films = s ? s.movie : state.trending.overall.movie;
   const store = services().find((x) => x.store)?.movie || [];
   const picks = [
-    shows[0] && { eye: s ? `No. 1 show on ${s.label}` : 'No. 1 show', it: shows[0], sub: s ? `${shows[0].year || ''}` : `On ${onText(shows[0], 'UK streaming')}` },
-    films[0] && { eye: s ? `No. 1 film on ${s.label}` : 'No. 1 film', it: films[0], sub: s ? `${films[0].year || ''}` : `On ${onText(films[0], 'UK streaming')}` },
-    s ? shows[1] && { eye: `No. 2 show on ${s.label}`, it: shows[1], sub: `${shows[1].year || ''}` }
-      : store[0] && { eye: 'No. 1 to buy or rent', it: store[0], sub: 'Apple TV, Sky Store and others', href: '#store' },
+    shows[0] && { eye: s ? `No. 1 show on ${s.label}` : 'No. 1 show', it: shows[0], type: 'tv', sub: s ? `${shows[0].year || ''}` : `On ${onText(shows[0], 'UK streaming')}` },
+    films[0] && { eye: s ? `No. 1 film on ${s.label}` : 'No. 1 film', it: films[0], type: 'movie', sub: s ? `${films[0].year || ''}` : `On ${onText(films[0], 'UK streaming')}` },
+    s ? shows[1] && { eye: `No. 2 show on ${s.label}`, it: shows[1], type: 'tv', sub: `${shows[1].year || ''}` }
+      : store[0] && { eye: 'No. 1 to buy or rent', it: store[0], type: 'movie', sub: 'Apple TV, Sky Store and others', href: '#store' },
   ].filter(Boolean);
   if (!picks.length) return '';
   return `<section class="feats" aria-label="Highlights"><div class="feat-row">${picks.map((p) => {
     const it = p.it, wide = it.backdrop ? it.backdrop.replace('/w1280/', '/w780/') : null;
-    return `<a class="feat" href="${esc(p.href || it.url)}" ${p.href ? '' : 'target="_blank" rel="noopener"'}>
+    return `<a class="feat" href="${esc(p.href || it.url)}" ${p.href ? '' : `target="_blank" rel="noopener" ${reg(infoFor(it, p.type, p.eye, s ? [s] : null))}`}>
       <span class="f-eye">${esc(p.eye)}</span>
       <span class="f-title">${esc(it.title)}</span>
       <span class="f-sub">${esc(p.sub)}</span>
@@ -384,7 +418,7 @@ function chartList(list, s, k = state.kind) {
   return `<section class="clist" aria-labelledby="cl-h-${k}">
     <div class="row-hd"><h2 class="row-h" id="cl-h-${k}">${s?.store ? 'Films to buy or rent: at a glance' : `Top 10 ${words(k)} at a glance`}</h2>
       <a class="see-all" href="${esc(browse)}">See more in Browse<span class="chev" aria-hidden="true"></span></a></div>
-    <ol class="cl">${list.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener">
+    <ol class="cl">${list.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(chartInfo(it, i, k))}>
       <span class="cl-n">${i + 1}</span>
       ${it.poster ? `<img src="${esc(it.poster)}" alt="" loading="lazy" decoding="async">` : `<span class="cl-ph" style="background:hsl(${hue(it.title)} 45% 35%)"></span>`}
       <span class="cl-t"><b>${esc(it.title)}</b><small>${esc([s ? '' : onText(it), it.season, it.year].filter(Boolean).join(' · '))}</small></span>
@@ -407,7 +441,7 @@ function newRow(s) {
       const sv = svc(x.service), what = x.type === 'movie' ? 'Film' : x.season ? `Season ${x.season}` : 'Series';
       const body = `<span class="nr-art">${x.poster ? `<img src="${esc(x.poster)}" alt="" loading="lazy">` : placeholder({ title: x.title })}${sv?.logo ? `<img class="nr-svc" src="${esc(sv.logo)}" alt="${esc(sv.label)}">` : ''}</span>
         <b>${esc(x.title)}</b><small>${esc(what)} · ${esc(when(x.date))}</small>`;
-      return `<li>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${body}</a>` : `<span>${body}</span>`}</li>`;
+      return `<li>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener" ${reg(infoFor(x, x.type, `New on ${sv?.label || 'streaming'}: ${when(x.date)}`, sv ? [sv] : []))}>${body}</a>` : `<span>${body}</span>`}</li>`;
     }).join('')}</ul>
   </section>`;
 }
@@ -433,7 +467,7 @@ function pageNew() {
         const what = [x.type === 'movie' ? 'Film' : x.season ? `Season ${x.season}` : 'Series', x.original ? `${s?.label} original` : ''].filter(Boolean).join(', ');
         const thumb = x.poster ? `<img class="nl-art" src="${esc(x.poster)}" alt="" loading="lazy">` : `<span class="nl-art" style="background:hsl(${hue(x.title)} 45% 35%)"></span>`;
         return `<li>${thumb}<div class="grow">
-          ${x.url ? `<a class="title" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a>` : `<span class="title">${esc(x.title)}</span>`}
+          ${x.url ? `<a class="title" href="${esc(x.url)}" target="_blank" rel="noopener" ${reg(infoFor(x, x.type, `New on ${s?.label || 'streaming'}`, s ? [s] : []))}>${esc(x.title)}</a>` : `<span class="title">${esc(x.title)}</span>`}
           <span class="what">${esc(what)}</span></div>
           ${s ? `<a class="btn btn-tinted chip" href="#${s.key}">${esc(s.label)}</a>` : ''}</li>`;
       }).join('')}</ul></section>`).join('');
