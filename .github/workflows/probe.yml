@@ -5,8 +5,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          for q in "Netflix ID" "Disney+ movie ID" "Disney+ series ID" "Amazon Prime Video ID" "Max ID" "HBO Max ID" "Paramount+ ID" "Apple TV movie ID" "Apple TV show ID" "TMDB movie ID" "TMDB TV series ID" "Now TV ID" "BBC iPlayer"; do
-            r=$(curl -s -G "https://www.wikidata.org/w/api.php" --data-urlencode "action=wbsearchentities" --data-urlencode "type=property" --data-urlencode "language=en" --data-urlencode "format=json" --data-urlencode "limit=4" --data-urlencode "search=$q" -H "User-Agent: Tenner/1.0 (github.com/danseacroft-lang/Tenner)" | jq -r '[.search[] | "\(.id)=\(.label)"] | join("; ")')
-            echo "::notice title=$q::$r"
+          UA="Tenner/1.0 (github.com/danseacroft-lang/Tenner)"
+          for p in P4983 P4947 P1874 P7595 P7596 P8055 P14440 P8298 P13147 P9586 P9751; do
+            r=$(curl -s "https://www.wikidata.org/wiki/Special:EntityData/$p.json" -H "User-Agent: $UA" | jq -r --arg p "$p" '.entities[$p] | "\(.labels.en.value) | " + ([.claims.P1630[]?.mainsnak.datavalue.value] | join(" , "))')
+            echo "::notice title=$p::$r"
           done
-          ids=$(curl -s -G "https://www.wikidata.org/w/api.php" --data-urlencode "action=wbsearchentities" --data-urlencode "type=property" --data-urlencode "language=en" --data-urlencode "format=json" --data-urlencode "limit=50" --data-urlencode "search=ID" -H "User-Agent: Tenner/1.0" >/dev/null; echo)
+          Q='SELECT ?t ?nf ?dp ?pv ?pv2 ?hb ?pp ?at WHERE { VALUES ?t {"66732" "1396" "100088"} ?i wdt:P4983 ?t . OPTIONAL{?i wdt:P1874 ?nf} OPTIONAL{?i wdt:P7596 ?dp} OPTIONAL{?i wdt:P8055 ?pv} OPTIONAL{?i wdt:P14440 ?pv2} OPTIONAL{?i wdt:P8298 ?hb} OPTIONAL{?i wdt:P13147 ?pp} OPTIONAL{?i wdt:P9751 ?at} }'
+          r=$(curl -s -G https://query.wikidata.org/sparql --data-urlencode "query=$Q" -H "Accept: application/sparql-results+json" -H "User-Agent: $UA" | jq -c '[.results.bindings[] | with_entries(.value |= .value)]')
+          echo "::notice title=sparql::$r"
