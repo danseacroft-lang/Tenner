@@ -54,7 +54,7 @@
         <label><span>Watched up to</span>
           <select data-pr="s" aria-label="Season">${opts(x.sz.length, p ? s : 0, (n) => `Season ${n}`)}${p ? '' : '<option value="" selected>Season</option>'}</select>
           <select data-pr="e" aria-label="Episode"${p ? '' : ' disabled'}>${opts(x.sz[s - 1] || 1, p?.[1] || 0, (n) => `Episode ${n}`)}</select></label>
-        ${up ? `<button type="button" class="btn btn-tinted" data-act="watched">Watched S${up[0]} E${up[1]}</button>` : ''}
+        ${up ? `<button type="button" class="btn btn-tinted" data-act="watched">Mark S${up[0]} E${up[1]} watched</button>` : ''}
         ${p ? '<button type="button" class="btn btn-tinted sh-reset" data-act="reset" aria-label="Clear progress" title="Clear progress">Clear</button>' : ''}
       </div>
       <p class="sh-pstat">${esc(status)}${p && !(p[0] === last[0] && p[1] === last[1]) ? ` · ${x.sz.reduce((a, n) => a + n, 0) - (x.sz.slice(0, p[0] - 1).reduce((a, n) => a + n, 0) + p[1])} episodes to go` : ''}</p>
@@ -97,11 +97,22 @@
       .replace(/\s+(Premium|Kids|Basic|Standard|Essential)$/i, '').replace(/^Paramount\+$/, 'Paramount Plus').trim();
     return NAMES[b] || b;
   };
+  // where each service's own search lives, so a tap lands on the title there
+  const q = (t) => encodeURIComponent(t);
+  const SEARCH = {
+    'Apple TV': (t) => `https://tv.apple.com/gb/search?term=${q(t)}`, 'Apple TV+': (t) => `https://tv.apple.com/gb/search?term=${q(t)}`,
+    'Prime Video': (t) => `https://www.amazon.co.uk/s?k=${q(t)}&i=instant-video`, 'Prime Video Store': (t) => `https://www.amazon.co.uk/s?k=${q(t)}&i=instant-video`,
+    'Google Play Movies': (t) => `https://play.google.com/store/search?q=${q(t)}&c=movies`, 'YouTube': (t) => `https://www.youtube.com/results?search_query=${q(t)}`,
+    'Netflix': (t) => `https://www.netflix.com/search?q=${q(t)}`, 'Disney+': (t) => `https://www.disneyplus.com/search?q=${q(t)}`,
+    'Rakuten TV': (t) => `https://www.rakuten.tv/uk/search?q=${q(t)}`, 'BBC iPlayer': (t) => `https://www.bbc.co.uk/iplayer/search?q=${q(t)}`,
+    'Microsoft Store': (t) => `https://www.microsoft.com/en-gb/search/shop/movies?q=${q(t)}`,
+  };
   function providerList(ids, d, info) {
     const seen = new Set();
     return (ids || []).map((id) => [id, ...(d.providers[id] || [])]).filter(([, n]) => n && !seen.has(brand(n)) && seen.add(brand(n))).map(([id, n, logo]) => {
-      // Netflix titles go straight to Netflix; everything else to the title's TMDB watch page, which links into each app
-      const href = /^Netflix/i.test(n) && info.netflix ? info.netflix : info.watch;
+      // Netflix titles go straight to the title on Netflix; the big stores and services open their own search for the
+      // title (TMDB gives no per-title links into each app); anything else goes to the title's TMDB watch page
+      const go = SEARCH[brand(n)], href = /^Netflix/i.test(n) && info.netflix ? info.netflix : go ? go(info.title) : info.watch;
       return `<a class="sh-prov" href="${esc(href)}" target="_blank" rel="noopener">${logo && d.logo ? `<img src="${esc(d.logo + logo)}" alt="" loading="lazy">` : `<i>${esc(brand(n)[0])}</i>`}<span>${esc(brand(n))}</span></a>`;
     }).join('');
   }
@@ -139,9 +150,9 @@
         </div>
         ${x.tl ? `<p class="sh-tl">${esc(x.tl)}</p>` : ''}
         ${info.overview ? `<p class="sh-ov">${esc(info.overview)}</p>` : ''}
+        <section class="sh-where" aria-labelledby="shW"><h3 id="shW">Where to Watch</h3>${whereHtml(info, d)}</section>
         ${progressHtml(info, x)}
         ${chartHtml(info)}
-        <section class="sh-where" aria-labelledby="shW"><h3 id="shW">Where to Watch</h3>${whereHtml(info, d)}</section>
         <p class="sh-foot">Where-to-watch information from JustWatch, via TMDB.${info.tmdb ? ` <a href="${esc(info.tmdb)}" target="_blank" rel="noopener">More on TMDB</a>` : ''}</p>
       </div>`;
   }

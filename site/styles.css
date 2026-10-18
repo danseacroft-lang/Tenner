@@ -144,6 +144,8 @@ main:focus { outline: none; }
 .tb-btn[aria-expanded="true"] { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
 @media (hover: hover) { .tb-btn:not([aria-expanded="true"]):hover { background: var(--pill); } }
 .tb-btn svg { width: 21px; height: 21px; }
+a.tb-btn:hover { text-decoration: none; }
+.tb-about[aria-current] { color: var(--accent); }
 
 /* the tabs: a capsule of glass with an even specular rim and a soft shadow below; the chosen tab sits under a pill of
    lighter glass that glides (and squashes a little) as it moves, inset evenly so the two shapes stay concentric */
@@ -159,7 +161,6 @@ main:focus { outline: none; }
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }
-.tabs button[data-tab="watchlist"] { display: none; }   /* phones: reached from the "Your Watchlist" row instead */
 .tabs button {
   position: relative; z-index: 1; appearance: none; border: 0; background: none; display: flex; align-items: center; gap: 7px; height: 36px; padding: 0 16px;
   border-radius: 999px; font: 600 15px/1 var(--font); letter-spacing: -.016em; color: var(--label); cursor: pointer; touch-action: manipulation;
@@ -388,7 +389,7 @@ main:focus { outline: none; }
   --edge: max(76px, var(--col));
   position: relative; width: calc(100vw - var(--side, 0px)); margin-left: calc(50% - (100vw - var(--side, 0px)) / 2);
 }
-.feats + .row-wrap { margin-top: 8px; }
+.row-wrap + .feats { margin-top: 30px; }
 .posters {
   list-style: none; margin: 0; padding: 34px var(--col) 14px;
   display: grid; grid-auto-flow: column; grid-auto-columns: var(--cw); gap: 26px;
@@ -530,7 +531,7 @@ main:focus { outline: none; }
   .h-dots button::after { content: ""; display: block; margin: -8px; height: 24px; }   /* a bigger target than it looks */
   .h-dots button[aria-current="true"] { width: 24px; background: var(--label); }
   @media (hover: hover) { .h-dots button:not([aria-current="true"]):hover { background: var(--label2); } }
-  .hero + .feats { margin-top: 10px; }
+  .hero + .row-wrap { margin-top: 4px; }
 }
 
 /* ============================================================ homepage, the Apple Music "New" way
@@ -762,8 +763,7 @@ main:focus { outline: none; }
   .tabs button[aria-selected="true"] { background: var(--fill); color: var(--label); font-weight: 600; }
   .tabs button:active { transform: none; filter: none; background: var(--fill-strong); }
   @media (hover: hover) { .tabs button[aria-selected="false"]:hover { color: var(--label); background: var(--fill); } }
-  .tabs button[data-tab="about"] { display: none; }
-  .tabs button[data-tab="watchlist"] { display: flex; }
+  .top-act > .tb-about { display: none; }   /* About is at the foot of the sidebar */
   /* the small print and the version, then About and Theme at the foot */
   .side-links { margin-top: auto; display: flex; flex-wrap: wrap; gap: 2px 12px; padding: 0 10px; }
   .side-link { padding: 3px 0; border: 0; background: none; color: var(--label2); font: 400 12px/1.3 var(--font); letter-spacing: -.01em; cursor: default; }

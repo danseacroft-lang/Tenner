@@ -590,7 +590,7 @@ function sampleCatalogue() {
 // ---------- main ----------
 async function write(name, obj) {
   await mkdir(OUT, { recursive: true });
-  await writeFile(join(OUT, name), JSON.stringify(obj, null, 1));
+  await writeFile(join(OUT, name), JSON.stringify(obj));   // compact: smaller downloads for every visitor
   console.log('wrote', join('site/data', name));
 }
 

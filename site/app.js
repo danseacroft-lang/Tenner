@@ -208,8 +208,10 @@ function draw() {
 
   const chart = list.length
     ? `${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up. Add your TMDB key and run the workflow to see the real chart.</p>` : ''}
-       ${hero(picks, s)}${s?.store ? '' : features(s)}
-       ${kinds.map((k, r) => `${kinds.length > 1 ? `<h2 class="row-h kind-h">Top 10 ${words(k)}</h2>` : ''}${posterRow(listOf(k), k, r === 0)}${chartList(listOf(k), s, k)}`).join('')}
+       ${hero(picks, s)}
+       ${kinds.map((k, r) => `${kinds.length > 1 ? `<h2 class="row-h kind-h">Top 10 ${words(k)}</h2>` : ''}${posterRow(listOf(k), k, r === 0)}`).join('')}
+       ${s?.store ? '' : features(s)}
+       ${kinds.map((k) => chartList(listOf(k), s, k)).join('')}
        ${s?.store ? '' : savedRow()}${s ? '' : weekRow()}${s?.store ? '' : newRow(s)}`
     : `<div class="empty"><h2>Nothing here right now</h2><p>The chart for ${esc(where)} will be back after the next hourly update.</p><a class="btn btn-tinted" href="#top">See all five services</a></div>`;
   view.innerHTML = `<div class="wrap chart">${chart}</div>`;
@@ -413,12 +415,19 @@ const onText = (it, fallback) => (it.on || []).map((k) => svc(k)?.label).filter(
 function features(s) {
   const shows = s ? s.tv : state.trending.overall.tv, films = s ? s.movie : state.trending.overall.movie;
   const store = services().find((x) => x.store)?.movie || [];
+  // Elsewhere on the charts: what the chart you're looking at doesn't already show (the other kind's No. 1, the No. 1 to
+  // buy or rent, this week's biggest climber), never the No. 1 that's already in the hero and the posters
+  const showing = state.kind === 'both' ? ['tv', 'movie'] : [state.kind];
+  const climb = !s && state.week?.climbers?.find((x) => x.c.startsWith('all:'));
+  const climbIt = climb && (state.trending.overall[climb.c.split(':')[1]] || []).find((it) => wlKey(it, it.type) === climb.k);
   const picks = [
-    shows[0] && { eye: s ? `No. 1 show on ${s.label}` : 'No. 1 show', it: shows[0], type: 'tv', sub: s ? `${shows[0].year || ''}` : `On ${onText(shows[0], 'UK streaming')}` },
-    films[0] && { eye: s ? `No. 1 film on ${s.label}` : 'No. 1 film', it: films[0], type: 'movie', sub: s ? `${films[0].year || ''}` : `On ${onText(films[0], 'UK streaming')}` },
-    s ? shows[1] && { eye: `No. 2 show on ${s.label}`, it: shows[1], type: 'tv', sub: `${shows[1].year || ''}` }
-      : store[0] && { eye: 'No. 1 to buy or rent', it: store[0], type: 'movie', sub: 'Apple TV, Sky Store and others', href: '#store' },
-  ].filter(Boolean);
+    !showing.includes('tv') && shows[0] && { eye: s ? `No. 1 show on ${s.label}` : 'No. 1 show', it: shows[0], type: 'tv', sub: s ? `${shows[0].year || ''}` : `On ${onText(shows[0], 'UK streaming')}` },
+    !showing.includes('movie') && films[0] && { eye: s ? `No. 1 film on ${s.label}` : 'No. 1 film', it: films[0], type: 'movie', sub: s ? `${films[0].year || ''}` : `On ${onText(films[0], 'UK streaming')}` },
+    !s && store[0] && { eye: 'No. 1 to buy or rent', it: store[0], type: 'movie', sub: 'Apple TV, Sky Store and others', href: '#store' },
+    climbIt && { eye: 'Biggest climber this week', it: climbIt, type: climbIt.type, sub: `Up ${climb.by} to No. ${climb.to} in the UK` },
+    s && shows[1] && showing.includes('tv') && { eye: `No. 2 show on ${s.label}`, it: shows[1], type: 'tv', sub: `${shows[1].year || ''}` },
+    s && films[1] && showing.includes('movie') && { eye: `No. 2 film on ${s.label}`, it: films[1], type: 'movie', sub: `${films[1].year || ''}` },
+  ].filter(Boolean).slice(0, 3);
   if (!picks.length) return '';
   return `<section class="feats" aria-label="Highlights"><div class="feat-row">${picks.map((p) => {
     const it = p.it, wide = it.backdrop ? it.backdrop.replace('/w1280/', '/w780/') : null;
@@ -440,7 +449,7 @@ function features(s) {
 // The buy-or-rent chart has no catalogue behind it, so there it stays a list of that chart.
 function topRated(k, s) {
   const c = state.cat; if (!c?.items) return [];
-  const pass = (min) => c.items.filter((x) => x.t === k && x.r && x.v >= min && (s ? x.s.includes(s.key) : x.s.length));
+  const pass = (min) => c.items.filter((x) => x.t === k && x.r && x.v >= min && (s?.store ? x.b : s ? x.s.includes(s.key) : x.s.length));
   let l = pass(300); if (l.length < 10) l = pass(100);   // a smaller service may need a lower bar to fill ten
   return l.sort((a, b) => b.r - a.r || b.v - a.v).slice(0, 10).map((x) => ({
     id: x.i, title: x.n, year: (x.d || '').slice(0, 4), rating: x.r, on: x.s, url: tmdbUrl(k, x.i),
@@ -448,16 +457,17 @@ function topRated(k, s) {
   }));
 }
 function chartList(list, s, k = state.kind) {
-  const rated = !s?.store;
-  if (rated) list = topRated(k, s);
+  // the buy-or-rent chart's list is the best-rated films to buy or rent; if the catalogue has too few, it's left out
+  // rather than repeating the posters above
+  list = topRated(k, s);
   if (!list.length) return '';
-  const q = rated ? { c: 'top', ...(k === 'movie' ? { k: 'movie' } : {}), ...(s ? { s: s.key } : {}) } : { c: 'store', k: 'movie' };
+  const q = s?.store ? { c: 'store', k: 'movie', sort: 'rating' } : { c: 'top', ...(k === 'movie' ? { k: 'movie' } : {}), ...(s ? { s: s.key } : {}) };
   const browse = `browse.html#${new URLSearchParams(q)}`;
   return `<section class="clist" aria-labelledby="cl-h-${k}">
-    <div class="row-hd"><h2 class="row-h" id="cl-h-${k}">${rated ? `Top rated ${words(k).toLowerCase()} at a glance` : 'Films to buy or rent: at a glance'}</h2>
+    <div class="row-hd"><h2 class="row-h" id="cl-h-${k}">${s?.store ? 'Top rated to buy or rent' : `Top rated ${words(k).toLowerCase()} at a glance`}</h2>
       <a class="see-all" href="${esc(browse)}">See more in Browse<span class="chev" aria-hidden="true"></span></a></div>
-    <ol class="cl">${list.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(rated ? infoFor(it, k, `No. ${i + 1} top rated${s ? ` on ${s.label}` : ''}`) : chartInfo(it, i, k))}>
-      <span class="cl-n">${i + 1}${rated ? '' : moveBadge(it)}</span>
+    <ol class="cl">${list.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(infoFor(it, k, `No. ${i + 1} top rated${s?.store ? ' to buy or rent' : s ? ` on ${s.label}` : ''}`))}>
+      <span class="cl-n">${i + 1}</span>
       ${it.poster ? `<img src="${esc(thumb(it.poster))}" alt="" loading="lazy" decoding="async">` : `<span class="cl-ph" style="background:hsl(${hue(it.title)} 45% 35%)"></span>`}
       <span class="cl-t"><b>${esc(it.title)}</b><small>${esc([s ? '' : onText(it), it.season, it.year].filter(Boolean).join(' · '))}</small></span>
       ${it.rating ? `<span class="cl-r">★ ${it.rating.toFixed(1)}</span>` : ''}
