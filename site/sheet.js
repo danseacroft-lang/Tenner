@@ -23,9 +23,15 @@
 
   const runtime = (m) => !m ? '' : m < 60 ? `${m}m` : `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}`;
   // one entry per service: "Netflix" and "Netflix Standard with Ads" are the same place to watch
-  const NAMES = { 'Disney Plus': 'Disney+', 'Amazon Prime Video': 'Prime Video', 'Paramount Plus': 'Paramount+', 'Paramount Plus Apple TV Channel': 'Paramount+ (Apple TV)',
-    'Amazon Video': 'Prime Video Store', 'Apple TV Plus': 'Apple TV+', 'Sky Go': 'Sky Go', 'Now TV': 'NOW', 'NOW TV Cinema': 'NOW Cinema' };
-  const brand = (n) => { const b = n.replace(/\s+(Standard|Basic)?\s*with Ads$/i, '').trim(); return NAMES[b] || b; };
+  // one entry per service: TMDB lists plans and channels separately ("Netflix Standard with Ads", "Paramount+ Amazon
+  // Channel", "Paramount Plus Premium"); they're all the same place to watch, so they fold into the service's own name
+  const NAMES = { 'Disney Plus': 'Disney+', 'Amazon Prime Video': 'Prime Video', 'Paramount Plus': 'Paramount+', 'Apple TV Plus': 'Apple TV+',
+    'Apple TV Store': 'Apple TV', 'Amazon Video': 'Prime Video Store', 'Now TV': 'NOW', 'Now TV Cinema': 'NOW', 'NOW TV Cinema': 'NOW', 'Netflix Kids': 'Netflix' };
+  const brand = (n) => {
+    const b = n.replace(/\s+(Standard|Basic|Premium)?\s*with Ads$/i, '').replace(/\s+(Amazon|Apple TV|Roku Premium)\s+Channel$/i, '')
+      .replace(/\s+(Premium|Kids|Basic|Standard|Essential)$/i, '').replace(/^Paramount\+$/, 'Paramount Plus').trim();
+    return NAMES[b] || b;
+  };
   function providerList(ids, d, info) {
     const seen = new Set();
     return (ids || []).map((id) => [id, ...(d.providers[id] || [])]).filter(([, n]) => n && !seen.has(brand(n)) && seen.add(brand(n))).map(([id, n, logo]) => {
