@@ -67,7 +67,11 @@ function titleShape(d, type, k) {
   const vids = (d.videos?.results || []).filter((v) => v.site === 'YouTube' && /Trailer|Teaser/.test(v.type));
   const trailer = (vids.find((v) => v.type === 'Trailer' && v.official) || vids.find((v) => v.type === 'Trailer') || vids[0])?.key;
   const runtime = type === 'movie' ? d.runtime : (d.episode_run_time?.[0] || d.last_episode_to_air?.runtime || null);
+  const nx = d.next_episode_to_air;
   const item = Object.fromEntries(Object.entries({
+    nx: type === 'tv' && nx?.air_date ? [nx.air_date, nx.season_number, nx.episode_number] : undefined,
+    sz: type === 'tv' ? (d.seasons || []).filter((s) => s.season_number > 0 && s.episode_count > 0).map((s) => s.episode_count) : undefined,
+    en: type === 'tv' && /Ended|Canceled/.test(d.status || '') ? 1 : undefined,
     at: Date.now(), rt: runtime || undefined, se: type === 'tv' ? d.number_of_seasons || undefined : undefined, c: cert || undefined,
     g: (d.genres || []).map((g) => g.name).slice(0, 3), tl: d.tagline || undefined,
     f: ids(gb.flatrate), fr: ids([...(gb.free || []), ...(gb.ads || [])]), re: ids(gb.rent), bu: ids(gb.buy), tr: trailer,

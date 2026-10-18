@@ -325,6 +325,65 @@ export function addMovement(data, prev, now = new Date()) {
   return h;
 }
 
+// ---------- Trackers from the same history: each title's recent ranks, and the week's round-up ----------
+// trail.json: for every charted title, its rank in its main chart (the UK chart if it's there, else its service's)
+//   by day for the last 10 days and by hour for the last 24, for the little line in the title sheet (0 = not in it).
+// week.json: "This week on Tenner": the biggest climbers, new arrivals and each chart's No. 1, against a week ago
+//   (or the oldest day kept, while the history is still building up).
+export function buildTrackers(data, h, now = new Date()) {
+  const keyOf = (it) => (/^\d+$/.test(String(it.id)) ? `${it.type === 'movie' ? 'm' : 't'}${it.id}` : `x${it.title}`);
+  const days = Object.keys(h.days).sort(), hours = Object.keys(h.hours).sort().slice(-24);
+  const label = Object.fromEntries((data.services || []).map((s) => [s.key, s.label]));
+  const charts = {}, info = {};
+  for (const sv of data.services || []) if (!sv.store) for (const t of ['tv', 'movie']) if (sv[t]?.length) charts[`${sv.key}:${t}`] = sv[t];   // streaming charts (not buy or rent)
+  for (const t of ['tv', 'movie']) if (data.overall?.[t]?.length) charts[`all:${t}`] = data.overall[t];
+  for (const list of Object.values(charts)) for (const it of list) {
+    const k = keyOf(it); if (info[k] || k[0] === 'x') continue;
+    info[k] = { title: it.title, type: it.type, id: it.id, year: it.year || null, poster: it.poster || null, on: it.on || [] };
+  }
+  // ---- trail
+  const rank = (snap, c, k) => (snap?.[c] ? snap[c].indexOf(k) + 1 : 0);
+  const trail = { generatedAt: data.generatedAt, days, hours: hours.map((x) => `${x}:00:00Z`), items: {} };
+  for (const k of Object.keys(info)) {
+    const t = info[k].type, seen = (c) => days.filter((d) => rank(h.days[d], c, k)).length + hours.filter((x) => rank(h.hours[x], c, k)).length;
+    const cands = [`all:${t}`, ...Object.keys(label).map((s) => `${s}:${t}`)].filter((c) => seen(c));
+    if (!cands.length) continue;
+    const c = cands.includes(`all:${t}`) ? `all:${t}` : cands.sort((a, b) => seen(b) - seen(a))[0];
+    trail.items[k] = { c, d: days.map((d) => rank(h.days[d], c, k)), h: hours.map((x) => rank(h.hours[x], c, k)) };
+  }
+  // ---- the week
+  const today = now.toISOString().slice(0, 10);
+  const back = days.filter((d) => d < today && (now - Date.parse(`${d}T12:00:00Z`)) / 864e5 <= 7.5);
+  const refDay = back[0] || null;   // a week ago, or the oldest day we have
+  const oldHour = Object.keys(h.hours).sort()[0];
+  const was = refDay ? h.days[refDay] : h.hours[oldHour];
+  const since = refDay ? `${refDay}T12:00:00Z` : oldHour ? `${oldHour}:00:00Z` : null;
+  const nowSnap = Object.fromEntries(Object.entries(charts).map(([c, l]) => [c, l.map(keyOf)]));
+  const climbers = [], arrivals = [], ones = [];
+  for (const [c, list] of Object.entries(nowSnap)) {
+    list.forEach((k, i) => {
+      if (!info[k]) return;
+      const j = was?.[c]?.indexOf(k) ?? -1;
+      if (j > i) climbers.push({ k, c, from: j + 1, to: i + 1, by: j - i });
+      if (c.startsWith('all:') && was && !Object.values(was).some((l) => l.includes(k))) arrivals.push({ k, c, to: i + 1 });   // nowhere in the charts a week ago
+    });
+    if (list[0] && info[list[0]]) {
+      let n = 0; for (const d of [...days].reverse()) { if (h.days[d]?.[c]?.[0] === list[0]) n++; else break; }
+      ones.push({ k: list[0], c, days: Math.max(1, n), fresh: !!was?.[c] && was[c][0] !== list[0] });
+    }
+  }
+  const best = new Map(); for (const x of climbers.sort((a, b) => b.by - a.by || a.to - b.to)) if (!best.has(x.k)) best.set(x.k, x);
+  const used = new Set([...[...best.keys()].slice(0, 8), ...arrivals.map((x) => x.k), ...ones.map((x) => x.k)]);
+  const week = {
+    generatedAt: data.generatedAt, since, days: refDay ? Math.round((Date.parse(`${today}T12:00:00Z`) - Date.parse(`${refDay}T12:00:00Z`)) / 864e5) : 0,
+    labels: { all: 'the UK', ...label },
+    climbers: [...best.values()].slice(0, 8), arrivals: arrivals.sort((a, b) => a.to - b.to).slice(0, 8),
+    ones: ones.sort((a, b) => (a.c.startsWith('all:') ? -1 : 0) - (b.c.startsWith('all:') ? -1 : 0) || b.days - a.days),
+    items: Object.fromEntries([...used].filter((k) => info[k]).map((k) => [k, info[k]])),
+  };
+  return { trail, week };
+}
+
 // ---------- Title details: where to watch in the UK, runtime, age rating, trailer ----------
 // One TMDB request per title (details plus watch providers, videos and UK certification), so Tenner can show where to
 // watch without sending people elsewhere. Charted titles refresh every hour; the rest of the Browse catalogue at most
@@ -354,7 +413,11 @@ export async function buildTitles(chartKeys, catalogueKeys, prev) {
     const vids = (d.videos?.results || []).filter((v) => v.site === 'YouTube' && /Trailer|Teaser/.test(v.type));
     const trailer = (vids.find((v) => v.type === 'Trailer' && v.official) || vids.find((v) => v.type === 'Trailer') || vids[0])?.key;
     const runtime = type === 'movie' ? d.runtime : (d.episode_run_time?.[0] || d.last_episode_to_air?.runtime || null);
+    const nx = d.next_episode_to_air;   // shows: the next episode's date, for the countdown
     items[k] = Object.fromEntries(Object.entries({
+      nx: type === 'tv' && nx?.air_date ? [nx.air_date, nx.season_number, nx.episode_number] : undefined,
+      sz: type === 'tv' ? (d.seasons || []).filter((s) => s.season_number > 0 && s.episode_count > 0).map((s) => s.episode_count) : undefined,
+      en: type === 'tv' && /Ended|Canceled/.test(d.status || '') ? 1 : undefined,
       at: Date.now(), rt: runtime || undefined, se: type === 'tv' ? d.number_of_seasons || undefined : undefined, c: cert || undefined,
       g: (d.genres || []).map((g) => g.name).slice(0, 3), tl: d.tagline || undefined,
       f: ids(gb.flatrate), fr: ids([...(gb.free || []), ...(gb.ads || [])]), re: ids(gb.rent), bu: ids(gb.buy), tr: trailer,
@@ -542,8 +605,25 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     for (const sv of trending.services) for (const t of ['tv', 'movie']) for (const it of sv[t] || []) {
       const n = it.id; sItems[`${t[0]}${n}`] = { at: Date.now(), rt: t === 'movie' ? 88 + (n * 7) % 60 : 40 + (n * 3) % 25, se: t === 'tv' ? 1 + n % 4 : undefined,
         c: ['U', 'PG', '12', '15', '18'][n % 5], g: ['Drama', 'Comedy', 'Crime'].slice(0, 1 + n % 3), tl: n % 2 ? 'A fictional tagline for a sample title.' : undefined,
-        f: sv.store ? [] : [[8, 337, 9, 1899][n % 4]], fr: n % 5 === 0 ? [9] : [], re: [2, 130].slice(0, 1 + n % 2), bu: [2], tr: undefined };
+        f: sv.store ? [] : [[8, 337, 9, 1899][n % 4]], fr: n % 5 === 0 ? [9] : [], re: [2, 130].slice(0, 1 + n % 2), bu: [2], tr: undefined,
+        nx: t === 'tv' && n % 3 === 0 ? [new Date(Date.now() + (1 + n % 9) * 864e5).toISOString().slice(0, 10), 1 + n % 4, 3 + n % 6] : undefined,
+        sz: t === 'tv' ? Array.from({ length: 1 + n % 4 }, (_, s) => 6 + ((n + s) % 5)) : undefined };
     }
+    // sample trackers: a made-up week of charts (each day nudged a little), so the history and round-up can be tried
+    let sh = { v: 1, hours: {}, days: {} };
+    const keyOf = (it) => `${it.type === 'movie' ? 'm' : 't'}${it.id}`;
+    for (let i = 7; i >= 0; i--) {
+      const when = new Date(Date.now() - i * 864e5), snap = {};
+      const jig = (k) => [...k].reduce((n, ch) => n + ch.charCodeAt(0), 0);
+      const nudge = (list) => { const k = list.map(keyOf).map((key, j) => [key, j + (i ? ((jig(key) + i * 7) % 7) - 3 : 0)]).sort((p, q) => p[1] - q[1]).map((p) => p[0]); return i > 4 ? k.slice(0, -2) : k; };
+      for (const sv of trending.services) for (const t of ['tv', 'movie']) if (sv[t]?.length) snap[`${sv.key}:${t}`] = nudge(sv[t]);
+      for (const t of ['tv', 'movie']) snap[`all:${t}`] = nudge(trending.overall[t]);
+      sh.days[when.toISOString().slice(0, 10)] = snap;
+      if (i === 0) for (let x = 23; x >= 1; x--) sh.hours[new Date(Date.now() - x * 3600e3).toISOString().slice(0, 13)] = x > 12 ? sh.days[new Date(Date.now() - 864e5).toISOString().slice(0, 10)] : snap;
+    }
+    sh = addMovement(trending, sh);
+    const st = buildTrackers(trending, sh);
+    await write('trending.json', trending); await write('trail.json', st.trail); await write('week.json', st.week);
     await write('titles.json', { v: 1, generatedAt: trending.generatedAt, logo: '', providers: sp, items: sItems, sample: true });
     const sc = sampleCatalogue();
     await write('browse.json', sc);
@@ -590,7 +670,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     }
     // chart movement, only when the chart is fresh (a kept chart has nothing new to compare)
     if (built) {
-      try { await write('history.json', addMovement(data, await liveCopy('history.json'))); }
+      try {
+        const h = addMovement(data, await liveCopy('history.json'));
+        await write('history.json', h);
+        const { trail, week } = buildTrackers(data, h);
+        await write('trail.json', trail); await write('week.json', week);
+      }
       catch (err) { warn('Movement', `couldn't work out chart movement (${err.message})`); }
     }
     await write('trending.json', data);

@@ -88,12 +88,28 @@
     },
     remove(k) { saved.set(saved.all().filter((x) => x.k !== k)); },
   };
-  addEventListener('storage', (e) => { if (e.key === WL) dispatchEvent(new Event('tn:saved')); });
+  // where you're up to in a show: { k: [season, episode] } (the last episode you've watched), also on this device only
+  const PR = 'tenner-progress';
+  const progress = {
+    all() { try { return JSON.parse(localStorage.getItem(PR) || '{}') || {}; } catch { return {}; } },
+    get(k) { const p = progress.all()[k]; return Array.isArray(p) && p.length === 2 ? p : null; },
+    set(k, p) { const all = progress.all(); if (p) all[k] = p; else delete all[k]; try { localStorage.setItem(PR, JSON.stringify(all)); } catch {} dispatchEvent(new Event('tn:saved')); },
+  };
+  // the next episode to watch after [s, e], given each season's episode count; null when you're caught up
+  const nextUp = (p, sz) => { if (!p) return [1, 1]; const [s, e] = p; if (sz?.[s - 1] && e < sz[s - 1]) return [s, e + 1]; if (sz && s < sz.length) return [s + 1, 1]; return sz ? null : [s, e + 1]; };
+  // "Today", "Tomorrow", "Fri 24 Oct (in 6 days)": when the next episode lands
+  const whenText = (iso) => {
+    const d = new Date(iso + 'T12:00:00'), t = new Date(); t.setHours(12, 0, 0, 0);
+    const n = Math.round((d - t) / 864e5);
+    return n <= 0 ? (n === 0 ? 'Today' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })) : n === 1 ? 'Tomorrow'
+      : n < 7 ? d.toLocaleDateString('en-GB', { weekday: 'long' }) : d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+  };
+  addEventListener('storage', (e) => { if (e.key === WL || e.key === PR) dispatchEvent(new Event('tn:saved')); });
 
   // ---------- the search API (worker/, on Cloudflare): every film and show on TMDB. Empty until it's deployed ----------
   const api = 'https://tenner-api.danseacroft.workers.dev';
 
-  window.tn = { esc, hue, glide, arrows, segment, reduce, contact, saved, api };
+  window.tn = { esc, hue, glide, arrows, segment, reduce, contact, saved, progress, nextUp, whenText, api };
 
   // ---------- tabs ----------
   const tabs = [...document.querySelectorAll('#tabs [role=tab]')], ind = $('#tabInd'), names = tabs.map((t) => t.dataset.tab);

@@ -15,13 +15,14 @@ const pad = (n) => String(n).padStart(2, '0');
 // ---------- data ----------
 async function fetchData(bust) {
   const v = `?v=${bust ? Date.now() : Math.floor(Date.now() / 600000)}`;
-  const [trending, fresh, cat] = await Promise.all([
+  const [trending, fresh, cat, week] = await Promise.all([
     fetch('data/trending.json' + v, { cache: bust ? 'no-store' : 'default' })
       .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }),
     fetch('data/new.json' + v).then((r) => (r.ok ? r.json() : null)).catch(() => null),
     fetch('data/browse.json' + v).then((r) => (r.ok ? r.json() : null)).catch(() => null),   // for "Top rated at a glance"
+    fetch('data/week.json' + v).then((r) => (r.ok ? r.json() : null)).catch(() => null),     // for "This Week"
   ]);
-  return { trending, fresh, cat };
+  return { trending, fresh, cat, week };
 }
 
 async function load() {
@@ -152,7 +153,7 @@ async function refresh(quiet) {
   try {
     const d = await fetchData(true);
     const changed = d.trending.generatedAt !== state.trending.generatedAt || d.fresh?.generatedAt !== state.fresh?.generatedAt;
-    if (changed) { const y = scrollY; Object.assign(state, d, { cat: d.cat || state.cat }); render(); requestAnimationFrame(() => scrollTo(0, y)); }
+    if (changed) { const y = scrollY; Object.assign(state, d, { cat: d.cat || state.cat, week: d.week || state.week }); render(); requestAnimationFrame(() => scrollTo(0, y)); }
     if (!quiet) toast(changed ? 'New chart loaded' : "You're up to date");
   } catch {
     if (!quiet) toast("Couldn't check right now. Try again in a moment.");   // quietly: the next check catches up
@@ -165,9 +166,9 @@ addEventListener('tn:check', () => refresh(true));
 // ---------- routing ----------
 function route() {
   const h = location.hash.slice(1);
-  state.route = h === 'new' || h === 'watchlist' || svc(h) ? h : 'top';
+  state.route = h === 'new' || h === 'watchlist' || h === 'week' || svc(h) ? h : 'top';
   if (svc(state.route)?.store) state.kind = 'movie';
-  if (state.route !== 'new' && state.route !== 'watchlist') state.lastChart = state.route;
+  if (!['new', 'watchlist', 'week'].includes(state.route)) state.lastChart = state.route;
   render();
 }
 
@@ -180,10 +181,11 @@ function morph(fn) {
   document.startViewTransition(fn);
 }
 function draw() {
-  selectTab(state.route === 'new' || state.route === 'watchlist' ? state.route : 'top');
+  selectTab(state.route === 'new' || state.route === 'watchlist' ? state.route : state.route === 'week' ? 'new' : 'top');
   document.querySelectorAll('.kind [data-kind]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.kind === state.kind)));
   const isNew = state.route === 'new';
-  $('#controls').hidden = isNew || state.route === 'watchlist';
+  $('#controls').hidden = isNew || state.route === 'watchlist' || state.route === 'week';
+  if (state.route === 'week') { shown = new Map(); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWeek()}</div>`; document.title = 'This Week | Tenner'; openFromUrl(); return; }
   if (state.route === 'watchlist') { shown = new Map(); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWatchlist()}</div>`; document.title = 'Watchlist | Tenner'; openFromUrl(); wantTitles(); return; }
   if (isNew) { shown = new Map(); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; document.title = 'New This Week | Tenner'; openFromUrl(); return; }
 
@@ -208,7 +210,7 @@ function draw() {
     ? `${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up. Add your TMDB key and run the workflow to see the real chart.</p>` : ''}
        ${hero(picks, s)}${s?.store ? '' : features(s)}
        ${kinds.map((k, r) => `${kinds.length > 1 ? `<h2 class="row-h kind-h">Top 10 ${words(k)}</h2>` : ''}${posterRow(listOf(k), k, r === 0)}${chartList(listOf(k), s, k)}`).join('')}
-       ${s?.store ? '' : savedRow()}${s?.store ? '' : newRow(s)}`
+       ${s?.store ? '' : savedRow()}${s ? '' : weekRow()}${s?.store ? '' : newRow(s)}`
     : `<div class="empty"><h2>Nothing here right now</h2><p>The chart for ${esc(where)} will be back after the next hourly update.</p><a class="btn btn-tinted" href="#top">See all five services</a></div>`;
   view.innerHTML = `<div class="wrap chart">${chart}</div>`;
   openFromUrl();
@@ -493,9 +495,24 @@ function chartSpots() {
   return spots;
 }
 const wlInfo = (x, eye) => ({ k: x.k, type: x.type, eye, title: x.title, year: x.year, poster: x.poster, tmdb: tmdbUrl(x.type, x.k.slice(1)), services: [] });
-function wantTitles() {   // where-to-watch for the list comes from the title details, loaded once
-  if (state.titles || !window.tnSheet?.details) return;
-  window.tnSheet.details().then((d) => { if (d && !state.titles) { state.titles = d; if (state.route === 'watchlist') render(); } });
+// The list's details (where to watch, next episode, season sizes) come from data/titles.json; saved shows Tenner
+// doesn't follow are looked up once each through the search API.
+const det = (k) => state.titles?.items?.[k] || state.extra?.[k];
+function wantTitles() {
+  if (!window.tnSheet?.details) return;
+  const more = () => {
+    const api = window.tn.api; if (!api) return;
+    const miss = window.tn.saved.all().filter((x) => x.type === 'tv' && !det(x.k) && !(state.asked ||= new Set()).has(x.k)).slice(0, 30);
+    if (!miss.length) return;
+    miss.forEach((x) => state.asked.add(x.k));
+    Promise.all(miss.map((x) => fetch(`${api}/title/${x.k}`).then((r) => (r.ok ? r.json() : null)).catch(() => null))).then((rs) => {
+      state.extra ||= {};
+      rs.forEach((r) => { if (r?.items) Object.assign(state.extra, r.items); });
+      if (rs.some(Boolean) && state.route === 'watchlist') render();
+    });
+  };
+  if (state.titles) return more();
+  window.tnSheet.details().then((d) => { if (d && !state.titles) { state.titles = d; if (state.route === 'watchlist') render(); } more(); });
 }
 function pageWatchlist() {
   const list = window.tn.saved.all(), spots = chartSpots(), d = state.titles;
@@ -512,17 +529,36 @@ function pageWatchlist() {
     : `<ul class="list wl">${list.map((x) => {
         const spot = spots.get(x.k), sh = reg(wlInfo(x, spot || 'In your Watchlist'));
         const what = [x.type === 'movie' ? 'Film' : 'Series', x.year].filter(Boolean).join(' · ');
-        const thumb = x.poster ? `<img class="nl-art" src="${esc(thumb(x.poster))}" alt="" loading="lazy">` : `<span class="nl-art" style="background:hsl(${hue(x.title)} 45% 35%)"></span>`;
-        return `<li>${thumb}<div class="grow">
+        const art = x.poster ? `<img class="nl-art" src="${esc(thumb(x.poster))}" alt="" loading="lazy">` : `<span class="nl-art" style="background:hsl(${hue(x.title)} 45% 35%)"></span>`;
+        return `<li>${art}<div class="grow">
           <a class="title" href="${esc(tmdbUrl(x.type, x.k.slice(1)))}" target="_blank" rel="noopener" ${sh}>${esc(x.title)}</a>
-          <span class="what">${esc(what)}${spot ? ` · <b class="wl-spot">${esc(spot)}</b>` : ''}</span></div>
+          <span class="what">${esc(what)}${spot ? ` · <b class="wl-spot">${esc(spot)}</b>` : ''}</span>${showLine(x)}</div>
           <span class="wl-on">${onLogos(x.k)}</span>
           <button type="button" class="btn btn-icon wl-x" data-unsave="${esc(x.k)}" aria-label="Remove ${esc(x.title)} from your Watchlist" title="Remove">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></li>`;
       }).join('')}</ul>`;
   return `<h1 class="large-title page-title">Watchlist</h1>
     <p class="lede">${list.length ? `${list.length} title${list.length === 1 ? '' : 's'}, newest first. ` : ''}Saved on this device only: no account, nothing sent anywhere.</p>
-    ${body}`;
+    ${comingUp(list)}${body}`;
+}
+// shows: where you're up to, and when the next episode lands
+function showLine(x) {
+  if (x.type !== 'tv') return '';
+  const d = det(x.k), p = window.tn.progress.get(x.k), up = p && window.tn.nextUp(p, d?.sz);
+  const bits = [p ? (up ? `<b class="wl-go">Continue S${up[0]} E${up[1]}</b>` : '<b class="wl-go">All caught up</b>') : '',
+    d?.nx ? `New episode ${esc(window.tn.whenText(d.nx[0]))}` : d?.en ? 'Ended' : ''].filter(Boolean);
+  return bits.length ? `<span class="what wl-next">${bits.join(' · ')}</span>` : '';
+}
+// Coming up: new episodes of your saved shows over the next month, soonest first
+function comingUp(list) {
+  const today = new Date().toISOString().slice(0, 10), soon = new Date(Date.now() + 31 * 864e5).toISOString().slice(0, 10);
+  const items = list.filter((x) => x.type === 'tv' && det(x.k)?.nx && det(x.k).nx[0] >= today && det(x.k).nx[0] <= soon)
+    .sort((a, b) => det(a.k).nx[0].localeCompare(det(b.k).nx[0]));
+  if (!items.length) return '';
+  return `<section class="nrow wl-soon" aria-labelledby="cu-h"><h2 class="row-h" id="cu-h">Coming Up</h2>
+    <ul class="nr">${items.map((x) => { const n = det(x.k).nx; return `<li><a href="${esc(tmdbUrl('tv', x.k.slice(1)))}" target="_blank" rel="noopener" ${reg(wlInfo(x, `New episode ${window.tn.whenText(n[0])}`))}>
+      <span class="nr-art">${x.poster ? `<img src="${esc(x.poster)}" alt="" loading="lazy">` : placeholder({ title: x.title })}<span class="cu-when">${esc(window.tn.whenText(n[0]))}</span></span>
+      <b>${esc(x.title)}</b><small>Season ${n[1]}, episode ${n[2]}</small></a></li>`; }).join('')}</ul></section>`;
 }
 // On the Top 10: your saved titles as a row of posters, the way into the Watchlist on phones
 function savedRow() {
@@ -544,6 +580,43 @@ view.addEventListener('click', (e) => {
 // saving or removing (here, in a sheet or in another tab) redraws the Watchlist and the row
 addEventListener('tn:sheet-closed', () => { if (state.savedDirty) { state.savedDirty = false; const y = scrollY; draw(); scrollTo(0, y); } });
 addEventListener('tn:saved', () => { if (state.trending && !window.tnSheet?.isOpen?.()) { const y = scrollY; draw(); scrollTo(0, y); } else state.savedDirty = true; });
+
+// ---------- This Week: the round-up (data/week.json, rebuilt hourly from the chart history) ----------
+const chartName = (c, w = state.week) => { const [s, t] = c.split(':'); return `${t === 'movie' ? 'film' : 'show'} ${s === 'all' ? 'in the UK' : `on ${w?.labels?.[s] || s}`}`; };
+const weekInfo = (x, eye) => { const it = state.week.items[x.k]; return it ? infoFor(it, it.type, eye) : null; };
+const sinceText = (w) => !w?.since ? '' : w.days >= 6 ? 'over the last week' : w.days >= 1 ? `since ${new Date(w.since).toLocaleDateString('en-GB', { weekday: 'long' })}` : 'since yesterday';
+function weekCard(x, sub) {
+  const it = state.week.items[x.k]; if (!it) return '';
+  return `<li><a href="${esc(tmdbUrl(it.type, it.id))}" target="_blank" rel="noopener" ${reg(weekInfo(x, sub))}>
+    <span class="nr-art">${it.poster ? `<img src="${esc(it.poster)}" alt="" loading="lazy">` : placeholder(it)}</span>
+    <b>${esc(it.title)}</b><small>${esc(sub)}</small></a></li>`;
+}
+function pageWeek() {
+  const w = state.week;
+  if (!w || (!w.climbers?.length && !w.ones?.length)) return `<h1 class="large-title page-title">This Week</h1>
+    <div class="empty"><h2>Building up</h2><p>The round-up fills in as Tenner keeps an eye on the charts. Check back tomorrow.</p><a class="btn btn-tinted" href="#top">See the top 10</a></div>`;
+  const ones = w.ones.filter((x, i, all) => w.items[x.k] && all.findIndex((y) => y.k === x.k) === i);   // once each, its biggest chart first
+  const sec = (id, title, sub, inner) => inner ? `<section class="wk" aria-labelledby="${id}"><div class="wk-hd"><h2 class="row-h" id="${id}">${title}</h2>${sub ? `<p>${esc(sub)}</p>` : ''}</div>${inner}</section>` : '';
+  return `<h1 class="large-title page-title">This Week</h1>
+    <p class="lede">What moved on the UK's charts ${esc(sinceText(w))}, rebuilt every hour.${w.days < 6 ? ' The full week builds up over seven days.' : ''}</p>
+    ${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up.</p>` : ''}
+    ${sec('wk-1', 'The No. 1s', 'Top of each chart right now, and for how long', `<ul class="nr">${ones.map((x) => weekCard(x, `${x.fresh ? 'New No. 1 ' : 'No. 1 '}${chartName(x.c)}${x.days > 1 ? ` · ${x.days} days` : ''}`)).join('')}</ul>`)}
+    ${sec('wk-2', 'Biggest Climbers', `Up the most places ${sinceText(w)}`, w.climbers.length ? `<ol class="wk-list">${w.climbers.filter((x) => w.items[x.k]).map((x) => {
+      const it = w.items[x.k];
+      return `<li><a href="${esc(tmdbUrl(it.type, it.id))}" target="_blank" rel="noopener" ${reg(weekInfo(x, `Up ${x.by} to No. ${x.to} ${chartName(x.c)}`))}>
+        ${it.poster ? `<img src="${esc(thumb(it.poster))}" alt="" loading="lazy">` : `<span class="cl-ph" style="background:hsl(${hue(it.title)} 45% 35%)"></span>`}
+        <span class="cl-t"><b>${esc(it.title)}</b><small>No. ${x.from} → No. ${x.to} ${esc(chartName(x.c))}</small></span>
+        <span class="mv up">▲${x.by}</span></a></li>`; }).join('')}</ol>` : '')}
+    ${sec('wk-3', 'New Arrivals', `In the UK's top 10 now, nowhere in the charts ${w.days >= 6 ? 'a week ago' : 'before'}`, w.arrivals.length ? `<ul class="nr">${w.arrivals.map((x) => weekCard(x, `New at No. ${x.to} ${chartName(x.c)}`)).join('')}</ul>` : '')}`;
+}
+// On the Top 10: a taste of the week, the way in
+function weekRow() {
+  const w = state.week; if (!w?.climbers?.length) return '';
+  return `<section class="nrow" aria-labelledby="wk-h">
+    <h2 class="row-h" id="wk-h"><a href="#week">This Week<span class="chev" aria-hidden="true"></span></a></h2>
+    <ul class="nr">${w.climbers.slice(0, 8).map((x) => weekCard(x, `▲${x.by} to No. ${x.to} ${chartName(x.c)}`)).join('')}</ul>
+  </section>`;
+}
 
 function pageNew() {
   const f = state.fresh;
@@ -572,7 +645,7 @@ function pageNew() {
       }).join('')}</ul></section>`).join('');
   }
   return `<h1 class="large-title page-title">New This Week</h1>
-    <p class="lede">Arriving over the last and next seven days. Dates come from US listings, so a few UK dates may differ.</p>
+    <p class="lede">Arriving over the last and next seven days. Dates come from US listings, so a few UK dates may differ.${state.week?.climbers?.length ? ' <a href="#week">See what moved on the charts this week</a>.' : ''}</p>
     ${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up.</p>` : ''}
     ${body}`;
 }
@@ -660,7 +733,7 @@ function openTab(name) {
   if (name === 'about') { location.href = 'about.html'; return; }
   if (name === 'browse') { location.href = 'browse.html'; return; }
   if (name === 'search') { location.href = 'browse.html#search'; return; }
-  const at = state.route === 'new' || state.route === 'watchlist' ? state.route : 'top';
+  const at = state.route === 'new' || state.route === 'watchlist' ? state.route : state.route === 'week' ? 'new' : 'top';
   if (name === at) { scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }); return; } // tap the open tab: back to the top
   location.hash = name === 'new' || name === 'watchlist' ? name : (state.lastChart || 'top');
 }

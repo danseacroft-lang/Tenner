@@ -4,7 +4,62 @@
 // card on computers. The address gains ?t=… so a title can be shared, and Back closes it.
 // Details come from data/titles.json (rebuilt hourly), fetched the first time a sheet opens.
 (() => {
-  const { esc, hue, reduce, saved } = window.tn;
+  const { esc, hue, reduce, saved, progress, nextUp, whenText } = window.tn;
+  // the chart history (data/trail.json: each charted title's recent ranks), loaded with the first sheet
+  let trailP = null;
+  const trail = () => (trailP ||= fetch(`data/trail.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
+  addEventListener('tn:check', () => { trailP = null; });
+  let trailD = null;
+  const CHART = { all: 'in the UK', netflix: 'on Netflix', disney: 'on Disney+', prime: 'on Prime Video', hbomax: 'on HBO Max', paramount: 'on Paramount+' };
+
+  // ---------- trackers ----------
+  // On the chart: a small line of the title's rank (No. 1 at the top) over the last week, or the last day while the
+  // history is still building up. Gaps where it was out of the top 10.
+  function chartHtml(info) {
+    const t = trailD?.items?.[info.k]; if (!t) return '';
+    const byDay = t.d.filter(Boolean).length >= 3, r = byDay ? t.d : t.h, when = byDay ? trailD.days : trailD.hours;
+    if (r.filter(Boolean).length < 2) return '';
+    const W = 300, H = 92, px = (i) => 8 + (i * (W - 16)) / Math.max(1, r.length - 1), py = (n) => 10 + ((n - 1) * (H - 20)) / 9;
+    let path = '', pen = false;
+    r.forEach((n, i) => { if (!n) { pen = false; return; } path += `${pen ? 'L' : 'M'}${px(i).toFixed(1)} ${py(n).toFixed(1)}`; pen = true; });
+    const dots = r.map((n, i) => (n ? `<circle cx="${px(i).toFixed(1)}" cy="${py(n).toFixed(1)}" r="${i === r.length - 1 ? 4 : 2.4}"${i === r.length - 1 ? ' class="now"' : ''}/>` : '')).join('');
+    const label = (s) => (byDay ? new Date(s + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short' }) : new Date(s).toLocaleTimeString('en-GB', { hour: 'numeric' }));
+    const now = r.at(-1), best = Math.min(...r.filter(Boolean)), inTop = r.filter(Boolean).length;
+    const where = CHART[t.c.split(':')[0]] || '';
+    const summary = [now ? `No. ${now} ${where} now` : `Out of the top 10 ${where} now`, `best No. ${best}`,
+      byDay ? `${inTop} of the last ${r.length} days in the top 10` : 'over the last 24 hours'].join(' · ');
+    return `<section class="sh-track" aria-labelledby="shC"><h3 id="shC">On the Chart</h3><p class="sh-tsum">${esc(summary)}</p>
+      <svg class="sh-spark" viewBox="0 0 ${W} ${H + 16}" role="img" aria-label="${esc(summary)}">
+        <defs><linearGradient id="shG" x1="0" x2="1"><stop offset="0" stop-color="#ff375f"/><stop offset=".35" stop-color="#ff9f0a"/><stop offset=".65" stop-color="#0a84ff"/><stop offset="1" stop-color="#bf5af2"/></linearGradient></defs>
+        <line x1="8" x2="${W - 8}" y1="${py(1)}" y2="${py(1)}" class="g"/><line x1="8" x2="${W - 8}" y1="${py(10)}" y2="${py(10)}" class="g"/>
+        <text x="${W - 8}" y="${py(1) - 3}" class="y">No. 1</text><text x="${W - 8}" y="${py(10) - 3}" class="y">No. 10</text>
+        <path d="${path}" class="ln"/>${dots}
+        <text x="8" y="${H + 12}" class="x">${esc(label(when[0]))}</text><text x="${W - 8}" y="${H + 12}" class="x" text-anchor="end">${byDay ? 'Today' : 'Now'}</text>
+      </svg></section>`;
+  }
+  // Shows: when the next episode lands, and where you're up to (kept on this device)
+  function nextHtml(info, x) {
+    if (info.type !== 'tv') return '';
+    if (x.nx) return `<p class="sh-next"><b>New episode ${esc(whenText(x.nx[0]))}</b><span>Season ${x.nx[1]}, episode ${x.nx[2]}</span></p>`;
+    return x.en ? '<p class="sh-next done"><b>Series ended</b></p>' : '';
+  }
+  function progressHtml(info, x) {
+    if (info.type !== 'tv' || !info.k || !x.sz?.length) return '';
+    const p = progress.get(info.k), up = nextUp(p, x.sz), last = [x.sz.length, x.sz.at(-1)];
+    const s = p?.[0] || 1;
+    const opts = (n, cur, f) => Array.from({ length: n }, (_, i) => `<option value="${i + 1}"${i + 1 === cur ? ' selected' : ''}>${f(i + 1)}</option>`).join('');
+    const status = !p ? 'Not started' : up ? `Up next: S${up[0]} E${up[1]}` : x.nx ? `All caught up · new episode ${whenText(x.nx[0])}` : 'All caught up';
+    return `<section class="sh-prog" aria-labelledby="shP"><h3 id="shP">Your Progress</h3>
+      <div class="sh-prow">
+        <label><span>Watched up to</span>
+          <select data-pr="s" aria-label="Season">${opts(x.sz.length, p ? s : 0, (n) => `Season ${n}`)}${p ? '' : '<option value="" selected>Season</option>'}</select>
+          <select data-pr="e" aria-label="Episode"${p ? '' : ' disabled'}>${opts(x.sz[s - 1] || 1, p?.[1] || 0, (n) => `Episode ${n}`)}</select></label>
+        ${up ? `<button type="button" class="btn btn-tinted" data-act="watched">Watched S${up[0]} E${up[1]}</button>` : ''}
+        ${p ? '<button type="button" class="btn btn-tinted sh-reset" data-act="reset" aria-label="Clear progress" title="Clear progress">Clear</button>' : ''}
+      </div>
+      <p class="sh-pstat">${esc(status)}${p && !(p[0] === last[0] && p[1] === last[1]) ? ` · ${x.sz.reduce((a, n) => a + n, 0) - (x.sz.slice(0, p[0] - 1).reduce((a, n) => a + n, 0) + p[1])} episodes to go` : ''}</p>
+    </section>`;
+  }
   // the Watchlist button: a bookmark that fills in once saved
   const saveBtn = (on) => `<button type="button" class="btn btn-tinted sh-save${on ? ' on' : ''}" data-act="save" aria-pressed="${on}">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h11v17L12 16.6 6.5 20.5z" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>${on ? 'In Watchlist' : 'Watchlist'}</button>`;
@@ -75,6 +130,7 @@
         <h2 id="shT">${esc(info.title)}</h2>
         <p class="sh-meta">${meta.map(String).map((m) => (m.startsWith('<b') ? m : esc(m))).join('<span aria-hidden="true"> · </span>')}</p>
         ${genres ? `<p class="sh-genres">${esc(genres)}</p>` : ''}
+        ${nextHtml(info, x)}
         <div class="sh-btns">
           ${x.tr ? `<button type="button" class="btn btn-tinted" data-act="trailer"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>Trailer</button>` : ''}
           ${info.k ? saveBtn(saved.has(info.k)) : ''}
@@ -83,6 +139,8 @@
         </div>
         ${x.tl ? `<p class="sh-tl">${esc(x.tl)}</p>` : ''}
         ${info.overview ? `<p class="sh-ov">${esc(info.overview)}</p>` : ''}
+        ${progressHtml(info, x)}
+        ${chartHtml(info)}
         <section class="sh-where" aria-labelledby="shW"><h3 id="shW">Where to Watch</h3>${whereHtml(info, d)}</section>
         <p class="sh-foot">Where-to-watch information from JustWatch, via TMDB.${info.tmdb ? ` <a href="${esc(info.tmdb)}" target="_blank" rel="noopener">More on TMDB</a>` : ''}</p>
       </div>`;
@@ -104,7 +162,7 @@
       history.pushState({ sheet: info.k }, '', u); pushed = true;
     }
     document.title = `${info.title} | Tenner`;
-    let d = await details();
+    let [d] = await Promise.all([details(), trail().then((t) => { trailD = t; })]);
     if (current !== info) return;
     if (!d?.items?.[info.k] && window.tn.api) {
       render(info, { ...(d || {}), items: {}, pending: true });   // "Loading…" stays until the live details arrive
@@ -159,11 +217,34 @@
       const on = saved.toggle(current);
       b.outerHTML = saveBtn(on); sheet.querySelector('.sh-save')?.focus({ preventScroll: true });
     }
+    if (b.dataset.act === 'watched' || b.dataset.act === 'reset') {
+      const x = shown?.items?.[current.k]; if (!x?.sz) return;
+      if (b.dataset.act === 'reset') progress.set(current.k, null);
+      else { const up = nextUp(progress.get(current.k), x.sz); if (up) progress.set(current.k, up); if (!saved.has(current.k)) saved.toggle(current); }
+      redrawProgress(b.dataset.act);
+    }
     if (b.dataset.act === 'share') {
       const url = new URL(location.href); if (current.k) url.searchParams.set('t', current.k);
       const data = { title: `${current.title} on Tenner`, text: `Where to watch ${current.title} in the UK`, url: url.toString() };
       try { if (navigator.share) await navigator.share(data); else { await navigator.clipboard.writeText(data.url); b.lastChild.textContent = 'Link copied'; setTimeout(() => (b.lastChild.textContent = 'Share'), 1600); } } catch { /* cancelled */ }
     }
+  });
+
+  // choosing a season or episode from the menus
+  function redrawProgress(focus) {
+    const sec = sheet.querySelector('.sh-prog'), x = shown?.items?.[current?.k]; if (!sec || !x) return;
+    sec.outerHTML = progressHtml(current, x);
+    const save = sheet.querySelector('.sh-save'); if (save) save.outerHTML = saveBtn(saved.has(current.k));
+    sheet.querySelector(focus === 'watched' ? '[data-act="watched"], [data-pr="e"]' : focus === 'reset' ? '[data-pr="s"]' : `[data-pr="${focus}"]`)?.focus({ preventScroll: true });
+  }
+  sheet.addEventListener('change', (e) => {
+    const sel = e.target.closest('[data-pr]'); if (!sel || !current) return;
+    const x = shown?.items?.[current.k]; if (!x?.sz) return;
+    const p = progress.get(current.k);
+    let s = +sheet.querySelector('[data-pr="s"]').value || 1, ep = sel.dataset.pr === 's' ? (p && p[0] === s ? p[1] : 1) : +sel.value || 1;
+    ep = Math.min(ep, x.sz[s - 1] || ep);
+    progress.set(current.k, [s, ep]); if (!saved.has(current.k)) saved.toggle(current);
+    redrawProgress(sel.dataset.pr);
   });
 
   // ---------- phones: swipe the sheet down to close it ----------
