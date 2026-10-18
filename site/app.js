@@ -15,12 +15,13 @@ const pad = (n) => String(n).padStart(2, '0');
 // ---------- data ----------
 async function fetchData(bust) {
   const v = `?v=${bust ? Date.now() : Math.floor(Date.now() / 600000)}`;
-  const [trending, fresh] = await Promise.all([
+  const [trending, fresh, cat] = await Promise.all([
     fetch('data/trending.json' + v, { cache: bust ? 'no-store' : 'default' })
       .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }),
     fetch('data/new.json' + v).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    fetch('data/browse.json' + v).then((r) => (r.ok ? r.json() : null)).catch(() => null),   // for "Top rated at a glance"
   ]);
-  return { trending, fresh };
+  return { trending, fresh, cat };
 }
 
 async function load() {
@@ -151,7 +152,7 @@ async function refresh(quiet) {
   try {
     const d = await fetchData(true);
     const changed = d.trending.generatedAt !== state.trending.generatedAt || d.fresh?.generatedAt !== state.fresh?.generatedAt;
-    if (changed) { const y = scrollY; Object.assign(state, d); render(); requestAnimationFrame(() => scrollTo(0, y)); }
+    if (changed) { const y = scrollY; Object.assign(state, d, { cat: d.cat || state.cat }); render(); requestAnimationFrame(() => scrollTo(0, y)); }
     if (!quiet) toast(changed ? 'New chart loaded' : "You're up to date");
   } catch {
     if (!quiet) toast("Couldn't check right now. Try again in a moment.");   // quietly: the next check catches up
@@ -225,7 +226,7 @@ let heroList = [], heroAt = 0, heroScope = null;
 function heroCopy({ it, n }) {
   // on a service's page it's that service's chart; on All it's the UK-wide chart, and the details say where to find it
   const s = heroScope, kind = it.type === 'tv' ? 'show' : 'film';
-  const eye = s?.store ? `No. ${n} to buy or rent` : s ? `No. ${n} ${kind} on ${s.label}` : `No. ${n} ${kind} in the UK`;
+  const eye = [s?.store ? `No. ${n} to buy or rent` : s ? `No. ${n} ${kind} on ${s.label}` : `No. ${n} ${kind} in the UK`, n === 1 ? topText(it) : ''].filter(Boolean).join(' · ');
   const where = s ? '' : onText(it);
   const bits = [it.season || (it.type === 'tv' ? 'Series' : 'Film'), it.year, it.rating ? `★ ${it.rating.toFixed(1)}` : '', weeksText(it), where ? `On ${where}` : ''].filter(Boolean);
   return `<p class="h-eye">${s?.logo ? `<img src="${esc(s.logo)}" alt="">` : ''}${esc(eye)}</p>
@@ -315,12 +316,28 @@ function openFromUrl() {
   if (it) window.tnSheet.open(infoFor(it, it.type || type), true);
 }
 
+// ---------- chart movement: ▲ up, ▼ down or NEW since about a day ago (worked out hourly, see fetch-data.mjs) ----------
+function since() {
+  const t = state.trending?.moveSince; if (!t) return '';
+  const h = (Date.now() - Date.parse(t)) / 3600e3;
+  return h >= 20 ? 'since yesterday' : `since ${new Date(t).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit' })}`;
+}
+function moveBadge(it, quietSame) {
+  const m = it.mv; if (m === undefined || m === null) return '';
+  if (m === 'new') return `<span class="mv new" title="New to this chart ${since()}">NEW</span>`;
+  if (m === 0) return quietSame ? '' : `<span class="mv same" title="No change ${since()}" aria-label="No change">–</span>`;
+  const up = m > 0, n = Math.abs(m);
+  return `<span class="mv ${up ? 'up' : 'down'}" title="${up ? 'Up' : 'Down'} ${n} place${n === 1 ? '' : 's'} ${since()}" aria-label="${up ? 'Up' : 'Down'} ${n}">${up ? '▲' : '▼'}${n}</span>`;
+}
+const topText = (it) => (it.top > 1 ? `No. 1 for ${it.top} days` : '');
+
 // ---------- pieces ----------
 function placeholder(it) {
   const h = hue(it.title);
   return `<span class="ph" style="background:linear-gradient(160deg,hsl(${h} 45% 42%),hsl(${(h + 40) % 360} 55% 18%))">${esc(it.title)}</span>`;
 }
 const meta = (it) => [
+  moveBadge(it, true),
   it.season ? `<span>${esc(it.season)}</span>` : '',
   it.year ? `<span>${it.year}</span>` : '',
   it.rating ? `<span class="star" aria-label="Rated ${it.rating} out of 10">★ ${it.rating.toFixed(1)}</span>` : '',
@@ -362,7 +379,7 @@ function wireRanks() {
 const scope = () => (state.route === 'top' ? null : svc(state.route));
 const eyeFor = (n, type) => { const s = scope(), what = type === 'tv' ? 'show' : 'film';
   return s?.store ? `No. ${n} to buy or rent` : s ? `No. ${n} ${what} on ${s.label}` : `No. ${n} ${what} in the UK`; };
-const chartInfo = (it, i, type) => infoFor(it, type, eyeFor(i + 1, type), scope() && !scope().store ? [scope()] : null);
+const chartInfo = (it, i, type) => infoFor(it, type, [eyeFor(i + 1, type), i === 0 ? topText(it) : ''].filter(Boolean).join(' · '), scope() && !scope().store ? [scope()] : null);
 function posterRow(list, kind = state.kind, first = true) {
   const edge = (side) => `<div class="edge ${side}" aria-hidden="true">${'<i></i>'.repeat(6)}</div>`;
   return `<div class="row-wrap at-start">
@@ -412,14 +429,30 @@ function features(s) {
   }).join('')}</div></section>`;
 }
 
-// The ten as a tidy list in columns, like "Best New Songs": rank, a small poster, title and where it's on.
+// The best-rated ten on the service (or all five), as a tidy list in columns like "Best New Songs": rank, a small
+// poster, title and where it's on. The posters above already show the chart, so this list shows something else:
+// the catalogue's highest-rated titles with enough votes to trust (the same test as Browse's Top rated).
+// The buy-or-rent chart has no catalogue behind it, so there it stays a list of that chart.
+function topRated(k, s) {
+  const c = state.cat; if (!c?.items) return [];
+  const pass = (min) => c.items.filter((x) => x.t === k && x.r && x.v >= min && (s ? x.s.includes(s.key) : x.s.length));
+  let l = pass(300); if (l.length < 10) l = pass(100);   // a smaller service may need a lower bar to fill ten
+  return l.sort((a, b) => b.r - a.r || b.v - a.v).slice(0, 10).map((x) => ({
+    id: x.i, title: x.n, year: (x.d || '').slice(0, 4), rating: x.r, on: x.s, url: tmdbUrl(k, x.i),
+    poster: x.img ? (x.img.startsWith('/') ? c.img + x.img : x.img) : null,
+  }));
+}
 function chartList(list, s, k = state.kind) {
-  const browse = `browse.html#${new URLSearchParams({ ...(k === 'movie' ? { k: 'movie' } : {}), ...(s && !s.store ? { s: s.key } : {}), ...(s?.store ? { c: 'store', k: 'movie' } : {}) })}`;
+  const rated = !s?.store;
+  if (rated) list = topRated(k, s);
+  if (!list.length) return '';
+  const q = rated ? { c: 'top', ...(k === 'movie' ? { k: 'movie' } : {}), ...(s ? { s: s.key } : {}) } : { c: 'store', k: 'movie' };
+  const browse = `browse.html#${new URLSearchParams(q)}`;
   return `<section class="clist" aria-labelledby="cl-h-${k}">
-    <div class="row-hd"><h2 class="row-h" id="cl-h-${k}">${s?.store ? 'Films to buy or rent: at a glance' : `Top 10 ${words(k)} at a glance`}</h2>
+    <div class="row-hd"><h2 class="row-h" id="cl-h-${k}">${rated ? `Top rated ${words(k).toLowerCase()} at a glance` : 'Films to buy or rent: at a glance'}</h2>
       <a class="see-all" href="${esc(browse)}">See more in Browse<span class="chev" aria-hidden="true"></span></a></div>
-    <ol class="cl">${list.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(chartInfo(it, i, k))}>
-      <span class="cl-n">${i + 1}</span>
+    <ol class="cl">${list.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(rated ? infoFor(it, k, `No. ${i + 1} top rated${s ? ` on ${s.label}` : ''}`) : chartInfo(it, i, k))}>
+      <span class="cl-n">${i + 1}${rated ? '' : moveBadge(it)}</span>
       ${it.poster ? `<img src="${esc(it.poster)}" alt="" loading="lazy" decoding="async">` : `<span class="cl-ph" style="background:hsl(${hue(it.title)} 45% 35%)"></span>`}
       <span class="cl-t"><b>${esc(it.title)}</b><small>${esc([s ? '' : onText(it), it.season, it.year].filter(Boolean).join(' · '))}</small></span>
       ${it.rating ? `<span class="cl-r">★ ${it.rating.toFixed(1)}</span>` : ''}

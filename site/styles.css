@@ -420,7 +420,7 @@ main:focus { outline: none; }
 .ph { display: grid; align-content: end; padding: 18px; color: #fff; font: 700 25px/1.05 var(--font-display); letter-spacing: -.03em; text-wrap: balance; }
 .pcard h3 { margin: 10px 0 2px; font: 600 15px/1.25 var(--font); letter-spacing: -.022em; }
 .pcard h3 a { color: var(--label); }
-.pcard .sub { margin: 0; color: var(--label2); font-size: 13px; letter-spacing: -.01em; display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.pcard .sub { margin: 0; color: var(--label2); font-size: 13px; letter-spacing: -.01em; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
 .star { color: var(--gold); font-weight: 600; }
 
 /* arrows: glass circles that spring in and out, and swell under the pointer like Liquid Glass */
@@ -586,6 +586,15 @@ main:focus { outline: none; }
 .cl-t b { font-weight: 500; font-size: 15px; letter-spacing: -.016em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cl-t small { font-size: 13px; color: var(--label2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cl-r { flex: none; font-size: 13px; color: var(--label2); font-variant-numeric: tabular-nums; }
+/* movement since about a day ago: green up, red down, blue for new entries */
+.mv { font: 700 11px/1 var(--font); letter-spacing: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mv.up { color: var(--green); }
+.mv.down { color: #ff3b30; }
+.mv.new { color: var(--accent); font-size: 9.5px; letter-spacing: .04em; }
+.mv.same { color: var(--label3); font-weight: 600; }
+.cl-n { display: grid; justify-items: center; gap: 3px; }
+.cl-n .mv { font-size: 10px; }
+.cl-n .mv.new { font-size: 8.5px; }
 
 /* New This Week, as a row of posters */
 .nr {

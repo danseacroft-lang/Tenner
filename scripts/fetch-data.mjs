@@ -294,6 +294,37 @@ export async function buildNetflixOfficial() {
   return out;
 }
 
+// ---------- Chart movement: up, down or new since about a day ago, and days at No. 1 ----------
+// Every run saves a small snapshot of each chart (data/history.json: the last 30 hours by the hour, and the last 10
+// days). Each title is compared with the snapshot nearest 24 hours ago (or, in a chart's first day, the oldest one at
+// least 3 hours old), and a No. 1 counts the days it has held the top spot.
+export function addMovement(data, prev, now = new Date()) {
+  const h = prev?.v === 1 ? prev : { v: 1, hours: {}, days: {} };
+  const keyOf = (it) => (/^\d+$/.test(String(it.id)) ? `${it.type === 'movie' ? 'm' : 't'}${it.id}` : `x${it.title}`);
+  const charts = {};
+  for (const sv of data.services) for (const t of ['tv', 'movie']) if (sv[t]?.length) charts[`${sv.key}:${t}`] = sv[t];
+  for (const t of ['tv', 'movie']) if (data.overall?.[t]?.length) charts[`all:${t}`] = data.overall[t];
+  const snap = Object.fromEntries(Object.entries(charts).map(([c, list]) => [c, list.map(keyOf)]));
+  const hour = now.toISOString().slice(0, 13), day = now.toISOString().slice(0, 10), age = (k) => (now - Date.parse(k.length === 13 ? `${k}:00:00Z` : `${k}T12:00:00Z`)) / 3600e3;
+  h.hours[hour] = snap; h.days[day] = snap;
+  for (const k of Object.keys(h.hours)) if (age(k) > 30) delete h.hours[k];
+  for (const k of Object.keys(h.days)) if (age(k) > 24 * 10) delete h.days[k];
+  // the reference: nearest to 24 hours ago, or the oldest at least 3 hours old
+  const past = Object.keys(h.hours).filter((k) => age(k) >= 3).sort();
+  const ref = past.filter((k) => age(k) >= 20).sort((a, b) => Math.abs(age(a) - 24) - Math.abs(age(b) - 24))[0] || past[0];
+  data.moveSince = ref ? new Date(`${ref}:00:00Z`).toISOString() : null;
+  const days = Object.keys(h.days).sort().reverse();
+  for (const [c, list] of Object.entries(charts)) {
+    const before = ref && h.hours[ref][c];
+    list.forEach((it, i) => {
+      delete it.mv; delete it.top;
+      if (before) { const was = before.indexOf(keyOf(it)); it.mv = was < 0 ? 'new' : was - i; }   // positive: up
+      if (i === 0) { let n = 0; for (const d of days) { if (h.days[d][c]?.[0] === keyOf(it)) n++; else break; } if (n > 1) it.top = n; }
+    });
+  }
+  return h;
+}
+
 // ---------- Title details: where to watch in the UK, runtime, age rating, trailer ----------
 // One TMDB request per title (details plus watch providers, videos and UK certification), so Tenner can show where to
 // watch without sending people elsewhere. Charted titles refresh every hour; the rest of the Browse catalogue at most
@@ -556,6 +587,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         status = { ok: false, error: String(err.message).slice(0, 300), at: new Date().toISOString(), kept: !!nf.official };
       }
       await write('netflix-status.json', status);
+    }
+    // chart movement, only when the chart is fresh (a kept chart has nothing new to compare)
+    if (built) {
+      try { await write('history.json', addMovement(data, await liveCopy('history.json'))); }
+      catch (err) { warn('Movement', `couldn't work out chart movement (${err.message})`); }
     }
     await write('trending.json', data);
     if (built) await write('providers.json', built.providers);
