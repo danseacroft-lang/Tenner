@@ -198,3 +198,12 @@
   .bwrap { padding-top: 22px; }
   .browse .filters { top: 24px; max-height: calc(100dvh - 48px); }
 }
+
+/* with a mouse or trackpad: the macOS way (see styles.css) — shade, not size */
+@media (hover: hover) and (pointer: fine) {
+  .coll-b:active, .g-b:active { transform: none; }
+  .coll-b[aria-checked="false"]:hover { background: var(--fill); }
+  .coll-b[aria-checked="false"]:active, .w-b:active, .s-b:active { background: var(--fill-strong); }
+  .g-b:active { filter: var(--press); }
+  .coll-b, .g-b, .w-b, .s-b { transition-duration: .1s; }
+}

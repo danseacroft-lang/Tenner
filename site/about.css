@@ -32,7 +32,6 @@
 .awrap { max-width: var(--max); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter-r); }
 .about svg { display: block; }
 .eyebrow { font: 600 14px/1.2 var(--font); letter-spacing: -.01em; color: var(--accent); margin: 0 0 10px; }
-.chip { font: 600 15px var(--font); letter-spacing: -.016em; fill: var(--a-ink); }
 .neon01s { font: 800 26px var(--font-display); letter-spacing: -.05em; }
 .about .credits { text-align: left; }
 
@@ -86,7 +85,7 @@
 .steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 .step { background: var(--a-card); border-radius: 28px; overflow: hidden; box-shadow: var(--a-card-shadow); display: flex; flex-direction: column; }
 .step .art { aspect-ratio: 320 / 190; background: linear-gradient(180deg, var(--a-tile1), var(--a-tile2)); overflow: hidden; }
-.step .art svg { width: 100%; height: 100%; }
+.step .art > svg { width: 100%; height: 100%; }
 .step .txt { padding: 20px 24px 24px; }
 .step h3 { font: 700 21px/1.19 var(--font-display); letter-spacing: .004em; margin: 0 0 8px; }
 .step p { margin: 0; color: var(--label2); font-size: 16px; line-height: 1.5; letter-spacing: -.016em; }
@@ -123,9 +122,7 @@
 @keyframes faqIn { from { opacity: 0; transform: translateY(-6px); } }
 
 /* ============================================================ motion: each card performs once as it arrives; nothing loops */
-@keyframes bob { 50% { transform: translateY(3px); } }
 @keyframes turn { to { transform: rotate(360deg); } }
-.bob { animation: bob 4s ease-in-out 3; }                                  /* the chips bob a few times and settle */
 .hand { transform-box: view-box; transform-origin: 160px 96px; }
 .js-reveal .reveal.in .hand { animation: turn 3s cubic-bezier(.45, 0, .2, 1) .3s 1; }   /* one sweep round the clock */
 /* reveal on arrival (only once the script has marked the page, so nothing is hidden without it) */
@@ -149,7 +146,7 @@
 @media (hover: hover) { .step { transition: transform .6s var(--ease-spring), box-shadow .4s ease; } .step:hover { transform: translateY(-4px); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .bob, .hand, .faq-list details[open] .a { animation: none !important; }
+  .hand, .faq-list details[open] .a { animation: none !important; }
   .js-reveal .reveal, .js-reveal .reveal * { opacity: 1 !important; transform: none !important; stroke-dashoffset: 0 !important; transition: none !important; }
 }
 
@@ -175,4 +172,25 @@
   .b-logo { width: 48px; height: 48px; border-radius: 11px; }
   .faq-list summary { padding: 20px 2px; }
   .faq-list .a { padding: 0 8px 22px 2px; }
+}
+
+/* the little labels on the cards: frosted, like a macOS material, with monochrome symbols and text */
+.step .art { position: relative; }
+.tag {
+  position: absolute; display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px 0 8px; border-radius: 8px;
+  font: 600 12.5px/1 var(--font); letter-spacing: -.01em; color: var(--a-ink); white-space: nowrap; pointer-events: none;
+  background: rgba(255, 255, 255, .5); -webkit-backdrop-filter: blur(14px) saturate(180%); backdrop-filter: blur(14px) saturate(180%);
+  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .7), inset 0 1px 0 rgba(255, 255, 255, .5);
+}
+.tag svg { width: 14px; height: 14px; flex: none; color: var(--a-ink2); }
+.tag .dot { width: 6px; height: 6px; border-radius: 50%; background: #30d158; margin: 0 1px 0 2px; }
+:root[data-theme="dark"] .tag { background: rgba(40, 40, 46, .42); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .16), inset 0 1px 0 rgba(255, 255, 255, .08); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tag { background: rgba(40, 40, 46, .42); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .16), inset 0 1px 0 rgba(255, 255, 255, .08); } }
+@media (prefers-reduced-transparency: reduce) { .tag { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--a-paper); } }
+
+/* with a mouse or trackpad: a push button shades when pressed and doesn't react to hover (the macOS way) */
+@media (hover: hover) and (pointer: fine) {
+  .b-cta:hover { background: #fff; }
+  .b-cta:active { transform: none; filter: brightness(.86); }
+  .b-cta { transition-duration: .1s; }
 }

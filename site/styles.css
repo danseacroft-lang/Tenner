@@ -723,6 +723,34 @@ main:focus { outline: none; }
 }
 @media (min-width: 1000px) and (prefers-color-scheme: dark) { :root:not([data-theme="light"]):has(.bd-ext > *) { --side-bg: rgba(28, 28, 30, .58); } }
 
+/* ============================================================ pointer interactions, the macOS way
+   With a mouse or trackpad, controls behave as they do on a Mac: the pointer stays an arrow over controls (the pointing
+   hand is for links), borderless controls show a soft highlight on hover, and a press shades a control in place (darker
+   by day, lighter by night) rather than shrinking or swelling it. Big content (posters, cards) still lifts a touch.
+   Touch screens keep the iOS feel. */
+@media (hover: hover) and (pointer: fine) {
+  :root { --press: brightness(.9); }
+  :root[data-theme="dark"] { --press: brightness(1.28); }
+  button, summary, [role="tab"], [role="radio"], [role="menuitemradio"] { cursor: default; }
+  /* a press is a change of shade, never of size */
+  .btn:active, .tabs button:active, .tb-btn:active, .svc-b:active, .scroller:active, .scroller:hover, .h-cta:active, .svc-b:hover .svc-ic { transform: none; }
+  .tabs button:active { filter: none; }
+  .btn:active, .tb-btn:active, .scroller:active, .segmented button:active, .dd:active { filter: var(--press); }
+  .h-cta:active { filter: brightness(.86); }
+  .h-cta:hover { opacity: 1; }
+  /* push buttons don't react to hover; borderless ones get a soft highlight that deepens while pressed */
+  .btn-tinted:hover { background: var(--fill); }
+  .btn-tinted:active { background: var(--fill-strong); }
+  .svc-b[aria-checked="false"]:hover { background: var(--fill); }
+  .svc-b[aria-checked="false"]:active { background: var(--fill-strong); }
+  .segmented button[aria-checked="false"]:hover { color: var(--label); }
+  .th-list button:active { background: var(--fill-strong); }
+  .side-about:active { background: var(--fill-strong); }
+  /* the Mac is quick: shades change at once */
+  .btn, .svc-b, .tb-btn, .scroller, .segmented button, .th-list button, .h-cta, .side-about { transition-duration: .1s; }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --press: brightness(1.28); } }
+
 /* ============================================================ accessibility settings, as Apple's platforms honour them
    Reduce Transparency: every glass surface turns solid. Increase Contrast: stronger text, separators and edges. */
 @media (prefers-reduced-transparency: reduce) {

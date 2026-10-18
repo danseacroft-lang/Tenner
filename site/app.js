@@ -237,7 +237,7 @@ function hero(picks, s) {   // picks: [{ it, n }] where n is the title's rank in
   heroList = picks.slice(0, 5); heroAt = 0; heroScope = s;
   return `<section class="hero" aria-label="Top of the chart">
     <div class="h-copy" id="heroCopy" aria-live="polite">${heroCopy(heroList[0])}</div>
-    ${heroList.length > 1 ? `<div class="h-dots">${heroList.map((p, i) => `<button type="button" data-hero="${i}" aria-label="Number ${p.n}: ${esc(p.it.title)}" aria-current="${i === 0}"></button>`).join('')}</div>` : ''}
+    ${heroList.length > 1 ? `<div class="h-dots">${heroList.map((p, i) => `<button type="button" data-hero="${i}" aria-label="Number ${p.n}: ${esc(p.it.title)}" title="${esc(p.it.title)}" aria-current="${i === 0}"></button>`).join('')}</div>` : ''}
   </section>`;
 }
 // The backdrop crossfades: the new picture decodes first, then fades in over the old one, which is then dropped.
@@ -333,7 +333,7 @@ function posterRow(list, kind = state.kind, first = true) {
   const edge = (side) => `<div class="edge ${side}" aria-hidden="true">${'<i></i>'.repeat(6)}</div>`;
   return `<div class="row-wrap at-start">
     ${edge('l')}${edge('r')}
-    <button type="button" class="btn btn-icon scroller prev" aria-label="Previous titles" disabled>
+    <button type="button" class="btn btn-icon scroller prev" aria-label="Previous titles" title="Previous" disabled>
       <svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><path d="M8 2L2 8l6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <ol class="posters" aria-label="Top 10 ${words(kind)}">
       ${list.map((it, i) => `<li class="pcard" style="--d:${i}">
@@ -345,7 +345,7 @@ function posterRow(list, kind = state.kind, first = true) {
         <p class="sub">${meta(it)}</p>
       </li>`).join('')}
     </ol>
-    <button type="button" class="btn btn-icon scroller next" aria-label="Next titles">
+    <button type="button" class="btn btn-icon scroller next" aria-label="Next titles" title="Next">
       <svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><path d="M2 2l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>`;
 }
