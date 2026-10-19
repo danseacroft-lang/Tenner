@@ -91,44 +91,61 @@
   const runtime = (m) => !m ? '' : m < 60 ? `${m}m` : `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}`;
   // one entry per service: TMDB lists plans and channels separately ("Netflix Standard with Ads", "Paramount+ Amazon
   // Channel", "Paramount Plus Premium"); they're all the same place to watch, so they fold into the service's own name
-  const NAMES = { 'Disney Plus': 'Disney+', 'Amazon Prime Video': 'Prime Video', 'Paramount Plus': 'Paramount+', 'Apple TV Plus': 'Apple TV+',
+  const NAMES = { 'Disney Plus': 'Disney+', 'Amazon Prime Video': 'Prime Video', 'Amazon Prime Video Free': 'Prime Video', 'Paramount Plus': 'Paramount+', 'Apple TV Plus': 'Apple TV+', 'Channel 4 Plus': 'Channel 4',
     'Apple TV Store': 'Apple TV', 'Amazon Video': 'Prime Video Store', 'Now TV': 'NOW', 'Now TV Cinema': 'NOW', 'NOW TV Cinema': 'NOW', 'Netflix Kids': 'Netflix' };
   const brand = (n) => {
     const b = n.replace(/\s+(Standard|Basic|Premium)?\s*with Ads$/i, '').replace(/\s+(Amazon|Apple TV|Roku Premium)\s+Channel$/i, '')
       .replace(/\s+(Premium|Kids|Basic|Standard|Essential)$/i, '').replace(/^Paramount\+$/, 'Paramount Plus').trim();
     return NAMES[b] || b;
   };
-  // where each service's own search lives, so a tap lands on the title there
-  const q = (t) => encodeURIComponent(t);
-  const SEARCH = {
-    'Apple TV': (t) => `https://tv.apple.com/gb/search?term=${q(t)}`, 'Apple TV+': (t) => `https://tv.apple.com/gb/search?term=${q(t)}`,
-    'Prime Video': (t) => `https://www.amazon.co.uk/s?k=${q(t)}&i=instant-video`, 'Prime Video Store': (t) => `https://www.amazon.co.uk/s?k=${q(t)}&i=instant-video`,
-    'Google Play Movies': (t) => `https://play.google.com/store/search?q=${q(t)}&c=movies`, 'YouTube': (t) => `https://www.youtube.com/results?search_query=${q(t)}`,
-    'Netflix': (t) => `https://www.netflix.com/search?q=${q(t)}`, 'Disney+': (t) => `https://www.disneyplus.com/search?q=${q(t)}`,
-    'Rakuten TV': (t) => `https://www.rakuten.tv/uk/search?q=${q(t)}`, 'BBC iPlayer': (t) => `https://www.bbc.co.uk/iplayer/search?q=${q(t)}`,
-    'Microsoft Store': (t) => `https://www.microsoft.com/en-gb/search/shop/movies?q=${q(t)}`,
-  };
-  // the title itself on each service, where Wikidata knows its ID (titles.json `ln`); on phones these open the app
+  // ---------- every service links somewhere that works (each address tested in a browser, October 2026) ----------
+  // 1. the title itself, where Wikidata knows its ID on that service (titles.json `ln`); on phones these open the app
   const DIRECT = {
     'Netflix': (l) => l.nf && `https://www.netflix.com/title/${l.nf}`, 'Disney+': (l) => l.dp && `https://www.disneyplus.com/${l.dp}`,
     'Prime Video': (l) => l.pv && `https://www.primevideo.com/detail/${l.pv}`, 'Prime Video Store': (l) => l.pv && `https://www.primevideo.com/detail/${l.pv}`,
     'HBO Max': (l) => l.hb && `https://play.hbomax.com/${l.hb}`, 'Apple TV': (l) => l.ap && `https://tv.apple.com/gb/${l.ap}`, 'Apple TV+': (l) => l.ap && `https://tv.apple.com/gb/${l.ap}`,
   };
+  // 2. the service's own search, with the title filled in
+  const q = (t) => encodeURIComponent(t);
+  const apple = (t) => `https://tv.apple.com/gb/search?term=${q(t)}`, amazon = (t) => `https://www.amazon.co.uk/s?k=${q(t)}&i=instant-video`;
+  const youtube = (t) => `https://www.youtube.com/results?search_query=${q(t)}`;
+  const SEARCH = {
+    'Apple TV': apple, 'Apple TV+': apple, 'Prime Video': amazon, 'Prime Video Store': amazon, 'Amazon MX Player': amazon,
+    'Google Play Movies': (t) => `https://play.google.com/store/search?q=${q(t)}&c=movies`, 'YouTube': youtube, 'YouTube Free': youtube,
+    'Netflix': (t) => `https://www.netflix.com/search?q=${q(t)}`, 'Sky Store': (t) => `https://www.skystore.com/search?q=${q(t)}`,
+    'NOW': (t) => `https://www.nowtv.com/watch/search?q=${q(t)}`, 'Rakuten TV': (t) => `https://www.rakuten.tv/uk/search?q=${q(t)}`,
+    'BBC iPlayer': (t) => `https://www.bbc.co.uk/iplayer/search?q=${q(t)}`, 'ITVX': (t) => `https://www.itv.com/watch/search?q=${q(t)}`,
+    '5': (t) => `https://www.channel5.com/search?q=${q(t)}`, 'UKTV Play': (t) => `https://u.co.uk/search?q=${q(t)}`, 'STV Player': (t) => `https://player.stv.tv/search?q=${q(t)}`,
+    'Paramount+': (t) => `https://www.paramountplus.com/gb/search/?q=${q(t)}`, 'HBO Max': (t) => `https://play.hbomax.com/search?q=${q(t)}`,
+    'MUBI': (t) => `https://mubi.com/en/gb/search/films?query=${q(t)}`, 'Tubi TV': (t) => `https://tubitv.com/search/${q(t)}`,
+    'Crunchyroll': (t) => `https://www.crunchyroll.com/search?q=${q(t)}`, 'BFI Player': (t) => `https://player.bfi.org.uk/search?q=${q(t)}`,
+    'Plex': (t) => `https://watch.plex.tv/search?q=${q(t)}`, 'Hayu': (t) => `https://www.hayu.com/search?q=${q(t)}`,
+  };
+  // 3. services with no search page that opens from a link: their home page
+  const HOME = {
+    'Disney+': 'https://www.disneyplus.com/', 'Channel 4': 'https://www.channel4.com/', 'Sky Go': 'https://www.sky.com/watch/sky-go',
+    'Curzon Home Cinema': 'https://www.curzon.com/home-cinema/', 'Discovery+': 'https://www.discoveryplus.com/gb', 'Pluto TV': 'https://pluto.tv/',
+    'Shudder': 'https://www.shudder.com/',
+  };
+  // channels you watch inside Prime Video or the Apple TV app open that app's search
+  const linkFor = (raw, title, ln, info) => {
+    const b = brand(raw);
+    return DIRECT[b]?.(ln) || (b === 'Netflix' && info.netflix)
+      || (/amazon channel$/i.test(raw) ? amazon(title) : /apple tv channel$/i.test(raw) ? apple(title) : null)
+      || SEARCH[b]?.(title) || HOME[b] || info.watch;   // 4. otherwise the title's TMDB page, which lists every service
+  };
   function providerList(ids, d, info) {
     const ln = d.items?.[info.k]?.ln || {};
     const seen = new Set();
     return (ids || []).map((id) => [id, ...(d.providers[id] || [])]).filter(([, n]) => n && !seen.has(brand(n)) && seen.add(brand(n))).map(([id, n, logo]) => {
-      // Netflix titles go straight to the title on Netflix; the big stores and services open their own search for the
-      // title (TMDB gives no per-title links into each app); anything else goes to the title's TMDB watch page
-      const b = brand(n), go = SEARCH[b];
-      const href = DIRECT[b]?.(ln) || (/^Netflix/i.test(n) && info.netflix) || (go ? go(info.title) : info.watch);
+      const href = linkFor(n, info.title, ln, info);
       return `<a class="sh-prov" href="${esc(href)}" target="_blank" rel="noopener">${logo && d.logo ? `<img src="${esc(d.logo + logo)}" alt="" loading="lazy">` : `<i>${esc(brand(n)[0])}</i>`}<span>${esc(brand(n))}</span></a>`;
     }).join('');
   }
   function whereHtml(info, d) {
     const x = d?.items?.[info.k];
     if (!x) {   // no details (yet): what we know from the chart or catalogue
-      const on = (info.services || []).map((s) => `<span class="sh-prov flat">${s.logo ? `<img src="${esc(s.logo)}" alt="">` : ''}<span>${esc(s.label)}</span></span>`).join('');
+      const on = (info.services || []).map((s) => `<a class="sh-prov" href="${esc(linkFor(s.label, info.title, {}, info))}" target="_blank" rel="noopener">${s.logo ? `<img src="${esc(s.logo)}" alt="">` : `<i>${esc(s.label[0])}</i>`}<span>${esc(s.label)}</span></a>`).join('');
       return on ? `<div class="sh-grp"><h4>Included with</h4><div class="sh-provs">${on}</div></div>` : `<p class="sh-none">${d && !d.pending ? 'We don’t have where-to-watch details for this one yet.' : 'Loading where to watch…'}</p>`;
     }
     const groups = [['Included with', x.f], ['Free', x.fr], ['Rent', x.re], ['Buy', x.bu]]
