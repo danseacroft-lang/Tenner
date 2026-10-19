@@ -43,7 +43,7 @@ export default {
     }
 
     // the edge cache, keyed on the request without its origin
-    const cache = caches.default, key = new Request(`https://tenner-cache${url.pathname}?${new URLSearchParams(params)}`);
+    const cache = caches.default, key = new Request(`https://tenner-cache/v2${url.pathname}?${new URLSearchParams(params)}`);   // bump v when a shape changes
     let hit = await cache.match(key);
     if (!hit) {
       const r = await fetch(`${TMDB}${path}?${new URLSearchParams(params)}`, { headers: { authorization: `Bearer ${env.TMDB_TOKEN}`, accept: 'application/json' } });
