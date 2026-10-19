@@ -83,7 +83,8 @@
     if (!pd) { person.innerHTML = `<div class="pp-hero"><div class="pp-in">${back}</div></div><div class="p-empty"><h2>Couldn’t load this person</h2><p>Check your connection and try again.</p></div>`; return; }
     document.title = `${pd.name} · Cast & Crew · Tenner`;
     const facts = [pd.born && `Born ${day(pd.born)}${pd.place ? ` in ${pd.place}` : ''}`, pd.died ? `Died ${day(pd.died)}, aged ${age(pd.born, pd.died)}` : pd.born && `Age ${age(pd.born)}`].filter(Boolean);
-    const tabs = [['acting', 'Acting', pd.acting], ['crew', 'Behind the Camera', pd.crew]].filter((t) => t[2].length);
+    const dated = (l) => [...l.filter((x) => x.year), ...l.filter((x) => !x.year)];   // undated (unannounced) work goes last
+    const tabs = [['acting', 'Acting', dated(pd.acting)], ['crew', 'Behind the Camera', dated(pd.crew)]].filter((t) => t[2].length);
     const first = pd.dept === 'Acting' || !pd.crew.length ? tabs[0] : tabs.find((t) => t[0] === 'crew');
     person.innerHTML = `<div class="pp-hero" style="--h:${hue(pd.name)}">${pd.photo ? `<img class="pp-glow" src="${esc(pd.photo)}" alt="" aria-hidden="true">` : ''}
       <div class="pp-in">${back}${photo(pd, 'pf pp-ph')}
