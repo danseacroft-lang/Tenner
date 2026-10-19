@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tenner</title>
+  <meta name="description" content="The UK's top 10 shows and films right now. The experimental, lightweight Tenner.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="apple-mobile-web-app-title" content="Tenner">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <!-- Tenner's experimental build: the core of Tenner and nothing else, built from the system's own parts (its font,
+       colours, lists, pickers, search field and sheets). No web fonts, no animations, one small script. -->
+  <script>try{var t=localStorage.getItem("tenner-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+  <link rel="stylesheet" href="lite.css">
+</head>
+<body>
+  <nav class="nav" aria-label="Tenner">
+    <p class="brand"><img src="../logo.svg" alt="" width="28" height="28">Tenner</p>
+    <a href="#top" data-tab="top"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0zM7 6H4v1.5A3.5 3.5 0 0 0 7.5 11M17 6h3v1.5a3.5 3.5 0 0 1-3.5 3.5M12 14v4M8.5 20.5h7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Top 10</span></a>
+    <a href="#search" data-tab="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Search</span></a>
+    <a href="#watchlist" data-tab="watchlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h11v17L12 16.6 6.5 20.5z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg><span>Watchlist</span></a>
+    <a href="#settings" data-tab="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-2.6-1.5L14.2 2.6h-4l-.4 2.5A7.6 7.6 0 0 0 7.2 6.6l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.6 7.6 0 0 0 2.6-1.5l2.3 1 2-3.4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><span>Settings</span></a>
+  </nav>
+
+  <main id="main">
+    <!-- Top 10 -->
+    <section class="page" id="top" aria-labelledby="topH">
+      <h1 id="topH">Top 10</h1>
+      <div class="bar">
+        <div class="seg" role="radiogroup" aria-label="Shows or films">
+          <label><input type="radio" name="kind" value="tv" checked><span>Shows</span></label>
+          <label><input type="radio" name="kind" value="movie"><span>Films</span></label>
+        </div>
+        <select id="svc" aria-label="Service"><option value="all">All services</option></select>
+      </div>
+      <p class="foot" id="topNote"></p>
+      <ol class="list" id="chart"></ol>
+    </section>
+
+    <!-- Search -->
+    <section class="page" id="search" aria-labelledby="searchH" hidden>
+      <h1 id="searchH">Search</h1>
+      <input type="search" id="q" placeholder="Shows and films" autocomplete="off" enterkeyhint="search" aria-label="Search shows and films">
+      <ul class="list" id="results"></ul>
+      <p class="foot" id="searchNote"></p>
+    </section>
+
+    <!-- Watchlist -->
+    <section class="page" id="watchlist" aria-labelledby="wlH" hidden>
+      <h1 id="wlH">Watchlist</h1>
+      <ul class="list" id="saved"></ul>
+      <p class="foot" id="wlNote"></p>
+    </section>
+
+    <!-- Settings -->
+    <section class="page" id="settings" aria-labelledby="setH" hidden>
+      <h1 id="setH">Settings</h1>
+      <h2 class="head">Appearance</h2>
+      <div class="list">
+        <label class="row"><span class="grow">Theme</span>
+          <select id="theme"><option value="auto">Automatic</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+      </div>
+      <h2 class="head">Tenner</h2>
+      <div class="list">
+        <button type="button" class="row tint" id="classic"><span class="grow">Go back to the standard Tenner</span><i class="chev" aria-hidden="true"></i></button>
+      </div>
+      <p class="foot">You’re trying an experimental version of Tenner: just the essentials, built to feel like part of your device. Your Watchlist is shared with the standard version.</p>
+      <p class="foot center">Tenner Experimental 0.1</p>
+    </section>
+  </main>
+
+  <!-- a title: a native sheet -->
+  <dialog id="sheet" aria-labelledby="shT">
+    <form method="dialog" class="sh-bar"><button class="done" value="done">Done</button></form>
+    <div class="sh-body" id="shBody"></div>
+  </dialog>
+
+  <script src="lite.js" defer></script>
+</body>
+</html>
