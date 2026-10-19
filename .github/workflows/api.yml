@@ -38,5 +38,8 @@ jobs:
           T=$(curl -s -H "Origin: https://danseacroft-lang.github.io" "$U/title/m603")
           echo "Search: $(echo "$S" | jq -r '[.results[]?.title] | .[:5] | join(", ")')"
           echo "Title:  $(echo "$T" | jq -r '.info.title // .error')  ·  UK streaming: $(echo "$T" | jq -r '[.items[]?.f[]?] | length') services"
+          P=$(curl -s -H "Origin: https://danseacroft-lang.github.io" "$U/people?q=bette%20midler" | jq -r '.results[0].id // empty')
+          echo "People: Bette Midler is $P"
+          [ -n "$P" ] && echo "Known for: $(curl -s -H "Origin: https://danseacroft-lang.github.io" "$U/person/$P" | jq -r '[.known[]?.title] | .[:6] | join(", ")')"
           echo "Others blocked: $(curl -s -o /dev/null -w '%{http_code}' -H 'Origin: https://example.com' "$U/search?q=matrix")"
           echo "$S" | jq -e '.results | length > 0' > /dev/null
