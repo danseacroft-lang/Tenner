@@ -14,8 +14,8 @@
 .p-search input::placeholder { color: var(--label2); font-weight: 400; }
 .p-search input::-webkit-search-cancel-button { display: none; }
 .p-search input:focus { outline: none; box-shadow: 0 0 0 2.5px var(--accent), 0 0 40px -6px color-mix(in srgb, var(--accent) 55%, transparent), var(--shadow); }
-.p-search .s-ic { position: absolute; left: 18px; width: 23px; height: 23px; color: var(--label2); pointer-events: none; }
-.p-search .s-clear { position: absolute; right: 14px; width: 30px; height: 30px; padding: 5px; border: 0; background: none; color: var(--label3); cursor: pointer; border-radius: 50%; }
+.p-search .s-ic { position: absolute; z-index: 1; left: 18px; width: 23px; height: 23px; color: var(--label2); pointer-events: none; }
+.p-search .s-clear { position: absolute; z-index: 1; right: 14px; width: 30px; height: 30px; padding: 5px; border: 0; background: none; color: var(--label3); cursor: pointer; border-radius: 50%; }
 .p-search .s-clear svg { width: 20px; height: 20px; }
 .p-note { min-height: 0; margin: 14px 2px 0; color: var(--label2); font-size: 15px; }
 .p-note:empty { display: none; }
