@@ -101,7 +101,7 @@
     more?.addEventListener('click', () => { bio.closest('.pp-bio').classList.add('open'); more.remove(); });
     const seg = person.querySelector('.segmented'), pick = (b) => {
       seg.querySelectorAll('button').forEach((n) => n.setAttribute('aria-checked', n === b));
-      $('#ppList').innerHTML = tabs.find((t) => t[0] === b.dataset.f)[2].map(credit).join('');
+      $('#ppList').innerHTML = tabs.find((t) => t[0] === b.dataset.f)[2].map(credit).join(''); $('#ppList').scrollTop = 0;
     };
     if (seg) { segment(seg, pick); seg.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) pick(b); }); }
   }
