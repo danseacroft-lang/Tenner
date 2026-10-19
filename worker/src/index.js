@@ -129,7 +129,7 @@ function peopleShape(d) {
 function personShape(p) {
   const all = (list, role) => (list || []).filter((x) => x.media_type === 'movie' || x.media_type === 'tv').map((x) => ({
     k: `${x.media_type === 'movie' ? 'm' : 't'}${x.id}`, type: x.media_type, title: x.title || x.name, year: yearOf(x),
-    poster: x.poster_path ? `${IMG}/w342${x.poster_path}` : null, pop: Math.round(x.popularity || 0), votes: x.vote_count || 0,
+    poster: x.poster_path ? `${IMG}/w342${x.poster_path}` : null, bd: x.backdrop_path ? `${IMG}/w1280${x.backdrop_path}` : null, pop: Math.round(x.popularity || 0), votes: x.vote_count || 0,
     role: role === 'cast' ? x.character || '' : x.job || '', eps: x.episode_count || null,
   }));
   const merge = (list) => {   // one row per title (several jobs on one title become "Writer, Director")
@@ -141,11 +141,12 @@ function personShape(p) {
   const crew = merge(all(p.combined_credits?.crew, 'crew'));
   const known = [...cast, ...crew].filter((x) => x.poster && x.votes > 20).sort((a, b) => b.votes * 2 + b.pop - (a.votes * 2 + a.pop))
     .filter((x, i, l) => l.findIndex((y) => y.k === x.k) === i).slice(0, 12);
+  const slim = ({ bd, ...x }) => x;
   const byYear = (l) => l.sort((a, b) => (b.year || '9999').localeCompare(a.year || '9999'));
   return {
     id: p.id, name: p.name, dept: p.known_for_department || null, photo: p.profile_path ? `${IMG}/h632${p.profile_path}` : null,
     born: p.birthday || null, died: p.deathday || null, place: p.place_of_birth || null, bio: (p.biography || '').trim(),
-    known, acting: byYear(cast), crew: byYear(crew),
+    known, acting: byYear(cast).map(slim), crew: byYear(crew).map(slim),   // only Known For needs the wide artwork (the splash)
   };
 }
 function creditsShape(d, type) {

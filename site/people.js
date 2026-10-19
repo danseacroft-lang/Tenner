@@ -86,7 +86,13 @@
     const dated = (l) => [...l.filter((x) => x.year), ...l.filter((x) => !x.year)];   // undated (unannounced) work goes last
     const tabs = [['acting', 'Acting', dated(pd.acting)], ['crew', 'Behind the Camera', dated(pd.crew)]].filter((t) => t[2].length);
     const first = pd.dept === 'Acting' || !pd.crew.length ? tabs[0] : tabs.find((t) => t[0] === 'crew');
-    person.innerHTML = `<div class="pp-hero" style="--h:${hue(pd.name)}">${pd.photo ? `<img class="pp-glow" src="${esc(pd.photo)}" alt="" aria-hidden="true">` : ''}
+    // the splash: the wide artwork of what they're best known for, dissolving into the page (as on About); without
+    // one, a glow of their own photo
+    const sp = pd.known.find((x) => x.bd);
+    const bg = sp ? `<div class="pp-bg" aria-hidden="true"><img src="${esc(sp.bd.replace('/w1280/', '/original/'))}" alt="" fetchpriority="high" decoding="async" onload="this.classList.add('on')"><div class="pp-wash"></div><div class="pp-shade"></div></div>`
+      : pd.photo ? `<img class="pp-glow" src="${esc(pd.photo)}" alt="" aria-hidden="true">` : '';
+    const cap = sp ? `<a class="pp-now" href="./?t=${sp.k}" data-k="${sp.k}">${sp.poster ? `<img src="${esc(sp.poster)}" alt="">` : ''}<span><small>Known for</small><b>${esc(sp.title)}</b></span></a>` : '';
+    person.innerHTML = `<div class="pp-hero${sp ? ' splash' : ''}" style="--h:${hue(pd.name)}">${bg}${cap}
       <div class="pp-in">${back}${photo(pd, 'pf pp-ph')}
         <div class="pp-id"><p class="pp-dept">${esc(DEPT[pd.dept] || pd.dept || '')}</p><h1>${esc(pd.name)}</h1>
           ${facts.length ? `<p class="pp-facts">${esc(facts.join(' · '))}</p>` : ''}</div></div></div>
