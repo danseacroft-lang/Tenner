@@ -109,6 +109,23 @@
       .map(([label, ids]) => { const list = providerList(ids, d, info); return list ? `<div class="sh-grp"><h4>${label}</h4><div class="sh-provs">${list}</div></div>` : ''; }).join('');
     return groups || '<p class="sh-none">Not available to stream, rent or buy in the UK right now.</p>';
   }
+  // Cast & Crew: round faces in a row, each opening that person's page (people.html), from the search API
+  const castCache = new Map();
+  const castFor = (k) => {
+    if (!window.tn.api || !/^[mt]\d+$/.test(k || '')) return Promise.resolve(null);
+    if (!castCache.has(k)) castCache.set(k, fetch(`${window.tn.api}/credits/${k}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
+    return castCache.get(k);
+  };
+  async function fillCast(info) {
+    const c = await castFor(info.k), sec = $('#shCast');
+    if (current !== info || !sec) return;
+    const people = [...(c?.crew || []).slice(0, 2), ...(c?.cast || [])].filter((p, i, l) => l.findIndex((q) => q.id === p.id) === i);
+    if (!people.length) return;
+    sec.innerHTML = `<h3 id="shCC">Cast &amp; Crew</h3><ul class="sh-faces">${people.map((p) => `<li><a href="people.html?p=${p.id}" data-p="${p.id}">
+      <span class="sh-face" style="--h:${hue(p.name)}">${p.photo ? `<img src="${esc(p.photo)}" alt="" loading="lazy" decoding="async">` : esc(p.name.split(/\s+/).map((w) => w[0]).slice(0, 2).join(''))}</span>
+      <b>${esc(p.name)}</b><small>${esc(p.role)}</small></a></li>`).join('')}</ul>`;
+    sec.hidden = false;
+  }
   function render(info, d) {
     const x = d?.items?.[info.k] || {};
     const meta = [info.type === 'tv' ? (x.se ? `${x.se} season${x.se === 1 ? '' : 's'}` : 'Series') : 'Film', info.year, runtime(x.rt),
@@ -136,8 +153,10 @@
         <section class="sh-where" aria-labelledby="shW"><h3 id="shW">Where to Watch</h3>${whereHtml(info, d)}</section>
         ${progressHtml(info, x)}
         ${chartHtml(info)}
+        <section class="sh-cast" id="shCast" aria-labelledby="shCC" hidden></section>
         <p class="sh-foot">Where-to-watch information from JustWatch, via TMDB.${info.tmdb ? ` <a href="${esc(info.tmdb)}" target="_blank" rel="noopener">More on TMDB</a>` : ''}</p>
       </div>`;
+    fillCast(info);
   }
 
   // ---------- open and close ----------

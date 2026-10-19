@@ -1,6 +1,9 @@
 // Tenner's go-between for searching every film and show on TMDB, without putting the TMDB key in the website.
 //   GET /search?q=…   up to 20 films and shows, best match first
 //   GET /title/m123   one title's details and UK where-to-watch, in the same shape as data/titles.json
+//   GET /people?q=…   people (cast and crew) matching a name; without q, this week's most talked-about people
+//   GET /person/123   one person: biography, and everything they've been in or made
+//   GET /credits/m123 a title's main cast and key crew
 // Only Tenner's own pages may call it (CORS), and answers are cached at Cloudflare's edge, so popular searches and
 // titles barely touch TMDB: searches for a day, titles for six hours.
 const TMDB = 'https://api.themoviedb.org/3', IMG = 'https://image.tmdb.org/t/p', REGION = 'GB';
@@ -21,6 +24,16 @@ export default {
       const q = (url.searchParams.get('q') || '').trim().slice(0, 80);
       if (q.length < 2) return json({ results: [] }, 200, cors);
       path = '/search/multi'; params = { query: q, language: 'en-GB', region: REGION, include_adult: 'false' }; shape = searchShape; ttl = 86400;
+    } else if (url.pathname === '/people') {
+      const q = (url.searchParams.get('q') || '').trim().slice(0, 80);
+      if (q.length === 1) return json({ results: [] }, 200, cors);
+      path = q ? '/search/person' : '/trending/person/week'; params = q ? { query: q, language: 'en-GB', include_adult: 'false' } : { language: 'en-GB' };
+      shape = peopleShape; ttl = q ? 86400 : 21600;
+    } else if (/^\/person\/\d{1,9}$/.test(url.pathname)) {
+      path = url.pathname; params = { language: 'en-GB', append_to_response: 'combined_credits' }; shape = personShape; ttl = 86400;
+    } else if (/^\/credits\/[mt]\d{1,9}$/.test(url.pathname)) {
+      const k = url.pathname.split('/')[2], type = k[0] === 'm' ? 'movie' : 'tv';
+      path = `/${type}/${k.slice(1)}/${type === 'tv' ? 'aggregate_credits' : 'credits'}`; params = { language: 'en-GB' }; shape = (d) => creditsShape(d, type); ttl = 86400;
     } else {
       const m = url.pathname.match(/^\/title\/([mt])(\d{1,9})$/);
       if (!m) return json({ error: 'Not found' }, 404, cors);
@@ -100,4 +113,51 @@ async function addLinks(body) {
       pv: v('pv2') || v('pv'), hb: v('hb'), ap: v('atm') ? `movie/${v('atm')}` : v('ats') ? `show/${v('ats')}` : undefined }).filter(([, x]) => x));
     if (Object.keys(ln).length) body.items[k].ln = ln;
   } catch { /* no links: the sheet uses each service's search */ }
+}
+
+// ---------- people ----------
+const yearOf = (x) => (x.release_date || x.first_air_date || '').slice(0, 4) || null;
+const pic = (p) => (p ? `${IMG}/w185${p}` : null);
+function peopleShape(d) {
+  return {
+    results: (d.results || []).filter((p) => !p.adult).slice(0, 24).map((p) => ({
+      id: p.id, name: p.name, dept: p.known_for_department || null, photo: pic(p.profile_path), pop: Math.round(p.popularity || 0),
+      known: (p.known_for || []).filter((x) => x.media_type === 'movie' || x.media_type === 'tv').slice(0, 3).map((x) => x.title || x.name),
+    })),
+  };
+}
+function personShape(p) {
+  const all = (list, role) => (list || []).filter((x) => x.media_type === 'movie' || x.media_type === 'tv').map((x) => ({
+    k: `${x.media_type === 'movie' ? 'm' : 't'}${x.id}`, type: x.media_type, title: x.title || x.name, year: yearOf(x),
+    poster: x.poster_path ? `${IMG}/w342${x.poster_path}` : null, pop: Math.round(x.popularity || 0), votes: x.vote_count || 0,
+    role: role === 'cast' ? x.character || '' : x.job || '', eps: x.episode_count || null,
+  }));
+  const merge = (list) => {   // one row per title (several jobs on one title become "Writer, Director")
+    const m = new Map();
+    for (const x of list) { const y = m.get(x.k); if (y) { if (x.role && !y.role.includes(x.role)) y.role = [y.role, x.role].filter(Boolean).join(', '); } else m.set(x.k, { ...x }); }
+    return [...m.values()];
+  };
+  const cast = merge(all(p.combined_credits?.cast, 'cast')).filter((x) => !/^(himself|herself|self|themselves)\b/i.test(x.role) || x.votes > 50);
+  const crew = merge(all(p.combined_credits?.crew, 'crew'));
+  const known = [...cast, ...crew].filter((x) => x.poster && x.votes > 20).sort((a, b) => b.votes * 2 + b.pop - (a.votes * 2 + a.pop))
+    .filter((x, i, l) => l.findIndex((y) => y.k === x.k) === i).slice(0, 12);
+  const byYear = (l) => l.sort((a, b) => (b.year || '9999').localeCompare(a.year || '9999'));
+  return {
+    id: p.id, name: p.name, dept: p.known_for_department || null, photo: p.profile_path ? `${IMG}/h632${p.profile_path}` : null,
+    born: p.birthday || null, died: p.deathday || null, place: p.place_of_birth || null, bio: (p.biography || '').trim(),
+    known, acting: byYear(cast), crew: byYear(crew),
+  };
+}
+function creditsShape(d, type) {
+  const cast = (d.cast || []).slice(0, 16).map((c) => ({ id: c.id, name: c.name, photo: pic(c.profile_path),
+    role: type === 'tv' ? (c.roles || []).map((r) => r.character).filter(Boolean)[0] || '' : c.character || '' }));
+  const KEY = /^(Director|Creator|Screenplay|Writer|Novel|Executive Producer|Producer|Original Music Composer)$/;
+  const seen = new Set(), crew = [];
+  for (const c of d.crew || []) {
+    const jobs = type === 'tv' ? (c.jobs || []).map((j) => j.job) : [c.job];
+    const job = jobs.find((j) => KEY.test(j)); if (!job || seen.has(c.id)) continue;
+    seen.add(c.id); crew.push({ id: c.id, name: c.name, photo: pic(c.profile_path), role: job });
+  }
+  const order = ['Creator', 'Director', 'Screenplay', 'Writer', 'Novel', 'Original Music Composer', 'Executive Producer', 'Producer'];
+  return { cast, crew: crew.sort((a, b) => order.indexOf(a.role) - order.indexOf(b.role)).slice(0, 6) };
 }

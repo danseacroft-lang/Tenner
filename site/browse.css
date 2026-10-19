@@ -90,6 +90,7 @@
 .r-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 2px 0 16px; min-height: 36px; }
 .count { margin: 0; font: 600 17px/1.2 var(--font); color: var(--label2); font-variant-numeric: tabular-nums; }
 .f-btn { display: none; }
+@media (min-width: 821px) { .r-bar:has(.count:empty) { min-height: 0; margin-bottom: 0; } }   /* no count until there's a search to count */
 .f-btn svg { width: 18px; height: 18px; }
 .badge { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; }
 
@@ -243,3 +244,6 @@
 /* "My services": choose the ones you pay for (they become Browse's starting filter) */
 .mine-link { border: 0; padding: 0; background: none; color: var(--accent); font: 500 13px/1.2 var(--font); letter-spacing: -.01em; cursor: pointer; }
 @media (hover: hover) { .mine-link:hover { text-decoration: underline; } }
+.b-people { color: var(--accent); font-weight: 500; text-decoration: none; white-space: nowrap; }
+.b-people::after { content: " ›"; }
+@media (hover: hover) { .b-people:hover { text-decoration: underline; } }

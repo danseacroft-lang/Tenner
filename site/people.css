@@ -1,0 +1,134 @@
+/* Cast & Crew: the Apple TV app's people pages. A big search field, round portraits on shelves, a person's page with a
+   glow of their own photo behind them, and their work as posters and a dated list. */
+.pwrap { max-width: 1240px; margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter-r); }
+.p-head .lede { font-size: 17px; }
+
+/* ---------- the search field: tall, frosted, glowing when it's in use ---------- */
+.p-search { position: relative; display: flex; align-items: center; max-width: 680px; margin-top: 24px; }
+.p-search input {
+  width: 100%; height: 58px; padding: 0 52px 0 54px; border: 0; border-radius: 18px; -webkit-appearance: none; appearance: none;
+  background: var(--frost); box-shadow: var(--frost-line, inset 0 0 0 .5px var(--frost-edge)), var(--shadow);
+  -webkit-backdrop-filter: blur(30px) saturate(1.8); backdrop-filter: blur(30px) saturate(1.8);
+  color: var(--label); font: 500 20px/1 var(--font-display); letter-spacing: -.02em; transition: box-shadow .25s ease, background-color .2s ease;
+}
+.p-search input::placeholder { color: var(--label2); font-weight: 400; }
+.p-search input::-webkit-search-cancel-button { display: none; }
+.p-search input:focus { outline: none; box-shadow: 0 0 0 2.5px var(--accent), 0 0 40px -6px color-mix(in srgb, var(--accent) 55%, transparent), var(--shadow); }
+.p-search .s-ic { position: absolute; left: 18px; width: 23px; height: 23px; color: var(--label2); pointer-events: none; }
+.p-search .s-clear { position: absolute; right: 14px; width: 30px; height: 30px; padding: 5px; border: 0; background: none; color: var(--label3); cursor: pointer; border-radius: 50%; }
+.p-search .s-clear svg { width: 20px; height: 20px; }
+.p-note { min-height: 0; margin: 14px 2px 0; color: var(--label2); font-size: 15px; }
+.p-note:empty { display: none; }
+
+/* ---------- shelves and the results grid ---------- */
+.p-sec { margin-top: 40px; }
+.p-sh { margin-bottom: 14px; }
+.p-sh h2 { margin: 0; font: 700 22px/1.2 var(--font-display); letter-spacing: -.02em; }
+.p-sh p { margin: 2px 0 0; color: var(--label2); font-size: 15px; }
+.faces, .pp-known { list-style: none; margin: 0; padding: 0; }
+.shelf {
+  display: grid; grid-auto-flow: column; gap: 22px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+  scroll-snap-type: x mandatory; scroll-padding-left: var(--gutter); margin: 0 calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); padding: 6px var(--gutter-r) 10px var(--gutter);
+}
+.shelf::-webkit-scrollbar { display: none; }
+.shelf > li { scroll-snap-align: start; min-width: 0; }
+.faces.shelf { grid-auto-columns: 132px; }
+.faces.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 30px 22px; margin-top: 28px; }
+.face a { display: grid; justify-items: center; gap: 2px; text-align: center; color: inherit; text-decoration: none; border-radius: 14px; -webkit-tap-highlight-color: transparent; }
+.face b { margin-top: 10px; font: 600 15px/1.25 var(--font); letter-spacing: -.012em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.face small { color: var(--label2); font-size: 13px; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+/* a round portrait with a soft lift; no photo gets a gradient and initials, Apple Contacts-style */
+.pf { container-type: inline-size; position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 1; border-radius: 50%; overflow: hidden;
+  background: linear-gradient(160deg, hsl(var(--h, 220) 30% 62%), hsl(var(--h, 220) 34% 38%));
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .22), inset 0 0 0 .5px rgba(255, 255, 255, .12);
+  transition: transform .45s var(--ease-out, cubic-bezier(.2, .8, .2, 1)), box-shadow .45s ease; }
+.pf img { width: 100%; height: 100%; object-fit: cover; object-position: center 22%; }
+.pf i { font: 600 34cqw/1 var(--font-display); font-style: normal; color: rgba(255, 255, 255, .92); letter-spacing: .02em; }
+@media (hover: hover) {
+  .face a:hover .pf { transform: scale(1.06); box-shadow: 0 16px 34px rgba(0, 0, 0, .3), inset 0 0 0 .5px rgba(255, 255, 255, .16); }
+}
+.face a:active .pf { transform: scale(.96); }
+.face a:focus-visible { outline: none; }
+.face a:focus-visible .pf { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--accent); transform: scale(1.06); }
+
+/* loading: a row of breathing circles */
+.p-load { display: flex; gap: 22px; margin-top: 40px; overflow: hidden; }
+.p-load span { flex: none; width: 132px; aspect-ratio: 1; border-radius: 50%; background: var(--fill); animation: pBreathe 1.4s ease-in-out infinite alternate; }
+.p-load span:nth-child(2n) { animation-delay: .2s; }
+@keyframes pBreathe { to { opacity: .45; } }
+.p-empty { margin: 48px 0; text-align: center; color: var(--label2); }
+.p-empty h2 { margin: 0 0 6px; color: var(--label); font: 700 22px/1.2 var(--font-display); }
+
+/* ---------- a person ---------- */
+.pp-hero { position: relative; isolation: isolate; margin: 0 calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); padding: 18px var(--gutter-r) 34px var(--gutter); overflow: hidden; }
+/* their own photo, hugely blurred, fading into the page (no hard edge) */
+.pp-glow { position: absolute; inset: -30% -10% -10%; z-index: -1; width: 120%; height: 140%; object-fit: cover; filter: blur(70px) saturate(1.6); opacity: .55;
+  -webkit-mask-image: linear-gradient(#000 30%, transparent 92%); mask-image: linear-gradient(#000 30%, transparent 92%); }
+.pp-in { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "back back" "ph id"; align-items: end; gap: 22px 32px; }
+.pp-back { grid-area: back; justify-self: start; display: inline-flex; align-items: center; gap: 2px; margin-left: -6px; padding: 6px 10px 6px 4px; border-radius: 999px;
+  color: var(--accent); font: 500 17px/1 var(--font); letter-spacing: -.02em; text-decoration: none; }
+.pp-back svg { width: 22px; height: 22px; }
+@media (hover: hover) { .pp-back:hover { background: var(--fill); } }
+.pp-ph { grid-area: ph; width: clamp(140px, 18vw, 220px); }
+.pp-ph.sk, .sk-t { animation: pBreathe 1.4s ease-in-out infinite alternate; }
+.pp-ph.sk { background: var(--fill); box-shadow: none; }
+.pp-id { grid-area: id; min-width: 0; padding-bottom: 8px; }
+.pp-dept { margin: 0 0 4px; color: var(--label2); font: 600 13px/1 var(--font); letter-spacing: .06em; text-transform: uppercase; }
+.pp-id h1 { margin: 0; font: 700 clamp(34px, 5.4vw, 60px)/1.04 var(--font-display); letter-spacing: -.025em; text-wrap: balance; }
+.pp-facts { margin: 10px 0 0; color: var(--label2); font-size: 15px; }
+
+.pp-bio { position: relative; max-width: 72ch; max-height: calc(1.5em * 5); overflow: hidden; font-size: 16px; line-height: 1.5; color: var(--label); }
+.pp-bio p { margin: 0 0 .8em; }
+.pp-bio.open { max-height: none; }
+.pp-more { position: absolute; right: 0; bottom: 0; padding: 0 0 0 64px; border: 0; color: var(--accent); font: 600 16px/1.5 var(--font); cursor: pointer;
+  background: linear-gradient(90deg, transparent, var(--bg) 52px); }
+
+.pp-known.shelf { grid-auto-columns: 150px; gap: 18px; }
+.pp-known a { display: grid; gap: 2px; color: inherit; text-decoration: none; }
+.pp-known b { margin-top: 8px; font: 600 14px/1.25 var(--font); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.pp-known small { color: var(--label2); font-size: 13px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.pp-art { position: relative; display: grid; place-items: center; aspect-ratio: 2 / 3; border-radius: 12px; overflow: hidden;
+  background: linear-gradient(160deg, hsl(var(--h) 34% 40%), hsl(var(--h) 40% 18%)); box-shadow: 0 8px 22px rgba(0, 0, 0, .22), inset 0 0 0 .5px rgba(255, 255, 255, .1);
+  transition: transform .45s var(--ease-out, ease); }
+.pp-art img { width: 100%; height: 100%; object-fit: cover; }
+.pp-art i { padding: 8px; font: 700 13px/1.2 var(--font-display); font-style: normal; color: #fff; text-align: center; }
+@media (hover: hover) { .pp-known a:hover .pp-art { transform: scale(1.04); } }
+.pp-known a:focus-visible { outline: none; }
+.pp-known a:focus-visible .pp-art { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--accent); }
+
+.pp-fh { max-width: 860px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.pp-n { color: var(--label2); font-weight: 500; font-variant-numeric: tabular-nums; }
+.pp-list { list-style: none; margin: 0; padding: 0; border-radius: 14px; background: var(--bg2); overflow: hidden; max-width: 860px; }
+.pp-list a { display: grid; grid-template-columns: 46px 44px 1fr; align-items: center; gap: 14px; padding: 9px 16px; color: inherit; text-decoration: none; }
+.pp-list li + li a { border-top: .5px solid var(--sep); }
+.pp-list .pp-art { border-radius: 6px; box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .1); }
+.pp-list .pp-art i { display: none; }
+.pp-y { color: var(--label2); font: 500 15px/1 var(--font); font-variant-numeric: tabular-nums; }
+.pp-t { display: grid; gap: 2px; min-width: 0; }
+.pp-t b { font: 500 16px/1.25 var(--font); letter-spacing: -.012em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.pp-t small { color: var(--label2); font-size: 13px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+@media (hover: hover) { .pp-list a:hover { background: var(--fill); } }
+.pp-list a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* the reveal: things rise into place, unless animations are off */
+:root:not(.still) .p-sec, :root:not(.still) .faces.grid, :root:not(.still) .pp-in { animation: pRise .6s var(--ease-out, ease) both; }
+:root:not(.still) .p-sec:nth-of-type(2) { animation-delay: .08s; }
+:root:not(.still) .p-sec:nth-of-type(3) { animation-delay: .16s; }
+@keyframes pRise { from { opacity: 0; transform: translateY(14px); } }
+
+@media (max-width: 760px) {
+  .pwrap { padding-top: 6px; }
+  .p-search input { height: 52px; font-size: 18px; border-radius: 16px; }
+  .faces.shelf { grid-auto-columns: 104px; gap: 16px; }
+  .faces.grid { grid-template-columns: repeat(3, 1fr); gap: 24px 14px; }
+  .face b { font-size: 14px; }
+  .face small { font-size: 12px; }
+  .pp-in { grid-template-columns: 1fr; grid-template-areas: "back" "ph" "id"; justify-items: center; text-align: center; gap: 16px; }
+  .pp-back { justify-self: start; }
+  .pp-ph { width: 168px; }
+  .pp-known.shelf { grid-auto-columns: 122px; }
+  .pp-fh .segmented { width: 100%; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
+  .pp-list { margin: 0 calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); border-radius: 0; }
+  .pp-list a { grid-template-columns: 40px 38px 1fr; gap: 12px; }
+}

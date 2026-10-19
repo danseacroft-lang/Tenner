@@ -216,8 +216,7 @@
     $('#fCount').hidden = !n; $('#fCount').textContent = n;
     $('#clear').disabled = !n;
 
-    const noun = { tv: ['show', 'shows'], movie: ['film', 'films'], both: ['title', 'titles'] }[state.k][list.length === 1 ? 0 : 1];
-    $('#count').textContent = q ? `${list.length.toLocaleString('en-GB')} ${list.length === 1 ? 'result' : 'results'} for “${state.q.trim()}”` : `${list.length.toLocaleString('en-GB')} ${noun}`;
+    $('#count').textContent = q ? `${list.length.toLocaleString('en-GB')} ${list.length === 1 ? 'result' : 'results'} for “${state.q.trim()}”` : '';
     document.body.classList.toggle('searching', !!q);
     document.body.classList.toggle('mixed', !!q || state.k === 'both');   // show/film labels on the tiles when both are listed
     $('#qClear').hidden = !state.q;

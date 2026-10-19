@@ -78,7 +78,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.5.2';
+  const version = '1.6.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -181,6 +181,7 @@
     if (name === 'browse') { location.href = 'browse.html'; return; }
     if (name === 'new') { location.href = './#new'; return; }
     if (name === 'watchlist') { location.href = './#watchlist'; return; }
+    if (name === 'people') { location.href = 'people.html'; return; }
     location.href = './';
   }
   tabs.forEach((t) => t.addEventListener('click', () => open(t.dataset.tab)));
