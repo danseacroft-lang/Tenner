@@ -25,3 +25,6 @@
 .set-note { min-height: 20px; margin: 12px 4px 0; font-size: 14px; color: var(--green); }
 .set-ver { margin: 24px 0 0; color: var(--label3); font-size: 13px; }
 @media (max-width: 999px) { .set-wide { display: none; } }   /* the featured artwork is a computer thing */
+
+/* the last row: the way to the experimental version (not linked yet) */
+.set-exp { color: var(--accent); }

@@ -140,7 +140,7 @@
     padding: 8px max(16px, env(safe-area-inset-left, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-right, 0px));
     border-radius: 28px 28px 0 0;
     /* the sheet itself is the glass (the page shows through it, blurred); its cards are a lighter frost on top */
-    background: color-mix(in srgb, var(--bg) 62%, transparent); -webkit-backdrop-filter: blur(28px) saturate(180%); backdrop-filter: blur(28px) saturate(180%);
+    background: var(--sheet-bg); -webkit-backdrop-filter: var(--sheet-blur); backdrop-filter: var(--sheet-blur);
     box-shadow: 0 -20px 60px rgba(0, 0, 0, .35), inset 0 .5px 0 var(--frost-edge);
     transform: translateY(105%); visibility: hidden;
     transition: transform .5s var(--ease-spring), visibility 0s linear .5s;
