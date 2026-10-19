@@ -17,8 +17,7 @@
   --num-glass: rgba(255, 255, 255, .4); --num-glass-top: rgba(255, 255, 255, .62); --aura: .32; --core: .95;
   /* the glass shell and the wash of colour behind every page */
   --amb1: rgba(0, 122, 255, .11); --amb2: rgba(255, 55, 95, .07); --amb3: rgba(191, 90, 242, .07);
-  --glass: rgba(255, 255, 255, .64); --glass-hi: rgba(255, 255, 255, .85); --glass-line: rgba(60, 60, 67, .12);
-  --glass-shadow: 0 8px 30px rgba(0, 0, 0, .10), 0 1px 3px rgba(0, 0, 0, .06);
+  --glass: rgba(255, 255, 255, .64);
   --pill: rgba(118, 118, 128, .14);
   --ease-spring: cubic-bezier(.3, 1.25, .4, 1); --ease-out: cubic-bezier(.2, .8, .2, 1);
 
@@ -46,8 +45,7 @@
     --cover-shadow: 0 0 0 .5px rgba(255, 255, 255, .12), 0 6px 18px -8px rgba(0, 0, 0, .55);
     --num-glass: rgba(0, 0, 0, .5); --num-glass-top: rgba(40, 40, 46, .38); --aura: .45;
     --amb1: rgba(10, 132, 255, .24); --amb2: rgba(255, 55, 95, .1); --amb3: rgba(191, 90, 242, .16);
-    --glass: rgba(32, 32, 36, .58); --glass-hi: rgba(255, 255, 255, .16); --glass-line: rgba(255, 255, 255, .09);
-    --glass-shadow: 0 10px 34px rgba(0, 0, 0, .5), 0 1px 3px rgba(0, 0, 0, .3);
+    --glass: rgba(32, 32, 36, .58);
     --pill: rgba(118, 118, 128, .28);
     --frost: rgba(40, 40, 46, .42); --frost-on: rgba(255, 255, 255, .16); --frost-edge: rgba(255, 255, 255, .16); --frost-hi: rgba(255, 255, 255, .08);
     color-scheme: dark;
@@ -62,8 +60,7 @@
   --cover-shadow: 0 0 0 .5px rgba(255, 255, 255, .12), 0 6px 18px -8px rgba(0, 0, 0, .55);
   --num-glass: rgba(0, 0, 0, .5); --num-glass-top: rgba(40, 40, 46, .38); --aura: .45;
   --amb1: rgba(10, 132, 255, .24); --amb2: rgba(255, 55, 95, .1); --amb3: rgba(191, 90, 242, .16);
-  --glass: rgba(32, 32, 36, .58); --glass-hi: rgba(255, 255, 255, .16); --glass-line: rgba(255, 255, 255, .09);
-  --glass-shadow: 0 10px 34px rgba(0, 0, 0, .5), 0 1px 3px rgba(0, 0, 0, .3);
+  --glass: rgba(32, 32, 36, .58);
   --pill: rgba(118, 118, 128, .28);
   --frost: rgba(40, 40, 46, .42); --frost-on: rgba(255, 255, 255, .16); --frost-edge: rgba(255, 255, 255, .16); --frost-hi: rgba(255, 255, 255, .08);
   color-scheme: dark;
@@ -114,7 +111,7 @@ main:focus { outline: none; }
 .btn-icon { width: 44px; height: 44px; padding: 0; border-radius: 12px; }
 .btn.chip { height: 26px; padding: 0 10px; border-radius: 8px; font-size: 12.5px; font-weight: 600; }
 
-/* ============================================================ the shell, from Channel Crossings: Liquid Glass
+/* ============================================================ the shell: Liquid Glass
    A bar that floats at the top (logo, the tabs, the round Theme button), with the tabs floating at the bottom on phones
    as in iOS. From 1000px wide it becomes the Apple Music sidebar (further down). */
 .top-row {
@@ -759,10 +756,10 @@ main { padding-bottom: 56px; }   /* breathing room at the end of every page */
 
 
 /* ============================================================ computers: the Apple Music sidebar
-   From 1000px wide, the glass bar becomes a fixed sidebar on the left (logo, then Search, Top 10, New and Browse, the chosen
-   one on a grey pill with its icon in the accent colour; then About and the small print, the version, and Theme at the
-   foot) and the page sits to the right of it. About lives in the tab bar on phones and tablets. */
-.side-links, .side-about { display: none; }
+   From 1000px wide, the glass bar becomes a fixed sidebar on the left, as in the Apple TV app: the logo, the pages (the
+   chosen one on a grey pill, icons in the accent colour), then a "More" section (About, Theme and Settings, the same
+   rows), and the small print and the version at the very foot. The page sits to the right of it. */
+.side-links, .side-about, .side-h { display: none; }
 @media (min-width: 1000px) {
   :root { --side: 236px; --side-bg: rgba(242, 242, 247, .82); }
   :root[data-theme="dark"] { --side-bg: rgba(28, 28, 30, .82); }
@@ -795,28 +792,29 @@ main { padding-bottom: 56px; }   /* breathing room at the end of every page */
   .tabs button[data-tab="people"] { display: flex; }
   .th-wrap { display: contents; }   /* computers: the round button opens its own card instead */
   .th-sel { display: none; }
-  /* the small print and the version, then About and Theme at the foot */
+  /* More: a small grey heading, then About, Theme and Settings as rows like the pages above (2px apart, as they are) */
+  .side-h { display: block; margin: 8px 0 0; padding: 0 10px; color: var(--label3); font: 600 13px/1 var(--font); letter-spacing: -.005em; }
+  .side-about, .tb-btn { display: flex; align-items: center; gap: 12px; width: 100%; height: 38px; padding: 0 10px; border-radius: 9px;
+    color: var(--label); font: 500 15px/1 var(--font); letter-spacing: -.016em; text-decoration: none; transition: background-color .2s ease; }
+  .side-h + .side-about { margin-top: -12px; }
+  .side-about.side-settings { margin-top: -20px; }
+  .side-about svg, .tb-btn svg { width: 20px; height: 20px; flex: none; color: var(--accent); }
+  .side-about:hover, .tb-btn:hover { text-decoration: none; background: var(--fill); }
+  .side-about:active, .tb-btn:active { background: var(--fill-strong); transform: none; filter: none; }
+  .tb-btn[aria-expanded="true"] { background: var(--fill); color: var(--label); }
+  .side-about[aria-current] { background: var(--fill); font-weight: 600; }
+  .side-about:focus-visible, .tb-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .top-act { margin-top: -20px; justify-self: auto; align-self: stretch; padding: 0; border-radius: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .tb-btn { justify-content: flex-start; }
+  .tb-btn::after { content: "Theme"; position: static; inset: auto; }
+  /* the small print and the version, right at the foot */
   .side-links { margin-top: auto; display: flex; flex-wrap: wrap; gap: 2px 12px; padding: 0 10px; }
   .side-link { padding: 3px 0; border: 0; background: none; color: var(--label2); font: 400 12px/1.3 var(--font); letter-spacing: -.01em; cursor: default; }
   .side-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
   a.side-link { text-decoration: none; cursor: pointer; }
   @media (hover: hover) { a.side-link:hover { color: var(--label); text-decoration: none; } }
   .side-link[aria-current] { color: var(--label); font-weight: 600; }
-  /* About: a row at the foot of the sidebar, just above Theme, styled like it */
-  .side-about { display: flex; align-items: center; gap: 12px; height: 40px; margin: 8px 0 -20px; padding: 0 10px;   /* -20px: sits 2px above Theme, like the tabs */
-    border-radius: 9px;
-    color: var(--label); font: 500 15px/1 var(--font); letter-spacing: -.016em; text-decoration: none; transition: background-color .2s ease; }
-  .side-about svg { width: 20px; height: 20px; flex: none; }
-  .side-about:hover { text-decoration: none; background: var(--fill); }
-  .side-about[aria-current] { background: var(--fill); font-weight: 600; }
-  .side-about[aria-current] svg { color: var(--accent); }
-  .side-about + .side-about { margin-top: 0; }   /* Settings, About, then Theme: each 2px apart, like the tabs */
   .side-ver { flex-basis: 100%; margin-top: 6px; color: var(--label3); font-size: 12px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
-  .top-act { margin-top: 0; justify-self: auto; align-self: stretch; padding: 0; border-radius: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
-  .tb-btn { width: 100%; height: 40px; border-radius: 9px; display: flex; justify-content: flex-start; gap: 12px; padding: 0 10px; font: 500 15px/1 var(--font); letter-spacing: -.016em; }
-  .tb-btn::after { content: "Theme"; position: static; inset: auto; }
-  .tb-btn svg { width: 20px; height: 20px; }
-  .tb-pop { --tb-o: 30px calc(100% + 14px); }   /* the Theme card opens up from the sidebar, frosted like every sheet */
   .intro { padding-top: 22px; }
 }
 @media (min-width: 1000px) and (prefers-color-scheme: dark) {
@@ -946,8 +944,7 @@ a.sh-prov:hover { text-decoration: none; }
 @media (prefers-contrast: more) {
   :root:is([data-theme], :not([data-theme])) {
     --sep: color-mix(in srgb, var(--label) 45%, transparent); --label2: color-mix(in srgb, var(--label) 80%, transparent);
-    --label3: color-mix(in srgb, var(--label) 62%, transparent); --fill: color-mix(in srgb, var(--label) 16%, transparent);
-    --glass-hi: color-mix(in srgb, var(--label) 40%, transparent); --frost-edge: color-mix(in srgb, var(--label) 45%, transparent);
+    --label3: color-mix(in srgb, var(--label) 62%, transparent); --fill: color-mix(in srgb, var(--label) 16%, transparent); --frost-edge: color-mix(in srgb, var(--label) 45%, transparent);
   }
   .pcard a.cover, .f-img, .nr-art, .svc, .dd, .segmented { outline: 1px solid var(--sep); outline-offset: -1px; }
   @media (max-width: 999px) { .tabs { outline: 1px solid var(--sep); outline-offset: -1px; } }   /* the floating tab bar, not the sidebar */

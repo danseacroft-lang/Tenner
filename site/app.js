@@ -861,4 +861,5 @@ arrows($('.kind'), () => [...document.querySelectorAll('.kind [data-kind]')], (b
 window.tn.segment($('.kind'), (b) => setKind(b.dataset.kind));   // the thumb slides and can be dragged, like an iOS switch
 
 addEventListener('hashchange', () => { route(); scrollTo(0, 0); });
+addEventListener('popstate', () => state.trending && openFromUrl());   // Forward to a title you'd closed opens it again
 load();

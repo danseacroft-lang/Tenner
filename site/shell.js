@@ -78,7 +78,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.7.2';
+  const version = '1.8.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -210,8 +210,15 @@
   // the round button opens a card just under it, lined up with its right edge
   // The card is a native popover (the browser's top layer, with its own tap-outside and Escape to close)
   function tbMenu(btn, pop, onOpen) {
+    const side = matchMedia('(min-width: 1000px)');
     const place = () => {
-      const r = btn.getBoundingClientRect(), w = pop.offsetWidth, left = Math.max(12, Math.min(r.right - w, innerWidth - w - 12));
+      const r = btn.getBoundingClientRect(), w = pop.offsetWidth;
+      if (side.matches) {   // computers: beside its row in the sidebar, like a Mac menu
+        const h = pop.offsetHeight, top = Math.max(12, Math.min(r.top - 18, innerHeight - h - 12));
+        Object.assign(pop.style, { left: `${r.right + 10}px`, top: `${top}px`, maxHeight: `${innerHeight - 24}px` });
+        pop.style.setProperty('--tb-o', `-14px ${r.top + r.height / 2 - top}px`); return;
+      }
+      const left = Math.max(12, Math.min(r.right - w, innerWidth - w - 12));
       const h = pop.offsetHeight, up = innerHeight - r.bottom < h + 20 && r.top > h + 20;
       pop.style.top = (up ? r.top - h - 8 : r.bottom + 8) + 'px';
       pop.style.maxHeight = Math.max(200, up ? r.top - 20 : innerHeight - r.bottom - 20) + 'px';

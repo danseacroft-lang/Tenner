@@ -43,7 +43,7 @@ export default {
     }
 
     // the edge cache, keyed on the request without its origin
-    const cache = caches.default, key = new Request(`https://tenner-cache/v2${url.pathname}?${new URLSearchParams(params)}`);   // bump v when a shape changes
+    const cache = caches.default, key = new Request(`https://tenner-cache/v3${url.pathname}?${new URLSearchParams(params)}`);   // bump v when a shape changes
     let hit = await cache.match(key);
     if (!hit) {
       const r = await fetch(`${TMDB}${path}?${new URLSearchParams(params)}`, { headers: { authorization: `Bearer ${env.TMDB_TOKEN}`, accept: 'application/json' } });
@@ -127,21 +127,37 @@ function peopleShape(d) {
   };
 }
 function personShape(p) {
+  // how big a part each credit was, so Known For leads with what they're actually known for (a star turn), not a
+  // one-episode guest voice on a giant show: billing order for films, episodes for shows, the job behind the camera
+  const KEYJOB = /^(Director|Creator|Writer|Screenplay|Novel|Story)$/;
+  const weight = (x, role) => {
+    if (role === 'crew') return KEYJOB.test(x.job) ? 1 : /Producer/.test(x.job || '') ? 0.3 : 0.15;
+    if (x.media_type === 'movie') { const o = x.order ?? 99; return o <= 2 ? 1 : o <= 5 ? 0.7 : o <= 12 ? 0.35 : 0.12; }
+    const e = x.episode_count || 1; return e >= 20 ? 1 : e >= 8 ? 0.75 : e >= 3 ? 0.35 : 0.05;
+  };
+  const NOT_KNOWN = new Set([10767, 10763, 10764]);   // talk shows, news, reality: appearances, not work
   const all = (list, role) => (list || []).filter((x) => x.media_type === 'movie' || x.media_type === 'tv').map((x) => ({
     k: `${x.media_type === 'movie' ? 'm' : 't'}${x.id}`, type: x.media_type, title: x.title || x.name, year: yearOf(x),
     poster: x.poster_path ? `${IMG}/w342${x.poster_path}` : null, bd: x.backdrop_path ? `${IMG}/w1280${x.backdrop_path}` : null, pop: Math.round(x.popularity || 0), votes: x.vote_count || 0,
     role: role === 'cast' ? x.character || '' : x.job || '', eps: x.episode_count || null,
+    w: weight(x, role), avg: x.vote_average || 0, talk: (x.genre_ids || []).some((g) => NOT_KNOWN.has(g)),
   }));
   const merge = (list) => {   // one row per title (several jobs on one title become "Writer, Director")
     const m = new Map();
-    for (const x of list) { const y = m.get(x.k); if (y) { if (x.role && !y.role.includes(x.role)) y.role = [y.role, x.role].filter(Boolean).join(', '); } else m.set(x.k, { ...x }); }
+    for (const x of list) {
+      const y = m.get(x.k);
+      if (y) { if (x.role && !y.role.includes(x.role)) y.role = [y.role, x.role].filter(Boolean).join(', '); y.w = Math.max(y.w, x.w); } else m.set(x.k, { ...x });
+    }
     return [...m.values()];
   };
-  const cast = merge(all(p.combined_credits?.cast, 'cast')).filter((x) => !/^(himself|herself|self|themselves)\b/i.test(x.role) || x.votes > 50);
+  const self = (x) => /^(himself|herself|self|themselves)\b/i.test(x.role);
+  const cast = merge(all(p.combined_credits?.cast, 'cast')).filter((x) => !self(x) || x.votes > 50);
   const crew = merge(all(p.combined_credits?.crew, 'crew'));
-  const known = [...cast, ...crew].filter((x) => x.poster && x.votes > 20).sort((a, b) => b.votes * 2 + b.pop - (a.votes * 2 + a.pop))
-    .filter((x, i, l) => l.findIndex((y) => y.k === x.k) === i).slice(0, 12);
-  const slim = ({ bd, ...x }) => x;
+  // the score: how widely seen (votes) × how big their part was × how well liked
+  const score = (x) => x.votes * x.w * Math.min(1.25, Math.max(0.6, x.avg / 7));
+  const known = [...cast, ...crew].filter((x) => x.poster && x.votes > 20 && !x.talk && !self(x)).sort((a, b) => score(b) - score(a))
+    .filter((x, i, l) => l.findIndex((y) => y.k === x.k) === i).slice(0, 12).map(({ w, avg, talk, ...x }) => x);
+  const slim = ({ bd, w, avg, talk, ...x }) => x;
   const byYear = (l) => l.sort((a, b) => (b.year || '9999').localeCompare(a.year || '9999'));
   return {
     id: p.id, name: p.name, dept: p.known_for_department || null, photo: p.profile_path ? `${IMG}/h632${p.profile_path}` : null,

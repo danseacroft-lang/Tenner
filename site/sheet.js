@@ -75,6 +75,8 @@
     return apiCache.get(k);
   };
   let shown = null;   // the details the open sheet was drawn from
+  // the first touch, click or key anywhere starts fetching the details, so the first sheet opens already filled in
+  for (const t of ['pointerdown', 'keydown']) addEventListener(t, () => { details(); trail(); }, { once: true, passive: true });
 
   // ---------- the sheet, built once ----------
   document.body.insertAdjacentHTML('beforeend', `

@@ -78,19 +78,20 @@
         <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><path class="solid" d="M6 3h12v18.4l-6-4.2-6 4.2z"/></svg>
         <span>Watchlist</span></button>
     </div></nav>
-    <div class="side-links" aria-label="Site information">
-      <a class="side-link" href="legal.html#terms">Terms of Service</a>
-      <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
-      <a class="side-link" href="legal.html#cookies">Cookies</a>
-      <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.7.2</span>
-    </div>
-    <a class="side-about side-settings" href="settings.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-2.6-1.5L14.2 2.6h-4l-.4 2.5A7.6 7.6 0 0 0 7.2 6.6l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.6 7.6 0 0 0 2.6-1.5l2.3 1 2-3.4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><span>Settings</span></a>
+    <h2 class="side-h" id="sideMore">More</h2>
     <a class="side-about" aria-current="page" href="about.html"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M12 11v5.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.1" fill="currentColor"/></svg><span>About</span></a>
     <div class="top-act">
       <a class="tb-btn tb-about tb-settings" href="settings.html" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-2.6-1.5L14.2 2.6h-4l-.4 2.5A7.6 7.6 0 0 0 7.2 6.6l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.6 7.6 0 0 0 2.6-1.5l2.3 1 2-3.4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></a>
       <a class="tb-btn tb-about" href="about.html" aria-label="About Tenner" title="About" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v5.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.3" fill="currentColor"/></svg></a>
       <button type="button" class="tb-btn" id="thBtn" aria-haspopup="menu" aria-controls="thPop" aria-expanded="false" aria-label="Theme" title="Theme"><span id="thIc" style="display:contents"></span></button>
+    </div>
+    <a class="side-about side-settings" href="settings.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-2.6-1.5L14.2 2.6h-4l-.4 2.5A7.6 7.6 0 0 0 7.2 6.6l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.6 7.6 0 0 0 2.6-1.5l2.3 1 2-3.4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><span>Settings</span></a>
+    <div class="side-links" aria-label="Site information">
+      <a class="side-link" href="legal.html#terms">Terms of Service</a>
+      <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
+      <a class="side-link" href="legal.html#cookies">Cookies</a>
+      <a class="side-link" href="contact.html">Contact</a>
+      <span class="side-ver">Tenner 1.8.0</span>
     </div>
   </div>
 
@@ -121,7 +122,7 @@
       [o.tv&&o.tv[0],o.movie&&o.movie[0],o.tv&&o.tv[1],o.movie&&o.movie[1],o.tv&&o.tv[2]].forEach(function(x){ if(x&&x.backdrop&&!seen[x.title]){seen[x.title]=1;pick.push(x);} });
       if(!pick.length) return;
       var big=function(u){return u.replace('/t/p/w1280/','/t/p/original/');};
-      art.innerHTML=pick.map(function(x,i){return '<img src="'+big(x.backdrop)+'" alt="" decoding="async"'+(i?' loading="lazy"':' fetchpriority="high"')+'>';}).join('');
+      art.innerHTML=pick.map(function(x,i){return '<img src="'+x.backdrop+'" srcset="'+x.backdrop+' 1280w, '+big(x.backdrop)+' 1920w" sizes="100vw" alt="" decoding="async"'+(i?' loading="lazy"':' fetchpriority="high"')+'>';}).join('');
       var imgs=art.querySelectorAll('img'), i=0;
       function show(n){
         imgs.forEach(function(m,k){m.classList.toggle('on',k===n);});
@@ -252,7 +253,7 @@
     <nav class="more-links" aria-label="Site information">
       <a href="contact.html">Contact</a><a href="legal.html#privacy">Privacy Policy</a><a href="legal.html#terms">Terms of Service</a><a href="legal.html#cookies">Cookies</a>
     </nav>
-    <p class="more-ver side-ver-text">Tenner 1.7.2</p>
+    <p class="more-ver side-ver-text">Tenner 1.8.0</p>
     </main>
 
 

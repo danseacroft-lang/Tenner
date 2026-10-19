@@ -89,12 +89,12 @@
     // the splash: the wide artwork of what they're best known for, dissolving into the page (as on About); without
     // one, a glow of their own photo
     const sp = pd.known.find((x) => x.bd);
-    const bg = sp ? `<div class="pp-bg" aria-hidden="true"><img src="${esc(sp.bd.replace('/w1280/', '/original/'))}" alt="" fetchpriority="high" decoding="async" onload="this.classList.add('on')"><div class="pp-wash"></div><div class="pp-shade"></div></div>`
+    const bg = sp ? `<div class="pp-bg" aria-hidden="true"><img src="${esc(sp.bd)}" srcset="${esc(sp.bd)} 1280w, ${esc(sp.bd.replace('/w1280/', '/original/'))} 1920w" sizes="100vw" alt="" fetchpriority="high" decoding="async" onload="this.classList.add('on')"><div class="pp-wash"></div><div class="pp-shade"></div></div>`
       : pd.photo ? `<img class="pp-glow" src="${esc(pd.photo)}" alt="" aria-hidden="true">` : '';
     const cap = sp ? `<a class="pp-now" href="./?t=${sp.k}" data-k="${sp.k}">${sp.poster ? `<img src="${esc(sp.poster)}" alt="">` : ''}<span><small>Known for</small><b>${esc(sp.title)}</b></span></a>` : '';
     person.innerHTML = `<div class="pp-hero${sp ? ' splash' : ''}" style="--h:${hue(pd.name)}">${bg}${cap}
-      <div class="pp-in">${back}${photo(pd, 'pf pp-ph')}
-        <div class="pp-id"><p class="pp-dept">${esc(DEPT[pd.dept] || pd.dept || '')}</p><h1>${esc(pd.name)}</h1>
+      ${sp ? back : ""}<div class="pp-in">${sp ? "" : back}${photo(pd, 'pf pp-ph')}
+        <div class="pp-id"><p class="pp-dept">${esc(DEPT[pd.dept] || pd.dept || '')}</p><h1 tabindex="-1">${esc(pd.name)}</h1>
           ${facts.length ? `<p class="pp-facts">${esc(facts.join(' · '))}</p>` : ''}</div></div></div>
       ${pd.bio ? `<section class="pp-bio"><p id="ppBio">${esc(pd.bio).replace(/\n\n+/g, '</p><p>')}</p><button type="button" class="pp-more" id="ppMore" hidden>More</button></section>` : ''}
       ${pd.known.length ? `<section class="p-sec"><div class="p-sh"><h2>Known For</h2></div><ul class="pp-known shelf">${pd.known.map((x) =>
@@ -102,6 +102,7 @@
       ${tabs.length ? `<section class="p-sec"><div class="p-sh pp-fh"><h2>Filmography</h2>${tabs.length > 1 ? `<div class="segmented" role="radiogroup" aria-label="Acting or behind the camera"><span class="seg-thumb" aria-hidden="true"></span>${tabs.map((t) =>
         `<button type="button" role="radio" data-f="${t[0]}" aria-checked="${t === first}">${t[1]} <span class="pp-n">${t[2].length}</span></button>`).join('')}</div>` : ''}</div>
         <ol class="pp-list" id="ppList">${first[2].map(credit).join('')}</ol></section>` : ''}`;
+    if (push) person.querySelector('h1').focus({ preventScroll: true });   // screen readers land on the person's name
     const bio = $('#ppBio'), more = $('#ppMore');
     if (bio && bio.closest('.pp-bio').scrollHeight > bio.closest('.pp-bio').clientHeight + 4) { more.hidden = false; }
     more?.addEventListener('click', () => { bio.closest('.pp-bio').classList.add('open'); more.remove(); });
@@ -137,6 +138,7 @@
   addEventListener('popstate', () => {
     const p = new URL(location.href).searchParams.get('p');
     if (p && p !== person.dataset.id) showPerson(p, false); else if (!p && person.dataset.id) showFind();
+    const t = new URL(location.href).searchParams.get('t'); if (t && !window.tnSheet?.isOpen()) window.tnSheet?.openKey?.(t);
   });
 
   // ---------- start ----------

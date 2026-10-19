@@ -72,9 +72,13 @@
     if (wantSearch) history.replaceState(null, '', location.pathname);
     readHash(); buildControls(); apply(false);
     if (wantSearch) $('#q').focus();
-    const shared = new URL(location.href).searchParams.get('t'), sx = shared && item(shared);
-    if (sx) sheetFor(sx).then((info) => window.tnSheet?.open(info, true));
-    else if (shared) window.tnSheet?.openKey?.(shared);
+    const openShared = () => {   // ?t=…: a shared title, or Forward back to one
+      const shared = new URL(location.href).searchParams.get('t'), sx = shared && item(shared);
+      if (!shared || window.tnSheet?.isOpen()) return;
+      if (sx) sheetFor(sx).then((info) => window.tnSheet?.open(info, true));
+      else window.tnSheet?.openKey?.(shared);
+    };
+    openShared(); addEventListener('popstate', openShared);
   }).catch((err) => {
     $('#count').textContent = `The catalogue didn't load (${err.message}). It's rebuilt every hour, so try again shortly.`;
   });

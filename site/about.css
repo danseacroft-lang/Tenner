@@ -3,7 +3,6 @@
 
 :root {
   --a-bezel: #1c1c1e; --a-screen: #0b0d18;
-  --a-glass: rgba(255, 255, 255, .8); --a-glass-b: rgba(255, 255, 255, .95);
   --a-ink: #0b0b0f; --a-ink2: rgba(60, 60, 67, .72);
   --a-paper: #ffffff; --a-line: rgba(60, 60, 67, .16); --a-shadow: rgba(30, 30, 90, .18);
   --a-tile1: #eef0ff; --a-tile2: #dde2fb;
@@ -12,7 +11,6 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --a-bezel: #26262c; --a-screen: #05060c;
-    --a-glass: rgba(44, 44, 48, .74); --a-glass-b: rgba(255, 255, 255, .16);
     --a-ink: #ffffff; --a-ink2: rgba(235, 235, 245, .6);
     --a-paper: #2c2c30; --a-line: rgba(235, 235, 245, .14); --a-shadow: rgba(0, 0, 0, .55);
     --a-tile1: #1a1638; --a-tile2: #0e0c22;
@@ -21,7 +19,6 @@
 }
 :root[data-theme="dark"] {
   --a-bezel: #26262c; --a-screen: #05060c;
-  --a-glass: rgba(44, 44, 48, .74); --a-glass-b: rgba(255, 255, 255, .16);
   --a-ink: #ffffff; --a-ink2: rgba(235, 235, 245, .6);
   --a-paper: #2c2c30; --a-line: rgba(235, 235, 245, .14); --a-shadow: rgba(0, 0, 0, .55);
   --a-tile1: #1a1638; --a-tile2: #0e0c22;
@@ -108,7 +105,7 @@
   .step h3 { font-size: 19px; }
   .step p { font-size: 15px; }
 }
-/* frosted cards at night, as on Channel Crossings */
+/* frosted cards at night */
 :root[data-theme="dark"] .step { -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .step { -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%); } }
 
