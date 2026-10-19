@@ -116,18 +116,7 @@
   const sheet = $('#sheet'), body = $('#shBody');
   let current = null, detP = null;
   const details = () => (detP ||= get('titles.json'));
-  const NAMES = { 'Disney Plus': 'Disney+', 'Amazon Prime Video': 'Prime Video', 'Paramount Plus': 'Paramount+', 'Apple TV Plus': 'Apple TV+',
-    'Apple TV Store': 'Apple TV', 'Amazon Video': 'Prime Video Store', 'Now TV': 'NOW', 'Now TV Cinema': 'NOW', 'NOW TV Cinema': 'NOW', 'Netflix Kids': 'Netflix' };
-  const brand = (n) => { const b = n.replace(/\s+(Standard|Basic|Premium)?\s*with Ads$/i, '').replace(/\s+(Amazon|Apple TV|Roku Premium)\s+Channel$/i, '')
-    .replace(/\s+(Premium|Kids|Basic|Standard|Essential)$/i, '').replace(/^Paramount\+$/, 'Paramount Plus').trim(); return NAMES[b] || b; };
-  const enc = encodeURIComponent;
-  const SEARCH = { 'Apple TV': (t) => `https://tv.apple.com/gb/search?term=${enc(t)}`, 'Apple TV+': (t) => `https://tv.apple.com/gb/search?term=${enc(t)}`,
-    'Prime Video': (t) => `https://www.amazon.co.uk/s?k=${enc(t)}&i=instant-video`, 'Prime Video Store': (t) => `https://www.amazon.co.uk/s?k=${enc(t)}&i=instant-video`,
-    'Netflix': (t) => `https://www.netflix.com/search?q=${enc(t)}`, 'Disney+': (t) => `https://www.disneyplus.com/search?q=${enc(t)}`,
-    'BBC iPlayer': (t) => `https://www.bbc.co.uk/iplayer/search?q=${enc(t)}`, 'YouTube': (t) => `https://www.youtube.com/results?search_query=${enc(t)}` };
-  const DIRECT = { 'Netflix': (l) => l.nf && `https://www.netflix.com/title/${l.nf}`, 'Disney+': (l) => l.dp && `https://www.disneyplus.com/${l.dp}`,
-    'Prime Video': (l) => l.pv && `https://www.primevideo.com/detail/${l.pv}`, 'Prime Video Store': (l) => l.pv && `https://www.primevideo.com/detail/${l.pv}`,
-    'HBO Max': (l) => l.hb && `https://play.hbomax.com/${l.hb}`, 'Apple TV': (l) => l.ap && `https://tv.apple.com/gb/${l.ap}`, 'Apple TV+': (l) => l.ap && `https://tv.apple.com/gb/${l.ap}` };
+  const { brand, link } = window.tnLinks;   // ../links.js: every service's tested link, shared with Tenner
   const runtime = (m) => !m ? '' : m < 60 ? `${m}m` : `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}`;
   const tmdb = (x) => `https://www.themoviedb.org/${x.type}/${x.k.slice(1)}`;
 
@@ -137,7 +126,7 @@
     const seen = new Set();
     const group = (label, ids) => {
       const rows = (ids || []).map((id) => [id, ...(d.providers[id] || [])]).filter(([, n]) => n && !seen.has(brand(n)) && seen.add(brand(n))).map(([, n, logo]) => {
-        const b = brand(n), href = DIRECT[b]?.(it.ln || {}) || (SEARCH[b] ? SEARCH[b](x.title) : `${tmdb(x)}/watch?locale=GB`);
+        const b = brand(n), href = link(n, x.title, it.ln || {}, { watch: `${tmdb(x)}/watch?locale=GB` });
         return `<a class="row" href="${esc(href)}" target="_blank" rel="noopener">${logo && d.logo ? `<img class="lg" src="${esc(d.logo + logo)}" alt="">` : `<span class="lg">${esc(b[0])}</span>`}<span class="grow">${esc(b)}</span><i class="chev" aria-hidden="true"></i></a>`;
       }).join('');
       return rows ? `<h3 class="head">${label}</h3><div class="list">${rows}</div>` : '';

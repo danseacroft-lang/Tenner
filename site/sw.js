@@ -3,7 +3,7 @@
 // last copy kept for when there's no connection. Fonts and icons: from the cache. TMDB's posters: from the cache, the most recent
 // 60 or so. The search API is never cached here (Cloudflare caches it).
 const SHELL = 'tenner-shell-1.5.1', IMGS = 'tenner-img-v1';   // the shell cache follows the version
-const CORE = ['./', 'index.html', 'browse.html', 'about.html', 'settings.html', 'styles.css', 'browse.css', 'about.css', 'shell.js', 'sheet.js', 'app.js', 'browse.js',
+const CORE = ['./', 'index.html', 'browse.html', 'about.html', 'settings.html', 'styles.css', 'browse.css', 'about.css', 'shell.js', 'links.js', 'sheet.js', 'app.js', 'browse.js',
   'lite/', 'lite/index.html', 'lite/lite.css', 'lite/lite.js', 'fonts/inter-latin.woff2', 'fonts/inter-tight-latin.woff2', 'logo.svg', 'favicon.svg'];
 
 self.addEventListener('install', (e) => {
