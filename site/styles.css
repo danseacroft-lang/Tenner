@@ -926,10 +926,11 @@ a.sh-prov:hover { text-decoration: none; }
    Reduce Transparency: every glass surface turns solid. Increase Contrast: stronger text, separators and edges. */
 @media (prefers-reduced-transparency: reduce) {
   :root:is([data-theme], :not([data-theme])) { --glass: var(--bg2); --side-bg: var(--bg2); --frost: var(--bg2); }
-  .tabs, .top-act, .svc, .dd, .tb-pop, .top-row, .scroller, .coll, .score, .step, .btn-tinted, .segmented, .h-cta, .g-b, .tag {
+  .tabs, .top-act, .svc, .dd, .tb-pop, .top-row, .scroller, .coll, .score, .step, .btn-tinted, .segmented, .h-cta, .g-b, .tag, .panel, .filters {
     -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
   }
   .tb-pop { background: var(--card) !important; }
+  @media (max-width: 820px) { .filters { background: var(--bg) !important; } }
   .bd-ext { display: none !important; }
   :root { --side-bg: var(--bg2) !important; }   /* no artwork tint: a solid sidebar */
 }
