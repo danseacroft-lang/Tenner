@@ -28,3 +28,4 @@
 
 /* the last row: the way to the experimental version (not linked yet) */
 .set-exp { color: var(--accent); }
+.set-note:empty { display: none; }   /* only takes up room when it has something to say */
