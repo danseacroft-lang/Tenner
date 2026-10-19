@@ -1,4 +1,4 @@
-// Where each streaming service's link goes, shared by Tenner and the experimental version (lite/). Every address was
+// Where each streaming service's link goes (used by the title sheet). Every address was
 // opened in a browser to check it works (October 2026): the title itself where Wikidata knows its ID on that service,
 // else the service's own search with the title filled in, else its home page, else the title's TMDB watch page.
 (() => {

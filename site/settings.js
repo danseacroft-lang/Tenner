@@ -56,6 +56,4 @@
     saved.set([]); mine.set([]); prefs.set('start', 'auto'); show(); say('Cleared');
   });
   show();
-  // Tenner: try the experimental version. From now on the homepage opens it, until you choose to go back from its Settings.
-  document.getElementById('setExp').addEventListener('click', () => { try { localStorage.setItem('tenner-build', '"lite"'); } catch {} location.href = 'lite/'; });
 })();

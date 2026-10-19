@@ -26,6 +26,4 @@
 .set-ver { margin: 24px 0 0; color: var(--label3); font-size: 13px; }
 @media (max-width: 999px) { .set-wide { display: none; } }   /* the featured artwork is a computer thing */
 
-/* the last row: the way to the experimental version (not linked yet) */
-.set-exp { color: var(--accent); }
 .set-note:empty { display: none; }   /* only takes up room when it has something to say */
