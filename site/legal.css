@@ -54,8 +54,6 @@
 .c-row input::placeholder, .c-msg::placeholder { color: var(--label3); }
 .c-row input:focus, .c-msg:focus { outline: none; }
 .c-row:focus-within, .c-msg:focus { background: color-mix(in srgb, var(--accent) 6%, transparent); }
-.c-row .segmented { flex: 1; min-width: 0; }
-.c-row .segmented button { min-width: 0; padding: 0 8px; font-size: 13px; }
 .c-msg {
   display: block; width: 100%; min-height: 200px; padding: 14px 16px; border: 0; resize: vertical; background: none;
   color: var(--label); font: 400 16px/1.5 var(--font); letter-spacing: -.016em;
@@ -64,6 +62,10 @@
 .c-note { margin: 0; font-size: 13px; color: var(--label2); text-wrap: pretty; }
 .c-note.bad { color: #ff453a; }
 .c-send.busy { opacity: .6; }
+.c-row select { flex: 1; min-width: 0; height: 34px; margin: 0 -4px 0 0; padding: 0 28px 0 0; border: 0; background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238e8e93' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 6px center;
+  appearance: none; -webkit-appearance: none; font: 400 16px/1 var(--font); letter-spacing: -.016em; color: var(--label3); cursor: pointer; }
+.c-row select.chosen { color: var(--label); }
+.c-row select:focus { outline: none; }
 .c-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 /* sent: a tick and a thank-you in place of the form */
 .c-done { width: 100%; display: grid; justify-items: center; gap: 6px; padding: 34px 20px 28px; text-align: center; border-radius: 12px; background: var(--card); border: .5px solid var(--sep); outline: none; }

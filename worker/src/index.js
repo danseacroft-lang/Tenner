@@ -188,16 +188,17 @@ function creditsShape(d, type) {
 // Checked, then sent on as a plain email to Tenner's inbox, with Reply-To set to the sender (if they gave an address),
 // so replying is just pressing Reply. Nothing is kept here. One message a minute from each connection, and a hidden
 // field that people never fill in but spam robots do.
-const TOPICS = ['An idea', 'A problem', 'A question', 'Something else'];
+const TOPICS = ['Feedback', 'Suggestions', 'Support', 'Legal'];
 async function contact(req, env, cors) {
   if (!env.MAILER || !env.SUPPORT_EMAIL) return json({ error: 'Not set up yet' }, 503, cors);
   if (Number(req.headers.get('content-length') || 0) > 20000) return json({ error: 'Too long' }, 413, cors);
   let f; try { f = await req.json(); } catch { return json({ error: 'Bad form' }, 400, cors); }
   const clean = (v, n) => String(v ?? '').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').trim().slice(0, n);
   const msg = clean(f.msg, 5000), name = clean(f.name, 80).replace(/[\r\n<>"]/g, ''), email = clean(f.email, 200);
-  const topic = TOPICS.includes(f.topic) ? f.topic : 'Something else';
+  const topic = TOPICS.includes(f.topic) ? f.topic : 'Feedback';
   if (f.website) return json({ ok: true }, 200, cors);   // the hidden field: a robot, quietly ignored
   if (msg.length < 2) return json({ error: 'Write a message first' }, 400, cors);
+  if (!email) return json({ error: 'Add your email, so we can reply' }, 400, cors);
   if (email && !/^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(email)) return json({ error: 'That email address doesn’t look right' }, 400, cors);
   // one a minute from each connection (the edge cache remembers it briefly; nothing else is kept)
   const ip = req.headers.get('cf-connecting-ip') || 'x', slot = new Request(`https://tenner-cache/contact/${encodeURIComponent(ip)}`);

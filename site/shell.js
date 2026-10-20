@@ -78,7 +78,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.13.0';
+  const version = '1.13.1';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -243,7 +243,7 @@
   let seen = false; try { seen = !!localStorage.getItem(NOTE); } catch {}
   if (!seen && !navigator.webdriver) setTimeout(() => {
     document.body.insertAdjacentHTML('beforeend', `<aside class="pv-note" id="pvNote" aria-label="Privacy">
-      <svg class="pv-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5.5c0 4.2 2.9 8 7 9.5 4.1-1.5 7-5.3 7-9.5V6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="pv-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2.5 11.2 6 7.8l3.2 1.1 2.6-1.6a2.2 2.2 0 0 1 2.3 0l5.9 3.7-3.4 3.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="m16.6 14.4-4.1-3.1-2 1.3a1.5 1.5 0 0 1-2-.4 1.5 1.5 0 0 1 .3-2.1l3-2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="m2.5 11.2 3.3 3.6M7.6 16.6l1.6 1.5a1.3 1.3 0 0 0 1.8 0M10.2 15.2l2.3 2.1a1.3 1.3 0 0 0 1.8 0 1.3 1.3 0 0 0 0-1.8M12.6 14l2.1 2a1.3 1.3 0 0 0 1.8-.1 1.3 1.3 0 0 0 0-1.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       <p>Tenner doesn’t use cookies or tracking. Your Watchlist and settings stay on this device. <a href="legal.html#cookies">Privacy Policy</a></p>
       <button type="button" class="pv-ok" id="pvOk">Got it</button></aside>`);
     const box = $('#pvNote');

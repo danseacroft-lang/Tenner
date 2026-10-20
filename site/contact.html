@@ -34,8 +34,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.13.0">
-  <link rel="stylesheet" href="legal.css?v=1.13.0">
+  <link rel="stylesheet" href="styles.css?v=1.13.1">
+  <link rel="stylesheet" href="legal.css?v=1.13.1">
 </head>
 <body class="legal">
   <a class="skip" href="#main">Skip to the page</a>
@@ -85,7 +85,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html" aria-current="page">Contact</a>
-      <span class="side-ver">Tenner 1.13.0</span>
+      <span class="side-ver">Tenner 1.13.1</span>
     </div>
   </div>
 
@@ -101,30 +101,26 @@
     <p class="l-lede">An idea for Tenner, something not looking right, or just a question? We read everything.</p>
 
     <form class="c-sheet" id="cForm" novalidate>
-      <label class="c-row"><span>Name</span><input id="cName" type="text" autocomplete="name" placeholder="Optional" maxlength="80" enterkeyhint="next"></label>
-      <label class="c-row"><span>Email</span><input id="cEmail" type="email" autocomplete="email" inputmode="email" placeholder="So we can reply (optional)" maxlength="200" enterkeyhint="next"></label>
+      <label class="c-row"><span>Name</span><input id="cName" type="text" autocomplete="name" placeholder="What should we call you?" maxlength="80" enterkeyhint="next"></label>
+      <label class="c-row"><span>Email</span><input id="cEmail" type="email" autocomplete="email" inputmode="email" placeholder="So we can reply" maxlength="200" required enterkeyhint="next"></label>
+      <label class="c-row"><span>About</span>
+        <select id="cType" required>
+          <option value="" selected disabled>Type of enquiry</option>
+          <option>Feedback</option><option>Suggestions</option><option>Support</option><option>Legal</option>
+        </select></label>
       <!-- left empty by people; spam robots fill it in -->
       <label class="c-hp" aria-hidden="true">Website <input id="cWeb" type="text" name="website" tabindex="-1" autocomplete="off"></label>
-      <div class="c-row"><span id="cTopicL">About</span>
-        <div class="segmented c-topic" role="radiogroup" aria-labelledby="cTopicL">
-          <span class="seg-thumb" aria-hidden="true"></span>
-          <button type="button" role="radio" data-topic="An idea" aria-checked="true">Idea</button>
-          <button type="button" role="radio" data-topic="A problem" aria-checked="false">Problem</button>
-          <button type="button" role="radio" data-topic="A question" aria-checked="false">Question</button>
-          <button type="button" role="radio" data-topic="Something else" aria-checked="false">Other</button>
-        </div>
-      </div>
-      <textarea class="c-msg" id="cMsg" aria-label="Message" placeholder="Write your message…" maxlength="5000" required></textarea>
+      <textarea class="c-msg" id="cMsg" aria-label="Your message" placeholder="Your message" maxlength="5000" required></textarea>
     </form>
     <div class="c-done" id="cDone" hidden tabindex="-1">
       <span class="c-tick" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 12.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      <h2>Message sent</h2>
-      <p id="cDoneP">Thanks for getting in touch. We read everything.</p>
-      <button type="button" class="btn btn-tinted" id="cAgain">Send another</button>
+      <h2>Thanks, we’ll get back to you shortly</h2>
+      <p id="cDoneP">Please allow 24–48 hours for our team to reply, but it’s usually much quicker.</p>
+      <button type="button" class="btn btn-tinted" id="cAgain">Send another message</button>
     </div>
     <div class="c-actions">
-      <p class="c-note" id="cNote" role="status" aria-live="polite">Your message comes straight to us. Add your email if you’d like a reply.</p>
-      <button type="submit" form="cForm" class="btn btn-tinted c-send" id="cSend"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 10.2 13.8M21 3l-6.9 18-3.9-7.2L3 9.9z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>Send</button>
+      <p class="c-note" id="cNote" role="status" aria-live="polite">Everything’s needed except your name. We’ll reply to the email you give.</p>
+      <button type="submit" form="cForm" class="btn btn-tinted c-send" id="cSend"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 10.2 13.8M21 3l-6.9 18-3.9-7.2L3 9.9z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>Submit</button>
     </div>
 
     <section class="c-more" aria-labelledby="cMoreH">
@@ -139,7 +135,7 @@
   </main>
 
 
-  <script src="shell.js?v=1.13.0" defer></script>
-  <script src="contact.js?v=1.13.0" defer></script>
+  <script src="shell.js?v=1.13.1" defer></script>
+  <script src="contact.js?v=1.13.1" defer></script>
 </body>
 </html>
