@@ -506,6 +506,9 @@ a.tb-btn:hover { text-decoration: none; }
      titles change. */
   .hero { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: clamp(440px, calc(94vh - 290px), 700px);
     margin: 0 calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); padding: 24px 76px 30px; }
+  /* a soft shade of the page's own colour behind the words, so they read on any artwork; no edge, it melts like the fade */
+  .hero::before { content: ""; position: absolute; z-index: -1; inset: -12% -10% -8% -6%; pointer-events: none;
+    background: radial-gradient(ellipse 62% 70% at 18% 78%, color-mix(in srgb, var(--bg) 62%, transparent) 0%, color-mix(in srgb, var(--bg) 30%, transparent) 45%, transparent 75%); }
   .h-copy { max-width: 620px; transition: opacity .22s ease, translate .22s ease; }
   .h-copy.out { opacity: 0; translate: 0 8px; }
   .h-badge { display: inline-flex; align-items: center; height: 34px; margin: 0 0 14px; padding: 0 16px; border-radius: 999px;
