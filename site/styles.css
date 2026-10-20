@@ -527,8 +527,9 @@ a.tb-btn:hover { text-decoration: none; }
   .hero { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: clamp(440px, calc(94vh - 290px), 700px);
     margin: 0 calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); padding: 24px 76px 30px; }
   /* a soft shade of the page's own colour behind the words, so they read on any artwork; no edge, it melts like the fade */
-  .hero::before { content: ""; position: absolute; z-index: -1; inset: -12% -10% -8% -6%; pointer-events: none;
-    background: radial-gradient(ellipse 62% 70% at 18% 78%, color-mix(in srgb, var(--bg) 62%, transparent) 0%, color-mix(in srgb, var(--bg) 30%, transparent) 45%, transparent 75%); }
+  /* closest-side: the glow reaches nothing exactly at its box's edges, so it can never be cut off into a line */
+  .hero::before { content: ""; position: absolute; z-index: -1; left: -14%; right: 22%; top: -6%; bottom: -30%; pointer-events: none;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--bg) 58%, transparent) 0%, color-mix(in srgb, var(--bg) 40%, transparent) 38%, color-mix(in srgb, var(--bg) 14%, transparent) 70%, transparent 100%); }
   .h-copy { max-width: 620px; transition: opacity .22s ease, translate .22s ease; }
   .h-copy.out { opacity: 0; translate: 0 8px; }
   .h-badge { display: inline-flex; align-items: center; height: 34px; margin: 0 0 14px; padding: 0 16px; border-radius: 999px;
@@ -887,6 +888,7 @@ main { padding-bottom: 56px; }   /* breathing room at the end of every page */
 /* with artwork under it, the sidebar's glass thins a little so the colours come through (computers only) */
 @media (min-width: 1000px) {
   :root:has(.bd-ext > *) { --side-bg: rgba(242, 242, 247, .62); }
+  :root:has(.bd-ext > *) .top-row { border-right-color: transparent; }   /* over artwork, no hairline: the glass alone separates them */
   :root[data-theme="dark"]:has(.bd-ext > *) { --side-bg: rgba(28, 28, 30, .58); }
 }
 @media (min-width: 1000px) and (prefers-color-scheme: dark) { :root:not([data-theme="light"]):has(.bd-ext > *) { --side-bg: rgba(28, 28, 30, .58); } }
