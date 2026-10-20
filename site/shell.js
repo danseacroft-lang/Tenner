@@ -78,7 +78,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.12.3';
+  const version = '1.13.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -236,6 +236,23 @@
     c.classList.remove('out'); if (!c.open) c.showModal();
     $('#scX').focus({ preventScroll: true });
   }
+
+  // ---------- a one-time note about privacy: not a consent banner (there's nothing to consent to), just reassurance ----------
+  // Shown once, at the foot of the screen in Tenner's frosted style; Got it puts it away for good on this device.
+  const NOTE = 'tenner-note-seen';
+  let seen = false; try { seen = !!localStorage.getItem(NOTE); } catch {}
+  if (!seen && !navigator.webdriver) setTimeout(() => {
+    document.body.insertAdjacentHTML('beforeend', `<aside class="pv-note" id="pvNote" aria-label="Privacy">
+      <svg class="pv-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5.5c0 4.2 2.9 8 7 9.5 4.1-1.5 7-5.3 7-9.5V6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <p>Tenner doesn’t use cookies or tracking. Your Watchlist and settings stay on this device. <a href="legal.html#cookies">Privacy Policy</a></p>
+      <button type="button" class="pv-ok" id="pvOk">Got it</button></aside>`);
+    const box = $('#pvNote');
+    requestAnimationFrame(() => box.classList.add('in'));
+    $('#pvOk').addEventListener('click', () => {
+      try { localStorage.setItem(NOTE, '1'); } catch {}
+      box.classList.remove('in'); setTimeout(() => box.remove(), reduce ? 0 : 350);
+    });
+  }, 1200);
 
   // ---------- the search API (worker/, on Cloudflare): every film and show on TMDB. Empty until it's deployed ----------
   const api = 'https://tenner-api.danseacroft.workers.dev';
