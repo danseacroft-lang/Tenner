@@ -48,15 +48,12 @@
 .c-sheet { width: 100%; background: var(--card); border: .5px solid var(--sep); border-radius: 12px; overflow: hidden; }
 .c-row { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 16px; border-bottom: .5px solid var(--sep); }
 .c-row > span:first-child { flex: none; width: 64px; color: var(--label2); font-size: 15px; }
-.c-row input, .c-row .c-to {
+.c-row input {
   flex: 1; min-width: 0; border: 0; padding: 8px 0; background: none; color: var(--label); font: 400 16px/1.3 var(--font); letter-spacing: -.016em;
 }
 .c-row input::placeholder, .c-msg::placeholder { color: var(--label3); }
 .c-row input:focus, .c-msg:focus { outline: none; }
 .c-row:focus-within, .c-msg:focus { background: color-mix(in srgb, var(--accent) 6%, transparent); }
-.c-to { display: flex; align-items: center; gap: 8px; }
-.c-to b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.c-copy { flex: none; height: 28px; padding: 0 10px; font-size: 13px; }
 .c-row .segmented { flex: 1; min-width: 0; }
 .c-row .segmented button { min-width: 0; padding: 0 8px; font-size: 13px; }
 .c-msg {
@@ -65,6 +62,17 @@
 }
 .c-actions { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 14px; }
 .c-note { margin: 0; font-size: 13px; color: var(--label2); text-wrap: pretty; }
+.c-note.bad { color: #ff453a; }
+.c-send.busy { opacity: .6; }
+.c-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+/* sent: a tick and a thank-you in place of the form */
+.c-done { width: 100%; display: grid; justify-items: center; gap: 6px; padding: 34px 20px 28px; text-align: center; border-radius: 12px; background: var(--card); border: .5px solid var(--sep); outline: none; }
+.c-done h2 { margin: 6px 0 0; font: 700 22px/1.2 var(--font-display); }
+.c-done p { margin: 0 0 12px; color: var(--label2); }
+.c-tick { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; color: #fff; background: var(--green); }
+.c-tick svg { width: 30px; height: 30px; }
+:root:not(.still) .c-tick { animation: cPop .5s var(--ease-spring) both; }
+@keyframes cPop { from { transform: scale(.4); opacity: 0; } }
 .c-send { flex: none; gap: 8px; height: 40px; padding: 0 18px 0 15px; color: var(--accent); }
 .c-send svg { width: 16px; height: 16px; }
 .c-more { width: 100%; margin-top: 32px; }

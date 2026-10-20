@@ -16,8 +16,9 @@ jobs:
       - uses: actions/checkout@v5
       - name: Check the Cloudflare secrets are there
         id: ready
-        env: { T: '${{ secrets.CLOUDFLARE_API_TOKEN }}', A: '${{ secrets.CLOUDFLARE_ACCOUNT_ID }}' }
+        env: { T: '${{ secrets.CLOUDFLARE_API_TOKEN }}', A: '${{ secrets.CLOUDFLARE_ACCOUNT_ID }}', M: '${{ secrets.SUPPORT_EMAIL }}' }
         run: |
+          if [ -n "$M" ]; then echo "mail=yes" >> "$GITHUB_OUTPUT"; else echo "::notice title=Contact form not connected::Add SUPPORT_EMAIL (the inbox for Contact messages) under Settings > Secrets and variables > Actions."; fi
           if [ -z "$T" ] || [ -z "$A" ]; then echo "::notice title=Search API not deployed::Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID under Settings > Secrets and variables > Actions."; echo "go=no" >> "$GITHUB_OUTPUT"; else echo "go=yes" >> "$GITHUB_OUTPUT"; fi
       - name: Deploy to Cloudflare
         if: steps.ready.outputs.go == 'yes'
@@ -29,6 +30,14 @@ jobs:
           secrets: TMDB_TOKEN
         env:
           TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
+      - name: Connect the Contact form to the inbox
+        if: steps.ready.outputs.go == 'yes' && steps.ready.outputs.mail == 'yes'
+        working-directory: worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SUPPORT_EMAIL: ${{ secrets.SUPPORT_EMAIL }}
+        run: printf '%s' "$SUPPORT_EMAIL" | npx --yes wrangler@4 secret put SUPPORT_EMAIL
       - name: Check it answers
         if: steps.ready.outputs.go == 'yes'
         run: |
