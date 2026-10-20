@@ -78,7 +78,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.11.0';
+  const version = '1.12.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -338,7 +338,21 @@
   showTheme();
 
   // ---------- a fade behind the floating bar once the page has scrolled ----------
-  const onScroll = () => root.classList.toggle('scrolled', scrollY > 8);
+  // and the page's title moves into the bar once its large title has gone under it (phones and tablets)
+  const brand = $('.top-brand'), barTitle = document.createElement('span');
+  barTitle.className = 'bar-title'; barTitle.setAttribute('aria-hidden', 'true'); brand?.append(barTitle);
+  let ticking = false;
+  const titleCheck = () => {
+    ticking = false;
+    const h = [...document.querySelectorAll('h1')].find((e) => e.getClientRects().length), bar = brand?.getBoundingClientRect();
+    const under = !!(h && bar && h.getBoundingClientRect().bottom < bar.bottom + 4);
+    if (under) { const t = (h.dataset.title || h.textContent).trim(); if (barTitle.textContent !== t) barTitle.textContent = t; }
+    root.classList.toggle('title-in', under);
+  };
+  const onScroll = () => {
+    root.classList.toggle('scrolled', scrollY > 8);
+    if (!ticking) { ticking = true; requestAnimationFrame(titleCheck); }
+  };
   addEventListener('scroll', onScroll, { passive: true }); onScroll();
 
   // ---------- staying current: pages left open fetch the new hour's data by themselves ----------

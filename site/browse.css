@@ -90,7 +90,8 @@
 .r-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 2px 0 16px; min-height: 36px; }
 .count { margin: 0; font: 600 17px/1.2 var(--font); color: var(--label2); font-variant-numeric: tabular-nums; }
 .f-btn { display: none; }
-@media (min-width: 821px) { .r-bar:has(.count:empty) { min-height: 0; margin-bottom: 0; } }   /* no count until there's a search to count */
+.r-bar:has(.count:empty) { min-height: 0; margin-bottom: 0; }   /* no count until there's a search to count */
+.b-ctl { display: flex; align-items: center; gap: 10px; }   /* Shows | Films | Both, and Filters beside it on phones */
 .f-btn svg { width: 18px; height: 18px; }
 .badge { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; }
 
@@ -154,6 +155,8 @@
   .sheet-open .tabbar { opacity: 0; pointer-events: none; transform: translateY(16px); }
   .grid { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 22px 14px; }
   .coll { margin-top: 18px; width: auto; }
+  .b-ctl { width: 100%; justify-content: space-between; }
+  .b-ctl .f-btn { height: 36px; }
 }
 @media (max-width: 420px) {
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

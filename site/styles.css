@@ -91,7 +91,6 @@ img { display: block; max-width: 100%; }
 .skip:focus { left: 16px; top: 8px; z-index: 30; }
 :focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 2px; }
 main:focus { outline: none; }
-.muted { color: var(--label2); }
 ::selection { background: color-mix(in srgb, var(--accent) 28%, transparent); }
 .page-title { margin-top: 24px; }
 .wrap { max-width: var(--max); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter-r); }
@@ -120,12 +119,22 @@ main:focus { outline: none; }
   view-transition-name: topbar;   /* it stays put while the page crossfades */
 }
 .top-row > * { position: relative; z-index: 1; animation: riseIn .6s var(--ease-out) both; }
-/* once the page scrolls, a fade of the page colour behind the bar keeps the chart from showing through its gaps */
+/* once the page scrolls, iOS's scroll edge: the page frosts and fades under the bar, with no line where it stops */
 .top-row::before {
-  content: ""; position: absolute; z-index: 0; left: -50vw; right: -50vw; top: 0; bottom: -22px; pointer-events: none; opacity: 0; transition: opacity .25s ease;
-  background: linear-gradient(to bottom, var(--bg) 55%, transparent);
+  content: ""; position: absolute; z-index: 0; left: -50vw; right: -50vw; top: 0; bottom: -26px; pointer-events: none; opacity: 0; transition: opacity .3s ease;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 78%, transparent) 30%, color-mix(in srgb, var(--bg) 40%, transparent) 70%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5); backdrop-filter: blur(14px) saturate(1.5);
+  -webkit-mask-image: linear-gradient(to bottom, #000 62%, transparent); mask-image: linear-gradient(to bottom, #000 62%, transparent);
 }
-.scrolled .top-row::before { opacity: .94; }
+.scrolled .top-row::before { opacity: 1; }
+/* the page's own title slides into the bar in place of "Tenner" once its large title has scrolled away (iOS) */
+.top-brand { position: relative; }
+.bar-title { position: absolute; left: 46px; right: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: 600 1.06rem/1.2 var(--font-display); letter-spacing: -.01em; color: var(--label); opacity: 0; translate: 0 8px; pointer-events: none;
+  transition: opacity .25s ease, translate .35s var(--ease-out); }
+.brand-name { transition: opacity .2s ease, translate .3s var(--ease-out); }
+.title-in .bar-title { opacity: 1; translate: 0 0; }
+.title-in .brand-name { opacity: 0; translate: 0 -8px; }
 .top-brand { display: flex; align-items: center; gap: 10px; pointer-events: auto; min-width: 0; }
 .lt-logo { display: block; width: 36px; height: 36px; border-radius: 9px; flex: none; box-shadow: 0 2px 8px rgba(120, 40, 200, .28); }
 .lt-logo img { width: 36px; height: 36px; }
@@ -261,6 +270,16 @@ a.tb-btn:hover { text-decoration: none; }
   font: 600 14px/1 var(--font); letter-spacing: -.016em; color: var(--accent); background: var(--frost); box-shadow: var(--frost-line); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); }
 .share-chart svg { width: 15px; height: 15px; }
 .share-chart:disabled { opacity: .5; }
+/* phones: Share becomes a round button beside the title, as in iOS, instead of a line of its own */
+@media (max-width: 560px) {
+  .intro { position: relative; }
+  .intro .large-title { padding-right: 52px; }
+  .share-chart { position: absolute; top: 18px; right: var(--gutter-r); width: 42px; height: 42px; padding: 0; justify-content: center; border-radius: 50%; font-size: 0; gap: 0;
+    background: var(--frost); box-shadow: var(--frost-line); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); }
+  .share-chart svg { width: 19px; height: 19px; margin-top: -2px; }
+  .intro > .lede.sub { animation-name: fadeOnly; }   /* no movement on this line, so Share stays pinned to the title area */
+}
+@keyframes fadeOnly { from { opacity: 0; } }
 .live-dot { position: relative; width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
 .live-dot::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--green); opacity: 0; animation: ping 2.4s ease-out 4; }
 @keyframes ping { 0% { transform: scale(.5); opacity: .7; } 80%, 100% { transform: scale(1.4); opacity: 0; } }
@@ -788,6 +807,9 @@ main { padding-bottom: 56px; }   /* breathing room at the end of every page */
 .intro > :nth-child(2) { animation-delay: .06s; }
 .intro > :nth-child(3) { animation-delay: .12s; }
 @keyframes riseIn { from { opacity: 0; transform: translateY(12px); } }
+/* moving between pages crossfades too (cross-document View Transitions), the bar or sidebar staying put; Animations
+   off skips it (the pagereveal handler in each page's head) */
+@media (prefers-reduced-motion: no-preference) { @view-transition { navigation: auto; } }
 /* switching tab or service crossfades (View Transitions) */
 ::view-transition-old(root) { animation: vtOut .22s ease both; }
 ::view-transition-new(root) { animation: vtIn .38s var(--ease-out) both; }
@@ -813,6 +835,7 @@ main { padding-bottom: 56px; }   /* breathing room at the end of every page */
     -webkit-backdrop-filter: blur(30px) saturate(180%); backdrop-filter: blur(30px) saturate(180%);
   }
   .top-row::before { display: none; }
+  .bar-title { display: none; }
   .top-row > * { animation: none; }
   .top-brand { padding: 0 8px; gap: 11px; }
   .lt-logo, .lt-logo img { width: 34px; height: 34px; border-radius: 8px; }
@@ -915,8 +938,14 @@ main { padding-bottom: 56px; }   /* breathing room at the end of every page */
 .sh-cert { display: inline-grid; place-items: center; min-width: 22px; height: 18px; padding: 0 4px; border-radius: 4px; font: 700 11px/1 var(--font);
   color: var(--label2); box-shadow: inset 0 0 0 1px var(--label3); }
 .sh-genres { margin: 2px 0 0; color: var(--label2); font-size: 15px; }
-.sh-btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 0; }
-.sh-btns .btn svg { width: 14px; height: 14px; }
+.sh-btns { display: grid; gap: 10px; margin: 18px 0 0; }
+.sh-btns .btn svg { width: 14px; height: 14px; flex: none; }
+.sh-main .btn { width: 100%; height: 50px; justify-content: center; gap: 9px; border-radius: 13px; font-size: 17px; font-weight: 600;
+  background: var(--label); color: var(--bg); box-shadow: none; }
+.sh-main .btn svg { width: 15px; height: 15px; }
+@media (hover: hover) { .sh-main .btn:hover { background: color-mix(in srgb, var(--label) 86%, transparent); } }
+.sh-more { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 10px; }
+.sh-more .btn { width: 100%; min-width: 0; height: 44px; justify-content: center; border-radius: 12px; padding: 0 10px; white-space: nowrap; overflow: hidden; }
 .sh-tl { margin: 18px 0 0; font-weight: 600; font-size: 16px; }
 .sh-ov { margin: 8px 0 0; font-size: 16px; line-height: 1.5; color: var(--label); }
 .sh-tl + .sh-ov { margin-top: 4px; }
@@ -1051,3 +1080,12 @@ a.sh-prov:hover { text-decoration: none; }
 @media (max-width: 719px) { .share-card { width: min(400px, calc(100vw - 32px)); border-radius: 28px; background: rgba(0, 0, 0, .62); -webkit-backdrop-filter: blur(40px) saturate(180%); backdrop-filter: blur(40px) saturate(180%); }
   .sc-art { height: 150px; } }
 @media (max-width: 719px) and (prefers-reduced-transparency: reduce) { .share-card { background: #000; } }
+
+/* loading: poster-shaped placeholders with a soft shimmer, the Apple TV way, instead of a line of text */
+.sk-say { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.sk-row { display: flex; gap: 26px; padding-top: 44px; overflow: hidden; }
+.sk-row i { flex: none; width: min(64vw, 236px); aspect-ratio: 2 / 3; border-radius: var(--radius);
+  background: linear-gradient(100deg, var(--fill) 40%, var(--fill-strong) 50%, var(--fill) 60%) 0 0 / 220% 100%; animation: skShine 1.6s ease-in-out infinite; }
+@keyframes skShine { from { background-position: 100% 0; } to { background-position: -20% 0; } }
+@media (prefers-reduced-motion: reduce) { .sk-row i { animation: none; } }
+@media (max-width: 999px) { .sk-row { gap: 16px; } .sk-row i { width: min(44vw, 200px); } }

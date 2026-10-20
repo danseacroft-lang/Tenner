@@ -34,7 +34,8 @@
   function tnTheme(t){var r=document.documentElement;if(t==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",t);
     var c=t==="auto"?null:(t==="light"?"#ffffff":"#000000");document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){if(!m.dataset.c)m.dataset.c=m.content;m.content=c||m.dataset.c;});}
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
-  try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}</script>
+  try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
+  addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="browse.css">
 </head>
@@ -86,7 +87,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.11.0</span>
+      <span class="side-ver">Tenner 1.12.0</span>
     </div>
   </div>
 
@@ -103,11 +104,16 @@
         <h1 class="large-title">Browse</h1>
         <p class="lede">Every popular show and film on the five services, in one place. <a href="people.html" class="b-people">Search cast &amp; crew</a></p>
       </div>
+      <div class="b-ctl">
       <div class="segmented" role="radiogroup" aria-label="Shows, films or both">
         <span class="seg-thumb" aria-hidden="true"></span>
           <button type="button" role="radio" data-kind="tv" aria-checked="true">Shows</button>
         <button type="button" role="radio" data-kind="movie" aria-checked="false">Films</button>
         <button type="button" role="radio" data-kind="both" aria-checked="false">Both</button>
+      </div>
+        <button type="button" class="btn btn-tinted f-btn" id="openFilters" aria-controls="filters" aria-expanded="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="17" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+            Filters<span class="badge" id="fCount" hidden></span></button>
       </div>
     </header>
 
@@ -146,9 +152,6 @@
       <section class="results" aria-labelledby="count">
         <div class="r-bar">
           <p id="count" class="count" aria-live="polite">Loading…</p>
-          <button type="button" class="btn btn-tinted f-btn" id="openFilters" aria-controls="filters" aria-expanded="false">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="17" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-            Filters<span class="badge" id="fCount" hidden></span></button>
         </div>
         <ol class="grid" id="grid"></ol>
         <div class="more" id="more" aria-hidden="true"></div>

@@ -19,22 +19,23 @@
     const t = trailD?.items?.[info.k]; if (!t) return '';
     const byDay = t.d.filter(Boolean).length >= 3, r = byDay ? t.d : t.h, when = byDay ? trailD.days : trailD.hours;
     if (r.filter(Boolean).length < 2) return '';
-    const W = 300, H = 92, px = (i) => 8 + (i * (W - 16)) / Math.max(1, r.length - 1), py = (n) => 10 + ((n - 1) * (H - 20)) / 9;
+    // Apple Stocks style: the plot on the left, No. 1 and No. 10 in a margin on the right, so labels never sit on the line
+    const W = 300, H = 92, R = 40, px = (i) => 8 + (i * (W - R - 16)) / Math.max(1, r.length - 1), py = (n) => 10 + ((n - 1) * (H - 20)) / 9;
     let path = '', pen = false;
     r.forEach((n, i) => { if (!n) { pen = false; return; } path += `${pen ? 'L' : 'M'}${px(i).toFixed(1)} ${py(n).toFixed(1)}`; pen = true; });
     const dots = r.map((n, i) => (n ? `<circle cx="${px(i).toFixed(1)}" cy="${py(n).toFixed(1)}" r="${i === r.length - 1 ? 4 : 2.4}"${i === r.length - 1 ? ' class="now"' : ''}/>` : '')).join('');
-    const label = (s) => (byDay ? new Date(s + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short' }) : new Date(s).toLocaleTimeString('en-GB', { hour: 'numeric' }));
+    const label = (s) => (byDay ? new Date(s + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short' }) : new Date(s).toLocaleTimeString('en-GB', { hour: 'numeric', hour12: true }).replace(' ', ''));
     const now = r.at(-1), best = Math.min(...r.filter(Boolean)), inTop = r.filter(Boolean).length;
     const where = CHART[t.c.split(':')[0]] || '';
-    const summary = [now ? `No. ${now} ${where} now` : `Out of the top 10 ${where} now`, `best No. ${best}`,
-      byDay ? `${inTop} of the last ${r.length} days in the top 10` : 'over the last 24 hours'].join(' · ');
+    const summary = [now ? `No. ${now} ${where} now` : `Out of the top 10 ${where} now`, best < (now || 11) ? `best No. ${best}` : '',
+      byDay ? `${inTop} of the last ${r.length} days in the top 10` : 'over the last 24 hours'].filter(Boolean).join(' · ');
     return `<section class="sh-track" aria-labelledby="shC"><h3 id="shC">On the Chart</h3><p class="sh-tsum">${esc(summary)}</p>
       <svg class="sh-spark" viewBox="0 0 ${W} ${H + 16}" role="img" aria-label="${esc(summary)}">
-        <defs><linearGradient id="shG" x1="0" x2="1"><stop offset="0" stop-color="#ff375f"/><stop offset=".35" stop-color="#ff9f0a"/><stop offset=".65" stop-color="#0a84ff"/><stop offset="1" stop-color="#bf5af2"/></linearGradient></defs>
-        <line x1="8" x2="${W - 8}" y1="${py(1)}" y2="${py(1)}" class="g"/><line x1="8" x2="${W - 8}" y1="${py(10)}" y2="${py(10)}" class="g"/>
-        <text x="${W - 8}" y="${py(1) - 3}" class="y">No. 1</text><text x="${W - 8}" y="${py(10) - 3}" class="y">No. 10</text>
+        <defs><linearGradient id="shG" gradientUnits="userSpaceOnUse" x1="8" y1="0" x2="${W - R - 8}" y2="0"><stop offset="0" stop-color="#ff375f"/><stop offset=".35" stop-color="#ff9f0a"/><stop offset=".65" stop-color="#0a84ff"/><stop offset="1" stop-color="#bf5af2"/></linearGradient></defs>
+        <line x1="8" x2="${W - R - 8}" y1="${py(1)}" y2="${py(1)}" class="g"/><line x1="8" x2="${W - R - 8}" y1="${py(10)}" y2="${py(10)}" class="g"/>
+        <text x="${W}" y="${py(1) + 4}" class="y" text-anchor="end">No. 1</text><text x="${W}" y="${py(10) + 4}" class="y" text-anchor="end">No. 10</text>
         <path d="${path}" class="ln"/>${dots}
-        <text x="8" y="${H + 12}" class="x">${esc(label(when[0]))}</text><text x="${W - 8}" y="${H + 12}" class="x" text-anchor="end">${byDay ? 'Today' : 'Now'}</text>
+        <text x="8" y="${H + 12}" class="x">${esc(label(when[0]))}</text><text x="${W - R - 8}" y="${H + 12}" class="x" text-anchor="end">${byDay ? 'Today' : 'Now'}</text>
       </svg></section>`;
   }
   // Shows: when the next episode lands, and where you're up to (kept on this device)
@@ -121,6 +122,16 @@
     const dir = m[1] === '▼' || m[2] === 'Down' ? 'down' : 'up', rest = m[4].replace(/^No\./, 'Now No.');
     return `<p class="sh-eye"><span class="sh-mv ${dir}" aria-label="${dir === 'up' ? 'Up' : 'Down'} ${m[3]} place${m[3] === '1' ? '' : 's'}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="${ARROW[dir]}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>${m[3]}</span>${esc(rest)}</p>`;
   }
+  // the actions, the Apple TV way: one wide filled button for the main thing (the trailer, or Netflix), then the rest
+  // side by side in equal widths
+  function btnsHtml(info, x) {
+    const nf = info.netflix || (x.ln?.nf ? `https://www.netflix.com/title/${x.ln.nf}` : '');
+    const trailer = x.tr ? `<button type="button" class="btn btn-tinted" data-act="trailer"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>Trailer</button>` : '';
+    const netflix = nf ? `<a class="btn btn-tinted" href="${esc(nf)}" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>Watch on Netflix</a>` : '';
+    const share = `<button type="button" class="btn btn-tinted" data-act="share"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M6 11v8.5h12V11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Share</button>`;
+    const main = netflix || trailer, rest = [netflix ? trailer : '', info.k ? saveBtn(saved.has(info.k)) : '', share].filter(Boolean);
+    return `<div class="sh-btns">${main ? `<div class="sh-main">${main}</div>` : ''}<div class="sh-more">${rest.join('')}</div></div>`;
+  }
   // Cast & Crew: round faces in a row, each opening that person's page (people.html), from the search API
   const castCache = new Map();
   const castFor = (k) => {
@@ -154,12 +165,7 @@
         <p class="sh-meta">${meta.map(String).map((m) => (m.startsWith('<b') ? m : esc(m))).join('<span aria-hidden="true"> · </span>')}</p>
         ${genres ? `<p class="sh-genres">${esc(genres)}</p>` : ''}
         ${nextHtml(info, x)}
-        <div class="sh-btns">
-          ${x.tr ? `<button type="button" class="btn btn-tinted" data-act="trailer"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>Trailer</button>` : ''}
-          ${info.k ? saveBtn(saved.has(info.k)) : ''}
-          ${info.netflix || x.ln?.nf ? `<a class="btn btn-tinted" href="${esc(info.netflix || `https://www.netflix.com/title/${x.ln.nf}`)}" target="_blank" rel="noopener">Watch on Netflix</a>` : ''}
-          <button type="button" class="btn btn-tinted" data-act="share"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M6 11v8.5h12V11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Share</button>
-        </div>
+        ${btnsHtml(info, x)}
         ${x.tl ? `<p class="sh-tl">${esc(x.tl)}</p>` : ''}
         ${info.overview ? `<p class="sh-ov">${esc(info.overview)}</p>` : ''}
         <section class="sh-where" aria-labelledby="shW"><h3 id="shW">Where to Watch</h3>${whereHtml(info, d)}</section>
