@@ -35,8 +35,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.12.2">
-  <link rel="stylesheet" href="about.css?v=1.12.2">
+  <link rel="stylesheet" href="styles.css?v=1.12.3">
+  <link rel="stylesheet" href="about.css?v=1.12.3">
 
 </head>
 <body class="about">
@@ -92,7 +92,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.12.2</span>
+      <span class="side-ver">Tenner 1.12.3</span>
     </div>
   </div>
 
@@ -123,9 +123,12 @@
       [o.tv&&o.tv[0],o.movie&&o.movie[0],o.tv&&o.tv[1],o.movie&&o.movie[1],o.tv&&o.tv[2]].forEach(function(x){ if(x&&x.backdrop&&!seen[x.title]){seen[x.title]=1;pick.push(x);} });
       if(!pick.length) return;
       var big=function(u){return u.replace('/t/p/w1280/','/t/p/original/');};
-      art.innerHTML=pick.map(function(x,i){return '<img src="'+x.backdrop+'" srcset="'+x.backdrop+' 1280w, '+big(x.backdrop)+' 1920w" sizes="100vw" alt="" decoding="async"'+(i?' loading="lazy"':' fetchpriority="high"')+'>';}).join('');
+      /* only the first picture loads now; each of the others just before its turn (one at a time, not all five at once) */
+      art.innerHTML=pick.map(function(x,i){var s=' srcset="'+x.backdrop+' 1280w, '+big(x.backdrop)+' 1920w" sizes="100vw"';return i?'<img data-s="'+x.backdrop+'" data-ss="'+x.backdrop+' 1280w, '+big(x.backdrop)+' 1920w" sizes="100vw" alt="" decoding="async">':'<img src="'+x.backdrop+'"'+s+' alt="" decoding="async" fetchpriority="high">';}).join('');
       var imgs=art.querySelectorAll('img'), i=0;
+      function want(m){ if(m&&m.dataset.s){ m.srcset=m.dataset.ss; m.src=m.dataset.s; delete m.dataset.s; } }
       function show(n){
+        want(imgs[n]); want(imgs[(n+1)%imgs.length]);
         imgs.forEach(function(m,k){m.classList.toggle('on',k===n);});
         var x=pick[n], on=(x.on||[])[0];
         now.hidden=false; now.href='./?t='+(x.type==='movie'?'m':'t')+x.id;
@@ -254,7 +257,7 @@
     <nav class="more-links" aria-label="Site information">
       <a href="contact.html">Contact</a><a href="legal.html#privacy">Privacy Policy</a><a href="legal.html#terms">Terms of Service</a><a href="legal.html#cookies">Cookies</a>
     </nav>
-    <p class="more-ver side-ver-text">Tenner 1.12.2</p>
+    <p class="more-ver side-ver-text">Tenner 1.12.3</p>
     </main>
 
 
@@ -272,6 +275,6 @@
     }).catch(function(){});}
     load(false); addEventListener('tn:check', function(){ load(true); });
   })();</script>
-  <script src="shell.js?v=1.12.2" defer></script>
+  <script src="shell.js?v=1.12.3" defer></script>
 </body>
 </html>

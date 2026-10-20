@@ -78,7 +78,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.12.2';
+  const version = '1.12.3';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -342,10 +342,11 @@
   const brand = $('.top-brand'), barTitle = document.createElement('span');
   barTitle.className = 'bar-title'; barTitle.setAttribute('aria-hidden', 'true'); brand?.append(barTitle);
   let ticking = false;
+  const sidebar = matchMedia('(min-width: 1000px)'); sidebar.addEventListener('change', () => onScroll());
   const titleCheck = () => {
     ticking = false;
     const h = [...document.querySelectorAll('h1')].find((e) => e.getClientRects().length), bar = brand?.getBoundingClientRect();
-    const under = !!(h && bar && h.getBoundingClientRect().bottom < bar.bottom + 4);
+    const under = !sidebar.matches && !!(h && bar && h.getBoundingClientRect().bottom < bar.bottom + 4);   // phones and tablets only
     if (under) { const t = (h.dataset.title || h.textContent).trim(); if (barTitle.textContent !== t) barTitle.textContent = t; }
     root.classList.toggle('title-in', under);
   };
