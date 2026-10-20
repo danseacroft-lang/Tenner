@@ -2,7 +2,7 @@
 // Pages, scripts, styles and the hourly data: the network first (so a new deploy or a new hour always wins), with the
 // last copy kept for when there's no connection, or when the network is too slow to answer within a few seconds. Fonts and icons: from the cache. TMDB's posters: from the cache, the most recent
 // 60 or so. The search API is never cached here (Cloudflare caches it).
-const SHELL = 'tenner-shell-1.12.1', IMGS = 'tenner-img-v1';   // the shell cache follows the version
+const SHELL = 'tenner-shell-1.12.2', IMGS = 'tenner-img-v1';   // the shell cache follows the version
 const CORE = ['./', 'index.html', 'browse.html', 'about.html', 'settings.html', 'people.html', 'styles.css', 'browse.css', 'about.css', 'people.css', 'shell.js', 'links.js', 'sheet.js', 'app.js', 'browse.js', 'people.js',
   'fonts/inter-latin.woff2', 'fonts/inter-tight-latin.woff2', 'logo.svg', 'favicon.svg'];
 
@@ -27,10 +27,12 @@ self.addEventListener('fetch', (e) => {
 
 async function networkFirst(e) {
   const req = e.request, c = await caches.open(SHELL);
-  // the hourly data files carry a ?v= stamp; keep one copy of each, whatever the stamp
-  const key = new URL(req.url); if (key.pathname.includes('/data/')) key.search = '';
+  // scripts and styles carry the version (?v=1.2.3) and the hourly data a time stamp: one copy of each, whatever the stamp
+  const key = new URL(req.url); key.searchParams.delete('v'); if (key.pathname.includes('/data/')) key.search = '';
   const fromCache = async () => (await c.match(key.toString(), { ignoreSearch: req.mode === 'navigate' })) || (req.mode === 'navigate' ? c.match('./') : null);
-  const net = fetch(req).then((res) => {
+  // pages always ask the server whether there's a newer copy (a quick "not changed" if not), so a new version's page
+  // arrives at once, and with it that version's own scripts and styles
+  const net = fetch(req, req.mode === 'navigate' ? { cache: 'no-cache' } : undefined).then((res) => {
     if (res.ok && res.type === 'basic') { const copy = res.clone(); e.waitUntil(c.put(key.toString(), copy)); }
     return res;
   });
