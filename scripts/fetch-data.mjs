@@ -208,7 +208,7 @@ const NETFLIX_TSV = 'https://www.netflix.com/tudum/top10/data/all-weeks-countrie
 async function getText(url, tries = 3) {
   for (let i = 1; ; i++) {
     try {
-      const res = await fetch(url, { headers: { 'user-agent': 'Mozilla/5.0 (compatible; Tenner/1.0; +https://danseacroft-lang.github.io/Tenner/)', accept: 'text/tab-separated-values,text/plain,*/*' }, signal: AbortSignal.timeout(90000) });
+      const res = await fetch(url, { headers: { 'user-agent': 'Mozilla/5.0 (compatible; Tenner/1.0; +https://tenner.stream/)', accept: 'text/tab-separated-values,text/plain,*/*' }, signal: AbortSignal.timeout(90000) });
       if (res.ok) return res.text();
       if (res.status < 500 && res.status !== 429) throw Object.assign(new Error(`${res.status} ${res.statusText}`), { fatal: true });
       throw new Error(`${res.status}`);
