@@ -111,6 +111,16 @@
       .map(([label, ids]) => { const list = providerList(ids, d, info); return list ? `<div class="sh-grp"><h4>${label}</h4><div class="sh-provs">${list}</div></div>` : ''; }).join('');
     return groups || '<p class="sh-none">Not available to stream, rent or buy in the UK right now.</p>';
   }
+  // the line above the title: plain words in sentence case; a move up or down becomes a small green or red badge
+  // ("▲2 to No. 3 show on Prime Video" → [↑ 2] Now No. 3 show on Prime Video)
+  const ARROW = { up: 'M8 13V3.5M3.8 7.6 8 3.4l4.2 4.2', down: 'M8 3v9.5M3.8 8.4 8 12.6l4.2-4.2' };
+  function eyeHtml(eye) {
+    if (!eye) return '';
+    const m = String(eye).match(/^(?:([▲▼])|(Up|Down) )(\d+)\s+(?:to\s+)?(.*)$/);
+    if (!m) return `<p class="sh-eye">${esc(eye)}</p>`;
+    const dir = m[1] === '▼' || m[2] === 'Down' ? 'down' : 'up', rest = m[4].replace(/^No\./, 'Now No.');
+    return `<p class="sh-eye"><span class="sh-mv ${dir}" aria-label="${dir === 'up' ? 'Up' : 'Down'} ${m[3]} place${m[3] === '1' ? '' : 's'}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="${ARROW[dir]}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>${m[3]}</span>${esc(rest)}</p>`;
+  }
   // Cast & Crew: round faces in a row, each opening that person's page (people.html), from the search API
   const castCache = new Map();
   const castFor = (k) => {
@@ -139,7 +149,7 @@
     body.innerHTML = `
       <div class="sh-art" id="shArt">${art}${info.poster ? `<img class="sh-poster" src="${esc(info.poster)}" alt="">` : ''}</div>
       <div class="sh-body">
-        ${info.eye ? `<p class="sh-eye">${esc(info.eye)}</p>` : ''}
+        ${eyeHtml(info.eye)}
         <h2 id="shT">${esc(info.title)}</h2>
         <p class="sh-meta">${meta.map(String).map((m) => (m.startsWith('<b') ? m : esc(m))).join('<span aria-hidden="true"> · </span>')}</p>
         ${genres ? `<p class="sh-genres">${esc(genres)}</p>` : ''}
@@ -187,6 +197,18 @@
       if (a) { for (const [f, v] of Object.entries(a.info || {})) if (v && !info[f]) info[f] = v; d = a; }
     }
     shown = d; render(info, d);
+    // no wide artwork in the hourly data (This Week, the Watchlist, search): the search API has it; swap it in softly
+    if (!info.backdrop && info.k && window.tn.api) {
+      const a = await fromApi(info.k), bd = a?.info?.backdrop;
+      if (!bd || current !== info) return;
+      info.backdrop = bd;
+      const old = $('#shArt > img:first-child, #shArt > .ph'); if (!old) return;
+      const img = new Image(); img.alt = ''; img.src = bd;
+      img.decode().catch(() => {}).then(() => {
+        if (current !== info || !old.isConnected) return;
+        img.style.opacity = '0'; old.replaceWith(img); requestAnimationFrame(() => { img.style.opacity = ''; });
+      });
+    }
   }
   // open a title by its key alone (a shared link to something Tenner doesn't follow)
   async function openKey(k) {

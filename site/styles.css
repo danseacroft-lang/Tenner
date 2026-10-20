@@ -442,16 +442,17 @@ a.tb-btn:hover { text-decoration: none; }
 }
 .row-wrap.at-start .posters { --fl: 0px; }
 .row-wrap.at-end .posters { --fr: 0px; }
-.edge { position: absolute; z-index: 2; top: 0; bottom: 0; width: var(--edge); pointer-events: none; transition: opacity .6s var(--ease-out), translate .7s var(--ease-spring); }
+.edge { position: absolute; z-index: 2; top: -28px; bottom: -28px; width: var(--edge);   /* a little past the row, fading out top and bottom: no hard line */
+  pointer-events: none; transition: opacity .6s var(--ease-out), translate .7s var(--ease-spring); }
 .edge.l { left: 0; --to: left; }
 .edge.r { right: 0; --to: right; }
 .edge i { position: absolute; inset: 0; }
-.edge i:nth-child(1) { -webkit-backdrop-filter: blur(0.6px); backdrop-filter: blur(0.6px); -webkit-mask-image: linear-gradient(to var(--to), transparent 0.00%, #000 14.29%, #000 28.57%, transparent 42.86%); mask-image: linear-gradient(to var(--to), transparent 0.00%, #000 14.29%, #000 28.57%, transparent 42.86%); }
-.edge i:nth-child(2) { -webkit-backdrop-filter: blur(1.4px); backdrop-filter: blur(1.4px); -webkit-mask-image: linear-gradient(to var(--to), transparent 14.29%, #000 28.57%, #000 42.86%, transparent 57.14%); mask-image: linear-gradient(to var(--to), transparent 14.29%, #000 28.57%, #000 42.86%, transparent 57.14%); }
-.edge i:nth-child(3) { -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); -webkit-mask-image: linear-gradient(to var(--to), transparent 28.57%, #000 42.86%, #000 57.14%, transparent 71.43%); mask-image: linear-gradient(to var(--to), transparent 28.57%, #000 42.86%, #000 57.14%, transparent 71.43%); }
-.edge i:nth-child(4) { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); -webkit-mask-image: linear-gradient(to var(--to), transparent 42.86%, #000 57.14%, #000 71.43%, transparent 85.71%); mask-image: linear-gradient(to var(--to), transparent 42.86%, #000 57.14%, #000 71.43%, transparent 85.71%); }
-.edge i:nth-child(5) { -webkit-backdrop-filter: blur(11px); backdrop-filter: blur(11px); -webkit-mask-image: linear-gradient(to var(--to), transparent 57.14%, #000 71.43%, #000 85.71%, transparent 100.00%); mask-image: linear-gradient(to var(--to), transparent 57.14%, #000 71.43%, #000 85.71%, transparent 100.00%); }
-.edge i:nth-child(6) { -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); -webkit-mask-image: linear-gradient(to var(--to), transparent 71.43%, #000 85.71%); mask-image: linear-gradient(to var(--to), transparent 71.43%, #000 85.71%); }
+.edge i:nth-child(1) { -webkit-backdrop-filter: blur(0.6px); backdrop-filter: blur(0.6px); -webkit-mask-image: linear-gradient(to var(--to), transparent 0.00%, #000 14.29%, #000 28.57%, transparent 42.86%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to var(--to), transparent 0.00%, #000 14.29%, #000 28.57%, transparent 42.86%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); mask-composite: intersect; }
+.edge i:nth-child(2) { -webkit-backdrop-filter: blur(1.4px); backdrop-filter: blur(1.4px); -webkit-mask-image: linear-gradient(to var(--to), transparent 14.29%, #000 28.57%, #000 42.86%, transparent 57.14%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to var(--to), transparent 14.29%, #000 28.57%, #000 42.86%, transparent 57.14%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); mask-composite: intersect; }
+.edge i:nth-child(3) { -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); -webkit-mask-image: linear-gradient(to var(--to), transparent 28.57%, #000 42.86%, #000 57.14%, transparent 71.43%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to var(--to), transparent 28.57%, #000 42.86%, #000 57.14%, transparent 71.43%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); mask-composite: intersect; }
+.edge i:nth-child(4) { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); -webkit-mask-image: linear-gradient(to var(--to), transparent 42.86%, #000 57.14%, #000 71.43%, transparent 85.71%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to var(--to), transparent 42.86%, #000 57.14%, #000 71.43%, transparent 85.71%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); mask-composite: intersect; }
+.edge i:nth-child(5) { -webkit-backdrop-filter: blur(11px); backdrop-filter: blur(11px); -webkit-mask-image: linear-gradient(to var(--to), transparent 57.14%, #000 71.43%, #000 85.71%, transparent 100.00%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to var(--to), transparent 57.14%, #000 71.43%, #000 85.71%, transparent 100.00%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); mask-composite: intersect; }
+.edge i:nth-child(6) { -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); -webkit-mask-image: linear-gradient(to var(--to), transparent 71.43%, #000 85.71%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to var(--to), transparent 71.43%, #000 85.71%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); mask-composite: intersect; }
 .row-wrap.at-start .edge.l { opacity: 0; translate: -30% 0; }
 .row-wrap.at-end .edge.r { opacity: 0; translate: 30% 0; }
 
@@ -890,18 +891,25 @@ main { padding-bottom: 56px; }   /* breathing room at the end of every page */
 }
 .sh-x svg { width: 16px; height: 16px; }
 .sh-scroll { overflow-y: auto; overscroll-behavior: contain; }
-.sh-art { position: relative; aspect-ratio: 16 / 9; background: var(--fill); overflow: hidden; touch-action: none; }
+/* the artwork melts into the card (a mask on the picture itself, so it works on the frosted card in either theme, with no
+   line where it ends); the poster hangs over the edge, uncut */
+.sh-art { position: relative; aspect-ratio: 16 / 9; touch-action: none; }
 .sh-art > img:first-child, .sh-art .ph, .sh-art iframe { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border: 0; display: block; }
-.sh-art img.soft { filter: blur(24px) saturate(1.3); scale: 1.3; }
-.sh-art::after { content: ""; position: absolute; inset: 50% 0 0; pointer-events: none;
-  background: linear-gradient(transparent, var(--sheet-bg)); }
-.sh-art.playing::after, .sh-art.playing .sh-poster { display: none; }
+.sh-art > img:first-child, .sh-art .ph { -webkit-mask-image: linear-gradient(to bottom, #000 42%, rgba(0, 0, 0, .55) 72%, transparent 100%); mask-image: linear-gradient(to bottom, #000 42%, rgba(0, 0, 0, .55) 72%, transparent 100%);
+  transition: opacity .5s ease; }
+.sh-art img.soft { filter: blur(30px) saturate(1.4); opacity: .85; }   /* only while the wide artwork is on its way */
+.sh-art.playing { background: #000; }
+.sh-art.playing .sh-poster { display: none; }
 .sh-poster { position: absolute; z-index: 1; left: 24px; bottom: -1px; width: 92px; aspect-ratio: 2 / 3; height: auto; object-fit: cover; border-radius: 10px;
   box-shadow: 0 0 0 .5px rgba(255, 255, 255, .25), 0 12px 30px rgba(0, 0, 0, .45); translate: 0 30%; }
 .sh-body { padding: 18px 24px 22px; }
 .sh-art:has(.sh-poster) + .sh-body { padding-top: 48px; }
 .sh-art.playing + .sh-body { padding-top: 18px; }
-.sh-eye { margin: 0 0 4px; font: 600 12px/1.3 var(--font); letter-spacing: .05em; text-transform: uppercase; color: var(--label2); }
+.sh-eye { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 6px; font: 600 14px/1.3 var(--font); letter-spacing: -.012em; color: var(--label2); }
+.sh-mv { display: inline-flex; align-items: center; gap: 3px; height: 22px; padding: 0 8px 0 6px; border-radius: 999px; font: 700 13px/1 var(--font); font-variant-numeric: tabular-nums; }
+.sh-mv svg { width: 13px; height: 13px; }
+.sh-mv.up { color: var(--green); background: color-mix(in srgb, var(--green) 16%, transparent); }
+.sh-mv.down { color: #ff453a; background: color-mix(in srgb, #ff453a 16%, transparent); }
 .sheet h2 { margin: 0; font: 700 28px/1.12 var(--font-display); letter-spacing: -.01em; text-wrap: balance; }
 .sh-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0 2px; margin: 8px 0 0; color: var(--label2); font-size: 15px; font-variant-numeric: tabular-nums; }
 .sh-cert { display: inline-grid; place-items: center; min-width: 22px; height: 18px; padding: 0 4px; border-radius: 4px; font: 700 11px/1 var(--font);
