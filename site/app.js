@@ -303,38 +303,59 @@ function draw() {
     : `<div class="empty"><h2>Nothing here right now</h2><p>The chart for ${esc(where)} will be back after the next hourly update.</p><a class="btn btn-tinted" href="#top">See all five services</a></div>`;
   view.innerHTML = `<div class="wrap chart">${chart}</div>`;
   openFromUrl();
-  setBackdrop(heroOn() && list.length ? list[0] : null);   // the hero's first pick
+  setBackdrop(heroOn() && list.length ? heroList[heroAt]?.it || list[0] : null);   // the hero's pick
   wireScroller(); wireRanks();
 }
 
-// ---------- computers: the hero, the Sky / Apple TV way ----------
-// The chart's top five take turns as a big backdrop on the right that fades into the page on its left and bottom;
-// the title, a line about it and a button sit on the faded part, with dots to flip between them. Nothing moves on
-// its own, so an idle page still costs nothing. Phones and tablets skip it (and never download the artwork).
+// ---------- computers: the hero, the Apple TV way ----------
+// The chart's top titles take turns as a big backdrop on the right that melts into the page on its left and bottom
+// (the fade is the backdrop's own mask, below). Over the faded part: a badge, the title, a line of details with the
+// service and age rating, a sentence about it, Where to watch and + (Watchlist), with arrows either side, dots and a
+// pause button. It moves on by itself every few seconds, the TV way, unless Animations are off, it's paused, or you're
+// pointing at it or tabbing through it. Phones and tablets skip it (and never download the artwork).
 const wide = matchMedia('(min-width: 1000px)');
 wide.addEventListener('change', () => state.trending && state.route !== 'new' && render());
 const heroOn = () => wide.matches && window.tn.prefs.get().hero;   // Settings: "Featured artwork"
+const HERO_N = 8, HERO_MS = 8000;
 let heroList = [], heroAt = 0, heroScope = null;
+const PLUS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
+const TICK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 12.5l4.2 4.2 8.8-9.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function heroCopy({ it, n }) {
   // on a service's page it's that service's chart; on All it's the UK-wide chart, and the details say where to find it
-  const s = heroScope, kind = it.type === 'tv' ? 'show' : 'film';
-  const eye = [s?.store ? `No. ${n} to buy or rent` : s ? `No. ${n} ${kind} on ${s.label}` : `No. ${n} ${kind} in the UK`, n === 1 ? topText(it) : ''].filter(Boolean).join(' · ');
-  const where = s && !s.mine ? '' : onText(it);
-  const bits = [it.season || (it.type === 'tv' ? 'Series' : 'Film'), it.year, it.rating && window.tn.prefs.get().ratings ? `★ ${it.rating.toFixed(1)}` : '', weeksText(it), where ? `On ${where}` : ''].filter(Boolean);
-  return `<p class="h-eye">${s?.logo ? `<img src="${esc(s.logo)}" alt="">` : ''}${esc(eye)}</p>
+  const s = heroScope, kind = it.type === 'tv' ? 'show' : 'film', k = wlKey(it, it.type), x = (k && det(k)) || {};
+  const badge = s?.store ? `No. ${n} to buy or rent` : s ? `No. ${n} ${kind} on ${s.label}` : `No. ${n} ${kind} in the UK`;
+  const on = s && !s.mine ? s : svc((it.on || [])[0]);
+  const bits = [it.type === 'tv' ? (it.season || 'TV Show') : 'Film', ...(x.g || []).slice(0, 2), it.year,
+    it.rating && window.tn.prefs.get().ratings ? `★ ${it.rating.toFixed(1)}` : '', n === 1 ? topText(it) : weeksText(it)].filter(Boolean);
+  const info = infoFor(it, it.type, badge, s && !s.store && !s.mine ? [s] : null), mark = window.tn.saved.has(k);
+  return `<p class="h-badge">${esc(badge)}</p>
     <h2 class="h-title">${esc(it.title)}</h2>
-    <p class="h-meta">${bits.map(esc).join(' · ')}</p>
+    <p class="h-meta">${on?.logo ? `<img class="h-svc" src="${esc(on.logo)}" alt="${esc(on.label)}" title="${esc(on.label)}">` : ''}<span>${bits.map(esc).join(' · ')}</span>${x.c ? `<b class="h-cert" data-c="${esc(String(x.c).toUpperCase())}" title="Rated ${esc(x.c)}">${esc(x.c)}</b>` : ''}</p>
     ${it.overview ? `<p class="h-blurb">${esc(firstSentence(it.overview))}</p>` : ''}
-    <a class="h-cta" href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(infoFor(it, it.type, eye, s && !s.store && !s.mine ? [s] : null))}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>Where to watch</a>`;
+    <div class="h-btns">
+      <a class="h-cta" href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(info)}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.6v10.8L13.2 8z" fill="currentColor"/></svg>Where to watch</a>
+      ${k ? `<button type="button" class="h-add" data-hero-save="${esc(k)}" aria-pressed="${mark}" aria-label="${mark ? 'Saved to' : 'Add to'} Watchlist" title="${mark ? 'In your Watchlist' : 'Add to Watchlist'}">${mark ? TICK : PLUS}</button>` : ''}
+    </div>`;
 }
 function hero(picks, s) {   // picks: [{ it, n }] where n is the title's rank in its own chart
-  if (!heroOn() || !picks.length) return '';
-  heroList = picks.slice(0, 5); heroAt = 0; heroScope = s;
-  return `<section class="hero" aria-label="Top of the chart">
-    <div class="h-copy" id="heroCopy" aria-live="polite">${heroCopy(heroList[0])}</div>
-    ${heroList.length > 1 ? `<div class="h-dots">${heroList.map((p, i) => `<button type="button" data-hero="${i}" aria-label="Number ${p.n}: ${esc(p.it.title)}" title="${esc(p.it.title)}" aria-current="${i === 0}"></button>`).join('')}</div>` : ''}
+  if (!heroOn() || !picks.length) { stopHero(); return ''; }
+  // a redraw (a new hour, a save to the Watchlist) keeps the title that's showing, if it's still in the chart
+  const was = heroScope?.key === s?.key && heroList[heroAt]?.it, list = picks.slice(0, HERO_N);
+  const keep = was ? list.findIndex((p) => p.it.id === was.id && p.it.type === was.type) : -1;
+  heroList = list; heroAt = Math.max(0, keep); heroScope = s;
+  if (!state.titles) window.tnSheet?.details().then((d) => { if (d && !state.titles) { state.titles = d; redrawHeroCopy(); } });   // genres and age ratings
+  const many = heroList.length > 1, arrow = (dir, d) => `<button type="button" class="h-arrow ${dir}" data-hero-step="${dir === 'prev' ? -1 : 1}" aria-label="${dir === 'prev' ? 'Previous' : 'Next'} title"><svg viewBox="0 0 24 40" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
+  queueMicrotask(startHero);
+  return `<section class="hero" id="hero" aria-roledescription="carousel" aria-label="Top of the chart">
+    ${many ? arrow('prev', 'M16 6 6 20l10 14') : ''}
+    <div class="h-copy" id="heroCopy" aria-live="polite">${heroCopy(heroList[heroAt])}</div>
+    ${many ? `<div class="h-dots">${heroList.map((p, i) => `<button type="button" data-hero="${i}" aria-label="Number ${p.n}: ${esc(p.it.title)}" title="${esc(p.it.title)}" aria-current="${i === heroAt}"></button>`).join('')}</div>
+    <button type="button" class="h-pause" id="heroPause" aria-pressed="${heroPaused}" aria-label="${heroPaused ? 'Play' : 'Pause'}" title="${heroPaused ? 'Play' : 'Pause'}"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="i-pause" d="M8.5 6.5v11M15.5 6.5v11" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path class="i-play" d="M8.5 5.8v12.4L18.6 12z" fill="currentColor"/></svg></button>` : ''}
+    ${many ? arrow('next', 'M8 6l10 14L8 34') : ''}
   </section>`;
 }
+function redrawHeroCopy() { const c = $('#heroCopy'); if (c && heroList[heroAt]) c.innerHTML = heroCopy(heroList[heroAt]); }
+addEventListener('tn:saved', () => $('#heroCopy') && redrawHeroCopy());
 // The backdrop crossfades: the new picture decodes first, then fades in over the old one, which is then dropped.
 let bdKey = null;
 function setBackdrop(it) {
@@ -342,7 +363,7 @@ function setBackdrop(it) {
   if (key === bdKey) return; bdKey = key;
   if (!it) { bd.replaceChildren(); $('#bdExt')?.replaceChildren(); return; }
   let layer;
-  if (it.backdrop) { layer = new Image(); layer.alt = ''; layer.src = it.backdrop; }
+  if (it.backdrop) { layer = new Image(); layer.alt = ''; layer.src = it.backdrop.replace('/w1280/', '/original/'); layer.srcset = `${it.backdrop} 1280w, ${it.backdrop.replace('/w1280/', '/original/')} 1920w`; layer.sizes = '80vw'; }
   else { const h = hue(it.title); layer = document.createElement('span'); layer.style.background = `linear-gradient(120deg,hsl(${h} 45% 30%),hsl(${(h + 40) % 360} 55% 12%))`; }
   layer.className = 'bd-l';
   const show = () => {
@@ -352,9 +373,12 @@ function setBackdrop(it) {
     bd.append(layer);
     if (reduceMotion || bd.children.length === 1) { layer.classList.add('in'); [...bd.children].slice(0, -1).forEach((c) => c.remove()); return; }
     requestAnimationFrame(() => layer.classList.add('in'));
-    setTimeout(() => [...bd.children].slice(0, -1).forEach((c) => c.remove()), 700);
+    setTimeout(() => [...bd.children].slice(0, -1).forEach((c) => c.remove()), 900);
   };
   layer.decode ? layer.decode().then(show, show) : show();
+  // the next one's artwork loads quietly in the background, so it's ready when its turn comes
+  const nx = heroList[(heroList.findIndex((p) => p.it === it) + 1) % (heroList.length || 1)]?.it;
+  if (nx?.backdrop && nx !== it) { const pre = new Image(); pre.srcset = `${nx.backdrop} 1280w, ${nx.backdrop.replace('/w1280/', '/original/')} 1920w`; pre.sizes = '80vw'; }
 }
 function showHero(i) {
   if (i === heroAt || !heroList[i]) return;
@@ -362,14 +386,40 @@ function showHero(i) {
   document.querySelectorAll('[data-hero]').forEach((b) => b.setAttribute('aria-current', String(Number(b.dataset.hero) === i)));
   const copy = $('#heroCopy');
   const swap = () => { copy.innerHTML = heroCopy(heroList[i]); copy.classList.remove('out'); };
-  if (reduceMotion) swap(); else { copy.classList.add('out'); setTimeout(swap, 180); }
+  if (reduceMotion) swap(); else { copy.classList.add('out'); setTimeout(swap, 220); }
   setBackdrop(heroList[i].it);
+  startHero();   // a fresh count after every change, by hand or by itself
 }
-view.addEventListener('click', (e) => { const d = e.target.closest('[data-hero]'); if (d) showHero(Number(d.dataset.hero)); });
-view.addEventListener('keydown', (e) => {   // ← → move between the hero's titles when a dot has focus
-  const d = e.target.closest?.('[data-hero]'); if (!d || !['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+// the turns: paused by the button, while you point at it or tab through it, while a sheet is open or the tab is hidden
+let heroTimer = 0, heroPaused = false;
+const heroHeld = () => heroPaused || document.hidden || window.tnSheet?.isOpen() || $('#hero')?.matches(':hover, :focus-within') || document.documentElement.classList.contains('still') || reduceMotion;
+function stopHero() { clearTimeout(heroTimer); heroTimer = 0; }
+function startHero() {
+  stopHero();
+  const h = $('#hero'); if (!h || heroList.length < 2) return;
+  h.classList.toggle('auto', !document.documentElement.classList.contains('still') && !reduceMotion);
+  heroTimer = setTimeout(function tick() {
+    if (!$('#hero')) return;
+    if (heroHeld()) { heroTimer = setTimeout(tick, 1500); return; }
+    showHero((heroAt + 1) % heroList.length);
+  }, HERO_MS);
+}
+document.addEventListener('visibilitychange', () => document.hidden || startHero());
+view.addEventListener('click', (e) => {
+  const d = e.target.closest('[data-hero]'); if (d) { showHero(Number(d.dataset.hero)); return; }
+  const st = e.target.closest('[data-hero-step]'); if (st) { showHero((heroAt + Number(st.dataset.heroStep) + heroList.length) % heroList.length); return; }
+  if (e.target.closest('#heroPause')) {
+    heroPaused = !heroPaused; const b = $('#heroPause');
+    b.setAttribute('aria-pressed', heroPaused); b.setAttribute('aria-label', heroPaused ? 'Play' : 'Pause'); b.title = heroPaused ? 'Play' : 'Pause';
+    if (!heroPaused) startHero(); return;
+  }
+  const add = e.target.closest('[data-hero-save]');
+  if (add) { const it = heroList[heroAt].it; window.tn.saved.toggle(infoFor(it, it.type)); $('[data-hero-save]')?.focus({ preventScroll: true }); }
+});
+view.addEventListener('keydown', (e) => {   // ← → move between the hero's titles when a dot or arrow has focus
+  const d = e.target.closest?.('[data-hero], [data-hero-step]'); if (!d || !['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
   e.preventDefault(); const i = (heroAt + (e.key === 'ArrowRight' ? 1 : -1) + heroList.length) % heroList.length;
-  showHero(i); $(`[data-hero="${i}"]`)?.focus();
+  showHero(i); if (d.dataset.hero) $(`[data-hero="${i}"]`)?.focus();
 });
 
 // Netflix's own chart is weekly (Monday to Sunday); "week" is the Sunday it ends on.
