@@ -169,29 +169,23 @@ async function refresh(quiet) {
 }
 $('#refresh').addEventListener('click', () => refresh(false));
 
-// ---------- share a chart: a picture of this Top 10 (made here, in the browser) plus a link back ----------
-// Phones get the share sheet with the image attached; elsewhere the image downloads and the link is copied.
-$('#shareChart').addEventListener('click', async () => {
-  const btn = $('#shareChart'), s = state.route === 'top' ? null : svc(state.route);
+// ---------- share a chart: the phone's share sheet, or the share card on computers (shell.js), with this Top 10 as a
+// picture (made here, in the browser) as well as a link back ----------
+$('#shareChart').addEventListener('click', () => {
+  const s = state.route === 'top' ? null : svc(state.route);
   const kind = state.kind === 'both' ? 'tv' : state.kind;
   const list = ((s ? s[kind] : state.trending.overall[kind]) || []).slice(0, 10);
   if (!list.length) return;
   const title = s?.store ? 'Top 10 to buy or rent' : `Top 10 ${words(kind)}`;
   const where = s?.mine ? 'On my services' : s?.store ? 'Apple TV, Sky Store and others' : s ? `On ${s.label}` : 'In the UK, on all five services';
   const url = new URL(location.href); url.search = ''; url.hash = s && !s.mine ? s.key : '';
-  const text = `${title} ${s && !s.mine && !s.store ? `on ${s.label}` : 'in the UK'} right now, from Tenner`;
-  btn.disabled = true;
-  try {
-    const blob = await chartImage(list, title, where);
-    const file = blob && new File([blob], `tenner-${(s?.key || 'uk')}-${kind}.png`, { type: 'image/png' });
-    if (file && navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: 'Tenner', text: `${text}: ${url}` });
-    else if (navigator.share && matchMedia('(hover: none)').matches) await navigator.share({ title: 'Tenner', text, url: url.toString() });
-    else {
-      if (file) { const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = file.name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
-      try { await navigator.clipboard.writeText(url.toString()); toast(file ? 'Picture saved and link copied' : 'Link copied'); } catch { toast(file ? 'Picture saved' : "Couldn't share right now"); }
-    }
-  } catch { /* the share sheet was closed */ }
-  btn.disabled = false;
+  const top3 = list.slice(0, 3).map((it, i) => `${i + 1}. ${it.title}`).join(', ');
+  window.tn.share({
+    heading: `Share this ${title} with someone looking for something to watch`,
+    title: 'Tenner', url: url.toString(),
+    text: `${title} ${s && !s.mine && !s.store ? `on ${s.label}` : 'in the UK'} right now: ${top3}`,
+    picture: async () => ({ blob: await chartImage(list, title, where), name: `tenner-${(s?.key || 'uk')}-${kind}.png` }),
+  });
 });
 // The picture: 1080×1350 (a portrait post), night colours, ranks, posters where they'll load, titles and where they're on
 async function chartImage(list, title, where) {

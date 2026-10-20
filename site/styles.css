@@ -1003,3 +1003,51 @@ a.sh-prov:hover { text-decoration: none; }
 .still, .still *, .still *::before, .still *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 .no-moves .mv { display: none !important; }
 .no-ratings .star, .no-ratings .cl-r, .no-ratings .score { display: none !important; }
+
+/* ============================================================ the share card (shell.js), as on Channel Crossings
+   Computers: a black card in the middle of the screen (a native modal <dialog>), white pill buttons for each place to
+   share, a note, and a little drive-in scene melting in at the foot. Phones use the system's own share sheet instead. */
+.share-card { position: fixed; inset: 0; margin: auto; padding: 0; border: 0; width: min(360px, calc(100vw - 32px)); height: fit-content; max-height: calc(100dvh - 48px);
+  display: flex; flex-direction: column; overflow-y: auto; overscroll-behavior: contain; border-radius: 30px; background: #000; color: #fff;
+  box-shadow: 0 0 0 .5px rgba(255, 255, 255, .1), 0 40px 100px rgba(0, 0, 0, .5); animation: scIn .5s var(--ease-spring) both; }
+.share-card:not([open]) { display: none; }
+.share-card.out { animation: scOut .2s ease-in both; }
+.share-card::backdrop { background: rgba(0, 0, 0, .42); animation: scFade .3s ease both; }
+@keyframes scIn { from { opacity: 0; transform: scale(.9); } }
+@keyframes scOut { to { opacity: 0; transform: scale(.95); } }
+@keyframes scFade { from { opacity: 0; } }
+.share-card h2 { margin: 0; padding: 34px 22px 22px; font: 700 1.35rem/1.18 var(--font-display); letter-spacing: -.01em; text-align: center; text-wrap: balance; }
+.sc-btns { display: flex; flex-direction: column; gap: 10px; padding: 0 16px; }
+.sc-b { position: relative; display: flex; align-items: center; justify-content: center; min-height: 46px; padding: 0 44px; border: 0; border-radius: 999px;
+  background: #fff; color: #000; font: 500 15px/1 var(--font); letter-spacing: -.01em; text-decoration: none; cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .08); transition: transform .15s, background-color .2s; }
+.sc-b:hover { text-decoration: none; }
+.sc-b svg { position: absolute; left: 18px; top: 50%; width: 19px; height: 19px; transform: translateY(-50%); }
+.sc-b span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (hover: hover) { .sc-b:hover { background: #ececf0; } }
+.sc-b:active { transform: scale(.98); }
+.sc-b:disabled { opacity: .7; cursor: progress; }
+.sc-b:focus-visible { outline: 2px solid #0a84ff; outline-offset: 3px; }
+.share-card p { margin: 16px 22px 0; color: rgba(235, 235, 245, .6); font-size: 12.5px; line-height: 1.45; text-align: center; }
+.sc-art { position: relative; flex: none; height: clamp(72px, calc(100dvh - 560px), 200px); margin-top: 6px; overflow: hidden;
+  -webkit-mask-image: linear-gradient(transparent, #000 46%); mask-image: linear-gradient(transparent, #000 46%); }
+.sc-art svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.sc-x { position: absolute; z-index: 2; top: 14px; left: 14px; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%;
+  background: rgba(255, 255, 255, .14); color: rgba(255, 255, 255, .8); cursor: pointer; }
+.sc-x svg { width: 11px; height: 11px; }
+.sc-x::after { content: ""; position: absolute; inset: -6px; }
+.sc-x:focus-visible { outline: 2px solid #0a84ff; outline-offset: 2px; }
+/* the scene moves gently: stars twinkle, the screen glows, the projector's beam sways */
+:root:not(.still) .sc-star { animation: scTw 3.2s ease-in-out infinite alternate; }
+:root:not(.still) .sc-star:nth-child(2n) { animation-delay: -1.4s; }
+:root:not(.still) .sc-star:nth-child(3n) { animation-delay: -2.3s; }
+:root:not(.still) .sc-glow { animation: scGlow 4s ease-in-out infinite alternate; }
+:root:not(.still) .sc-beam { transform-origin: 232px 150px; animation: scBeam 6s ease-in-out infinite alternate; }
+@keyframes scTw { to { opacity: .25; } }
+@keyframes scGlow { to { opacity: .55; } }
+@keyframes scBeam { from { transform: rotate(-1.5deg); opacity: .8; } to { transform: rotate(1.5deg); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .share-card, .share-card::backdrop { animation: none; } }
+/* phones without a share sheet of their own: the card, frosted */
+@media (max-width: 719px) { .share-card { width: min(400px, calc(100vw - 32px)); border-radius: 28px; background: rgba(0, 0, 0, .62); -webkit-backdrop-filter: blur(40px) saturate(180%); backdrop-filter: blur(40px) saturate(180%); }
+  .sc-art { height: 150px; } }
+@media (max-width: 719px) and (prefers-reduced-transparency: reduce) { .share-card { background: #000; } }

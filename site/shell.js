@@ -78,7 +78,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.10.0';
+  const version = '1.11.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -154,10 +154,93 @@
     dlg.returnValue = ''; dlg.showModal();
   }
 
+  // ---------- Share: the phone's own share sheet where there is one, otherwise the share card ----------
+  // As on Channel Crossings: on phones and tablets the system share sheet; on computers a black card (a native modal
+  // <dialog>: Escape, focus and the dimmed page come free) with X, Facebook, WhatsApp, Telegram and Copy link, plus
+  // "Save as picture" where there's a picture to save. Nothing loads from those sites until a button's pressed.
+  // share({ heading, title, text, url, picture: async () => ({ blob, name }) })
+  const NETS = [
+    ['Post on X', (t, u) => `https://x.com/intent/post?text=${encodeURIComponent(t)}&url=${encodeURIComponent(u)}`,
+      '<path fill="currentColor" d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.2L2 3h6.33l4.37 5.77L17.75 3Zm-1.08 16.17h1.7L7.4 4.74H5.58l11.09 14.43Z"/>'],
+    ['Share on Facebook', (t, u) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(u)}`,
+      '<circle cx="12" cy="12" r="11" fill="#0866FF"/><path fill="#fff" d="M13.4 23v-8.1h2.7l.42-3.2H13.4V9.7c0-.92.26-1.55 1.58-1.55h1.68V5.3a22 22 0 0 0-2.45-.13c-2.43 0-4.09 1.48-4.09 4.2v2.35H7.37v3.2h2.75V23z"/>'],
+    ['Send on WhatsApp', (t, u) => `https://wa.me/?text=${encodeURIComponent(`${t} ${u}`)}`,
+      '<path fill="#25D366" d="M12 1.5A10.4 10.4 0 0 0 3.05 17.2L1.6 22.5l5.45-1.43A10.4 10.4 0 1 0 12 1.5Z"/><path fill="#fff" d="M17.6 14.5c-.3-.15-1.8-.88-2.07-.98-.28-.1-.48-.15-.68.15-.2.3-.78.98-.96 1.18-.18.2-.35.22-.65.07a8.5 8.5 0 0 1-4.2-3.67c-.32-.55.32-.5.9-1.68.1-.2.05-.37-.02-.52-.08-.15-.68-1.64-.93-2.24-.25-.59-.5-.5-.68-.51h-.58c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.5 0 1.47 1.07 2.9 1.22 3.1.15.2 2.1 3.2 5.08 4.49 1.89.81 2.62.88 3.56.74.57-.09 1.8-.74 2.04-1.45.25-.71.25-1.32.18-1.45-.07-.13-.27-.2-.57-.35Z"/>'],
+    ['Send on Telegram', (t, u) => `https://t.me/share/url?url=${encodeURIComponent(u)}&text=${encodeURIComponent(t)}`,
+      '<circle cx="12" cy="12" r="11" fill="#29A9EB"/><path fill="#fff" d="M5.3 11.7 16.9 7.2c.54-.2 1.01.13.83.95l-1.97 9.3c-.15.66-.54.82-1.09.51l-3-2.22-1.45 1.4c-.16.16-.3.3-.6.3l.21-3.05 5.55-5.01c.24-.21-.05-.33-.38-.12l-6.86 4.32-2.96-.92c-.64-.2-.65-.64.14-.95Z"/>'],
+  ];
+  const LINK = '<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4.5 4.5 0 0 0 6.4.4l3-3a4.5 4.5 0 0 0-6.4-6.4l-1.2 1.2"/><path d="M14 10a4.5 4.5 0 0 0-6.4-.4l-3 3a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2"/></g>';
+  const PIC = '<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="m20.5 16-4.8-4.8L6 19.5"/></g>';
+  // the scene at the foot of the card: a drive-in on a starry night, the screen glowing in Tenner's colours
+  const SCENE = `<svg viewBox="0 0 280 170" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <defs>
+      <linearGradient id="scSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000"/><stop offset=".6" stop-color="#0d0b24"/><stop offset="1" stop-color="#1d1440"/></linearGradient>
+      <linearGradient id="scScr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff375f"/><stop offset=".35" stop-color="#ff9f0a"/><stop offset=".7" stop-color="#0a84ff"/><stop offset="1" stop-color="#bf5af2"/></linearGradient>
+      <linearGradient id="scBeam" x1="1" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      <radialGradient id="scGlow"><stop offset="0" stop-color="#bf5af2" stop-opacity=".55"/><stop offset="1" stop-color="#bf5af2" stop-opacity="0"/></radialGradient>
+    </defs>
+    <rect width="280" height="170" fill="url(#scSky)"/>
+    <g fill="#fff">${[[22, 18, 1.1], [58, 34, .8], [96, 12, 1], [204, 20, 1.2], [238, 40, .8], [262, 14, 1], [150, 8, .7], [178, 44, .8], [36, 52, .7]].map(([x, y, r]) => `<circle class="sc-star" cx="${x}" cy="${y}" r="${r}"/>`).join('')}</g>
+    <ellipse class="sc-glow" cx="140" cy="80" rx="110" ry="60" fill="url(#scGlow)"/>
+    <path class="sc-beam" d="M232 150 L96 52 L184 52 Z" fill="url(#scBeam)"/>
+    <rect x="128" y="104" width="4" height="40" fill="#14112b"/><rect x="148" y="104" width="4" height="40" fill="#14112b"/>
+    <rect class="sc-screen" x="88" y="44" width="104" height="62" rx="4" fill="url(#scScr)"/>
+    <text x="140" y="88" text-anchor="middle" font-family="Inter Tight, Inter, -apple-system, sans-serif" font-weight="800" font-size="34" fill="none" stroke="#fff" stroke-width="1.6" opacity=".92">10</text>
+    <path d="M0 150 Q70 138 140 144 T280 140 V170 H0Z" fill="#0b0920"/>
+    <g fill="#05040d"><path d="M40 152h44l-6-10H50z"/><rect x="36" y="150" width="52" height="9" rx="4"/><path d="M170 154h40l-5-9h-26z"/><rect x="166" y="152" width="48" height="8" rx="4"/></g>
+    <g fill="#ffd60a" opacity=".85"><circle cx="40" cy="155" r="1.6"/><circle cx="166" cy="157" r="1.5"/></g>
+    <rect x="226" y="146" width="12" height="9" rx="2" fill="#05040d"/>
+  </svg>`;
+  let card = null, shareNow = null;
+  function shareCard() {
+    if (card) return card;
+    document.body.insertAdjacentHTML('beforeend', `<dialog class="share-card" id="shareCard" aria-labelledby="scT">
+      <button type="button" class="sc-x" id="scX" aria-label="Close"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M1 1l8 8M9 1L1 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      <h2 id="scT"></h2>
+      <div class="sc-btns" id="scBtns"></div>
+      <p>Each post carries a link back to Tenner. Nothing loads from these sites until you tap.</p>
+      <div class="sc-art">${SCENE}</div>
+    </dialog>`);
+    card = $('#shareCard');
+    const shut = () => { if (!card.open || card.classList.contains('out')) return; if (reduce || document.documentElement.classList.contains('still')) { card.close(); return; } card.classList.add('out'); setTimeout(() => { card.classList.remove('out'); card.close(); }, 200); };
+    $('#scX').addEventListener('click', shut);
+    card.addEventListener('cancel', (e) => { e.preventDefault(); shut(); });
+    card.addEventListener('click', (e) => {   // a tap on the dimmed page closes it
+      if (e.target === card) { const r = card.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) shut(); return; }
+      const b = e.target.closest('[data-sc]'); if (!b || !shareNow) return;
+      if (b.dataset.sc === 'copy') {
+        navigator.clipboard?.writeText(shareNow.url).then(() => { b.lastChild.textContent = 'Link copied'; setTimeout(() => (b.lastChild.textContent = 'Copy link'), 1600); }, () => { b.lastChild.textContent = shareNow.url; });
+      } else if (b.dataset.sc === 'pic') {
+        b.disabled = true; b.lastChild.textContent = 'Making the picture…';
+        shareNow.picture().then((p) => {
+          if (!p?.blob) throw new Error();
+          const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(p.blob), download: p.name }); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+          b.lastChild.textContent = 'Picture saved';
+        }).catch(() => { b.lastChild.textContent = 'Couldn’t make the picture'; })
+          .finally(() => { b.disabled = false; setTimeout(() => (b.lastChild.textContent = 'Save as picture'), 1800); });
+      }
+    });
+    return card;
+  }
+  async function share(o) {
+    if (navigator.share && matchMedia('(pointer: coarse)').matches) {   // phones and tablets: the system's own share sheet
+      let files;
+      try { const p = o.picture && await o.picture(); const f = p?.blob && new File([p.blob], p.name, { type: p.blob.type }); if (f && navigator.canShare?.({ files: [f] })) files = [f]; } catch {}
+      return navigator.share(files ? { files, title: o.title, text: `${o.text} ${o.url}` } : { title: o.title, text: o.text, url: o.url }).catch(() => {});
+    }
+    const c = shareCard(); shareNow = o;
+    $('#scT').textContent = o.heading;
+    $('#scBtns').innerHTML = NETS.map(([label, href, icon]) => `<a class="sc-b" href="${esc(href(o.text, o.url))}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true">${icon}</svg><span>${label}</span></a>`).join('')
+      + `<button type="button" class="sc-b" data-sc="copy"><svg viewBox="0 0 24 24" aria-hidden="true">${LINK}</svg><span>Copy link</span></button>`
+      + (o.picture ? `<button type="button" class="sc-b" data-sc="pic"><svg viewBox="0 0 24 24" aria-hidden="true">${PIC}</svg><span>Save as picture</span></button>` : '');
+    c.classList.remove('out'); if (!c.open) c.showModal();
+    $('#scX').focus({ preventScroll: true });
+  }
+
   // ---------- the search API (worker/, on Cloudflare): every film and show on TMDB. Empty until it's deployed ----------
   const api = 'https://tenner-api.danseacroft.workers.dev';
 
-  window.tn = { prefs, version, esc, hue, glide, arrows, segment, reduce, contact, saved, progress, nextUp, whenText, mine, pickMine, api };
+  window.tn = { prefs, version, esc, hue, glide, arrows, segment, reduce, contact, saved, progress, nextUp, whenText, mine, pickMine, api, share };
 
   // ---------- tabs ----------
   const tabs = [...document.querySelectorAll('#tabs [role=tab]')], ind = $('#tabInd'), names = tabs.map((t) => t.dataset.tab);

@@ -260,8 +260,7 @@
     }
     if (b.dataset.act === 'share') {
       const url = new URL(location.href); if (current.k) url.searchParams.set('t', current.k);
-      const data = { title: `${current.title} on Tenner`, text: `Where to watch ${current.title} in the UK`, url: url.toString() };
-      try { if (navigator.share) await navigator.share(data); else { await navigator.clipboard.writeText(data.url); b.lastChild.textContent = 'Link copied'; setTimeout(() => (b.lastChild.textContent = 'Share'), 1600); } } catch { /* cancelled */ }
+      window.tn.share({ heading: `Share ${current.title} with someone who'd like it`, title: `${current.title} on Tenner`, text: `Where to watch ${current.title} in the UK`, url: url.toString() });
     }
   });
 
