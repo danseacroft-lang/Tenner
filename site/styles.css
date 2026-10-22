@@ -1133,9 +1133,6 @@ a.sh-prov:hover { text-decoration: none; }
     transition: transform .35s var(--ease-spring); }
   .mb-card:active { transform: scale(.98); }
   .mb-card:hover { text-decoration: none; }
-  .mb-card img, .mb-ph { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .mb-card img.soft { filter: blur(18px) saturate(1.3); scale: 1.3; }
-  .mb-ph { background: linear-gradient(135deg, hsl(var(--h) 45% 32%), hsl(calc(var(--h) + 40) 55% 12%)); }
   /* the words sit on a soft shade at the bottom left, so they read on any picture */
   .mb-card::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0, 0, 0, .78) 0%, rgba(0, 0, 0, .35) 42%, transparent 70%); }
   .mb-copy { position: absolute; z-index: 1; left: 14px; right: 14px; bottom: 12px; display: grid; gap: 3px; justify-items: start; }
@@ -1148,8 +1145,8 @@ a.sh-prov:hover { text-decoration: none; }
   .mb-dots i.on { background: var(--label); transform: scale(1.15); }
 
   /* the header under the banners: tighter, the title a section heading's size */
-  .mban:not([hidden]) + .intro { padding-top: 0; }
-  .mban:not([hidden]) + .intro .large-title { margin-top: 14px; font-size: 28px; }
+  .mban:not([hidden]):not(.msp) + .intro { padding-top: 0; }
+  .mban:not([hidden]):not(.msp) + .intro .large-title { margin-top: 14px; font-size: 28px; }
 
   /* rows of posters three across, small gaps, the neon ranks scaled to match */
   .row-wrap { --cw: 30vw; --edge: 34px; }
@@ -1247,6 +1244,45 @@ a.sh-prov:hover { text-decoration: none; }
 }
 @media (max-width: 719px) and (prefers-reduced-transparency: reduce) { .drawer { background: var(--bg2); -webkit-backdrop-filter: none; backdrop-filter: none; } }
 
+/* ============================================================ phones: the chart opens like About
+   The top titles' artwork fills the top of the screen, one after another, washed with Tenner's colours and dissolving
+   into the page (black at night, white by day) with no line anywhere. A frosted card names the title, with dots; the
+   chart's heading sits big over the faded part, then the page carries on as normal. */
+@media (max-width: 560px) {
+  #main { isolation: isolate; }
+  .mban.msp:not([hidden]) { position: relative; z-index: -1; height: 96svh; margin: 0 0 -46svh; }
+  .msp-bg { position: absolute; inset: 0; pointer-events: none;
+    -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 10%, #000 34%, rgba(0,0,0,.5) 58%, rgba(0,0,0,.12) 80%, transparent 96%);
+    mask-image: linear-gradient(180deg, transparent 0%, #000 10%, #000 34%, rgba(0,0,0,.5) 58%, rgba(0,0,0,.12) 80%, transparent 96%); }
+  .msp-art { position: absolute; inset: 0; overflow: hidden; }
+  .msp-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 60% 20%; opacity: 0; scale: 1.06;
+    transition: opacity 1.6s ease, scale 9s linear; }
+  .msp-art img.on { opacity: 1; scale: 1; }
+  .msp-wash { position: absolute; inset: 0; mix-blend-mode: soft-light; opacity: .8;
+    background: linear-gradient(125deg, #ff375f 0%, #ff9f0a 22%, transparent 45%, #0a84ff 75%, #bf5af2 100%);
+    -webkit-mask-image: linear-gradient(180deg, #000 40%, transparent 95%); mask-image: linear-gradient(180deg, #000 40%, transparent 95%); }
+  .msp-shade { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--bg) 30%, transparent) 30%,
+    color-mix(in srgb, var(--bg) 75%, transparent) 55%, color-mix(in srgb, var(--bg) 85%, transparent) 80%); }
+  /* what's on screen: a small frosted card near the top, tap it for where to watch */
+  .msp-now { position: absolute; left: var(--gutter); right: var(--gutter-r); top: 13svh; display: flex; align-items: center; gap: 12px; width: fit-content; max-width: calc(100% - 2 * var(--gutter));
+    padding: 8px 18px 8px 8px; border-radius: 16px; color: var(--label); text-decoration: none; -webkit-tap-highlight-color: transparent;
+    background: var(--frost); box-shadow: var(--frost-line); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); transition: transform .35s var(--ease-spring); }
+  .msp-now:hover { text-decoration: none; }
+  .msp-now:active { transform: scale(.97); }
+  .msp-now img { flex: none; width: 40px; height: 60px; border-radius: 6px; object-fit: cover; }
+  .msp-now > span { min-width: 0; }
+  .msp-now small { display: block; font: 600 11px/1.3 var(--font); letter-spacing: .08em; text-transform: uppercase; color: var(--label2); }
+  .msp-now b { display: block; font: 600 15px/1.3 var(--font); letter-spacing: -.016em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .msp-dots { display: flex; gap: 6px; margin-top: 8px; }
+  .msp-dots i { width: 6px; height: 6px; border-radius: 3px; background: var(--label3); transition: width .4s, background-color .4s; }
+  .msp-dots i.on { width: 18px; background: var(--label); }
+  /* the chart's heading, big and bold over the faded artwork */
+  .mban.msp:not([hidden]) + .intro .large-title { margin: 0 0 12px; max-width: 11ch; font: 800 46px/.98 var(--font-display); letter-spacing: -.035em; }
+  .mban.msp:not([hidden]) + .intro .lede { font-size: 17px; line-height: 1.45; letter-spacing: -.015em; }
+}
+:root.still .msp-art img { transition: opacity .3s ease; scale: 1; }
+@media (prefers-reduced-motion: reduce) { .msp-art img { transition: opacity .3s ease; scale: 1; } }
+
 /* ============================================================ phones: New This Week, laid out like the homepage
    Banners first (the poster on the right, its colours blurred behind, the words on the left, as on Rakuten), then each
    day as a bold heading over a list like "Top rated at a glance": poster, title, service and what it is, the logo. */
@@ -1260,7 +1296,7 @@ a.sh-prov:hover { text-decoration: none; }
   .mb-pc .mb-copy { right: 42%; z-index: 2; }
   .mb-pc .mb-title { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 20px; }
 
-  .mban:not([hidden]) + .intro + #view .page-title { margin-top: 14px; font-size: 28px; }
+  .mban:not([hidden]):not(.msp) + .intro + #view .page-title { margin-top: 14px; font-size: 28px; }
   /* each day: a bold heading, then the list without a box, rows divided by hairlines */
   .group { margin-top: 30px; }
   .group h2 { margin: 0 0 6px; font: 800 21px/1.2 var(--font-display); letter-spacing: -.015em; color: var(--label); }

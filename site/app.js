@@ -400,28 +400,56 @@ view.addEventListener('keydown', (e) => {   // ← → move between the hero's t
   showHero(i); if (d.dataset.hero) $(`[data-hero="${i}"]`)?.focus();
 });
 
-// ---------- phones: the top titles as wide artwork banners, swiped one at a time, neighbours peeking in at the sides ----------
+// ---------- phones: the chart's top titles as a full-height splash, the way About opens ----------
+// Each title's artwork fills the top of the screen for a few seconds, washed with Tenner's colours and dissolving into
+// the page, where the chart's heading sits; a small frosted card names it (tap it for where to watch), with dots. Swipe
+// across the artwork to go back and forth. It moves on by itself unless Animations are off.
 const phone = matchMedia('(max-width: 560px)');
 phone.addEventListener('change', () => state.trending && render());
 const mBan = $('#mBan');
+let spTimer = 0, spAt = 0, spGo = null, spKey = '';
+function hideBan() { clearInterval(spTimer); spGo = null; mBan.classList.remove('msp'); mBan.hidden = true; mBan.innerHTML = ''; }
 function banners(picks, s) {
-  if (!phone.matches || !picks.length) { mBan.hidden = true; mBan.innerHTML = ''; return; }
-  const list = picks.slice(0, 6), wide = (u) => u && u.replace('/w1280/', '/w780/');
-  mountBanners(list.map(({ it, n }, i) => {
-    const kind = it.type === 'tv' ? 'show' : 'film', badge = s?.store ? `No. ${n} to buy or rent` : s ? `No. ${n} on ${s.label}` : `No. ${n} ${kind} in the UK`;
-    const art = it.backdrop ? `<img src="${esc(wide(it.backdrop))}" alt="" ${i ? 'loading="lazy"' : 'fetchpriority="high"'} decoding="async">`
-      : it.poster ? `<img class="soft" src="${esc(it.poster)}" alt="" loading="lazy">` : `<span class="mb-ph" style="--h:${hue(it.title)}"></span>`;
-    return `<a class="mb-card" href="${esc(it.url)}" target="_blank" rel="noopener" aria-label="${esc(`${badge}: ${it.title}`)}" ${reg(infoFor(it, it.type, badge, s && !s.store && !s.mine ? [s] : null))}>
-      ${art}<span class="mb-copy"><span class="mb-badge">${esc(badge)}</span><b class="mb-title">${esc(it.title)}</b><span class="mb-meta">${esc([it.type === 'tv' ? (it.season || 'Series') : 'Film', it.year].filter(Boolean).join(' · '))}</span></span></a>`;
-  }));
+  const list = phone.matches ? picks.filter((p) => p.it.backdrop).slice(0, 5) : [];
+  if (!list.length) return hideBan();
+  clearInterval(spTimer); mBan.classList.add('msp');
+  const badge = ({ it, n }) => s?.store ? `No. ${n} to buy or rent` : s ? `No. ${n} on ${s.label}` : `No. ${n} ${it.type === 'tv' ? 'show' : 'film'} in the UK`;
+  const sheets = list.map((p) => reg(infoFor(p.it, p.it.type, badge(p), s && !s.store && !s.mine ? [s] : null)));
+  mBan.innerHTML = `<div class="msp-bg" aria-hidden="true"><div class="msp-art">${list.map(({ it }, i) => `<img ${i ? 'data-' : 'fetchpriority="high" '}src="${esc(it.backdrop)}" alt="" decoding="async">`).join('')}</div><div class="msp-wash"></div><div class="msp-shade"></div></div>
+    <a class="msp-now" id="mspNow" target="_blank" rel="noopener"></a>`;
+  mBan.hidden = false;
+  const imgs = [...mBan.querySelectorAll('.msp-art img')], now = $('#mspNow');
+  const want = (m) => { if (m?.dataset.src) { m.src = m.dataset.src; delete m.dataset.src; } };
+  spGo = (n) => {
+    spAt = (n + list.length) % list.length; const p = list[spAt]; spKey = p.it.title;
+    want(imgs[spAt]); want(imgs[(spAt + 1) % imgs.length]);
+    imgs.forEach((m, k) => m.classList.toggle('on', k === spAt));
+    now.href = p.it.url; now.setAttribute('data-sheet', sheets[spAt].match(/\d+/)[0]); now.setAttribute('aria-label', `${badge(p)}: ${p.it.title}`);
+    now.innerHTML = `${p.it.poster ? `<img src="${esc(p.it.poster)}" alt="">` : ''}<span><small>${esc(badge(p))}</small><b>${esc(p.it.title)}</b>
+      <span class="msp-dots">${list.map((_, k) => `<i${k === spAt ? ' class="on"' : ''}></i>`).join('')}</span></span>`;
+  };
+  // the same title stays up when the chart redraws (a new hour, the other kind, a service picked)
+  spGo(Math.max(0, list.findIndex((p) => p.it.title === spKey)));
+  spAuto();
 }
+function spAuto() {
+  clearInterval(spTimer);
+  if (!spGo || reduceMotion || document.documentElement.classList.contains('still')) return;
+  spTimer = setInterval(() => { if (!document.hidden && !window.tnSheet?.isOpen()) spGo(spAt + 1); }, 7000);
+}
+let spX = null;
+mBan.addEventListener('touchstart', (e) => { spX = spGo ? [e.touches[0].clientX, e.touches[0].clientY] : null; }, { passive: true });
+mBan.addEventListener('touchend', (e) => {
+  if (!spX) return; const t = e.changedTouches[0], dx = t.clientX - spX[0], dy = t.clientY - spX[1]; spX = null;
+  if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) { spGo(spAt + (dx < 0 ? 1 : -1)); spAuto(); }
+}, { passive: true });
 // New This Week on phones: the new arrivals as banners too. Watchmode gives a poster but no wide artwork, so each is laid
 // out like Rakuten's own: the words on the left, the poster crisp on the right, its colours blurred behind
 function newBanners(items) {
-  if (!phone.matches) { mBan.hidden = true; mBan.innerHTML = ''; return; }
+  if (!phone.matches) return hideBan();
   const today = new Date().toISOString().slice(0, 10);
   const list = items.filter((x) => x.poster).sort((a, b) => (b.original - a.original) || Math.abs(Date.parse(a.date) - Date.parse(today)) - Math.abs(Date.parse(b.date) - Date.parse(today))).slice(0, 6);
-  if (!list.length) { mBan.hidden = true; mBan.innerHTML = ''; return; }
+  if (!list.length) return hideBan();
   mountBanners(list.map((x, i) => {
     const s = svc(x.service), when = x.date === today ? 'Today' : fmtDate(new Date(x.date + 'T12:00:00'), { weekday: 'short', day: 'numeric', month: 'short' });
     const badge = `New on ${s?.label || 'streaming'} · ${when}`, what = x.type === 'movie' ? 'Film' : x.season ? `Season ${x.season}` : 'Series';
@@ -432,6 +460,7 @@ function newBanners(items) {
   }));
 }
 function mountBanners(cards) {
+  clearInterval(spTimer); spGo = null; mBan.classList.remove('msp');
   mBan.innerHTML = `<div class="mb-track" id="mbTrack">${cards.join('')}</div>
     <div class="mb-dots" aria-hidden="true">${cards.map((_, i) => `<i${i ? '' : ' class="on"'}></i>`).join('')}</div>`;
   mBan.hidden = false;
