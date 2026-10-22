@@ -122,8 +122,8 @@ main:focus { outline: none; }
 /* once the page scrolls, iOS's scroll edge: the page frosts and fades under the bar, with no line where it stops */
 .top-row::before {
   content: ""; position: absolute; z-index: 0; left: -50vw; right: -50vw; top: 0; bottom: -26px; pointer-events: none; opacity: 0; transition: opacity .3s ease;
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 78%, transparent) 30%, color-mix(in srgb, var(--bg) 40%, transparent) 70%, transparent);
-  -webkit-backdrop-filter: blur(14px) saturate(1.5); backdrop-filter: blur(14px) saturate(1.5);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 90%, transparent) 40%, color-mix(in srgb, var(--bg) 60%, transparent) 75%, transparent);
+  -webkit-backdrop-filter: blur(22px) saturate(1.5); backdrop-filter: blur(22px) saturate(1.5);
   -webkit-mask-image: linear-gradient(to bottom, #000 62%, transparent); mask-image: linear-gradient(to bottom, #000 62%, transparent);
 }
 .scrolled .top-row::before { opacity: 1; }
@@ -1246,3 +1246,33 @@ a.sh-prov:hover { text-decoration: none; }
   .drawer .side-ver { flex-basis: 100%; margin-top: 6px; color: var(--label3); font-size: 12px; }
 }
 @media (max-width: 719px) and (prefers-reduced-transparency: reduce) { .drawer { background: var(--bg2); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+
+/* ============================================================ phones: New This Week, laid out like the homepage
+   Banners first (the poster on the right, its colours blurred behind, the words on the left, as on Rakuten), then each
+   day as a bold heading over a list like "Top rated at a glance": poster, title, service and what it is, the logo. */
+.what-ph, .nl-logo { display: none; }
+@media (max-width: 560px) {
+  .mb-pc { background: #0b0b10; }
+  .mb-pc .mb-glow { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(28px) saturate(1.5) brightness(.75); scale: 1.4; }
+  .mb-pc .mb-poster { position: absolute; z-index: 1; top: 8%; bottom: 8%; right: 14px; left: auto; width: auto; height: 84%; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 9px;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, .5), 0 0 0 .5px rgba(255, 255, 255, .15); }
+  .mb-pc::after { background: linear-gradient(to right, rgba(0, 0, 0, .7) 0%, rgba(0, 0, 0, .35) 55%, transparent 80%); }
+  .mb-pc .mb-copy { right: 42%; z-index: 2; }
+  .mb-pc .mb-title { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 20px; }
+
+  .mban:not([hidden]) + .intro + #view .page-title { margin-top: 14px; font-size: 28px; }
+  /* each day: a bold heading, then the list without a box, rows divided by hairlines */
+  .group { margin-top: 30px; }
+  .group h2 { margin: 0 0 6px; font: 800 21px/1.2 var(--font-display); letter-spacing: -.015em; color: var(--label); }
+  .group h2.today { color: var(--accent); }
+  .group .list { background: none; border-radius: 0; overflow: visible; }
+  .group .list li { gap: 14px; padding: 12px 0; }
+  .group .list li + li::before { left: 0; }
+  .group .list .nl-art { width: 46px; height: 69px; border-radius: 7px; box-shadow: 0 0 0 .5px var(--sep), 0 4px 10px rgba(0, 0, 0, .25); }
+  .group .list .title { display: block; font-size: 17px; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .group .list .what { display: none; }
+  .group .list .what-ph { display: block; margin-top: 2px; color: var(--label2); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .group .list .chip:has(+ .nl-logo) { display: none; }
+  .nl-logo { display: block; flex: none; width: 30px; height: 30px; border-radius: 8px; overflow: hidden; box-shadow: 0 0 0 .5px var(--sep); }
+  .nl-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+}

@@ -250,7 +250,7 @@ function draw() {
   $('#controls').hidden = isNew || state.route === 'watchlist' || state.route === 'week';
   if (state.route === 'week') { shown = new Map(); banners([]); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWeek()}</div>`; document.title = 'This Week | Tenner'; openFromUrl(); return; }
   if (state.route === 'watchlist') { shown = new Map(); banners([]); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWatchlist()}</div>`; document.title = 'Watchlist | Tenner'; openFromUrl(); wantTitles(); return; }
-  if (isNew) { shown = new Map(); banners([]); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; document.title = 'New This Week | Tenner'; openFromUrl(); return; }
+  if (isNew) { shown = new Map(); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; newBanners(state.fresh?.items || []); document.title = 'New This Week | Tenner'; openFromUrl(); return; }
 
   markDropdowns(); markStack();
   shown = new Map();
@@ -407,14 +407,33 @@ const mBan = $('#mBan');
 function banners(picks, s) {
   if (!phone.matches || !picks.length) { mBan.hidden = true; mBan.innerHTML = ''; return; }
   const list = picks.slice(0, 6), wide = (u) => u && u.replace('/w1280/', '/w780/');
-  mBan.innerHTML = `<div class="mb-track" id="mbTrack">${list.map(({ it, n }, i) => {
+  mountBanners(list.map(({ it, n }, i) => {
     const kind = it.type === 'tv' ? 'show' : 'film', badge = s?.store ? `No. ${n} to buy or rent` : s ? `No. ${n} on ${s.label}` : `No. ${n} ${kind} in the UK`;
     const art = it.backdrop ? `<img src="${esc(wide(it.backdrop))}" alt="" ${i ? 'loading="lazy"' : 'fetchpriority="high"'} decoding="async">`
       : it.poster ? `<img class="soft" src="${esc(it.poster)}" alt="" loading="lazy">` : `<span class="mb-ph" style="--h:${hue(it.title)}"></span>`;
     return `<a class="mb-card" href="${esc(it.url)}" target="_blank" rel="noopener" aria-label="${esc(`${badge}: ${it.title}`)}" ${reg(infoFor(it, it.type, badge, s && !s.store && !s.mine ? [s] : null))}>
       ${art}<span class="mb-copy"><span class="mb-badge">${esc(badge)}</span><b class="mb-title">${esc(it.title)}</b><span class="mb-meta">${esc([it.type === 'tv' ? (it.season || 'Series') : 'Film', it.year].filter(Boolean).join(' · '))}</span></span></a>`;
-  }).join('')}</div>
-    <div class="mb-dots" aria-hidden="true">${list.map((_, i) => `<i${i ? '' : ' class="on"'}></i>`).join('')}</div>`;
+  }));
+}
+// New This Week on phones: the new arrivals as banners too. Watchmode gives a poster but no wide artwork, so each is laid
+// out like Rakuten's own: the words on the left, the poster crisp on the right, its colours blurred behind
+function newBanners(items) {
+  if (!phone.matches) { mBan.hidden = true; mBan.innerHTML = ''; return; }
+  const today = new Date().toISOString().slice(0, 10);
+  const list = items.filter((x) => x.poster).sort((a, b) => (b.original - a.original) || Math.abs(Date.parse(a.date) - Date.parse(today)) - Math.abs(Date.parse(b.date) - Date.parse(today))).slice(0, 6);
+  if (!list.length) { mBan.hidden = true; mBan.innerHTML = ''; return; }
+  mountBanners(list.map((x, i) => {
+    const s = svc(x.service), when = x.date === today ? 'Today' : fmtDate(new Date(x.date + 'T12:00:00'), { weekday: 'short', day: 'numeric', month: 'short' });
+    const badge = `New on ${s?.label || 'streaming'} · ${when}`, what = x.type === 'movie' ? 'Film' : x.season ? `Season ${x.season}` : 'Series';
+    const attrs = x.url ? `href="${esc(x.url)}" target="_blank" rel="noopener" ${reg(infoFor(x, x.type, badge, s ? [s] : []))}` : 'href="#new"';
+    return `<a class="mb-card mb-pc" ${attrs} aria-label="${esc(`${badge}: ${x.title}`)}">
+      <img class="mb-glow" src="${esc(x.poster)}" alt="" ${i ? 'loading="lazy"' : ''}><img class="mb-poster" src="${esc(x.poster)}" alt="" ${i ? 'loading="lazy"' : 'fetchpriority="high"'} decoding="async">
+      <span class="mb-copy"><span class="mb-badge">${esc(badge)}</span><b class="mb-title">${esc(x.title)}</b><span class="mb-meta">${esc([what, x.original ? `${s?.label} original` : ''].filter(Boolean).join(' · '))}</span></span></a>`;
+  }));
+}
+function mountBanners(cards) {
+  mBan.innerHTML = `<div class="mb-track" id="mbTrack">${cards.join('')}</div>
+    <div class="mb-dots" aria-hidden="true">${cards.map((_, i) => `<i${i ? '' : ' class="on"'}></i>`).join('')}</div>`;
   mBan.hidden = false;
   const track = $('#mbTrack'), dots = [...mBan.querySelectorAll('.mb-dots i')];
   let raf = 0;
@@ -801,11 +820,12 @@ function pageNew() {
       <ul class="list">${items.map((x) => {
         const s = svc(x.service);
         const what = [x.type === 'movie' ? 'Film' : x.season ? `Season ${x.season}` : 'Series', x.original ? `${s?.label} original` : ''].filter(Boolean).join(', ');
+        const whatPhone = [s?.label, x.type === 'movie' ? 'Film' : x.season ? `Season ${x.season}` : 'Series'].filter(Boolean).join(' · ');
         const art = x.poster ? `<img class="nl-art" src="${esc(thumb(x.poster))}" alt="" loading="lazy">` : `<span class="nl-art" style="background:hsl(${hue(x.title)} 45% 35%)"></span>`;
         return `<li>${art}<div class="grow">
           ${x.url ? `<a class="title" href="${esc(x.url)}" target="_blank" rel="noopener" ${reg(infoFor(x, x.type, `New on ${s?.label || 'streaming'}`, s ? [s] : []))}>${esc(x.title)}</a>` : `<span class="title">${esc(x.title)}</span>`}
-          <span class="what">${esc(what)}</span></div>
-          ${s ? `<a class="btn btn-tinted chip" href="#${s.key}">${esc(s.label)}</a>` : ''}</li>`;
+          <span class="what">${esc(what)}</span><span class="what-ph">${esc(whatPhone)}${x.original ? ' · Original' : ''}</span></div>
+          ${s ? `<a class="btn btn-tinted chip" href="#${s.key}">${esc(s.label)}</a>${s.logo ? `<a class="nl-logo" href="#${s.key}" aria-label="${esc(s.label)} Top 10"><img src="${esc(s.logo)}" alt=""></a>` : ''}` : ''}</li>`;
       }).join('')}</ul></section>`).join('');
   }
   return `<h1 class="large-title page-title">New This Week</h1>
