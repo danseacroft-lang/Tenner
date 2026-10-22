@@ -243,7 +243,7 @@ function adult(list, k) {
 }
 function draw() {
   selectTab(state.route === 'new' || state.route === 'watchlist' ? state.route : state.route === 'week' ? 'new' : 'top');
-  document.querySelectorAll('.kind [data-kind]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.kind === state.kind)));
+  $('#kindSel').value = state.kind; $('#kindL').textContent = { tv: 'Shows', movie: 'Films', both: 'Shows and films' }[state.kind];
   const isNew = state.route === 'new';
   $('#controls').hidden = isNew || state.route === 'watchlist' || state.route === 'week';
   if (state.route === 'week') { shown = new Map(); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWeek()}</div>`; document.title = 'This Week | Tenner'; openFromUrl(); return; }
@@ -881,9 +881,7 @@ function setKind(k) {
   if (k !== 'movie' && svc(state.route)?.store) { location.hash = 'top'; return; }
   render();
 }
-document.querySelectorAll('.kind [data-kind]').forEach((b) => b.addEventListener('click', () => setKind(b.dataset.kind)));
-arrows($('.kind'), () => [...document.querySelectorAll('.kind [data-kind]')], (b) => setKind(b.dataset.kind));
-window.tn.segment($('.kind'), (b) => setKind(b.dataset.kind));   // the thumb slides and can be dragged, like an iOS switch
+$('#kindSel').addEventListener('change', (e) => setKind(e.target.value));
 
 addEventListener('hashchange', () => { route(); scrollTo(0, 0); });
 addEventListener('popstate', () => state.trending && openFromUrl());   // Forward to a title you'd closed opens it again

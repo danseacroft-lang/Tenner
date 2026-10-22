@@ -36,7 +36,7 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.16.0">
+  <link rel="stylesheet" href="styles.css?v=1.17.0">
 </head>
 <body>
   <a class="skip" href="#main">Skip to the chart</a>
@@ -106,7 +106,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.16.0</span>
+      <span class="side-ver">Tenner 1.17.0</span>
     </div>
   </div>
 
@@ -129,12 +129,9 @@
           <span class="live-dot" aria-hidden="true"></span><span id="ago">Updated just now</span></button>
       </p>
       <div class="controls">
-        <div class="segmented kind" role="radiogroup" aria-label="Shows, films or both">
-          <span class="seg-thumb" aria-hidden="true"></span>
-          <button type="button" role="radio" data-kind="tv" aria-checked="true">Shows</button>
-          <button type="button" role="radio" data-kind="movie" aria-checked="false">Films</button>
-          <button type="button" role="radio" data-kind="both" aria-checked="false">Both</button>
-        </div>
+        <!-- Shows, Films or Both: a pop-up button over the browser's own picker (a native <select>), above the services -->
+        <label class="dd dd-kind" id="kindDD"><span class="dd-l" id="kindL">Shows</span><span class="dd-chev" aria-hidden="true"></span>
+          <select id="kindSel" aria-label="Shows, films or both"><option value="tv">Shows</option><option value="movie">Films</option><option value="both">Shows and films</option></select></label>
         <!-- the services: a pop-up button over the browser's own picker -->
         <label class="dd" id="svcDD"><span class="dd-ic"></span><span class="dd-l">All</span><span class="dd-chev" aria-hidden="true"></span>
           <select id="svcSel" aria-label="Choose a service"></select></label>
@@ -150,9 +147,9 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-  <script src="shell.js?v=1.16.0" defer></script>
-  <script src="links.js?v=1.16.0" defer></script>
-  <script src="sheet.js?v=1.16.0" defer></script>
-  <script src="app.js?v=1.16.0" defer></script>
+  <script src="shell.js?v=1.17.0" defer></script>
+  <script src="links.js?v=1.17.0" defer></script>
+  <script src="sheet.js?v=1.17.0" defer></script>
+  <script src="app.js?v=1.17.0" defer></script>
 </body>
 </html>

@@ -270,18 +270,15 @@ a.tb-btn:hover { text-decoration: none; }
   font: 600 14px/1 var(--font); letter-spacing: -.016em; color: var(--accent); background: var(--frost); box-shadow: var(--frost-line); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); }
 .share-chart svg { width: 15px; height: 15px; }
 .share-chart:disabled { opacity: .5; }
-/* Share: a round button at the end of the Shows | Films | Both row on computers and tablets, so a long line of
-   service names never pushes it about; on phones it sits beside the title, as in iOS */
-.controls .share-chart { width: 40px; height: 40px; margin-left: auto; padding: 0; justify-content: center; border-radius: 50%; font-size: 0; gap: 0; flex: none; }
+/* Share: a round button in the very top-right corner of the page's header (beside the title on phones) */
+.intro { position: relative; }
+.controls .share-chart { position: absolute; top: 22px; right: var(--gutter-r); width: 42px; height: 42px; margin: 0; padding: 0; justify-content: center; border-radius: 50%; font-size: 0; gap: 0; }
 .controls .share-chart svg { width: 19px; height: 19px; margin-top: -2px; }
 @media (hover: hover) { .controls .share-chart:hover { background: color-mix(in srgb, var(--frost) 60%, var(--fill-strong)); } }
 .controls .share-chart:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-@media (max-width: 560px) {
-  .intro { position: relative; }
-  .intro .large-title { padding-right: 52px; }
-  .controls .share-chart { position: absolute; top: 18px; right: var(--gutter-r); width: 42px; height: 42px; margin: 0; }
-  .intro > .controls { animation-name: fadeOnly; }   /* no movement on this row, so Share stays pinned beside the title */
-}
+.intro .large-title { padding-right: 56px; }
+.intro > .controls { animation-name: fadeOnly; }   /* no movement on this row, so Share stays pinned in its corner */
+@media (max-width: 560px) { .controls .share-chart { top: 18px; } }
 @keyframes fadeOnly { from { opacity: 0; } }
 .live-dot { position: relative; width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
 .live-dot::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--green); opacity: 0; animation: ping 2.4s ease-out 4; }
@@ -331,8 +328,7 @@ a.tb-btn:hover { text-decoration: none; }
 .dd select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; appearance: none; border: 0; cursor: pointer; }
 .dd:has(select:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 .dd-l { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: left; }
-.dd-ic { flex: none; width: 28px; height: 28px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 1px color-mix(in srgb, var(--label) 16%, transparent); }
-.dd-ic img { scale: 1.12; }
+.dd-ic { flex: none; width: 28px; height: 28px; border-radius: 7px; overflow: hidden; box-shadow: 0 0 0 1px color-mix(in srgb, var(--label) 16%, transparent); }
 .dd-ic img, .dd-ic .svc-glyph { width: 100%; height: 100%; object-fit: cover; }
 .dd-ic .svc-glyph svg { width: 16px; height: 16px; }
 /* the pop-up button's double chevron, as on a Mac */
@@ -340,20 +336,23 @@ a.tb-btn:hover { text-decoration: none; }
   background: no-repeat center / 9px 14px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 14'%3E%3Cpath d='M1 5l3.5-3.5L8 5M1 9l3.5 3.5L8 9' fill='none' stroke='%23888' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
 /* computers and tablets: the stack of app icons replaces the pop-up button; Shows | Films | Both is a capsule of the same
    height beside it, round ends and all */
-@media (min-width: 561px) { .controls .segmented { height: 46px; padding: 4px; } .controls .seg-thumb { top: 4px; bottom: 4px; } .controls .segmented button { font-size: 15px; padding: 0 18px; } }
+/* the Shows / Films pop-up sits right above the services: a compact capsule, its width just its words */
+.dd-kind { min-width: 0; height: 38px; padding: 0 14px 0 18px; gap: 10px; font: 600 16px/1 var(--font-display); letter-spacing: -.02em; }
+.dd-kind .dd-chev { opacity: .7; }
+@media (min-width: 561px) { .controls { flex-direction: column; align-items: flex-start; gap: 10px; } }
 /* computers and tablets: the stack of app icons replaces the pop-up button */
 @media (min-width: 561px) { #svcDD { display: none; } }
 .stack-w { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .stack { position: relative; display: flex; align-items: center; height: 46px; padding: 0 8px 0 6px; border-radius: 999px;
   background: var(--frost); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); box-shadow: var(--frost-line); }
-.st-i { position: relative; z-index: calc(40 - var(--i)); flex: none; width: 34px; height: 34px; margin-left: -20px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer;
+.st-i { position: relative; z-index: calc(40 - var(--i)); flex: none; width: 34px; height: 34px; margin-left: -20px; padding: 0; border: 0; border-radius: 9px; background: none; cursor: pointer;
   transition: margin-left .5s var(--ease-spring), transform .35s var(--ease-spring); transition-delay: calc(var(--i) * 18ms); -webkit-tap-highlight-color: transparent; }
 .st-i:first-child { margin-left: 0; }
-/* the icon itself: a circle, matching the round capsule it sits in. The logo is zoomed a touch so its own square
-   corners fall outside the circle, and a thin see-through rim (not a black one) lets the pile read without a hard edge */
-.st-art { display: block; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: var(--fill);
+/* the icon itself: an iOS app icon (rounded square), with a thin see-through rim, not a black one, so the pile reads
+   without a hard edge */
+.st-art { display: block; width: 100%; height: 100%; border-radius: inherit; overflow: hidden; background: var(--fill);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--label) 16%, transparent), 0 3px 8px rgba(0, 0, 0, .22); transition: box-shadow .25s ease; }
-.st-art img { width: 100%; height: 100%; object-fit: cover; display: block; scale: 1.12; }
+.st-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .st-art .svc-glyph { width: 100%; height: 100%; display: grid; place-items: center; }
 .st-mine { background: linear-gradient(135deg, #ffd60a, #ff9f0a); color: #fff; }
 .st-mine svg { width: 18px; height: 18px; }
@@ -386,9 +385,9 @@ a.tb-btn:hover { text-decoration: none; }
 @media (prefers-reduced-motion: reduce) { .st-i, .st-pick { transition-duration: .01s; transition-delay: 0s; } }
 
 @media (max-width: 560px) {
-  .controls { gap: 8px; }
-  .controls .segmented { display: grid; width: 100%; height: 40px; }
-  #svcDD { flex: 1 1 100%; height: 40px; padding-left: 6px; }
+  .controls { gap: 8px; flex-wrap: nowrap; }
+  #kindDD { flex: none; height: 40px; }
+  #svcDD { flex: 1 1 auto; min-width: 0; height: 40px; padding-left: 6px; }
 }
 
 .notice { margin: 18px 0 0; padding: 12px 16px; border-radius: var(--radius); background: color-mix(in srgb, var(--accent) 12%, transparent); font-size: 15px; }
