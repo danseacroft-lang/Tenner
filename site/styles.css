@@ -293,25 +293,24 @@ a.tb-btn:hover { text-decoration: none; }
 
 .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 18px; }
 .segmented { position: relative; isolation: isolate; touch-action: pan-y;
-  display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; flex: none; height: 36px; padding: 3px; border-radius: var(--r-ctl);
+  display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; flex: none; height: 36px; padding: 3px; border-radius: 999px;
   background: var(--frost); box-shadow: var(--frost-line); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); }
 .segmented button {
   position: relative; z-index: 1;
-  font: 600 14px/1 var(--font); letter-spacing: -.016em; color: var(--label2); background: none; border: 0; border-radius: var(--r-in); padding: 0 16px; min-width: 72px; cursor: pointer;
+  font: 600 14px/1 var(--font); letter-spacing: -.016em; color: var(--label2); background: none; border: 0; border-radius: 999px; padding: 0 16px; min-width: 72px; cursor: pointer;
   transition: background-color .25s ease, color .25s ease, box-shadow .25s ease;
 }
 /* the thumb: one frosted tile that slides between the options (and can be dragged, like an iOS switch's knob) */
 .segmented button[aria-checked="true"] { color: var(--label); }
 .seg-thumb {
-  position: absolute; z-index: 0; left: 0; top: 3px; bottom: 3px; width: 0; border-radius: var(--r-in); pointer-events: none;
+  position: absolute; z-index: 0; left: 0; top: 3px; bottom: 3px; width: 0; border-radius: 999px; pointer-events: none;
   background: var(--frost-on); box-shadow: inset 0 0 0 .5px var(--frost-edge);
   transition: scale .3s var(--ease-spring), filter .2s ease;
 }
 .seg-thumb.held { scale: 1.06; filter: brightness(1.06); }   /* held: it swells a touch, as the iOS knob does */
 .segmented button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
-/* the service bar: a glass capsule like the tab bar, each service as its own app icon with its name, and a lighter pill
-   that glides to the chosen one. Buy or rent sits after a hairline, since it isn't a service. On phones it scrolls. */
+/* the poster rows' fading edges animate these lengths; a service with no logo gets a glyph on Tenner's colours */
 @property --fl { syntax: "<length>"; inherits: true; initial-value: 0px; }
 @property --fr { syntax: "<length>"; inherits: true; initial-value: 0px; }
 .svc-glyph { width: 100%; height: 100%; display: grid; place-items: center; color: #fff; font: 700 14px var(--font); background: linear-gradient(135deg, #ff375f, #bf5af2 55%, #0a84ff); }
@@ -320,7 +319,7 @@ a.tb-btn:hover { text-decoration: none; }
 /* the services: one pop-up button (the macOS / iOS way) over the browser's own picker, a native <select>, beside
    Shows | Films | Both; on phones the two stack, the same width */
 .dd {
-  position: relative; display: inline-flex; align-items: center; gap: 9px; min-width: 210px; height: 36px; padding: 0 12px 0 4px; border: 0; border-radius: var(--r-ctl); cursor: pointer;
+  position: relative; display: inline-flex; align-items: center; gap: 9px; min-width: 210px; height: 36px; padding: 0 14px 0 6px; border: 0; border-radius: 999px; cursor: pointer;
   color: var(--label); font: 600 15px/1 var(--font); letter-spacing: -.016em; white-space: nowrap; -webkit-tap-highlight-color: transparent;
   background: var(--frost); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); box-shadow: var(--frost-line);
   transition: transform .35s var(--ease-spring), background-color .2s ease;
@@ -339,6 +338,9 @@ a.tb-btn:hover { text-decoration: none; }
 /* the pop-up button's double chevron, as on a Mac */
 .dd-chev { flex: none; width: 9px; height: 14px; margin-left: 2px; opacity: .55;
   background: no-repeat center / 9px 14px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 14'%3E%3Cpath d='M1 5l3.5-3.5L8 5M1 9l3.5 3.5L8 9' fill='none' stroke='%23888' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+/* computers and tablets: the stack of app icons replaces the pop-up button; Shows | Films | Both is a capsule of the same
+   height beside it, round ends and all */
+@media (min-width: 561px) { .controls .segmented { height: 46px; padding: 4px; } .controls .seg-thumb { top: 4px; bottom: 4px; } .controls .segmented button { font-size: 15px; padding: 0 18px; } }
 /* computers and tablets: the stack of app icons replaces the pop-up button */
 @media (min-width: 561px) { #svcDD { display: none; } }
 .stack-w { display: flex; align-items: center; gap: 12px; min-width: 0; }
@@ -353,7 +355,6 @@ a.tb-btn:hover { text-decoration: none; }
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--label) 16%, transparent), 0 3px 8px rgba(0, 0, 0, .22); transition: box-shadow .25s ease; }
 .st-art img { width: 100%; height: 100%; object-fit: cover; display: block; scale: 1.12; }
 .st-art .svc-glyph { width: 100%; height: 100%; display: grid; place-items: center; }
-.st-all { font: 800 12px/1 var(--font-display); letter-spacing: -.02em; color: #fff; }
 .st-mine { background: linear-gradient(135deg, #ffd60a, #ff9f0a); color: #fff; }
 .st-mine svg { width: 18px; height: 18px; }
 /* the one you're on sits on top of the pile, with a ring in the accent colour */
@@ -363,13 +364,13 @@ a.tb-btn:hover { text-decoration: none; }
 .st-tip { position: absolute; left: 50%; top: calc(100% + 10px); padding: 5px 9px; border-radius: 8px; white-space: nowrap; pointer-events: none;
   font: 600 12px/1 var(--font); letter-spacing: -.01em; color: var(--label); background: var(--sheet-bg); -webkit-backdrop-filter: var(--sheet-blur); backdrop-filter: var(--sheet-blur);
   box-shadow: inset 0 0 0 .5px var(--frost-edge), 0 6px 18px rgba(0, 0, 0, .2); opacity: 0; transform: translate(-50%, -4px); transition: opacity .15s ease, transform .2s ease; }
-.st-pick { flex: none; display: grid; place-items: center; width: 0; height: 32px; margin-left: 0; padding: 0; border: 0; border-radius: 50%; overflow: hidden; background: none; color: var(--label2); cursor: pointer;
-  opacity: 0; transition: width .4s var(--ease-spring), margin-left .4s var(--ease-spring), opacity .2s ease; }
-.st-pick svg { width: 18px; height: 18px; flex: none; }
+.st-pick { flex: none; display: grid; place-items: center; width: 32px; height: 32px; margin-left: 8px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--label2); cursor: pointer;
+  transition: color .2s ease, background-color .2s ease, rotate .6s var(--ease-spring); }
+.st-pick svg { width: 20px; height: 20px; flex: none; }
+:root:not(.still) .st-pick:hover { rotate: 60deg; }   /* the cog turns a little when you point at it */
 /* fanned out: point at it, tab into it, or tap it on a tablet */
 .stack:hover .st-i, .stack:focus-within .st-i, .stack.open .st-i { margin-left: 8px; }
 .stack:hover .st-i:first-child, .stack:focus-within .st-i:first-child, .stack.open .st-i:first-child { margin-left: 0; }
-.stack:hover .st-pick, .stack:focus-within .st-pick, .stack.open .st-pick { width: 32px; margin-left: 6px; opacity: 1; }
 :root:not(.still) .stack:hover .st-i, :root:not(.still) .stack.open .st-i { animation: stJiggle .5s ease-in-out both; animation-delay: calc(var(--i) * 30ms + 80ms); }
 @keyframes stJiggle { 0%, 100% { rotate: 0deg; } 25% { rotate: -5deg; } 50% { rotate: 4deg; } 75% { rotate: -2deg; } }
 .st-i:hover, .st-i:focus-visible { transform: translateY(-3px) scale(1.14); z-index: 60; }

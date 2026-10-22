@@ -73,14 +73,19 @@ svcSel.addEventListener('change', () => {
 // Point at it (or tab into it, or tap it on a tablet) and the icons fan out with a little iOS jiggle; pick one, or All.
 const stack = $('#svcStack');
 const STAR = '<span class="svc-glyph st-mine" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z" fill="currentColor"/></svg></span>';
-const PICK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="17" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+const PICK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-2.6-1.5L14.2 2.6h-4l-.4 2.5A7.6 7.6 0 0 0 7.2 6.6l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.6 7.6 0 0 0 2.6-1.5l2.3 1 2-3.4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>';   // a cog: where to pick your services
 function markStack() {
   const has = window.tn.mine.get().length;
-  const items = [['top', 'All services', '<span class="svc-glyph st-all" aria-hidden="true">All</span>'], has ? ['mine', 'My services', STAR] : null,
+  const items = [has ? ['mine', 'My services', STAR] : null,
     ...services().filter((x) => !x.store && !x.shop).map((x) => [x.key, x.label, iconOf(x.key)]),
     ...services().filter((x) => x.shop).map((x) => [x.key, `${x.label} (buy or rent)`, iconOf(x.key)]),
     ...(state.kind === 'movie' ? services().filter((x) => x.store).map((x) => [x.key, x.label, ICON_STORE]) : [])].filter(Boolean);
-  stack.innerHTML = items.map(([key, label, icon], i) => `<button type="button" role="radio" class="st-i" data-svc="${key}" aria-checked="${key === state.route}" tabindex="${key === state.route ? 0 : -1}" aria-label="${esc(label)}" style="--i:${i}"><span class="st-art">${icon}</span><span class="st-tip" aria-hidden="true">${esc(label.replace(' (buy or rent)', ''))}</span></button>`).join('')
+  // nothing chosen = all services; the one you're on has a ring, and choosing it again goes back to all of them
+  const first = items.findIndex(([key]) => key === state.route);
+  stack.innerHTML = items.map(([key, label, icon], i) => {
+    const on = key === state.route, name = label.replace(' (buy or rent)', '');
+    return `<button type="button" role="radio" class="st-i" data-svc="${key}" aria-checked="${on}" tabindex="${on || (first < 0 && i === 0) ? 0 : -1}" aria-label="${esc(on ? `${label}, chosen. Choose again for all services` : label)}" style="--i:${i}"><span class="st-art">${icon}</span><span class="st-tip" aria-hidden="true">${esc(on ? `${name} · again for all` : name)}</span></button>`;
+  }).join('')
     + `<button type="button" class="st-pick" data-pick aria-label="${has ? 'Change' : 'Choose'} my services" title="${has ? 'Change' : 'Choose'} my services">${PICK}</button>`;
   $('#stName').textContent = state.route === 'top' ? 'All services' : state.route === 'mine' ? 'My services' : svc(state.route)?.label || '';
 }
@@ -90,7 +95,7 @@ stack.addEventListener('click', (e) => {
   if (e.target.closest('[data-pick]')) { stack.classList.remove('open'); pickMine(); return; }
   const b = e.target.closest('.st-i'); if (!b) return;
   stack.classList.remove('open'); b.blur();
-  if (location.hash.slice(1) !== b.dataset.svc) location.hash = b.dataset.svc;
+  location.hash = b.getAttribute('aria-checked') === 'true' ? 'top' : b.dataset.svc;   // the one you're on again: back to all
 });
 document.addEventListener('pointerdown', (e) => { if (!stack.contains(e.target)) stack.classList.remove('open'); });
 arrows(stack, () => [...stack.querySelectorAll('.st-i')], (n) => { location.hash = n.dataset.svc; });
