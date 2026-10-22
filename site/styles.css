@@ -329,7 +329,8 @@ a.tb-btn:hover { text-decoration: none; }
 .dd select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; appearance: none; border: 0; cursor: pointer; }
 .dd:has(select:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 .dd-l { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: left; }
-.dd-ic { flex: none; width: 28px; height: 28px; border-radius: 7px; overflow: hidden; box-shadow: 0 0 0 .5px var(--sep); }
+.dd-ic { flex: none; width: 28px; height: 28px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 1px color-mix(in srgb, var(--label) 16%, transparent); }
+.dd-ic img { scale: 1.12; }
 .dd-ic img, .dd-ic .svc-glyph { width: 100%; height: 100%; object-fit: cover; }
 .dd-ic .svc-glyph svg { width: 16px; height: 16px; }
 /* the pop-up button's double chevron, as on a Mac */
@@ -340,19 +341,21 @@ a.tb-btn:hover { text-decoration: none; }
 .stack-w { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .stack { position: relative; display: flex; align-items: center; height: 46px; padding: 0 8px 0 6px; border-radius: 999px;
   background: var(--frost); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); box-shadow: var(--frost-line); }
-.st-i { position: relative; z-index: calc(40 - var(--i)); flex: none; width: 34px; height: 34px; margin-left: -22px; padding: 0; border: 0; border-radius: 9px; background: none; cursor: pointer;
+.st-i { position: relative; z-index: calc(40 - var(--i)); flex: none; width: 34px; height: 34px; margin-left: -20px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer;
   transition: margin-left .5s var(--ease-spring), transform .35s var(--ease-spring); transition-delay: calc(var(--i) * 18ms); -webkit-tap-highlight-color: transparent; }
 .st-i:first-child { margin-left: 0; }
-/* the icon itself: an iOS app icon, its corners squircle-ish, with a hairline and a soft shadow so the pile reads */
-.st-art { display: block; width: 100%; height: 100%; border-radius: inherit; overflow: hidden;
-  box-shadow: 0 0 0 1.5px var(--bg), 0 3px 8px rgba(0, 0, 0, .28); transition: box-shadow .25s ease; }
-.st-art img, .st-art .svc-glyph { width: 100%; height: 100%; object-fit: cover; display: grid; place-items: center; }
+/* the icon itself: a circle, matching the round capsule it sits in. The logo is zoomed a touch so its own square
+   corners fall outside the circle, and a thin see-through rim (not a black one) lets the pile read without a hard edge */
+.st-art { display: block; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: var(--fill);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--label) 16%, transparent), 0 3px 8px rgba(0, 0, 0, .22); transition: box-shadow .25s ease; }
+.st-art img { width: 100%; height: 100%; object-fit: cover; display: block; scale: 1.12; }
+.st-art .svc-glyph { width: 100%; height: 100%; display: grid; place-items: center; }
 .st-all { font: 800 12px/1 var(--font-display); letter-spacing: -.02em; color: #fff; }
 .st-mine { background: linear-gradient(135deg, #ffd60a, #ff9f0a); color: #fff; }
 .st-mine svg { width: 18px; height: 18px; }
 /* the one you're on sits on top of the pile, with a ring in the accent colour */
 .st-i[aria-checked="true"] { z-index: 50; }
-.st-i[aria-checked="true"] .st-art { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent), 0 3px 8px rgba(0, 0, 0, .28); }
+.st-i[aria-checked="true"] .st-art { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 85%, transparent), 0 3px 8px rgba(0, 0, 0, .22); }
 /* the name, under the icon you point at */
 .st-tip { position: absolute; left: 50%; top: calc(100% + 10px); padding: 5px 9px; border-radius: 8px; white-space: nowrap; pointer-events: none;
   font: 600 12px/1 var(--font); letter-spacing: -.01em; color: var(--label); background: var(--sheet-bg); -webkit-backdrop-filter: var(--sheet-blur); backdrop-filter: var(--sheet-blur);
@@ -369,7 +372,7 @@ a.tb-btn:hover { text-decoration: none; }
 .st-i:hover, .st-i:focus-visible { transform: translateY(-3px) scale(1.14); z-index: 60; }
 .st-i:hover .st-tip, .st-i:focus-visible .st-tip { opacity: 1; transform: translate(-50%, 0); }
 .st-i:focus-visible { outline: none; }
-.st-i:focus-visible .st-art { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
+.st-i:focus-visible .st-art { box-shadow: 0 0 0 2px var(--accent), 0 0 0 5px color-mix(in srgb, var(--accent) 30%, transparent); }
 .st-i:active { transform: scale(.94); }
 @media (hover: hover) { .st-pick:hover { color: var(--label); background: var(--fill); } }
 .st-pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
