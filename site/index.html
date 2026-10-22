@@ -36,7 +36,7 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.15.1">
+  <link rel="stylesheet" href="styles.css?v=1.15.2">
 </head>
 <body>
   <a class="skip" href="#main">Skip to the chart</a>
@@ -106,7 +106,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.15.1</span>
+      <span class="side-ver">Tenner 1.15.2</span>
     </div>
   </div>
 
@@ -127,7 +127,6 @@
         <span id="lede">On all five services in the UK</span>
         <button type="button" id="refresh" class="updated" aria-live="polite" title="Check for a newer chart">
           <span class="live-dot" aria-hidden="true"></span><span id="ago">Updated just now</span></button>
-        <button type="button" id="shareChart" class="share-chart" title="Share this chart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M6 11v8.5h12V11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Share</button>
       </p>
       <div class="controls">
         <div class="segmented kind" role="radiogroup" aria-label="Shows, films or both">
@@ -141,6 +140,7 @@
           <select id="svcSel" aria-label="Choose a service"></select></label>
         <!-- computers and tablets: the services as a stack of app icons that fans out when you point at it -->
         <div class="stack-w"><div class="stack" id="svcStack" role="radiogroup" aria-label="Choose a service"></div><span class="st-name" id="stName" aria-hidden="true"></span></div>
+        <button type="button" id="shareChart" class="share-chart" title="Share this chart" aria-label="Share this chart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M6 11v8.5h12V11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Share</button>
       </div>
     </section>
 
@@ -150,9 +150,9 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-  <script src="shell.js?v=1.15.1" defer></script>
-  <script src="links.js?v=1.15.1" defer></script>
-  <script src="sheet.js?v=1.15.1" defer></script>
-  <script src="app.js?v=1.15.1" defer></script>
+  <script src="shell.js?v=1.15.2" defer></script>
+  <script src="links.js?v=1.15.2" defer></script>
+  <script src="sheet.js?v=1.15.2" defer></script>
+  <script src="app.js?v=1.15.2" defer></script>
 </body>
 </html>

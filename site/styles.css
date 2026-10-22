@@ -270,14 +270,17 @@ a.tb-btn:hover { text-decoration: none; }
   font: 600 14px/1 var(--font); letter-spacing: -.016em; color: var(--accent); background: var(--frost); box-shadow: var(--frost-line); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); }
 .share-chart svg { width: 15px; height: 15px; }
 .share-chart:disabled { opacity: .5; }
-/* phones: Share becomes a round button beside the title, as in iOS, instead of a line of its own */
+/* Share: a round button at the end of the Shows | Films | Both row on computers and tablets, so a long line of
+   service names never pushes it about; on phones it sits beside the title, as in iOS */
+.controls .share-chart { width: 40px; height: 40px; margin-left: auto; padding: 0; justify-content: center; border-radius: 50%; font-size: 0; gap: 0; flex: none; }
+.controls .share-chart svg { width: 19px; height: 19px; margin-top: -2px; }
+@media (hover: hover) { .controls .share-chart:hover { background: color-mix(in srgb, var(--frost) 60%, var(--fill-strong)); } }
+.controls .share-chart:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (max-width: 560px) {
   .intro { position: relative; }
   .intro .large-title { padding-right: 52px; }
-  .share-chart { position: absolute; top: 18px; right: var(--gutter-r); width: 42px; height: 42px; padding: 0; justify-content: center; border-radius: 50%; font-size: 0; gap: 0;
-    background: var(--frost); box-shadow: var(--frost-line); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); }
-  .share-chart svg { width: 19px; height: 19px; margin-top: -2px; }
-  .intro > .lede.sub { animation-name: fadeOnly; }   /* no movement on this line, so Share stays pinned to the title area */
+  .controls .share-chart { position: absolute; top: 18px; right: var(--gutter-r); width: 42px; height: 42px; margin: 0; }
+  .intro > .controls { animation-name: fadeOnly; }   /* no movement on this row, so Share stays pinned beside the title */
 }
 @keyframes fadeOnly { from { opacity: 0; } }
 .live-dot { position: relative; width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
