@@ -75,6 +75,7 @@ const stack = $('#svcStack');
 const STAR = '<span class="svc-glyph st-mine" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z" fill="currentColor"/></svg></span>';
 const PICK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-2.6-1.5L14.2 2.6h-4l-.4 2.5A7.6 7.6 0 0 0 7.2 6.6l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.6 7.6 0 0 0 2.6-1.5l2.3 1 2-3.4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>';   // a cog: where to pick your services
 function markStack() {
+  const had = stack.contains(document.activeElement);   // keyboard users keep their place when it redraws
   const has = window.tn.mine.get().length;
   const items = [has ? ['mine', 'My services', STAR] : null,
     ...services().filter((x) => !x.store && !x.shop).map((x) => [x.key, x.label, iconOf(x.key)]),
@@ -88,6 +89,7 @@ function markStack() {
   }).join('')
     + `<button type="button" class="st-pick" data-pick aria-label="${has ? 'Change' : 'Choose'} my services" title="${has ? 'Change' : 'Choose'} my services">${PICK}</button>`;
   $('#stName').textContent = state.route === 'top' ? 'All services' : state.route === 'mine' ? 'My services' : svc(state.route)?.label || '';
+  if (had) stack.querySelector('.st-i[tabindex="0"]')?.focus({ preventScroll: true });
 }
 stack.addEventListener('click', (e) => {
   // tablets have no pointer to hover with: the first tap fans the stack out, the next one picks

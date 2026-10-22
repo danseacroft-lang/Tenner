@@ -531,7 +531,7 @@ a.tb-btn:hover { text-decoration: none; }
   /* the Apple TV hero: a tall stage with the words at the bottom left, over the faded part of the artwork; arrows at
      either side, dots under the buttons and a pause button at the bottom right. A steady height, so nothing jumps as
      titles change. */
-  .hero { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: clamp(440px, calc(94vh - 290px), 700px);
+  .hero { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: clamp(400px, calc(94vh - 350px), 660px);
     margin: 0 calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); padding: 24px 76px 30px; }
   /* a soft shade of the page's own colour behind the words, so they read on any artwork; no edge, it melts like the fade */
   /* closest-side: the glow reaches nothing exactly at its box's edges, so it can never be cut off into a line */
