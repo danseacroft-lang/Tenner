@@ -248,9 +248,9 @@ function draw() {
   $('#kindSel').value = state.kind; $('#kindL').textContent = { tv: 'Shows', movie: 'Films', both: 'Shows and films' }[state.kind];
   const isNew = state.route === 'new';
   $('#controls').hidden = isNew || state.route === 'watchlist' || state.route === 'week';
-  if (state.route === 'week') { shown = new Map(); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWeek()}</div>`; document.title = 'This Week | Tenner'; openFromUrl(); return; }
-  if (state.route === 'watchlist') { shown = new Map(); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWatchlist()}</div>`; document.title = 'Watchlist | Tenner'; openFromUrl(); wantTitles(); return; }
-  if (isNew) { shown = new Map(); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; document.title = 'New This Week | Tenner'; openFromUrl(); return; }
+  if (state.route === 'week') { shown = new Map(); banners([]); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWeek()}</div>`; document.title = 'This Week | Tenner'; openFromUrl(); return; }
+  if (state.route === 'watchlist') { shown = new Map(); banners([]); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWatchlist()}</div>`; document.title = 'Watchlist | Tenner'; openFromUrl(); wantTitles(); return; }
+  if (isNew) { shown = new Map(); banners([]); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; document.title = 'New This Week | Tenner'; openFromUrl(); return; }
 
   markDropdowns(); markStack();
   shown = new Map();
@@ -270,6 +270,7 @@ function draw() {
     : s ? `${s.shop ? 'To buy or rent on' : 'On'} ${s.logo ? `<img class="sub-logo" src="${esc(s.logo)}" alt="">` : ''}${esc(s.label)}${s.official ? ` · ${esc(officialLine(s.official))}` : ''}` : 'On all five services in the UK';
   document.title = s?.mine ? 'My Top 10 | Tenner' : s ? `${s.label} Top 10 | Tenner` : 'Tenner';
 
+  banners(picks, s);
   const chart = list.length
     ? `${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up. Add your TMDB key and run the workflow to see the real chart.</p>` : ''}
        ${hero(picks, s)}
@@ -397,6 +398,34 @@ view.addEventListener('keydown', (e) => {   // ← → move between the hero's t
   const d = e.target.closest?.('[data-hero], [data-hero-step]'); if (!d || !['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
   e.preventDefault(); const i = (heroAt + (e.key === 'ArrowRight' ? 1 : -1) + heroList.length) % heroList.length;
   showHero(i); if (d.dataset.hero) $(`[data-hero="${i}"]`)?.focus();
+});
+
+// ---------- phones: the top titles as wide artwork banners, swiped one at a time, neighbours peeking in at the sides ----------
+const phone = matchMedia('(max-width: 560px)');
+phone.addEventListener('change', () => state.trending && render());
+const mBan = $('#mBan');
+function banners(picks, s) {
+  if (!phone.matches || !picks.length) { mBan.hidden = true; mBan.innerHTML = ''; return; }
+  const list = picks.slice(0, 6), wide = (u) => u && u.replace('/w1280/', '/w780/');
+  mBan.innerHTML = `<div class="mb-track" id="mbTrack">${list.map(({ it, n }, i) => {
+    const kind = it.type === 'tv' ? 'show' : 'film', badge = s?.store ? `No. ${n} to buy or rent` : s ? `No. ${n} on ${s.label}` : `No. ${n} ${kind} in the UK`;
+    const art = it.backdrop ? `<img src="${esc(wide(it.backdrop))}" alt="" ${i ? 'loading="lazy"' : 'fetchpriority="high"'} decoding="async">`
+      : it.poster ? `<img class="soft" src="${esc(it.poster)}" alt="" loading="lazy">` : `<span class="mb-ph" style="--h:${hue(it.title)}"></span>`;
+    return `<a class="mb-card" href="${esc(it.url)}" target="_blank" rel="noopener" aria-label="${esc(`${badge}: ${it.title}`)}" ${reg(infoFor(it, it.type, badge, s && !s.store && !s.mine ? [s] : null))}>
+      ${art}<span class="mb-copy"><span class="mb-badge">${esc(badge)}</span><b class="mb-title">${esc(it.title)}</b><span class="mb-meta">${esc([it.type === 'tv' ? (it.season || 'Series') : 'Film', it.year].filter(Boolean).join(' · '))}</span></span></a>`;
+  }).join('')}</div>
+    <div class="mb-dots" aria-hidden="true">${list.map((_, i) => `<i${i ? '' : ' class="on"'}></i>`).join('')}</div>`;
+  mBan.hidden = false;
+  const track = $('#mbTrack'), dots = [...mBan.querySelectorAll('.mb-dots i')];
+  let raf = 0;
+  track.addEventListener('scroll', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => {
+    const c = track.firstElementChild; if (!c) return;
+    const i = Math.round(track.scrollLeft / (c.offsetWidth + 10)); dots.forEach((d, k) => d.classList.toggle('on', k === i));
+  }); }, { passive: true });
+}
+mBan.addEventListener('click', (e) => {
+  const a = e.target.closest('[data-sheet]'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
+  e.preventDefault(); window.tnSheet?.open(shown.get(a.dataset.sheet));
 });
 
 // Netflix's own chart is weekly (Monday to Sunday); "week" is the Sunday it ends on.
