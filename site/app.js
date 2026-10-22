@@ -69,6 +69,31 @@ svcSel.addEventListener('change', () => {
   if (svcSel.value === 'pick') { svcSel.value = state.route; pickMine(); return; }
   location.hash = svcSel.value;
 });
+// ---------- computers and tablets: the services as a stack of app icons, overlapping like a pile of apps ----------
+// Point at it (or tab into it, or tap it on a tablet) and the icons fan out with a little iOS jiggle; pick one, or All.
+const stack = $('#svcStack');
+const STAR = '<span class="svc-glyph st-mine" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z" fill="currentColor"/></svg></span>';
+const PICK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="17" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+function markStack() {
+  const has = window.tn.mine.get().length;
+  const items = [['top', 'All services', '<span class="svc-glyph st-all" aria-hidden="true">All</span>'], has ? ['mine', 'My services', STAR] : null,
+    ...services().filter((x) => !x.store && !x.shop).map((x) => [x.key, x.label, iconOf(x.key)]),
+    ...services().filter((x) => x.shop).map((x) => [x.key, `${x.label} (buy or rent)`, iconOf(x.key)]),
+    ...(state.kind === 'movie' ? services().filter((x) => x.store).map((x) => [x.key, x.label, ICON_STORE]) : [])].filter(Boolean);
+  stack.innerHTML = items.map(([key, label, icon], i) => `<button type="button" role="radio" class="st-i" data-svc="${key}" aria-checked="${key === state.route}" tabindex="${key === state.route ? 0 : -1}" aria-label="${esc(label)}" style="--i:${i}"><span class="st-art">${icon}</span><span class="st-tip" aria-hidden="true">${esc(label.replace(' (buy or rent)', ''))}</span></button>`).join('')
+    + `<button type="button" class="st-pick" data-pick aria-label="${has ? 'Change' : 'Choose'} my services" title="${has ? 'Change' : 'Choose'} my services">${PICK}</button>`;
+  $('#stName').textContent = state.route === 'top' ? 'All services' : state.route === 'mine' ? 'My services' : svc(state.route)?.label || '';
+}
+stack.addEventListener('click', (e) => {
+  // tablets have no pointer to hover with: the first tap fans the stack out, the next one picks
+  if (!stack.classList.contains('open') && !matchMedia('(hover: hover)').matches) { e.preventDefault(); stack.classList.add('open'); return; }
+  if (e.target.closest('[data-pick]')) { stack.classList.remove('open'); pickMine(); return; }
+  const b = e.target.closest('.st-i'); if (!b) return;
+  stack.classList.remove('open'); b.blur();
+  if (location.hash.slice(1) !== b.dataset.svc) location.hash = b.dataset.svc;
+});
+document.addEventListener('pointerdown', (e) => { if (!stack.contains(e.target)) stack.classList.remove('open'); });
+arrows(stack, () => [...stack.querySelectorAll('.st-i')], (n) => { location.hash = n.dataset.svc; });
 function markDropdowns() {
   const has = window.tn.mine.get().length, opt = (v, l) => `<option value="${v}"${v === state.route ? ' selected' : ''}>${esc(l)}</option>`;
   svcSel.innerHTML = opt('top', 'All services') + (has ? opt('mine', 'My services') : '')
@@ -220,7 +245,7 @@ function draw() {
   if (state.route === 'watchlist') { shown = new Map(); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWatchlist()}</div>`; document.title = 'Watchlist | Tenner'; openFromUrl(); wantTitles(); return; }
   if (isNew) { shown = new Map(); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; document.title = 'New This Week | Tenner'; openFromUrl(); return; }
 
-  markDropdowns();
+  markDropdowns(); markStack();
   shown = new Map();
 
   const s = state.route === 'top' ? null : svc(state.route);
