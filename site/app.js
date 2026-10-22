@@ -1,8 +1,8 @@
 // Tenner's chart pages. Reads data/trending.json and data/new.json (rebuilt hourly by GitHub Actions).
 // Routes: #top (all services), #netflix, #disney … (one service), #store (buy or rent), #new (new releases).
-// Shared helpers (esc, hue, glide, arrows) come from shell.js, which loads first.
+// Shared helpers (esc, hue) come from shell.js, which loads first.
 
-const { esc, hue, glide, arrows, reduce: reduceMotion } = window.tn;
+const { esc, hue, arrows, reduce: reduceMotion } = window.tn;
 const state = { trending: null, fresh: null, kind: 'tv', route: 'top' };
 const $ = (s, el = document) => el.querySelector(s);
 const view = $('#view');
@@ -37,7 +37,6 @@ async function load() {
   if (window.tn.prefs.get().no18) state.titles = await window.tnSheet?.details();   // certificates, before the first chart
   addEventListener('tn:prefs', () => { if (window.tn.prefs.get().no18 && !state.titles) window.tnSheet?.details().then((d) => { state.titles = d; render(); }); else render(); });
 
-  buildServiceBar();
   showUpdated();
   route();
 }
@@ -59,57 +58,10 @@ function mineScope() {
   return { key: 'mine', mine: true, keys, label: 'your services', names: names.length > 2 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names.join(' and '), tv: build('tv'), movie: build('movie') };
 }
 
-// ---------- the service bar: each service as its own app icon in a glass capsule, a pill gliding to the chosen one ----------
+// ---------- the services: one pop-up button over the browser's own picker (a native <select>), on every screen ----------
 const ICON_STORE = '<span class="svc-glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12.5H7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>';
-function buildServiceBar() {
-  const bar = $('#svc');
-  bar.querySelectorAll(':scope > :not(#svcInd)').forEach((el) => el.remove());
-  if (buildServiceBar.done) { fillServiceBar(bar); return; }
-  buildServiceBar.done = true;
-  fillServiceBar(bar);
-  wireServiceBar(bar);
-}
-const SLIDERS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="17" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
-function fillServiceBar(bar) {
-  const item = (key, label, icon, extra = '') =>
-    `<button type="button" role="radio" class="svc-b${extra}${icon ? '' : ' txt'}" data-svc="${key}" aria-checked="false" tabindex="-1">${icon ? `<span class="svc-ic">${icon}</span>` : ''}<span class="svc-l">${esc(label)}</span></button>`;
-  const iconFor = (s) => s.logo ? `<img src="${esc(s.logo)}" alt="" loading="lazy">` : `<span class="svc-glyph">${esc(s.label[0])}</span>`;
-  bar.insertAdjacentHTML('beforeend',
-    item('top', 'All', '') +   // just the word, to keep the bar clean
-    (window.tn.mine.get().length ? item('mine', 'Mine', '') : '') +
-    services().filter((s) => !s.store && !s.shop).map((s) => item(s.key, s.label, iconFor(s))).join('') +
-    services().filter((s) => s.shop).map((s, i) => (i ? '' : '<span class="svc-sep shop-sep" aria-hidden="true"></span>') + item(s.key, s.label, iconFor(s), ' shop')).join('') +
-    services().filter((s) => s.store).map((s) => `<span class="svc-sep" aria-hidden="true"></span>` + item(s.key, s.label, ICON_STORE, ' store')).join('') +
-    `<button type="button" class="svc-edit" data-pick aria-label="Choose my services" title="Choose my services">${SLIDERS}</button>`);
-}
-const pickMine = () => window.tn.pickMine(services().filter((s) => !s.store && !s.shop).map((s) => ({ key: s.key, label: s.label, logo: s.logo })));
-function wireServiceBar(bar) {
-  bar.addEventListener('click', (e) => { if (e.target.closest('[data-pick]')) { pickMine(); return; } const b = e.target.closest('.svc-b'); if (b) location.hash = b.dataset.svc; });
-  arrows(bar, () => [...bar.querySelectorAll('.svc-b')], (n) => { location.hash = n.dataset.svc; });
-  // fade whichever end has more to scroll to
-  const edges = () => { const w = bar.parentElement;
-    w.classList.toggle('at-start', bar.scrollLeft < 4); w.classList.toggle('at-end', bar.scrollLeft + bar.clientWidth >= bar.scrollWidth - 4); };
-  bar.addEventListener('scroll', edges, { passive: true });
-  addEventListener('resize', () => { placeSvc(false); edges(); });
-  requestAnimationFrame(edges);
-}
-let svcPlaced = false;
-const placeSvc = (animate) => glide($('#svcInd'), $('.svc-b[aria-checked="true"]'), animate);
-function markService(key) {
-  document.querySelectorAll('.svc-b.store, .svc-sep:not(.shop-sep)').forEach((el) => { el.hidden = state.kind !== 'movie'; });
-  let chosen;
-  document.querySelectorAll('.svc-b').forEach((b) => { const on = b.dataset.svc === key; b.setAttribute('aria-checked', on); b.tabIndex = on ? 0 : -1; if (on) chosen = b; });
-  placeSvc(svcPlaced);
-  // keep the chosen one in view if the bar scrolls (narrow windows)
-  const bar = $('#svc');
-  if (chosen && bar.scrollWidth > bar.clientWidth) {
-    const target = chosen.offsetLeft - (bar.clientWidth - chosen.offsetWidth) / 2;
-    bar.scrollTo({ left: Math.max(0, target), behavior: !svcPlaced || reduceMotion ? 'auto' : 'smooth' });
-  }
-  svcPlaced = true;
-}
 
-// ---------- phones: the services as the phone's own picker (a native <select> under the styled button) ----------
+const pickMine = () => window.tn.pickMine(services().filter((s) => !s.store && !s.shop).map((s) => ({ key: s.key, label: s.label, logo: s.logo })));
 const iconOf = (key) => key === 'top' || key === 'mine' ? '' : key === 'store' ? ICON_STORE
   : svc(key)?.logo ? `<img src="${esc(svc(key).logo)}" alt="">` : `<span class="svc-glyph">${esc(svc(key)?.label[0] || '')}</span>`;
 const svcSel = $('#svcSel');
@@ -228,7 +180,6 @@ function clip(g, t, max) { if (g.measureText(t).width <= max) return t; while (t
 // choosing your services: rebuild the bar and show your own chart (or the UK's, if you went back to all five)
 addEventListener('tn:mine', () => {
   if (!state.trending) return;
-  buildServiceBar(); svcPlaced = false;
   const has = window.tn.mine.get().length;
   if (has && location.hash !== '#mine') location.hash = 'mine';
   else if (!has && state.route === 'mine') location.hash = 'top';
@@ -269,7 +220,7 @@ function draw() {
   if (state.route === 'watchlist') { shown = new Map(); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWatchlist()}</div>`; document.title = 'Watchlist | Tenner'; openFromUrl(); wantTitles(); return; }
   if (isNew) { shown = new Map(); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; document.title = 'New This Week | Tenner'; openFromUrl(); return; }
 
-  markService(state.route); markDropdowns();
+  markDropdowns();
   shown = new Map();
 
   const s = state.route === 'top' ? null : svc(state.route);

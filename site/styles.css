@@ -311,76 +311,34 @@ a.tb-btn:hover { text-decoration: none; }
    that glides to the chosen one. Buy or rent sits after a hairline, since it isn't a service. On phones it scrolls. */
 @property --fl { syntax: "<length>"; inherits: true; initial-value: 0px; }
 @property --fr { syntax: "<length>"; inherits: true; initial-value: 0px; }
-.svc {
-  position: relative; display: flex; align-items: center; gap: 2px; padding: 3px; border-radius: var(--r-ctl); max-width: 100%;
-  background: var(--frost); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); box-shadow: var(--frost-line);
-  overflow: hidden; isolation: isolate;
-}
-.svc-track {
-  --fl: 28px; --fr: 28px;
-  position: relative; display: flex; align-items: center; gap: 2px; min-width: 0; max-width: 100%;
-  overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; border-radius: var(--r-in);
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--fl), #000 calc(100% - var(--fr)), transparent);
-  mask-image: linear-gradient(to right, transparent, #000 var(--fl), #000 calc(100% - var(--fr)), transparent);
-  transition: --fl .35s ease, --fr .35s ease;
-}
-.svc-track::-webkit-scrollbar { display: none; }
-.svc.at-start .svc-track { --fl: 0px; }
-.svc.at-end .svc-track { --fr: 0px; }
-.svc-ind {
-  position: absolute; z-index: 0; left: 0; top: 0; bottom: 0; width: 0; border-radius: var(--r-in); pointer-events: none;
-  background: var(--frost-on); box-shadow: inset 0 0 0 .5px var(--frost-edge);
-}
-.svc-b {
-  position: relative; z-index: 1; flex: none; display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 11px 0 4px;
-  border: 0; border-radius: var(--r-in); background: none; cursor: pointer; color: var(--label2);
-  font: 600 14px/1 var(--font); letter-spacing: -.016em; white-space: nowrap;
-  transition: color .25s ease, transform .4s var(--ease-spring); -webkit-tap-highlight-color: transparent;
-}
-.svc-b.txt { padding: 0 13px; }   /* All: just the word */
-.svc-b:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.svc-b[aria-checked="true"] { color: var(--label); }
-@media (hover: hover) { .svc-b[aria-checked="false"]:hover { color: var(--label); } .svc-b:hover .svc-ic { transform: scale(1.08); } }
-.svc-b:active { transform: scale(.95); }
-.svc-ic {
-  width: 22px; height: 22px; flex: none; border-radius: 6px; overflow: hidden; display: grid; place-items: center;
-  box-shadow: 0 0 0 .5px var(--sep), 0 2px 6px rgba(0, 0, 0, .18); transition: transform .45s var(--ease-spring), filter .3s ease, opacity .3s ease;
-}
-.svc-ic img { width: 100%; height: 100%; object-fit: cover; }
-.svc-b[aria-checked="false"] .svc-ic { filter: saturate(.75); opacity: .85; }
 .svc-glyph { width: 100%; height: 100%; display: grid; place-items: center; color: #fff; font: 700 14px var(--font); background: linear-gradient(135deg, #ff375f, #bf5af2 55%, #0a84ff); }
 .svc-glyph svg { width: 14px; height: 14px; }
-.svc-edit { flex: none; display: grid; place-items: center; width: 34px; height: 34px; margin-left: 2px; border: 0; border-radius: var(--r-in); background: none; color: var(--label2); cursor: pointer; }
-.svc-edit svg { width: 18px; height: 18px; }
-@media (hover: hover) { .svc-edit:hover { color: var(--label); background: var(--fill); } }
-.svc-edit:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.svc-sep { flex: none; width: 1px; height: 18px; margin: 0 3px; background: var(--sep); }
 
-/* phones: the service bar folds into one button over the phone's own picker (a native <select>), under Shows | Films */
-.dd { display: none; }
+/* the services: one pop-up button (the macOS / iOS way) over the browser's own picker, a native <select>, beside
+   Shows | Films | Both; on phones the two stack, the same width */
+.dd {
+  position: relative; display: inline-flex; align-items: center; gap: 9px; min-width: 210px; height: 36px; padding: 0 12px 0 4px; border: 0; border-radius: var(--r-ctl); cursor: pointer;
+  color: var(--label); font: 600 15px/1 var(--font); letter-spacing: -.016em; white-space: nowrap; -webkit-tap-highlight-color: transparent;
+  background: var(--frost); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); box-shadow: var(--frost-line);
+  transition: transform .35s var(--ease-spring), background-color .2s ease;
+}
+#svcDD:has(.dd-ic[hidden]) { padding-left: 14px; }
+@media (hover: hover) { .dd:hover { background: color-mix(in srgb, var(--frost) 60%, var(--fill-strong)); } }
+.dd:active { transform: scale(1.03); }
+/* the native picker sits invisibly over the button: a click opens the system's own list */
+.dd select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; appearance: none; border: 0; cursor: pointer; }
+.dd:has(select:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dd-l { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.dd-ic { flex: none; width: 28px; height: 28px; border-radius: 7px; overflow: hidden; box-shadow: 0 0 0 .5px var(--sep); }
+.dd-ic img, .dd-ic .svc-glyph { width: 100%; height: 100%; object-fit: cover; }
+.dd-ic .svc-glyph svg { width: 16px; height: 16px; }
+/* the pop-up button's double chevron, as on a Mac */
+.dd-chev { flex: none; width: 9px; height: 14px; margin-left: 2px; opacity: .55;
+  background: no-repeat center / 9px 14px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 14'%3E%3Cpath d='M1 5l3.5-3.5L8 5M1 9l3.5 3.5L8 9' fill='none' stroke='%23888' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
 @media (max-width: 560px) {
-  /* Shows | Films stays the switch, sitting neatly on top of the services picker, the two the same width */
-  .controls .svc { display: none; }
-  .controls { flex-wrap: wrap; gap: 8px; }
+  .controls { gap: 8px; }
   .controls .segmented { display: grid; width: 100%; height: 40px; }
-  .dd {
-    display: inline-flex; align-items: center; gap: 8px; min-width: 0; height: 40px; padding: 0 14px; border: 0; border-radius: var(--r-ctl); cursor: pointer;
-    color: var(--label); font: 600 15px/1 var(--font); letter-spacing: -.016em; white-space: nowrap; -webkit-tap-highlight-color: transparent;
-    background: var(--frost); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); box-shadow: var(--frost-line);
-    transition: transform .35s var(--ease-spring), background-color .2s ease;
-  }
-  #svcDD { flex: 1 1 100%; padding-left: 6px; }
-  #svcDD:has(.dd-ic[hidden]) { padding-left: 16px; }
-  .dd:active { transform: scale(1.04); }
-  .dd { position: relative; }
-  /* the native picker sits invisibly over the button: a tap opens the phone's own list */
-  .dd select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; appearance: none; border: 0; cursor: pointer; }
-  .dd:has(select:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .dd-l { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: left; }
-  .dd-ic { flex: none; width: 28px; height: 28px; border-radius: 8px; overflow: hidden; box-shadow: 0 0 0 .5px var(--sep); }
-  .dd-ic img, .dd-ic .svc-glyph { width: 100%; height: 100%; object-fit: cover; }
-  .dd-ic .svc-glyph svg { width: 16px; height: 16px; }
-  .dd-chev { flex: none; width: 7px; height: 7px; margin: -4px 2px 0 2px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); opacity: .6; transition: transform .3s var(--ease-spring); }
+  #svcDD { flex: 1 1 100%; height: 40px; padding-left: 6px; }
 }
 
 .notice { margin: 18px 0 0; padding: 12px 16px; border-radius: var(--radius); background: color-mix(in srgb, var(--accent) 12%, transparent); font-size: 15px; }
@@ -994,18 +952,16 @@ a.sh-prov:hover { text-decoration: none; }
   :root[data-theme="dark"] { --press: brightness(1.28); }
   button, summary, [role="tab"], [role="radio"], [role="menuitemradio"] { cursor: default; }
   /* a press is a change of shade, never of size */
-  .btn:active, .tabs button:active, .tb-btn:active, .svc-b:active, .scroller:active, .scroller:hover, .h-cta:active, .svc-b:hover .svc-ic { transform: none; }
+  .btn:active, .tabs button:active, .tb-btn:active, .dd:active, .scroller:active, .scroller:hover, .h-cta:active { transform: none; }
   .tabs button:active { filter: none; }
   .btn:active, .tb-btn:active, .scroller:active, .segmented button:active, .dd:active { filter: var(--press); }
   .h-cta:active { filter: var(--press); }
   /* push buttons don't react to hover; borderless ones get a soft highlight that deepens while pressed */
-  .svc-b[aria-checked="false"]:hover { background: var(--fill); }
-  .svc-b[aria-checked="false"]:active { background: var(--fill-strong); }
   .segmented button[aria-checked="false"]:hover { color: var(--label); }
   .th-list button:active { background: var(--fill-strong); }
   .side-about:active { background: var(--fill-strong); }
   /* the Mac is quick: shades change at once */
-  .btn, .svc-b, .tb-btn, .scroller, .segmented button, .th-list button, .h-cta, .side-about { transition-duration: .1s; }
+  .btn, .dd, .tb-btn, .scroller, .segmented button, .th-list button, .h-cta, .side-about { transition-duration: .1s; }
 }
 @media (hover: hover) and (pointer: fine) and (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --press: brightness(1.28); } }
 
@@ -1013,7 +969,7 @@ a.sh-prov:hover { text-decoration: none; }
    Reduce Transparency: every glass surface turns solid. Increase Contrast: stronger text, separators and edges. */
 @media (prefers-reduced-transparency: reduce) {
   :root:is([data-theme], :not([data-theme])) { --glass: var(--bg2); --side-bg: var(--bg2); --frost: var(--bg2); --sheet-bg: var(--card); }
-  .tabs, .top-act, .svc, .dd, .tb-pop, .top-row, .scroller, .coll, .score, .step, .btn-tinted, .segmented, .h-cta, .h-add, .h-badge, .g-b, .tag, .panel, .filters, .sheet, .mine-dlg {
+  .tabs, .top-act, .dd, .tb-pop, .top-row, .scroller, .coll, .score, .step, .btn-tinted, .segmented, .h-cta, .h-add, .h-badge, .g-b, .tag, .panel, .filters, .sheet, .mine-dlg {
     -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
   }
   .bd-ext { display: none !important; }
@@ -1024,7 +980,7 @@ a.sh-prov:hover { text-decoration: none; }
     --sep: color-mix(in srgb, var(--label) 45%, transparent); --label2: color-mix(in srgb, var(--label) 80%, transparent);
     --label3: color-mix(in srgb, var(--label) 62%, transparent); --fill: color-mix(in srgb, var(--label) 16%, transparent); --frost-edge: color-mix(in srgb, var(--label) 45%, transparent);
   }
-  .pcard a.cover, .f-img, .nr-art, .svc, .dd, .segmented { outline: 1px solid var(--sep); outline-offset: -1px; }
+  .pcard a.cover, .f-img, .nr-art, .dd, .segmented { outline: 1px solid var(--sep); outline-offset: -1px; }
   @media (max-width: 999px) { .tabs { outline: 1px solid var(--sep); outline-offset: -1px; } }   /* the floating tab bar, not the sidebar */
 }
 
