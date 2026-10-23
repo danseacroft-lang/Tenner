@@ -5,7 +5,7 @@
   const { esc, account, avatar } = window.tn;
   const $ = (s) => document.querySelector(s);
   // Sign in with Google: the OAuth client ID from Google Cloud (public). Empty: the Google button stays hidden.
-  const GOOGLE_CLIENT_ID = '';
+  const GOOGLE_CLIENT_ID = '573684167951-69isfjep31v7kl8hs0083228flhbq53e.apps.googleusercontent.com';
   const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   const unb64u = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), (c) => c.charCodeAt(0));
   const say = (el, t, bad) => { const n = $(el); n.textContent = t; n.classList.toggle('bad', !!bad); clearTimeout(n.t); if (!bad) n.t = setTimeout(() => (n.textContent = ''), 3500); };

@@ -12,7 +12,7 @@ ALLOWED_ORIGINS = "https://tenner.stream,https://www.tenner.stream,https://danse
 # The Contact form emails Tenner's inbox through Cloudflare Email Routing (on tenner.stream). No address here: the
 # inbox is a Worker secret (SUPPORT_EMAIL), and it has to be a verified destination address in Email Routing.
 # Sign in with Google: the OAuth client ID from Google Cloud (public, not a secret). Empty: the Google button stays hidden.
-GOOGLE_CLIENT_ID = ""
+GOOGLE_CLIENT_ID = "573684167951-69isfjep31v7kl8hs0083228flhbq53e.apps.googleusercontent.com"
 
 [[send_email]]
 name = "MAILER"
