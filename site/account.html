@@ -36,10 +36,10 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.25.0">
-  <link rel="stylesheet" href="legal.css?v=1.25.0">
-  <link rel="stylesheet" href="settings.css?v=1.25.0">
-  <link rel="stylesheet" href="account.css?v=1.25.0">
+  <link rel="stylesheet" href="styles.css?v=1.25.1">
+  <link rel="stylesheet" href="legal.css?v=1.25.1">
+  <link rel="stylesheet" href="settings.css?v=1.25.1">
+  <link rel="stylesheet" href="account.css?v=1.25.1">
 </head>
 <body class="legal">
   <a class="skip" href="#main">Skip to the page</a>
@@ -89,7 +89,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.25.0</span>
+      <span class="side-ver">Tenner 1.25.1</span>
     </div>
   </div>
 
@@ -106,8 +106,9 @@
       <h1>Your Tenner, everywhere</h1>
       <p class="l-lede">Sign in to keep your Watchlist, where you’re up to, your services and your settings in step on every phone and computer, get alerts on each of them, and share your Watchlist if you like. It’s optional: Tenner works just the same without.</p>
       <div class="ac-ways">
-        <button type="button" class="btn btn-tinted ac-main" id="acPasskey"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5H5.5a2 2 0 0 0-2 2V7M17 3.5h1.5a2 2 0 0 1 2 2V7M7 20.5H5.5a2 2 0 0 1-2-2V17M17 20.5h1.5a2 2 0 0 0 2-2V17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1M9.5 16a4 4 0 0 0 5 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Sign in with a passkey</button>
         <div class="ac-google" id="acGoogle" hidden></div>
+        <p class="ac-or" id="acOr" hidden><span>or</span></p>
+        <button type="button" class="btn btn-tinted ac-main" id="acPasskey"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5H5.5a2 2 0 0 0-2 2V7M17 3.5h1.5a2 2 0 0 1 2 2V7M7 20.5H5.5a2 2 0 0 1-2-2V17M17 20.5h1.5a2 2 0 0 0 2-2V17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1M9.5 16a4 4 0 0 0 5 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Sign in with a passkey</button>
         <button type="button" class="ac-new" id="acNewOpen">New to Tenner? <b>Create an account</b></button>
         <form class="ac-newform" id="acNew" hidden>
           <label for="acName">What should we call you?</label>
@@ -155,7 +156,7 @@
   </main>
 
 
-  <script src="shell.js?v=1.25.0" defer></script>
-  <script src="account.js?v=1.25.0" defer></script>
+  <script src="shell.js?v=1.25.1" defer></script>
+  <script src="account.js?v=1.25.1" defer></script>
 </body>
 </html>

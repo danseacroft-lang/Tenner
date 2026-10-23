@@ -47,3 +47,6 @@
 @media (hover: hover) { .ls-grid a:hover img { translate: 0 -3px; } }
 .ls-cta { margin-top: 34px; }
 @media (max-width: 560px) { .ls-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ac-or { display: flex; align-items: center; gap: 12px; width: 100%; margin: 2px 0; color: var(--label3); font-size: 13px; }
+.ac-or::before, .ac-or::after { content: ""; flex: 1; height: .5px; background: var(--sep); }
+.ac-google:not([hidden]) + .ac-or:not([hidden]) ~ .ac-main { height: 46px; font-size: 16px; }

@@ -57,8 +57,8 @@
         } catch (err) { say(linking ? '#acNote' : '#acMsg', friendly(err), true); }
       } });
       const dark = document.documentElement.dataset.theme !== 'light';
-      into.hidden = false; into.innerHTML = '';
-      window.google.accounts.id.renderButton(into, { type: 'standard', theme: dark ? 'filled_black' : 'outline', size: 'large', shape: 'pill', text: linking ? 'continue_with' : 'signin_with', width: Math.min(360, into.parentElement.clientWidth || 320) });
+      into.hidden = false; into.innerHTML = ''; if (!linking) $('#acOr').hidden = false;
+      window.google.accounts.id.renderButton(into, { type: 'standard', theme: dark ? 'filled_black' : 'outline', size: 'large', shape: 'rectangular', text: 'continue_with', width: Math.min(360, into.parentElement.clientWidth || 320) });
     }).catch(() => {});
   }
 
