@@ -7,8 +7,6 @@
 //   POST /auth/login/start        → options for the browser (any passkey for this site)
 //   POST /auth/login/finish       { id, credential } → { token, user }
 //   POST /auth/google             { credential } → { token, user } (links Google if you're signed in already)
-//   POST /auth/facebook           { token } → { token, user } (likewise for Facebook)
-//   POST /auth/apple              { id_token, name? } → { token, user } (likewise for Apple)
 //   POST /auth/password/signup    { email, name, key } → { token, user }; /login { email, key }; /forgot { email } (emails a
 //                                 reset link); /reset { token, key } → { token, user }. The key is what the browser
 //                                 stretched from the password (PBKDF2, 310,000 rounds); only a salted hash of it is kept
@@ -18,7 +16,7 @@
 //   PATCH /me                     { name?, hue? }
 //   PUT  /me/data                 { data } → { data } (merged with what's stored, and the result for this device)
 //   POST /me/share                { on } → { share_id }
-//   DELETE /me/passkeys/:id, DELETE /me/google, DELETE /me/facebook, DELETE /me/apple, DELETE /me (the account and everything in it)
+//   DELETE /me/passkeys/:id, DELETE /me/google, DELETE /me (the account and everything in it)
 //   GET  /share/:id               a shared Watchlist: { name, picture, hue, list }
 // A session is a random token kept on the device (no cookies); only a hash of it is stored here.
 
@@ -147,7 +145,7 @@ function clean(d) {
 }
 
 // ---------- Google: check the ID token Google's button gave the page ----------
-// Google and Apple both hand the page a signed ID token; it's checked against their published keys (cached for an hour)
+// Google hands the page a signed ID token; it's checked against Google's published keys (cached for an hour)
 async function jwks(url) {
   const cache = caches.default, key = new Request(`https://tenner-cache/jwks/${encodeURIComponent(url)}`);
   let r = await cache.match(key);
@@ -167,7 +165,6 @@ async function verifyIdToken(token, { keys, iss, aud, who }) {
   return claims;
 }
 const verifyGoogle = (token, env) => verifyIdToken(token, { keys: 'https://www.googleapis.com/oauth2/v3/certs', iss: ['accounts.google.com', 'https://accounts.google.com'], aud: env.GOOGLE_CLIENT_ID, who: 'Google' });
-const verifyApple = (token, env) => verifyIdToken(token, { keys: 'https://appleid.apple.com/auth/keys', iss: ['https://appleid.apple.com'], aud: env.APPLE_SERVICES_ID, who: 'Apple' });
 
 // ---------- the routes ----------
 export async function authRoute(req, env, ctx, url, json, cors, origin) {
@@ -254,26 +251,6 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
       return ok({ token: await newSession(env, u.id, req), user: publicUser(u) });
     }
 
-    // ---- Facebook: the page's Facebook login hands over an access token; Facebook itself says which app it's for and who it is
-    if (p === '/auth/facebook' && m === 'POST') {
-      if (!env.FACEBOOK_APP_ID) return fail('Facebook sign-in isn’t set up yet', 503);
-      const t = encodeURIComponent(String(body.token || '').slice(0, 1000)), G = 'https://graph.facebook.com/v23.0';
-      const app = await (await fetch(`${G}/app?access_token=${t}`)).json();
-      if (app.id !== env.FACEBOOK_APP_ID) return fail('Facebook sign-in couldn’t be checked');
-      const fb = await (await fetch(`${G}/me?fields=id,name,first_name,picture.type(large){url,is_silhouette}&access_token=${t}`)).json();
-      if (!fb.id) return fail('Facebook sign-in couldn’t be checked');
-      const pic = fb.picture?.data && !fb.picture.data.is_silhouette ? fb.picture.data.url : null;
-      return viaLogin(req, env, ok, fail, { provider: 'facebook', who: 'Facebook', sub: fb.id, label: fb.name, first: fb.first_name || fb.name, pic });
-    }
-
-    // ---- Apple: Sign in with Apple's popup hands over an ID token (and, the very first time only, your name)
-    if (p === '/auth/apple' && m === 'POST') {
-      if (!env.APPLE_SERVICES_ID) return fail('Sign in with Apple isn’t set up yet', 503);
-      const a = await verifyApple(body.id_token, env);
-      const first = String(body.name || '').trim().slice(0, 40) || null;
-      return viaLogin(req, env, ok, fail, { provider: 'apple', who: 'Apple', sub: a.sub, label: a.email || 'Apple ID', first, pic: null });
-    }
-
     // ---- email and password
     mm = p.match(/^\/auth\/password\/(signup|login|forgot|reset|verify|resend)$/);
     if (mm && m === 'POST') {
@@ -355,7 +332,6 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
       return ok({ user: publicUser(me), data: d ? JSON.parse(d.data) : null, updated: d?.updated || 0,
         passkeys: pks.results.map((x) => ({ id: x.id, label: x.label, created: x.created, used: x.used })),
         sessions: ss.results.map((x) => ({ label: x.label, created: x.created, seen: x.seen, here: x.token === me.token })),
-        logins: (await env.DB.prepare('SELECT provider, name FROM logins WHERE user_id = ?').bind(me.id).all()).results,
         ...await (async () => { const pw = (await env.DB.prepare('SELECT email FROM passwords WHERE user_id = ?').bind(me.id).first())?.email || null;
           return { password: pw, password_ok: !pw || !env.RESEND_API_KEY || await isVerified(env, pw) }; })(), mail: !!env.RESEND_API_KEY });
     }
@@ -380,18 +356,13 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
       return ok({ share_id: sid });
     }
     if ((mm = p.match(/^\/me\/passkeys\/([\w-]{8,400})$/)) && m === 'DELETE') {
-      if (await ways(env, me) <= 1) return fail('This is your only way to sign in. Add another passkey, or link Google or Facebook first');
+      if (await ways(env, me) <= 1) return fail('This is your only way to sign in. Add another passkey, link Google or add a password first');
       await env.DB.prepare('DELETE FROM passkeys WHERE id = ? AND user_id = ?').bind(mm[1], me.id).run();
       return ok({ ok: true });
     }
     if (p === '/me/google' && m === 'DELETE') {
-      if (await ways(env, me) <= 1) return fail('Google is your only way to sign in. Add a passkey or link Facebook first');
+      if (await ways(env, me) <= 1) return fail('Google is your only way to sign in. Add a passkey or a password first');
       await env.DB.prepare('UPDATE users SET google_sub = NULL, email = NULL WHERE id = ?').bind(me.id).run();
-      return ok({ ok: true });
-    }
-    if ((mm = p.match(/^\/me\/(facebook|apple)$/)) && m === 'DELETE') {
-      if (await ways(env, me) <= 1) return fail(`${mm[1] === 'apple' ? 'Apple' : 'Facebook'} is your only way to sign in. Add another way first`);
-      await env.DB.prepare('DELETE FROM logins WHERE provider = ? AND user_id = ?').bind(mm[1], me.id).run();
       return ok({ ok: true });
     }
     if (p === '/me/password' && m === 'POST') {
@@ -422,7 +393,7 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
     }
     if (p === '/me' && m === 'DELETE') {
       const subs = (await env.DB.prepare('SELECT sub_key FROM pushsubs WHERE user_id = ?').bind(me.id).all()).results;
-      await env.DB.batch(['DELETE FROM passkeys WHERE user_id = ?', 'DELETE FROM logins WHERE user_id = ?', 'DELETE FROM passwords WHERE user_id = ?', 'DELETE FROM resets WHERE user_id = ?', 'DELETE FROM verified WHERE user_id = ?', 'DELETE FROM verifies WHERE user_id = ?', 'DELETE FROM sessions WHERE user_id = ?', 'DELETE FROM userdata WHERE user_id = ?', 'DELETE FROM pushsubs WHERE user_id = ?', 'DELETE FROM users WHERE id = ?']
+      await env.DB.batch(['DELETE FROM passkeys WHERE user_id = ?', 'DELETE FROM passwords WHERE user_id = ?', 'DELETE FROM resets WHERE user_id = ?', 'DELETE FROM verified WHERE user_id = ?', 'DELETE FROM verifies WHERE user_id = ?', 'DELETE FROM sessions WHERE user_id = ?', 'DELETE FROM userdata WHERE user_id = ?', 'DELETE FROM pushsubs WHERE user_id = ?', 'DELETE FROM users WHERE id = ?']
         .map((q) => env.DB.prepare(q).bind(me.id)));
       if (env.PUSH) for (const s of subs) { const v = await env.PUSH.get(s.sub_key, 'json'); if (v) { delete v.user; await env.PUSH.put(s.sub_key, JSON.stringify(v)); } }
       return ok({ ok: true });
@@ -432,32 +403,11 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
     return fail(err.message || 'Something went wrong');
   }
 }
-// signing in (or linking) with a service kept in logins: Facebook, Apple
-async function viaLogin(req, env, ok, fail, { provider, who, sub, label, first, pic }) {
-  const me = await sessionUser(req, env);
-  const owner = await env.DB.prepare('SELECT user_id FROM logins WHERE provider = ? AND sub = ?').bind(provider, String(sub)).first();
-  if (me) {
-    if (owner && owner.user_id !== me.id) return fail(`That ${who} account is already linked to another Tenner account`, 409);
-    if (!owner) await env.DB.prepare('INSERT INTO logins (provider, sub, user_id, name, created) VALUES (?, ?, ?, ?, ?)').bind(provider, String(sub), me.id, label || null, now()).run();
-    if (pic && !me.picture) await env.DB.prepare('UPDATE users SET picture = ? WHERE id = ?').bind(pic, me.id).run();
-    return ok({ ok: true });
-  }
-  let uid = owner?.user_id;
-  if (!uid) {
-    uid = rand(16);
-    await env.DB.batch([
-      env.DB.prepare('INSERT INTO users (id, name, picture, hue, created) VALUES (?, ?, ?, ?, ?)').bind(uid, String(first || 'You').slice(0, 40), pic || null, Math.floor(Math.random() * 360), now()),
-      env.DB.prepare('INSERT INTO logins (provider, sub, user_id, name, created) VALUES (?, ?, ?, ?, ?)').bind(provider, String(sub), uid, label || null, now())]);
-  }
-  const u = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(uid).first();
-  return ok({ token: await newSession(env, uid, req), user: publicUser(u) });
-}
-// how many ways you have of signing in (passkeys, Google, Facebook): the last one can't be taken away
+// how many ways you have of signing in (passkeys, Google, a password): the last one can't be taken away
 async function ways(env, me) {
   const pk = (await env.DB.prepare('SELECT COUNT(*) AS n FROM passkeys WHERE user_id = ?').bind(me.id).first()).n;
-  const other = (await env.DB.prepare('SELECT COUNT(*) AS n FROM logins WHERE user_id = ?').bind(me.id).first()).n;
   const pw = (await env.DB.prepare('SELECT COUNT(*) AS n FROM passwords WHERE user_id = ?').bind(me.id).first()).n;
-  return pk + other + pw + (me.google_sub ? 1 : 0);
+  return pk + pw + (me.google_sub ? 1 : 0);
 }
 // ---------- passwords: the browser stretches the password (slow on purpose); here it's salted and hashed once more ----------
 const normEmail = (e) => { const x = String(e || '').trim().toLowerCase().slice(0, 200); return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(x) ? x : null; };

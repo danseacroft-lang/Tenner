@@ -51,18 +51,6 @@
    told it's light too, so it stays see-through */
 .ac-google, .ac-google *, #acGLink, #acGLink * { color-scheme: light; }
 .ac-google iframe, #acGLink iframe { background: transparent !important; }
-/* Apple and Facebook: their own colours (Apple: white on dark, black by day), the same size as Google's button */
-.ac-sso { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%; max-width: 360px; height: 44px; padding: 0 16px; border: 0; border-radius: 10px; cursor: pointer;
-  font: 500 16px/1 var(--font); letter-spacing: -.012em; -webkit-tap-highlight-color: transparent; transition: transform .3s var(--ease-spring), filter .2s ease; }
-.ac-sso svg { width: 18px; height: 18px; flex: none; }
-.ac-sso:active { transform: scale(.97); }
-@media (hover: hover) { .ac-sso:hover { filter: brightness(1.08); } }
-.ac-sso:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
-.ac-apple { color: #000; background: #fff; }
-:root[data-theme="light"] .ac-apple { color: #fff; background: #000; }
-@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .ac-apple { color: #fff; background: #000; } }
-.ac-fb { color: #fff; background: #1877f2; }
-.ac-fb svg { width: 20px; height: 20px; }
 /* email and password */
 .ac-form:not([hidden]) { display: grid; gap: 10px; width: 100%; text-align: left; }
 .ac-form h2 { margin: 6px 0 2px; font: 700 20px/1.2 var(--font-display); }

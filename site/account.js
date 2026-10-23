@@ -5,9 +5,6 @@
   const { esc, account, avatar } = window.tn;
   const $ = (s) => document.querySelector(s);
   // Sign in with Google: the OAuth client ID from Google Cloud (public). Empty: the Google button stays hidden.
-  // Sign in with Apple: the Services ID from Apple Developer; Facebook Login: the Meta app ID (both public). Empty: hidden.
-  const APPLE_SERVICES_ID = '';
-  const FACEBOOK_APP_ID = '';
   const GOOGLE_CLIENT_ID = '573684167951-69isfjep31v7kl8hs0083228flhbq53e.apps.googleusercontent.com';
   const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   const unb64u = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), (c) => c.charCodeAt(0));
@@ -81,7 +78,7 @@
     checkEmail = email;
     $('#acCheckP').textContent = fresh ? `We’ve sent a link to ${email}. Tap it to confirm your email and finish making your account.`
       : `${email} isn’t confirmed yet. Tap the link we emailed you, or have it sent again.`;
-    for (const id of ['#acLogin', '#acNew', '#acNewOpen', '#acPasskey', '#acGoogle', '#acApple', '#acFb', '#acOr']) $(id).hidden = true;
+    for (const id of ['#acLogin', '#acNew', '#acNewOpen', '#acPasskey', '#acGoogle', '#acOr']) $(id).hidden = true;
     $('#acCheck').hidden = false; $('#acMsg').textContent = '';
   }
   $('#acResend').addEventListener('click', async (e) => {
@@ -137,34 +134,6 @@
     }).catch(() => {});
   }
 
-  // Apple: Apple's own sign-in window (their script loads only here, and only once it's set up)
-  let aReady = null;
-  const appleLib = () => (aReady ||= new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_GB/appleid.auth.js'; sc.onload = () => {
-    window.AppleID.auth.init({ clientId: APPLE_SERVICES_ID, scope: 'name email', redirectURI: `${location.origin}/account.html`, usePopup: true }); res(); }; sc.onerror = rej; document.head.append(sc); }));
-  async function apple(linking) {
-    await appleLib();
-    const r = await window.AppleID.auth.signIn();   // { authorization: { id_token }, user?: { name } } (the name only the very first time)
-    const out = await account.call('POST', '/auth/apple', { id_token: r.authorization.id_token, name: r.user?.name?.firstName || '' });
-    if (out.token) await account.signedIn(out.token, out.user); else if (linking) { say('#acNote', 'Apple linked'); load(); }
-  }
-  // Facebook: Facebook's own sign-in page, then straight back here with a one-off pass (no Facebook script on Tenner)
-  function facebook(linking) {
-    const state = Math.random().toString(36).slice(2) + Date.now().toString(36);
-    try { sessionStorage.setItem('tenner-fb', JSON.stringify({ state, linking })); } catch {}
-    location.href = `https://www.facebook.com/v23.0/dialog/oauth?${new URLSearchParams({ client_id: FACEBOOK_APP_ID, redirect_uri: `${location.origin}/account.html`, response_type: 'token', scope: 'public_profile', state })}`;
-  }
-  async function facebookBack() {
-    const h = new URLSearchParams(location.hash.slice(1)); if (!h.has('access_token') && !h.has('error')) return;
-    history.replaceState(null, '', location.pathname);
-    let saved = null; try { saved = JSON.parse(sessionStorage.getItem('tenner-fb') || 'null'); sessionStorage.removeItem('tenner-fb'); } catch {}
-    if (h.has('error') || !saved || saved.state !== h.get('state')) { say(account.token() ? '#acNote' : '#acMsg', h.has('error') ? 'Cancelled' : 'That didn’t work. Try again', !h.has('error')); return; }
-    try {
-      const out = await account.call('POST', '/auth/facebook', { token: h.get('access_token') });
-      if (out.token) await account.signedIn(out.token, out.user); else { say('#acNote', 'Facebook linked'); load(); }
-    } catch (err) { say(account.token() ? '#acNote' : '#acMsg', friendly(err), true); }
-  }
-  $('#acApple').addEventListener('click', () => apple(false).catch((err) => { if (err?.error !== 'popup_closed_by_user') say('#acMsg', friendly(err), true); }));
-  $('#acFb').addEventListener('click', () => facebook(false));
 
   // ---------- signed in ----------
   const HUES = [210, 265, 330, 5, 30, 145, 175];
@@ -188,9 +157,6 @@
       + (me.password ? `<div class="set-row"><span class="set-l">Email and password<small>${esc(me.password)}${me.password_ok ? '' : ' · <b class="ac-warn">not confirmed yet</b> <button type="button" class="ac-link ac-inline" data-reverify>Send the link again</button>'}</small></span><span class="ac-btns"><button type="button" class="ac-x ac-ok" data-pw-open>Change</button><button type="button" class="ac-x" data-pw-remove>Remove</button></span></div>`
         : '<button type="button" class="set-row set-link" data-pw-open><span class="set-l">Add a password<small>Sign in with your email and a password too</small></span><span class="set-chev" aria-hidden="true"></span></button>')
       + `<form class="set-row ac-pwform" id="acPwForm" hidden><input type="email" id="acSetEmail" autocomplete="username" placeholder="Email" aria-label="Email" required value="${esc(me.password || '')}"><input type="password" id="acSetPw" autocomplete="new-password" minlength="8" placeholder="New password" aria-label="New password" required><button class="btn btn-tinted">Save</button></form>`
-      + (me.logins || []).map((l) => `<div class="set-row"><span class="set-l">${l.provider === 'apple' ? 'Apple' : 'Facebook'}<small>${esc(l.name || 'Linked')}</small></span><button type="button" class="ac-x" data-unlink-svc="${esc(l.provider)}">Unlink</button></div>`).join('')
-      + (APPLE_SERVICES_ID && !(me.logins || []).some((l) => l.provider === 'apple') ? '<button type="button" class="set-row set-link" id="acLinkApple"><span class="set-l">Link Apple</span><span class="set-chev" aria-hidden="true"></span></button>' : '')
-      + (FACEBOOK_APP_ID && !(me.logins || []).some((l) => l.provider === 'facebook') ? '<button type="button" class="set-row set-link" id="acLinkFb"><span class="set-l">Link Facebook</span><span class="set-chev" aria-hidden="true"></span></button>' : '')
       + `<button type="button" class="set-row set-link" id="acAddPk"><span class="set-l">Add a passkey<small>For another device, or a password manager</small></span><span class="set-chev" aria-hidden="true"></span></button>`
       + (!u.google && GOOGLE_CLIENT_ID ? '<div class="set-row ac-glink"><span class="set-l">Link Google</span><div id="acGLink"></div></div>' : '');
     if (!u.google && GOOGLE_CLIENT_ID) google($('#acGLink'), true);
@@ -216,9 +182,6 @@
       else if ('reverify' in t.dataset) { await account.call('POST', '/me/verify'); say('#acNote', `Sent. Check ${me.password}`); }
       else if ('pwOpen' in t.dataset) { $('#acPwForm').hidden = false; $('#acSetEmail').focus(); }
       else if ('pwRemove' in t.dataset) { if (!confirm('Remove your password? You’ll sign in another way.')) return; await account.call('DELETE', '/me/password'); load(); say('#acNote', 'Password removed'); }
-      else if (t.dataset.unlinkSvc) { await account.call('DELETE', `/me/${t.dataset.unlinkSvc}`); load(); say('#acNote', 'Unlinked'); }
-      else if (t.id === 'acLinkApple') { await apple(true); }
-      else if (t.id === 'acLinkFb') { facebook(true); }
       else if ('unlink' in t.dataset) { await account.call('DELETE', '/me/google'); load(); say('#acNote', 'Google unlinked'); }
       else if (t.id === 'acAddPk') { await makePasskey(); load(); say('#acNote', 'Passkey added'); }
       else if (t.id === 'acOthers') { await account.call('DELETE', '/me/sessions'); load(); say('#acNote', 'Signed out everywhere else'); }
@@ -268,13 +231,9 @@
       $('#acNew').hidden = true; $('#acNewOpen').hidden = false; $('#acPasskey').hidden = false; $('#acCheck').hidden = true;
       if ($('#acReset').hidden) $('#acLogin').hidden = false;
       google($('#acGoogle'), false);
-      $('#acApple').hidden = !APPLE_SERVICES_ID; $('#acFb').hidden = !FACEBOOK_APP_ID;
-      if (APPLE_SERVICES_ID) appleLib().catch(() => {});   // ready before the tap, so its window isn't blocked
-      if (APPLE_SERVICES_ID || FACEBOOK_APP_ID) $('#acOr').hidden = false;
     }
   }
   addEventListener('tn:account', () => { if (!!account.token() === $('#acOut').hidden) return; show(); });
   $('#acIn').classList.toggle('native-sw', 'switch' in HTMLInputElement.prototype);
   show();
-  facebookBack();
 })();

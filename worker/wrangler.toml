@@ -13,10 +13,6 @@ ALLOWED_ORIGINS = "https://tenner.stream,https://www.tenner.stream,https://danse
 # inbox is a Worker secret (SUPPORT_EMAIL), and it has to be a verified destination address in Email Routing.
 # Sign in with Google: the OAuth client ID from Google Cloud (public, not a secret). Empty: the Google button stays hidden.
 GOOGLE_CLIENT_ID = "573684167951-69isfjep31v7kl8hs0083228flhbq53e.apps.googleusercontent.com"
-# Facebook Login: the Meta app ID (public, not a secret). Empty: the Facebook button stays hidden.
-FACEBOOK_APP_ID = ""
-# Sign in with Apple: the Services ID from Apple Developer (public). Empty: the Apple button stays hidden.
-APPLE_SERVICES_ID = ""
 
 [[send_email]]
 name = "MAILER"
