@@ -51,8 +51,8 @@
     homeHtml = shelf('In This Week’s Top 10', 'The faces of the UK’s most-watched shows and films right now.', stars.map((p) => card(p, `${p.role ? `${p.role} in ` : ''}${p.in.title}`, inPoster(p.in))).join(''))
       + shelf('Behind the Camera', 'Who made them.', makers.map((p) => card(p, `${p.role}, ${p.in.title}`, inPoster(p.in))).join(''))
       + (top10.length ? `<section class="p-sec"><div class="p-sh"><h2>The Top 10 People This Week</h2><p>Who everyone’s looking up.</p></div>
-        <ol class="p-rank">${top10.map((p, i) => `<li><a href="?p=${p.id}" data-p="${p.id}"><span class="pr-n">${i + 1}</span>${photo(p)}
-          <span class="pr-t"><b>${esc(p.name)}</b><small>${esc([DEPT[p.dept] || p.dept, p.known.slice(0, 2).join(', ')].filter(Boolean).join(' · '))}</small></span></a></li>`).join('')}</ol></section>` : '');
+        <ol class="cl">${top10.map((p, i) => `<li><a href="?p=${p.id}" data-p="${p.id}"><span class="cl-n">${i + 1}</span>${photo(p, 'pf cl-pf')}
+          <span class="cl-t"><b>${esc(p.name)}</b><small>${esc([DEPT[p.dept] || p.dept, p.known.slice(0, 2).join(', ')].filter(Boolean).join(' · '))}</small></span></a></li>`).join('')}</ol></section>` : '');
     if (!homeHtml) homeHtml = `<div class="p-empty"><h2>Search for anyone</h2><p>Type a name to find an actor, director or writer.</p></div>`;
     wallFaces = [...stars, ...top10, ...makers].filter((p) => p.photo);
     wall();

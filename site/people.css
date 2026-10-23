@@ -79,15 +79,9 @@ body.people { overflow-x: clip; }
 .pcard-p a:focus-visible .pf-card { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--accent); }
 
 /* ---------- the Top 10 people: big ranks, Tenner's way ---------- */
-.p-rank { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(5, auto); grid-auto-flow: column; gap: 6px 28px; }
-.p-rank a { display: grid; grid-template-columns: 52px 60px minmax(0, 1fr); align-items: center; gap: 14px; padding: 10px 12px; border-radius: 16px; color: inherit; text-decoration: none; transition: background-color .2s ease; }
-@media (hover: hover) { .p-rank a:hover { background: var(--fill); } .p-rank a:hover .pf { transform: scale(1.06); } }
-.p-rank a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.pr-n { font: 800 40px/1 var(--font-display); letter-spacing: -.04em; text-align: center; font-variant-numeric: tabular-nums;
-  background: linear-gradient(160deg, #ff375f, #ff9f0a 35%, #0a84ff 70%, #bf5af2); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.pr-t { display: grid; gap: 2px; min-width: 0; }
-.pr-t b { font: 600 17px/1.2 var(--font); letter-spacing: -.016em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.pr-t small { color: var(--label2); font-size: 13.5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+/* the Top 10 people: the homepage's chart list (.cl in styles.css), with round faces in place of posters */
+.cl .cl-pf { width: 44px; height: 44px; flex: none; box-shadow: 0 0 0 .5px var(--sep); }
+.cl .cl-pf img { width: 100%; height: 100%; border-radius: 0; box-shadow: none; }
 
 /* loading: a row of breathing cards */
 .p-load { display: flex; gap: 18px; margin-top: 44px; overflow: hidden; }
@@ -216,9 +210,6 @@ body.people { overflow-x: clip; }
   .p-cmd { top: calc(env(safe-area-inset-top, 0px) + 66px); }
   .p-shelf { grid-auto-columns: 40vw; gap: 12px; }
   .p-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 12px; }
-  .p-rank { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-flow: row; }
-  .p-rank a { grid-template-columns: 40px 52px minmax(0, 1fr); padding: 8px 4px; }
-  .pr-n { font-size: 32px; }
   .pp-in { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 18px; }
   .pp-ph { width: 46vw; }
   .pp-chips, .pp-figs, .pp-acts { justify-content: center; }
