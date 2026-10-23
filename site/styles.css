@@ -310,84 +310,38 @@ a.tb-btn:hover { text-decoration: none; }
 /* the poster rows' fading edges animate these lengths; a service with no logo gets a glyph on Tenner's colours */
 @property --fl { syntax: "<length>"; inherits: true; initial-value: 0px; }
 @property --fr { syntax: "<length>"; inherits: true; initial-value: 0px; }
-.svc-glyph { width: 100%; height: 100%; display: grid; place-items: center; color: #fff; font: 700 14px var(--font); background: linear-gradient(135deg, #ff375f, #bf5af2 55%, #0a84ff); }
-.svc-glyph svg { width: 14px; height: 14px; }
 
-/* the services: one pop-up button (the macOS / iOS way) over the browser's own picker, a native <select>, beside
-   Shows | Films | Both; on phones the two stack, the same width */
+/* Shows / Films / Both: a pop-up button (the macOS / iOS way) over the browser's own picker, a native <select> */
 .dd {
   position: relative; display: inline-flex; align-items: center; gap: 9px; min-width: 210px; height: 36px; padding: 0 14px 0 6px; border: 0; border-radius: 999px; cursor: pointer;
   color: var(--label); font: 600 15px/1 var(--font); letter-spacing: -.016em; white-space: nowrap; -webkit-tap-highlight-color: transparent;
   background: var(--frost); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); box-shadow: var(--frost-line);
   transition: transform .35s var(--ease-spring), background-color .2s ease;
 }
-#svcDD:has(.dd-ic[hidden]) { padding-left: 14px; }
 @media (hover: hover) { .dd:hover { background: color-mix(in srgb, var(--frost) 60%, var(--fill-strong)); } }
 .dd:active { transform: scale(1.03); }
 /* the native picker sits invisibly over the button: a click opens the system's own list */
 .dd select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; appearance: none; border: 0; cursor: pointer; }
 .dd:has(select:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 .dd-l { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: left; }
-.dd-ic { flex: none; width: 28px; height: 28px; border-radius: 7px; overflow: hidden; box-shadow: 0 0 0 1px color-mix(in srgb, var(--label) 16%, transparent); }
-.dd-ic img, .dd-ic .svc-glyph { width: 100%; height: 100%; object-fit: cover; }
-.dd-ic .svc-glyph svg { width: 16px; height: 16px; }
 /* the pop-up button's double chevron, as on a Mac */
 .dd-chev { flex: none; width: 9px; height: 14px; margin-left: 2px; opacity: .55;
   background: no-repeat center / 9px 14px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 14'%3E%3Cpath d='M1 5l3.5-3.5L8 5M1 9l3.5 3.5L8 9' fill='none' stroke='%23888' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
-/* computers and tablets: the stack of app icons replaces the pop-up button; Shows | Films | Both is a capsule of the same
-   height beside it, round ends and all */
-/* the Shows / Films pop-up sits right above the services: a compact capsule, its width just its words */
+/* a compact capsule, its width just its words, right above the services link */
 .dd-kind { min-width: 0; height: 38px; padding: 0 14px 0 18px; gap: 10px; font: 600 16px/1 var(--font-display); letter-spacing: -.02em; }
 .dd-kind .dd-chev { opacity: .7; }
 @media (min-width: 561px) { .controls { flex-direction: column; align-items: flex-start; gap: 10px; } }
-/* computers and tablets: the stack of app icons replaces the pop-up button */
-@media (min-width: 561px) { #svcDD { display: none; } }
-.stack-w { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.stack { position: relative; display: flex; align-items: center; height: 46px; padding: 0 8px 0 6px; border-radius: 999px;
-  background: var(--frost); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); box-shadow: var(--frost-line); }
-.st-i { position: relative; z-index: calc(40 - var(--i)); flex: none; width: 34px; height: 34px; margin-left: -20px; padding: 0; border: 0; border-radius: 9px; background: none; cursor: pointer;
-  transition: margin-left .5s var(--ease-spring), transform .35s var(--ease-spring); transition-delay: calc(var(--i) * 18ms); -webkit-tap-highlight-color: transparent; }
-.st-i:first-child { margin-left: 0; }
-/* the icon itself: an iOS app icon (rounded square), with a thin see-through rim, not a black one, so the pile reads
-   without a hard edge */
-.st-art { display: block; width: 100%; height: 100%; border-radius: inherit; overflow: hidden; background: var(--fill);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--label) 16%, transparent), 0 3px 8px rgba(0, 0, 0, .22); transition: box-shadow .25s ease; }
-.st-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.st-art .svc-glyph { width: 100%; height: 100%; display: grid; place-items: center; }
-.st-mine { background: linear-gradient(135deg, #ffd60a, #ff9f0a); color: #fff; }
-.st-mine svg { width: 18px; height: 18px; }
-/* the one you're on sits on top of the pile, with a ring in the accent colour */
-.st-i[aria-checked="true"] { z-index: 50; }
-.st-i[aria-checked="true"] .st-art { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 85%, transparent), 0 3px 8px rgba(0, 0, 0, .22); }
-/* the name, under the icon you point at */
-.st-tip { position: absolute; left: 50%; top: calc(100% + 10px); padding: 5px 9px; border-radius: 8px; white-space: nowrap; pointer-events: none;
-  font: 600 12px/1 var(--font); letter-spacing: -.01em; color: var(--label); background: var(--sheet-bg); -webkit-backdrop-filter: var(--sheet-blur); backdrop-filter: var(--sheet-blur);
-  box-shadow: inset 0 0 0 .5px var(--frost-edge), 0 6px 18px rgba(0, 0, 0, .2); opacity: 0; transform: translate(-50%, -4px); transition: opacity .15s ease, transform .2s ease; }
-.st-pick { flex: none; display: grid; place-items: center; width: 32px; height: 32px; margin-left: 8px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--label2); cursor: pointer;
-  transition: color .2s ease, background-color .2s ease, rotate .6s var(--ease-spring); }
-.st-pick svg { width: 20px; height: 20px; flex: none; }
-:root:not(.still) .st-pick:hover { rotate: 60deg; }   /* the cog turns a little when you point at it */
-/* fanned out: point at it, tab into it, or tap it on a tablet */
-.stack:hover .st-i, .stack:focus-within .st-i, .stack.open .st-i { margin-left: 8px; }
-.stack:hover .st-i:first-child, .stack:focus-within .st-i:first-child, .stack.open .st-i:first-child { margin-left: 0; }
-:root:not(.still) .stack:hover .st-i, :root:not(.still) .stack.open .st-i { animation: stJiggle .5s ease-in-out both; animation-delay: calc(var(--i) * 30ms + 80ms); }
-@keyframes stJiggle { 0%, 100% { rotate: 0deg; } 25% { rotate: -5deg; } 50% { rotate: 4deg; } 75% { rotate: -2deg; } }
-.st-i:hover, .st-i:focus-visible { transform: translateY(-3px) scale(1.14); z-index: 60; }
-.st-i:hover .st-tip, .st-i:focus-visible .st-tip { opacity: 1; transform: translate(-50%, 0); }
-.st-i:focus-visible { outline: none; }
-.st-i:focus-visible .st-art { box-shadow: 0 0 0 2px var(--accent), 0 0 0 5px color-mix(in srgb, var(--accent) 30%, transparent); }
-.st-i:active { transform: scale(.94); }
-@media (hover: hover) { .st-pick:hover { color: var(--label); background: var(--fill); } }
-.st-pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.st-name { font: 600 15px/1.2 var(--font); letter-spacing: -.016em; color: var(--label2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: opacity .2s ease; }
-.stack-w:has(.stack:hover, .stack:focus-within, .stack.open) .st-name { opacity: 0; }
-@media (max-width: 560px) { .stack-w { display: none; } }
-@media (prefers-reduced-motion: reduce) { .st-i, .st-pick { transition-duration: .01s; transition-delay: 0s; } }
+/* the services: a plain link in Tenner's blue, like "See more in Browse", that opens the picker */
+.svc-link { display: inline-flex; align-items: center; gap: 6px; padding: 6px 0; border: 0; background: none; cursor: pointer; color: var(--accent);
+  font: 500 16px/1.2 var(--font); letter-spacing: -.016em; -webkit-tap-highlight-color: transparent; }
+.svc-link .chev { width: 7px; height: 7px; border-width: 0 2px 2px 0; opacity: .8; }
+.svc-link:active { opacity: .6; }
+.svc-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+@media (hover: hover) { .svc-link:hover { text-decoration: underline; text-underline-offset: 3px; } }
 
 @media (max-width: 560px) {
-  .controls { gap: 8px; flex-wrap: nowrap; }
+  .controls { gap: 16px; flex-wrap: nowrap; align-items: center; }
   #kindDD { flex: none; height: 40px; }
-  #svcDD { flex: 1 1 auto; min-width: 0; height: 40px; padding-left: 6px; }
 }
 
 .notice { margin: 18px 0 0; padding: 12px 16px; border-radius: var(--radius); background: color-mix(in srgb, var(--accent) 12%, transparent); font-size: 15px; }
@@ -1018,7 +972,7 @@ a.sh-prov:hover { text-decoration: none; }
    Reduce Transparency: every glass surface turns solid. Increase Contrast: stronger text, separators and edges. */
 @media (prefers-reduced-transparency: reduce) {
   :root:is([data-theme], :not([data-theme])) { --glass: var(--bg2); --side-bg: var(--bg2); --frost: var(--bg2); --sheet-bg: var(--card); }
-  .tabs, .top-act, .dd, .stack, .tb-pop, .top-row, .scroller, .coll, .score, .step, .btn-tinted, .segmented, .h-cta, .h-add, .h-badge, .g-b, .tag, .panel, .filters, .sheet, .mine-dlg {
+  .tabs, .top-act, .dd, .tb-pop, .top-row, .scroller, .coll, .score, .step, .btn-tinted, .segmented, .h-cta, .h-add, .h-badge, .g-b, .tag, .panel, .filters, .sheet, .mine-dlg {
     -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
   }
   .bd-ext { display: none !important; }

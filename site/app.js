@@ -58,58 +58,12 @@ function mineScope() {
   return { key: 'mine', mine: true, keys, label: 'your services', names: names.length > 2 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names.join(' and '), tv: build('tv'), movie: build('movie') };
 }
 
-// ---------- the services: one pop-up button over the browser's own picker (a native <select>), on every screen ----------
-const ICON_STORE = '<span class="svc-glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12.5H7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>';
-
+// ---------- the services: "Choose your services" opens the picker; once you've chosen, it reads "Your Services" ----------
 const pickMine = () => window.tn.pickMine(services().filter((s) => !s.store && !s.shop).map((s) => ({ key: s.key, label: s.label, logo: s.logo })));
-const iconOf = (key) => key === 'top' || key === 'mine' ? '' : key === 'store' ? ICON_STORE
-  : svc(key)?.logo ? `<img src="${esc(svc(key).logo)}" alt="">` : `<span class="svc-glyph">${esc(svc(key)?.label[0] || '')}</span>`;
-const svcSel = $('#svcSel');
-svcSel.addEventListener('change', () => {
-  if (svcSel.value === 'pick') { svcSel.value = state.route; pickMine(); return; }
-  location.hash = svcSel.value;
-});
-// ---------- computers and tablets: the services as a stack of app icons, overlapping like a pile of apps ----------
-// Point at it (or tab into it, or tap it on a tablet) and the icons fan out with a little iOS jiggle; pick one, or All.
-const stack = $('#svcStack');
-const STAR = '<span class="svc-glyph st-mine" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z" fill="currentColor"/></svg></span>';
-const PICK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-2.6-1.5L14.2 2.6h-4l-.4 2.5A7.6 7.6 0 0 0 7.2 6.6l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.6 7.6 0 0 0 2.6-1.5l2.3 1 2-3.4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>';   // a cog: where to pick your services
-function markStack() {
-  const had = stack.contains(document.activeElement);   // keyboard users keep their place when it redraws
-  const has = window.tn.mine.get().length;
-  const items = [has ? ['mine', 'My services', STAR] : null,
-    ...services().filter((x) => !x.store && !x.shop).map((x) => [x.key, x.label, iconOf(x.key)]),
-    ...services().filter((x) => x.shop).map((x) => [x.key, `${x.label} (buy or rent)`, iconOf(x.key)]),
-    ...(state.kind === 'movie' ? services().filter((x) => x.store).map((x) => [x.key, x.label, ICON_STORE]) : [])].filter(Boolean);
-  // nothing chosen = all services; the one you're on has a ring, and choosing it again goes back to all of them
-  const first = items.findIndex(([key]) => key === state.route);
-  stack.innerHTML = items.map(([key, label, icon], i) => {
-    const on = key === state.route, name = label.replace(' (buy or rent)', '');
-    return `<button type="button" role="radio" class="st-i" data-svc="${key}" aria-checked="${on}" tabindex="${on || (first < 0 && i === 0) ? 0 : -1}" aria-label="${esc(on ? `${label}, chosen. Choose again for all services` : label)}" style="--i:${i}"><span class="st-art">${icon}</span><span class="st-tip" aria-hidden="true">${esc(on ? `${name} · again for all` : name)}</span></button>`;
-  }).join('')
-    + `<button type="button" class="st-pick" data-pick aria-label="${has ? 'Change' : 'Choose'} my services" title="${has ? 'Change' : 'Choose'} my services">${PICK}</button>`;
-  $('#stName').textContent = state.route === 'top' ? 'All services' : state.route === 'mine' ? 'My services' : svc(state.route)?.label || '';
-  if (had) stack.querySelector('.st-i[tabindex="0"]')?.focus({ preventScroll: true });
-}
-stack.addEventListener('click', (e) => {
-  // tablets have no pointer to hover with: the first tap fans the stack out, the next one picks
-  if (!stack.classList.contains('open') && !matchMedia('(hover: hover)').matches) { e.preventDefault(); stack.classList.add('open'); return; }
-  if (e.target.closest('[data-pick]')) { stack.classList.remove('open'); pickMine(); return; }
-  const b = e.target.closest('.st-i'); if (!b) return;
-  stack.classList.remove('open'); b.blur();
-  location.hash = b.getAttribute('aria-checked') === 'true' ? 'top' : b.dataset.svc;   // the one you're on again: back to all
-});
-document.addEventListener('pointerdown', (e) => { if (!stack.contains(e.target)) stack.classList.remove('open'); });
-arrows(stack, () => [...stack.querySelectorAll('.st-i')], (n) => { location.hash = n.dataset.svc; });
-function markDropdowns() {
-  const has = window.tn.mine.get().length, opt = (v, l) => `<option value="${v}"${v === state.route ? ' selected' : ''}>${esc(l)}</option>`;
-  svcSel.innerHTML = opt('top', 'All services') + (has ? opt('mine', 'My services') : '')
-    + services().filter((x) => !x.store && !x.shop).map((x) => opt(x.key, x.label)).join('')
-    + services().filter((x) => x.shop).map((x) => opt(x.key, `${x.label} (buy or rent)`)).join('')
-    + (state.kind === 'movie' ? services().filter((x) => x.store).map((x) => opt(x.key, x.label)).join('') : '')
-    + `<option value="pick">${has ? 'Change my services…' : 'Choose my services…'}</option>`;
-  $('#svcDD .dd-l').textContent = state.route === 'top' ? 'All services' : state.route === 'mine' ? 'My services' : svc(state.route)?.label || 'All services';
-  const ic = iconOf(state.route); $('#svcDD .dd-ic').innerHTML = ic; $('#svcDD .dd-ic').hidden = !ic;
+const svcLink = $('#svcLink');
+svcLink.addEventListener('click', pickMine);
+function markSvcLink() {
+  svcLink.firstChild.textContent = window.tn.mine.get().length ? 'Your Services' : 'Choose your services';
 }
 
 // ---------- "Updated … ago" ----------
@@ -139,7 +93,7 @@ setInterval(() => state.trending && showUpdated(), 30000);
 async function refresh(quiet) {
   const btn = $('#refresh');
   if (!state.trending || btn.classList.contains('busy')) return;
-  if (quiet && (document.activeElement === svcSel || $('.posters.dragging'))) return;
+  if (quiet && ($('.posters.dragging'))) return;
   if (!quiet) { btn.classList.add('busy'); $('#ago').textContent = 'Checking…'; }
   try {
     const d = await fetchData(true);
@@ -252,7 +206,7 @@ function draw() {
   if (state.route === 'watchlist') { shown = new Map(); banners([]); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWatchlist()}</div>`; document.title = 'Watchlist | Tenner'; openFromUrl(); wantTitles(); return; }
   if (isNew) { shown = new Map(); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; newBanners(state.fresh?.items || []); document.title = 'New This Week | Tenner'; openFromUrl(); return; }
 
-  markDropdowns(); markStack();
+  markSvcLink();
   shown = new Map();
 
   const s = state.route === 'top' ? null : svc(state.route);
