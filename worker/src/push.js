@@ -10,6 +10,8 @@
 // The hourly run works through subscribers in batches of ten; with a SELF service binding (optional) each batch runs
 // as its own request (POST /push/send), so a long list never makes one run too long.
 
+import { linkAlerts } from './auth.js';
+
 const SITE = 'https://tenner.stream';
 const enc = new TextEncoder();
 const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -37,8 +39,10 @@ export async function pushRoute(req, env, ctx, url, json, cors) {
     const sub = body?.sub, ep = sub?.endpoint;
     let host = ''; try { host = new URL(ep).hostname; } catch {}
     if (!/^https:\/\//.test(ep || '') || !PUSH_HOSTS.test(host) || !sub.keys?.p256dh || !sub.keys?.auth) return json({ error: 'Not a push address' }, 400, cors);
-    const watch = [...new Set((Array.isArray(body.watch) ? body.watch : []).filter((k) => /^[mt]\d{1,9}$/.test(k)))].slice(0, 500);
+    let watch = [...new Set((Array.isArray(body.watch) ? body.watch : []).filter((k) => /^[mt]\d{1,9}$/.test(k)))].slice(0, 500);
     const id = `sub:${await sha(ep)}`, old = await env.PUSH.get(id, 'json');
+    const acct = await linkAlerts(req, env, id).catch(() => null);   // signed in: this device's alerts follow the account's Watchlist
+    if (acct) watch = acct;
     await env.PUSH.put(id, JSON.stringify({ sub: { endpoint: ep, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } }, watch, seen: old?.seen || [], at: Date.now() }));
     if (!old) ctx.waitUntil(send(sub, { title: 'Alerts are on', body: 'Tenner will tell you when something on your Watchlist arrives or gets a new season.', url: '/#watchlist', tag: 'tenner-hello' }, env).catch(() => {}));
     return json({ ok: true, watching: watch.length }, 200, cors);

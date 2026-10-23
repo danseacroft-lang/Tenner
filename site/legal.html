@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Privacy Policy &amp; Terms of Service · Tenner</title>
-  <meta name="description" content="Tenner’s Privacy Policy and Terms of Service: no accounts, no tracking, no cookies.">
+  <meta name="description" content="Tenner’s Privacy Policy and Terms of Service: optional accounts, no tracking, no cookies.">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="favicon.ico" sizes="48x48">
@@ -36,8 +36,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.24.0">
-  <link rel="stylesheet" href="legal.css?v=1.24.0">
+  <link rel="stylesheet" href="styles.css?v=1.25.0">
+  <link rel="stylesheet" href="legal.css?v=1.25.0">
 </head>
 <body class="legal">
   <a class="skip" href="#main">Skip to the page</a>
@@ -87,7 +87,7 @@
       <a class="side-link" href="legal.html#privacy" aria-current="page">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies" aria-current="page">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.24.0</span>
+      <span class="side-ver">Tenner 1.25.0</span>
     </div>
   </div>
 
@@ -106,12 +106,11 @@
 
       <h2>1. Overview</h2>
       <p>Tenner (“we”, “us”, “our”) is a website that shows the UK’s most popular shows and films on Netflix, Disney+, Prime Video, HBO Max and Paramount+, updated every hour. This policy explains what information is involved when you visit the site and what choices you have.</p>
-      <p>The short version: we don’t collect or store any personal information about you. There are no accounts, no advertising and no tracking. The only exceptions are if you choose to send us a message, or to turn on Watchlist alerts.</p>
+      <p>The short version: unless you choose to create an account, we don’t collect or store any personal information about you. There’s no advertising and no tracking. Accounts are optional, and so are messages and Watchlist alerts; each is explained below.</p>
 
       <h2>2. Information We Collect</h2>
       <p>We don’t collect personal information when you visit the site. In particular, the site does not use:</p>
       <ul>
-        <li>accounts or logins;</li>
         <li>analytics or visitor-tracking tools;</li>
         <li>advertising or advertising networks;</li>
         <li>cookies of any kind.</li>
@@ -121,26 +120,37 @@
 
       <p><strong>If you turn on Watchlist alerts.</strong> Alerts are off unless you switch them on. When you do, your browser gives Tenner a push address for this device (made by your browser’s own notification service, such as Apple’s, Google’s or Mozilla’s), and Tenner keeps it on Cloudflare together with the list of titles on your Watchlist (their TMDB numbers only), so it can tell you when one of them arrives on a service or gets a new season. Nothing else is kept: no name, email address or location. The list is updated when your Watchlist changes, and both are deleted when you turn alerts off, or when your browser tells us the address no longer works. Alerts are sent through your browser’s notification service and are encrypted so that only your device can read them.</p>
 
+      <p><strong>If you create an account.</strong> Accounts are optional; Tenner works the same without one. If you make one, we keep:</p>
+      <ul>
+        <li><strong>Your name</strong>, as you typed it (or your first name from Google), and the colour you choose for your initial;</li>
+        <li><strong>How you sign in:</strong> the public half of each passkey you add (the private half never leaves your device or password manager), and, if you use Google, Google’s number for your account, your email address and your profile picture’s address, so we can recognise you and show which Google account is linked;</li>
+        <li><strong>What you keep in Tenner:</strong> your Watchlist, where you’re up to in shows, your services and your settings, so they’re the same on every device you sign in on;</li>
+        <li><strong>Where you’re signed in:</strong> the kind of device (such as “iPhone”), when you signed in and when it was last used. The sign-in itself is a random code kept on your device; we store only a scrambled copy of it;</li>
+        <li><strong>Your shared list link</strong>, if you turn sharing on. Anyone with the link can see your name, picture and Watchlist until you turn it off.</li>
+      </ul>
+      <p>This is kept in a database run by Cloudflare. We use it only to run your account. You can see it on the Account page, sign out of any device, and delete your account there at any time, which removes everything above straight away. Accounts don’t use cookies.</p>
+
       <h2>3. Information Stored on Your Device</h2>
       <p>To make the site work better, your browser keeps a few things on your own device:</p>
       <ul>
         <li><strong>Your theme:</strong> if you pick Auto or Day instead of Night.</li>
         <li><strong>Shows, Films or Both:</strong> which charts you last chose to see.</li>
         <li><strong>An offline copy:</strong> the site’s pages, its latest charts and some recent posters, so Tenner opens quickly and still works without a connection (especially if you add it to your home screen).</li>
-        <li><strong>Your Watchlist:</strong> the titles you save, with their names and posters. There’s no account: your Watchlist stays in this browser, on this device. You can carry it to another device yourself with Move to another device in Settings.</li>
+        <li><strong>Your Watchlist:</strong> the titles you save, with their names and posters. It stays in this browser, on this device, unless you sign in to an account (which keeps it in step on your devices), or carry it across yourself with Move to another device in Settings.</li>
         <li><strong>My services:</strong> the streaming services you’ve told Tenner you use, if you choose them, so it can show you a Top 10 of just those.</li>
         <li><strong>Your settings:</strong> the choices you make on the Settings page, such as which page Tenner opens on.</li>
         <li><strong>Your progress:</strong> the season and episode you’re up to in shows you’re watching, if you set it. Like your Watchlist, it stays on this device.</li>
         <li><strong>The privacy note:</strong> that you’ve pressed Got it, so the note about cookies isn’t shown again.</li>
       </ul>
-      <p>Your filters and searches on Browse live only in the page’s address, so you can bookmark or share them; they aren’t saved anywhere. <strong>Move to another device</strong> (in Settings) puts your Watchlist, progress and services into a link or QR code that only you see; nothing is uploaded. Apart from Watchlist alerts, if you turn them on (above), none of this is ever sent to us or anyone else. You can remove it at any time by clearing your browser’s data for this site.</p>
+      <p>Your filters and searches on Browse live only in the page’s address, so you can bookmark or share them; they aren’t saved anywhere. <strong>Move to another device</strong> (in Settings) puts your Watchlist, progress and services into a link or QR code that only you see; nothing is uploaded. Apart from Watchlist alerts and your account, if you choose them (above), none of this is ever sent to us or anyone else. You can remove it at any time by clearing your browser’s data for this site.</p>
 
       <h2>4. Third-Party Services</h2>
       <p>Like every website, Tenner relies on a few outside services. When your browser connects to them, they receive the technical details that any web request carries, such as your IP address and browser type. Each handles that information under its own privacy policy:</p>
       <ul>
         <li><strong>GitHub Pages</strong> hosts the website and its hourly charts. GitHub may log visitors’ IP addresses for security and to keep the service running. See <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">GitHub’s Privacy Statement</a>.</li>
         <li><strong>TMDB</strong> (The Movie Database) supplies the posters, artwork and service logos, which your browser loads directly from TMDB’s image servers. See <a href="https://www.themoviedb.org/privacy-policy" target="_blank" rel="noopener">TMDB’s Privacy Policy</a>.</li>
-        <li><strong>Cloudflare</strong> runs Tenner’s search service. When you search all films and shows, search Cast &amp; Crew or open a cast list, what you typed or opened is passed to TMDB to find the answer. It also passes on messages from the Contact page to our inbox, and keeps the push address and Watchlist of anyone who turns on alerts (see section 2). Nothing else is stored against you. See <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare’s Privacy Policy</a>.</li>
+        <li><strong>Cloudflare</strong> runs Tenner’s search service. When you search all films and shows, search Cast &amp; Crew or open a cast list, what you typed or opened is passed to TMDB to find the answer. It also passes on messages from the Contact page to our inbox, keeps the push address and Watchlist of anyone who turns on alerts, and holds accounts for anyone who makes one (see section 2). Nothing else is stored against you. See <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare’s Privacy Policy</a>.</li>
+        <li><strong>Google</strong> provides Sign in with Google. Its button loads from Google only on the Account page, and only Google’s sign-in is involved: if you use it, Google tells us your account number, name, email address and picture. See <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google’s Privacy Policy</a>.</li>
         <li><strong>YouTube</strong> plays trailers, but only when you press Trailer on a title. Tenner uses YouTube’s privacy-enhanced mode (youtube-nocookie.com), and nothing loads from YouTube until you press play. See <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google’s Privacy Policy</a>.</li>
       </ul>
       <p>The charts and where-to-watch details are gathered every hour by our own automated process from TMDB (with where-to-watch data from JustWatch), Netflix’s published Top 10 and Watchmode. Your browser doesn’t contact JustWatch, Netflix or Watchmode while you use Tenner. Watchmode also supplies the Coming soon and Leaving soon dates and the rent and buy prices. If you follow a link to Netflix, TMDB or another site, that site’s own policies apply.</p>
@@ -208,6 +218,6 @@
   </main>
 
 
-  <script src="shell.js?v=1.24.0" defer></script>
+  <script src="shell.js?v=1.25.0" defer></script>
 </body>
 </html>

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Watchlist · Tenner</title>
+  <meta name="description" content="A Watchlist shared from Tenner: the UK’s top ten shows and films, every hour.">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="favicon.ico" sizes="48x48">
+  <link rel="icon" href="icon-96.png" type="image/png" sizes="96x96">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-title" content="Tenner">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/inter-tight-latin.woff2" as="font" type="font/woff2" crossorigin>
+
+  <!-- Link previews in WhatsApp, iMessage, Messenger etc. -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Tenner">
+  <meta property="og:title" content="Tenner: your top ten, every hour">
+  <meta property="og:description" content="The UK's top 10 shows and films on Netflix, Disney+, Prime Video, HBO Max and Paramount+.">
+  <meta property="og:url" content="https://tenner.stream/list.html">
+  <meta property="og:image" content="https://tenner.stream/og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <script>/* Night is the default; Day or Auto only when chosen */
+  function tnTheme(t){var r=document.documentElement;if(t==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",t);
+    var c=t==="auto"?null:(t==="light"?"#ffffff":"#000000");document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){if(!m.dataset.c)m.dataset.c=m.content;m.content=c||m.dataset.c;});}
+  try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
+  try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
+  addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
+  <link rel="stylesheet" href="styles.css?v=1.25.0">
+  <link rel="stylesheet" href="legal.css?v=1.25.0">
+  <link rel="stylesheet" href="settings.css?v=1.25.0">
+  <link rel="stylesheet" href="account.css?v=1.25.0">
+  <meta name="robots" content="noindex">
+</head>
+<body class="legal">
+  <a class="skip" href="#main">Skip to the page</a>
+
+  <!-- the bar at the top: the logo, the tabs (a floating bar at the bottom on phones) and the round button -->
+  <div class="top-row">
+    <div class="top-brand">
+      <a class="lt-logo" href="./" aria-label="Tenner, back to the chart"><img src="logo.svg" alt="" width="36" height="36"></a>
+      <span class="brand-name">Tenner</span>
+    </div>
+    <nav class="tabbar" aria-label="Pages"><div class="tabs" role="tablist" id="tabs"><span class="tab-ind" id="tabInd" aria-hidden="true"></span>
+      <button type="button" role="tab" data-tab="search" aria-selected="false" tabindex="-1">
+        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 20 20"/></svg>
+        <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><circle class="thick" cx="10.5" cy="10.5" r="6.5" fill="none"/><path class="thick" d="M15.5 15.5 20 20"/></svg>
+        <span>Search</span></button>
+      <button type="button" role="tab" data-tab="top" aria-selected="false" tabindex="-1">
+        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4.5h8v5a4 4 0 0 1-8 0z"/><path d="M8 6.5H5.5a2.5 2.5 0 0 0 2.6 3.4M16 6.5h2.5a2.5 2.5 0 0 1-2.6 3.4M12 13.5v3.5M8.5 20h7M10 17h4"/></svg>
+        <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><path class="solid" d="M7.3 3.8h9.4v5.7a4.7 4.7 0 0 1-9.4 0z"/><path class="thick" d="M7.6 6.5H5.5a2.5 2.5 0 0 0 2.6 3.4M16.4 6.5h2.1a2.5 2.5 0 0 1-2.6 3.4M12 14v3M8.5 20h7"/></svg>
+        <span>Top 10</span></button>
+      <button type="button" role="tab" data-tab="new" aria-selected="false" tabindex="-1">
+        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3.5l1.8 4.9 4.9 1.8-4.9 1.8-1.8 4.9-1.8-4.9-4.9-1.8 4.9-1.8z"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z"/></svg>
+        <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><path class="solid" d="M10.5 2.5l2.1 5.4 5.4 2.1-5.4 2.1-2.1 5.4-2.1-5.4L3 10l5.4-2.1z"/><path class="solid" d="M18 13.5l1.1 2.4 2.4 1.1-2.4 1.1L18 20.5l-1.1-2.4-2.4-1.1 2.4-1.1z"/></svg>
+        <span>New</span></button>
+      <button type="button" role="tab" data-tab="browse" aria-selected="false" tabindex="-1">
+        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>
+        <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><rect class="solid" x="3" y="3" width="8" height="8" rx="2.2"/><rect class="solid" x="13" y="3" width="8" height="8" rx="2.2"/><rect class="solid" x="3" y="13" width="8" height="8" rx="2.2"/><rect class="solid" x="13" y="13" width="8" height="8" rx="2.2"/></svg>
+        <span>Browse</span></button>
+      <button type="button" role="tab" data-tab="people" aria-selected="false" tabindex="-1">
+        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 19.5c.8-3.4 3.3-5.3 6.2-5.3s5.4 1.9 6.2 5.3"/><circle cx="17" cy="9.5" r="2.6"/><path d="M16.2 14.4c2.4.1 4.3 1.7 5 4.6"/></svg>
+        <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><circle class="solid" cx="9" cy="8.5" r="3.8"/><path class="solid" d="M2.5 20c.7-3.8 3.4-6.2 6.5-6.2s5.8 2.4 6.5 6.2z"/><circle class="solid" cx="17.2" cy="9.4" r="2.9"/><path class="solid" d="M16.6 14c2.9 0 5 2 5.6 5.4h-4.9c-.2-2-.8-3.8-1.9-5.2z"/></svg>
+        <span>Cast &amp; Crew</span></button>
+      <button type="button" role="tab" data-tab="watchlist" aria-selected="false" tabindex="-1">
+        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h11v17L12 16.6 6.5 20.5z"/></svg>
+        <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><path class="solid" d="M6 3h12v18.4l-6-4.2-6 4.2z"/></svg>
+        <span>Watchlist</span></button>
+    </div></nav>
+    <h2 class="side-h" id="sideMore">More</h2>
+    <a class="side-about" href="about.html"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M12 11v5.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.1" fill="currentColor"/></svg><span>About</span></a>
+    <div class="top-act">
+      <a class="tb-btn tb-about tb-settings" href="settings.html" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-2.6-1.5L14.2 2.6h-4l-.4 2.5A7.6 7.6 0 0 0 7.2 6.6l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.6 7.6 0 0 0 2.6-1.5l2.3 1 2-3.4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></a>
+      <a class="tb-btn tb-about" href="about.html" aria-label="About Tenner" title="About"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v5.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.3" fill="currentColor"/></svg></a>
+      <button type="button" class="tb-btn" id="thBtn" aria-haspopup="menu" aria-controls="thPop" aria-expanded="false" aria-label="Theme" title="Theme"><span id="thIc" style="display:contents"></span></button>
+    </div>
+    <a class="side-about side-settings" href="settings.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-2.6-1.5L14.2 2.6h-4l-.4 2.5A7.6 7.6 0 0 0 7.2 6.6l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.6 7.6 0 0 0 2.6-1.5l2.3 1 2-3.4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><span>Settings</span></a>
+    <div class="side-links" aria-label="Site information">
+      <a class="side-link" href="legal.html#terms">Terms of Service</a>
+      <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
+      <a class="side-link" href="legal.html#cookies">Cookies</a>
+      <a class="side-link" href="contact.html">Contact</a>
+      <span class="side-ver">Tenner 1.25.0</span>
+    </div>
+  </div>
+
+  <div class="tb-pop th-pop" id="thPop" role="menu" aria-labelledby="thH" popover>
+    <div class="tb-head"><h2 id="thH">Theme</h2></div>
+    <div class="th-list"><button type="button" role="menuitemradio" data-mode="auto" aria-checked="false"><i><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 3.4a8.6 8.6 0 0 1 0 17.2z" fill="currentColor"/></svg></i><span><b>Auto</b><small>Follows your device</small></span><em aria-hidden="true"></em></button><button type="button" role="menuitemradio" data-mode="light" aria-checked="false"><i><svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2 12h2.4M19.6 12H22M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg></i><span><b>Day</b><small>Light all the time</small></span><em aria-hidden="true"></em></button><button type="button" role="menuitemradio" data-mode="dark" aria-checked="false"><i><svg class="ic-moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.7A8.5 8.5 0 1 1 9.3 3.5a7 7 0 0 0 11.2 11.2Z"/></svg></i><span><b>Night</b><small>Dark all the time</small></span><em aria-hidden="true"></em></button></div>
+  </div>
+
+
+  <main id="main" class="lwrap set acct ls" tabindex="-1">
+    <div class="ac-me"><span id="lsAv"></span><div class="ac-who"><h1 id="lsH">Watchlist</h1><p class="ls-sub" id="lsSub">Loading…</p></div></div>
+    <ol class="ls-grid" id="lsGrid"></ol>
+    <a class="btn btn-tinted ls-cta" href="./">See what’s in the UK Top 10 on Tenner</a>
+  </main>
+
+
+  <script src="shell.js?v=1.25.0" defer></script>
+  <script src="list.js?v=1.25.0" defer></script>
+</body>
+</html>

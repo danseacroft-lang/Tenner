@@ -5,12 +5,14 @@
 //   GET /person/123   one person: biography, and everything they've been in or made
 //   GET /credits/m123 a title's main cast and key crew
 //   /push/…           Watchlist alerts (push.js)
+//   /auth/…, /me…, /share/…  accounts: passkeys, Google, sync, shared lists (auth.js)
 //   POST /contact     the Contact page's form: emailed to Tenner's inbox (Cloudflare Email Routing). The inbox's
 //                     address is a Worker secret (SUPPORT_EMAIL), so it's never in the website or this code
 // Only Tenner's own pages may call it (CORS), and answers are cached at Cloudflare's edge, so popular searches and
 // titles barely touch TMDB: searches for a day, titles for six hours.
 import { EmailMessage } from 'cloudflare:email';
 import { pushRoute, pushRun, pushSend } from './push.js';
+import { authRoute } from './auth.js';
 
 const TMDB = 'https://api.themoviedb.org/3', IMG = 'https://image.tmdb.org/t/p', REGION = 'GB';
 
@@ -23,9 +25,10 @@ export default {
     const allowed = (env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
     const ok = allowed.includes(origin);
     const cors = ok ? { 'access-control-allow-origin': origin, vary: 'origin' } : {};
-    if (req.method === 'OPTIONS') return new Response(null, { status: ok ? 204 : 403, headers: { ...cors, 'access-control-allow-methods': 'GET, POST', 'access-control-allow-headers': 'content-type', 'access-control-max-age': '86400' } });
+    if (req.method === 'OPTIONS') return new Response(null, { status: ok ? 204 : 403, headers: { ...cors, 'access-control-allow-methods': 'GET, POST, PUT, PATCH, DELETE', 'access-control-allow-headers': 'content-type, authorization', 'access-control-max-age': '86400' } });
     if (!ok) return json({ error: 'Not allowed from this site' }, 403, cors);
     if (url.pathname.startsWith('/push/')) return pushRoute(req, env, ctx, url, json, cors);
+    if (/^\/(auth|me|share)(\/|$)/.test(url.pathname)) return authRoute(req, env, ctx, url, json, { ...cors, 'cache-control': 'no-store' }, origin);
     if (url.pathname === '/contact') return req.method === 'POST' ? contact(req, env, cors) : json({ error: 'POST only' }, 405, cors);
     if (req.method !== 'GET') return json({ error: 'GET only' }, 405, cors);
     if (!env.TMDB_TOKEN) return json({ error: 'Not set up yet' }, 503, cors);

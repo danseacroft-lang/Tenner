@@ -11,6 +11,9 @@ ALLOWED_ORIGINS = "https://tenner.stream,https://www.tenner.stream,https://danse
 
 # The Contact form emails Tenner's inbox through Cloudflare Email Routing (on tenner.stream). No address here: the
 # inbox is a Worker secret (SUPPORT_EMAIL), and it has to be a verified destination address in Email Routing.
+# Sign in with Google: the OAuth client ID from Google Cloud (public, not a secret). Empty: the Google button stays hidden.
+GOOGLE_CLIENT_ID = ""
+
 [[send_email]]
 name = "MAILER"
 
@@ -18,3 +21,6 @@ name = "MAILER"
 # adds its binding here before deploying.
 [triggers]
 crons = ["23 * * * *"]
+
+# Accounts (src/auth.js): Cloudflare D1. The deploy workflow creates the database the first time, adds its binding
+# (DB) here before deploying, and applies schema.sql.

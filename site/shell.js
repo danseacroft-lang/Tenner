@@ -4,11 +4,18 @@
 (() => {
   const $ = (s) => document.querySelector(s);
   const root = document.documentElement;
-  // ---------- settings (settings.html), on this device only ----------
+  // ---------- when each thing last changed on this device, so an account can merge devices fairly (newest wins) ----------
+  // { removed: { k: when } (titles taken off the Watchlist), pat: { k: when } (progress), sat (services), pfat (settings) }
+  const SYNC = 'tenner-sync';
+  const meta = {
+    get() { try { return { removed: {}, pat: {}, sat: 0, pfat: 0, ...JSON.parse(localStorage.getItem(SYNC) || '{}') }; } catch { return { removed: {}, pat: {}, sat: 0, pfat: 0 }; } },
+    edit(fn) { const m = meta.get(); fn(m); try { localStorage.setItem(SYNC, JSON.stringify(m)); } catch {} },
+  };
+  // ---------- settings (settings.html), on this device (and in your account, if you sign in) ----------
   const PREFS = 'tenner-settings', DEF = { start: 'auto', anim: false, moves: true, ratings: true, hero: true, trailers: 'here', no18: false };
   const prefs = {
     get() { try { const { still, ...p } = JSON.parse(localStorage.getItem(PREFS) || '{}'); return { ...DEF, ...p }; } catch { return { ...DEF }; } },   // still: the old Reduce motion setting, gone
-    set(k, v) { const p = prefs.get(); p[k] = v; try { localStorage.setItem(PREFS, JSON.stringify(p)); } catch {} apply(); dispatchEvent(new Event('tn:prefs')); },
+    set(k, v) { const p = prefs.get(); p[k] = v; try { localStorage.setItem(PREFS, JSON.stringify(p)); } catch {} meta.edit((m) => { m.pfat = Date.now(); }); apply(); dispatchEvent(new Event('tn:prefs')); },
   };
   // no animations unless you switch them on in Settings (and never when the device asks for reduced motion)
   const osStill = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -78,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.24.0';
+  const version = '1.25.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -92,7 +99,11 @@
   const saved = {
     all() { try { const l = JSON.parse(localStorage.getItem(WL) || '[]'); return Array.isArray(l) ? l.filter((x) => x?.k) : []; } catch { return []; } },
     has(k) { return !!k && saved.all().some((x) => x.k === k); },
-    set(l) { try { localStorage.setItem(WL, JSON.stringify(l)); } catch {} dispatchEvent(new Event('tn:saved')); },
+    set(l) {
+      const keep = new Set(l.map((x) => x.k)), gone = saved.all().filter((x) => !keep.has(x.k));
+      if (gone.length) meta.edit((m) => { for (const x of gone) m.removed[x.k] = Date.now(); });   // so other devices take them off too
+      try { localStorage.setItem(WL, JSON.stringify(l)); } catch {} dispatchEvent(new Event('tn:saved'));
+    },
     toggle(info) {
       if (!info?.k) return false;
       const l = saved.all(), on = l.some((x) => x.k === info.k);
@@ -107,7 +118,7 @@
   const progress = {
     all() { try { return JSON.parse(localStorage.getItem(PR) || '{}') || {}; } catch { return {}; } },
     get(k) { const p = progress.all()[k]; return Array.isArray(p) && p.length === 2 ? p : null; },
-    set(k, p) { const all = progress.all(); if (p) all[k] = p; else delete all[k]; try { localStorage.setItem(PR, JSON.stringify(all)); } catch {} dispatchEvent(new Event('tn:saved')); },
+    set(k, p) { const all = progress.all(); if (p) all[k] = p; else delete all[k]; try { localStorage.setItem(PR, JSON.stringify(all)); } catch {} meta.edit((m) => { m.pat[k] = Date.now(); }); dispatchEvent(new Event('tn:saved')); },
   };
   // the next episode to watch after [s, e], given each season's episode count; null when you're caught up
   const nextUp = (p, sz) => { if (!p) return [1, 1]; const [s, e] = p; if (sz?.[s - 1] && e < sz[s - 1]) return [s, e + 1]; if (sz && s < sz.length) return [s + 1, 1]; return sz ? null : [s, e + 1]; };
@@ -125,7 +136,7 @@
   const MS = 'tenner-services';
   const mine = {
     get() { try { const l = JSON.parse(localStorage.getItem(MS) || '[]'); return Array.isArray(l) ? l : []; } catch { return []; } },
-    set(l) { try { if (l.length) localStorage.setItem(MS, JSON.stringify(l)); else localStorage.removeItem(MS); } catch {} dispatchEvent(new Event('tn:mine')); },
+    set(l) { try { if (l.length) localStorage.setItem(MS, JSON.stringify(l)); else localStorage.removeItem(MS); } catch {} meta.edit((m) => { m.sat = Date.now(); }); dispatchEvent(new Event('tn:mine')); },
   };
   // the picker: a small sheet of switches, one per service
   function pickMine(list) {
@@ -166,7 +177,7 @@
     ['Share on Facebook', (t, u) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(u)}`,
       '<circle cx="12" cy="12" r="11" fill="#0866FF"/><path fill="#fff" d="M13.4 23v-8.1h2.7l.42-3.2H13.4V9.7c0-.92.26-1.55 1.58-1.55h1.68V5.3a22 22 0 0 0-2.45-.13c-2.43 0-4.09 1.48-4.09 4.2v2.35H7.37v3.2h2.75V23z"/>'],
     ['Send on WhatsApp', (t, u) => `https://wa.me/?text=${encodeURIComponent(`${t} ${u}`)}`,
-      '<path fill="#25D366" d="M12 1.5A10.4 10.4 0 0 0 3.05 17.2L1.6 22.5l5.45-1.43A10.4 10.4 0 1 0 12 1.5Z"/><path fill="#fff" d="M17.6 14.5c-.3-.15-1.8-.88-2.07-.98-.28-.1-.48-.15-.68.15-.2.3-.78.98-.96 1.18-.18.2-.35.22-.65.07a8.5 8.5 0 0 1-4.2-3.67c-.32-.55.32-.5.9-1.68.1-.2.05-.37-.02-.52-.08-.15-.68-1.64-.93-2.24-.25-.59-.5-.5-.68-.51h-.58c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.5 0 1.47 1.07 2.9 1.22 3.1.24.0 2.1 3.2 5.08 4.49 1.89.81 2.62.88 3.56.74.57-.09 1.8-.74 2.04-1.45.25-.71.25-1.32.18-1.45-.07-.13-.27-.2-.57-.35Z"/>'],
+      '<path fill="#25D366" d="M12 1.5A10.4 10.4 0 0 0 3.05 17.2L1.6 22.5l5.45-1.43A10.4 10.4 0 1 0 12 1.5Z"/><path fill="#fff" d="M17.6 14.5c-.3-.15-1.8-.88-2.07-.98-.28-.1-.48-.15-.68.15-.2.3-.78.98-.96 1.18-.18.2-.35.22-.65.07a8.5 8.5 0 0 1-4.2-3.67c-.32-.55.32-.5.9-1.68.1-.2.05-.37-.02-.52-.08-.15-.68-1.64-.93-2.24-.25-.59-.5-.5-.68-.51h-.58c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.5 0 1.47 1.07 2.9 1.22 3.1.25.0 2.1 3.2 5.08 4.49 1.89.81 2.62.88 3.56.74.57-.09 1.8-.74 2.04-1.45.25-.71.25-1.32.18-1.45-.07-.13-.27-.2-.57-.35Z"/>'],
     ['Send on Telegram', (t, u) => `https://t.me/share/url?url=${encodeURIComponent(u)}&text=${encodeURIComponent(t)}`,
       '<circle cx="12" cy="12" r="11" fill="#29A9EB"/><path fill="#fff" d="M5.3 11.7 16.9 7.2c.54-.2 1.01.13.83.95l-1.97 9.3c-.15.66-.54.82-1.09.51l-3-2.22-1.45 1.4c-.16.16-.3.3-.6.3l.21-3.05 5.55-5.01c.24-.21-.05-.33-.38-.12l-6.86 4.32-2.96-.92c-.64-.2-.65-.64.14-.95Z"/>'],
   ];
@@ -312,7 +323,8 @@
   const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   const pushSub = async () => { try { const reg = await navigator.serviceWorker?.getRegistration(); return (await reg?.pushManager?.getSubscription()) || null; } catch { return null; } };
-  const post = (path, body) => fetch(`${api}${path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const post = (path, body) => { const t = (() => { try { return localStorage.getItem('tenner-session'); } catch { return null; } })();
+    return fetch(`${api}${path}`, { method: 'POST', headers: { 'content-type': 'application/json', ...(t ? { authorization: `Bearer ${t}` } : {}) }, body: JSON.stringify(body) }); };
   const syncAlerts = (sub) => post('/push/subscribe', { sub: sub.toJSON(), watch: saved.all().map((x) => x.k) }).then((r) => { if (!r.ok) throw new Error('subscribe'); });
   const alerts = {
     // 'on', 'off', 'blocked' (turned off in the browser's settings), 'install' (iPhone: add to the Home Screen first) or 'unsupported'
@@ -359,7 +371,78 @@
     }
   }
 
-  window.tn = { prefs, version, esc, hue, glide, arrows, segment, reduce, contact, saved, progress, nextUp, whenText, mine, pickMine, api, share, alerts, isIOS, standalone };
+  // ---------- accounts (worker/src/auth.js): optional; sign in and this device keeps in step with your others ----------
+  // The session is a random token kept here (no cookies). Whenever the Watchlist, progress, services or settings change,
+  // and when you come back to the page, this device's copy goes to the account, which merges it with your other devices'
+  // (newest change wins, item by item) and hands back the result.
+  const SESS = 'tenner-session', ACC = 'tenner-account';
+  const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+  const lsSet = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch {} };
+  let applying = false, acctT = 0, syncing = null;
+  const account = {
+    token: () => lsGet(SESS),
+    user() { try { return JSON.parse(lsGet(ACC) || 'null'); } catch { return null; } },
+    async call(method, path, body) {
+      const t = account.token();
+      const r = await fetch(`${api}${path}`, { method, headers: { 'content-type': 'application/json', ...(t ? { authorization: `Bearer ${t}` } : {}) }, body: body ? JSON.stringify(body) : undefined });
+      const d = await r.json().catch(() => ({}));
+      if (r.status === 401 && t) { account.forget(); }   // signed out elsewhere (or the account was deleted)
+      if (!r.ok) throw Object.assign(new Error(d.error || 'Something went wrong'), { status: r.status });
+      return d;
+    },
+    signedIn(token, user) {
+      lsSet(SESS, token); lsSet(ACC, JSON.stringify(user));
+      dispatchEvent(new Event('tn:account')); return account.sync();
+    },
+    setUser(user) { lsSet(ACC, JSON.stringify(user)); dispatchEvent(new Event('tn:account')); },
+    forget() { lsSet(SESS, null); lsSet(ACC, null); dispatchEvent(new Event('tn:account')); },
+    async signOut(clear) {
+      try { await account.call('POST', '/auth/logout'); } catch {}
+      account.forget();
+      if (clear) { ['tenner-watchlist', 'tenner-progress', 'tenner-services', SYNC].forEach((k) => lsSet(k, null)); dispatchEvent(new Event('tn:saved')); dispatchEvent(new Event('tn:mine')); }
+    },
+    local() {
+      const m = meta.get();
+      return { watchlist: saved.all(), removed: m.removed, progress: progress.all(), pat: m.pat, services: mine.get(), sat: m.sat, settings: prefs.get(), pfat: m.pfat };
+    },
+    // send this device's copy; take back the merged one
+    sync() {
+      if (!account.token()) return Promise.resolve(null);
+      if (syncing) return syncing;
+      syncing = account.call('PUT', '/me/data', { data: account.local() }).then(({ data }) => { applyData(data); return data; })
+        .catch(() => null).finally(() => { syncing = null; });
+      return syncing;
+    },
+  };
+  function applyData(d) {
+    if (!d) return;
+    const before = JSON.stringify(account.local());
+    applying = true;
+    lsSet(WL, JSON.stringify(d.watchlist || []));
+    lsSet(PR, JSON.stringify(d.progress || {}));
+    lsSet(MS, d.services?.length ? JSON.stringify(d.services) : null);
+    if (d.settings && Object.keys(d.settings).length) lsSet(PREFS, JSON.stringify({ ...DEF, ...d.settings }));
+    lsSet(SYNC, JSON.stringify({ removed: d.removed || {}, pat: d.pat || {}, sat: d.sat || 0, pfat: d.pfat || 0 }));
+    if (JSON.stringify(account.local()) !== before) { apply(); dispatchEvent(new Event('tn:saved')); dispatchEvent(new Event('tn:mine')); dispatchEvent(new Event('tn:prefs')); }
+    applying = false;
+    dispatchEvent(new Event('tn:synced'));
+  }
+  const soon = () => { if (applying || !account.token()) return; clearTimeout(acctT); acctT = setTimeout(account.sync, 1200); };
+  ['tn:saved', 'tn:mine', 'tn:prefs'].forEach((e) => addEventListener(e, soon));
+  addEventListener('tn:check', () => account.sync());
+  if (account.token()) setTimeout(account.sync, 600);
+
+  // the account in the sidebar (and the phone's menu): your picture and name, or Sign in
+  const avatar = (u, cls = '') => u?.picture ? `<img class="av ${cls}" src="${esc(u.picture)}" alt="" referrerpolicy="no-referrer">`
+    : `<span class="av ${cls}" style="--h:${u ? u.hue : 210}" aria-hidden="true">${u ? esc((u.name || '?').trim()[0]?.toUpperCase() || '?') : '<svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4" fill="currentColor"/><path d="M4.5 20c1-4 4-6 7.5-6s6.5 2 7.5 6z" fill="currentColor"/></svg>'}</span>`;
+  const links = $('.side-links');
+  if (links) {
+    links.insertAdjacentHTML('afterbegin', '<a class="side-acct" id="sideAcct" href="account.html"></a>');
+    const draw = () => { const u = account.user(); $('#sideAcct').innerHTML = `${avatar(u)}<span><b>${u ? esc(u.name || 'You') : 'Sign in'}</b><small>${u ? 'Your account' : 'Sync across your devices'}</small></span>`; if (location.pathname.endsWith('account.html')) $('#sideAcct').setAttribute('aria-current', 'page'); };
+    draw(); addEventListener('tn:account', draw);
+  }
+
+  window.tn = { prefs, version, esc, hue, glide, arrows, segment, reduce, contact, saved, progress, nextUp, whenText, mine, pickMine, api, share, alerts, isIOS, standalone, account, avatar };
 
   // ---------- tabs ----------
   const tabs = [...document.querySelectorAll('#tabs [role=tab]')], ind = $('#tabInd'), names = tabs.map((t) => t.dataset.tab);

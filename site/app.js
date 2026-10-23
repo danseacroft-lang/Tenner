@@ -765,7 +765,7 @@ function pageWatchlist() {
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></li>`;
       }).join('')}</ul>`;
   return `<h1 class="large-title page-title">Watchlist</h1>
-    <p class="lede">${list.length ? `${list.length} title${list.length === 1 ? '' : 's'}, newest first. ` : ''}Saved on this device only, no account needed.</p>
+    <p class="lede">${list.length ? `${list.length} title${list.length === 1 ? '' : 's'}, newest first. ` : ''}${window.tn.account.user() ? 'Kept in step on every device you’re signed in on.' : 'Saved on this device. <a href="account.html">Sign in</a> to have it on all your devices.'}</p>
     ${list.length ? '<div class="wl-alert" id="wlAlert" hidden></div>' : ''}${comingUp(list)}${body}`;
 }
 // shows: where you're up to, and when the next episode lands

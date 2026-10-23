@@ -141,5 +141,8 @@
     try { ['tenner-watchlist', 'tenner-progress', 'tenner-services', 'tenner-settings', 'tenner-kind'].forEach((k) => localStorage.removeItem(k)); } catch {}
     saved.set([]); mine.set([]); prefs.set('start', 'auto'); show(); say('Cleared');
   });
+  // the account row at the top: who's signed in
+  const acct = () => { const u = window.tn.account.user(); document.getElementById('setAcctNow').textContent = u ? `Signed in as ${u.name || 'you'}. Everything here is kept in step on your devices` : 'Sign in to keep your Watchlist and settings in step on every device'; };
+  acct(); addEventListener('tn:account', acct);
   show();
 })();
