@@ -8,23 +8,35 @@
   // the chart history (data/trail.json: each charted title's recent ranks), loaded with the first sheet
   let trailP = null;
   const trail = () => (trailP ||= fetch(`data/trail.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
-  addEventListener('tn:check', () => { trailP = null; });
+  // what it costs to rent or buy (data/prices.json, the buy-or-rent chart's titles), loaded with the first sheet too
+  let priceP = null, priceD = null;
+  const prices = () => (priceP ||= fetch(`data/prices.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
+  addEventListener('tn:check', () => { trailP = null; priceP = null; });
   let trailD = null;
   const CHART = { all: 'in the UK', netflix: 'on Netflix', disney: 'on Disney+', prime: 'on Prime Video', hbomax: 'on HBO Max', paramount: 'on Paramount+' };
 
   // ---------- trackers ----------
-  // On the chart: a small line of the title's rank (No. 1 at the top) over the last week, or the last day while the
-  // history is still building up. Gaps where it was out of the top 10.
+  // On the chart: a line of the title's rank (No. 1 at the top) over the last month, or the last day while the history
+  // is still building up, gaps where it was out of the top 10; and its life on the charts so far (days in the top 10,
+  // its peak, days at No. 1, when it first charted)
+  const SVC = { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+' };
+  function lifeHtml(p) {
+    if (!p?.n) return '';
+    const peak = p.u ? `Peaked at No. ${p.u} in the UK` : p.b ? `Peaked at No. ${p.b[0]} on ${SVC[p.b[1]] || p.b[1]}` : '';
+    const first = new Date(p.f + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', ...(p.f.slice(0, 4) !== String(new Date().getFullYear()) ? { year: 'numeric' } : {}) });
+    const cells = [[p.n, p.n === 1 ? 'day in a Top 10' : 'days in a Top 10'], peak && [peak.match(/No\. \d+/)[0], peak.replace(/^Peaked at No\. \d+ /, 'peak ')], p.o ? [p.o, p.o === 1 ? 'day at No. 1' : 'days at No. 1'] : null].filter(Boolean);
+    return `<dl class="sh-life">${cells.map(([v, l]) => `<div><dt>${esc(String(v))}</dt><dd>${esc(l)}</dd></div>`).join('')}</dl><p class="sh-first">First charted ${esc(first)}</p>`;
+  }
   function chartHtml(info) {
     const t = trailD?.items?.[info.k]; if (!t) return '';
     const byDay = t.d.filter(Boolean).length >= 3, r = byDay ? t.d : t.h, when = byDay ? trailD.days : trailD.hours;
-    if (r.filter(Boolean).length < 2) return '';
+    if (r.filter(Boolean).length < 2) return t.p ? `<section class="sh-track" aria-labelledby="shC"><h3 id="shC">On the Chart</h3>${lifeHtml(t.p)}</section>` : '';
     // Apple Stocks style: the plot on the left, No. 1 and No. 10 in a margin on the right, so labels never sit on the line
     const W = 300, H = 92, R = 40, px = (i) => 8 + (i * (W - R - 16)) / Math.max(1, r.length - 1), py = (n) => 10 + ((n - 1) * (H - 20)) / 9;
     let path = '', pen = false;
     r.forEach((n, i) => { if (!n) { pen = false; return; } path += `${pen ? 'L' : 'M'}${px(i).toFixed(1)} ${py(n).toFixed(1)}`; pen = true; });
     const dots = r.map((n, i) => (n ? `<circle cx="${px(i).toFixed(1)}" cy="${py(n).toFixed(1)}" r="${i === r.length - 1 ? 4 : 2.4}"${i === r.length - 1 ? ' class="now"' : ''}/>` : '')).join('');
-    const label = (s) => (byDay ? new Date(s + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short' }) : new Date(s).toLocaleTimeString('en-GB', { hour: 'numeric', hour12: true }).replace(' ', ''));
+    const label = (s) => (byDay ? new Date(s + 'T12:00:00').toLocaleDateString('en-GB', r.length > 7 ? { day: 'numeric', month: 'short' } : { weekday: 'short' }) : new Date(s).toLocaleTimeString('en-GB', { hour: 'numeric', hour12: true }).replace(' ', ''));
     const now = r.at(-1), best = Math.min(...r.filter(Boolean)), inTop = r.filter(Boolean).length;
     const where = CHART[t.c.split(':')[0]] || '';
     const summary = [now ? `No. ${now} ${where} now` : `Out of the top 10 ${where} now`, best < (now || 11) ? `best No. ${best}` : '',
@@ -36,7 +48,7 @@
         <text x="${W}" y="${py(1) + 4}" class="y" text-anchor="end">No. 1</text><text x="${W}" y="${py(10) + 4}" class="y" text-anchor="end">No. 10</text>
         <path d="${path}" class="ln"/>${dots}
         <text x="8" y="${H + 12}" class="x">${esc(label(when[0]))}</text><text x="${W - R - 8}" y="${H + 12}" class="x" text-anchor="end">${byDay ? 'Today' : 'Now'}</text>
-      </svg></section>`;
+      </svg>${lifeHtml(t.p)}</section>`;
   }
   // Shows: when the next episode lands, and where you're up to (kept on this device)
   function nextHtml(info, x) {
@@ -77,7 +89,7 @@
   };
   let shown = null;   // the details the open sheet was drawn from
   // the first touch, click or key anywhere starts fetching the details, so the first sheet opens already filled in
-  for (const t of ['pointerdown', 'keydown']) addEventListener(t, () => { details(); trail(); }, { once: true, passive: true });
+  for (const t of ['pointerdown', 'keydown']) addEventListener(t, () => { details(); trail(); prices(); }, { once: true, passive: true });
 
   // ---------- the sheet, built once ----------
   document.body.insertAdjacentHTML('beforeend', `
@@ -110,7 +122,17 @@
     }
     const groups = [['Included with', x.f], ['Free', x.fr], ['Rent', x.re], ['Buy', x.bu]]
       .map(([label, ids]) => { const list = providerList(ids, d, info); return list ? `<div class="sh-grp"><h4>${label}</h4><div class="sh-provs">${list}</div></div>` : ''; }).join('');
-    return groups || '<p class="sh-none">Not available to stream, rent or buy in the UK right now.</p>';
+    return (groups + priceHtml(info)) || '<p class="sh-none">Not available to stream, rent or buy in the UK right now.</p>';
+  }
+  // the cheapest way to rent it and to buy it, where we have prices
+  const money = (n) => `£${n.toFixed(2)}`;
+  function priceHtml(info) {
+    const o = priceD?.items?.[info.k]?.o; if (!o?.length) return '';
+    const best = (t) => o.filter((x) => x[1] === t).sort((a, b) => a[2] - b[2])[0];
+    const line = (t, label) => { const x = best(t); if (!x) return ''; const inner = `${label} from <b>${money(x[2])}</b> on ${esc(x[0])}${x[3] ? ` <small>${esc(x[3])}</small>` : ''}`;
+      return /^https:\/\//.test(x[4]) ? `<a class="sh-pr" href="${esc(x[4])}" target="_blank" rel="noopener">${inner}</a>` : `<span class="sh-pr">${inner}</span>`; };
+    const lines = [line('rent', 'Rent'), line('buy', 'Buy')].filter(Boolean).join('');
+    return lines ? `<div class="sh-grp sh-prices"><h4>Cheapest</h4>${lines}</div>` : '';
   }
   // the line above the title: plain words in sentence case; a move up or down becomes a small green or red badge
   // ("▲2 to No. 3 show on Prime Video" → [↑ 2] Now No. 3 show on Prime Video)
@@ -194,7 +216,7 @@
       history.pushState({ sheet: info.k }, '', u); pushed = true;
     }
     document.title = `${info.title} | Tenner`;
-    let [d] = await Promise.all([details(), trail().then((t) => { trailD = t; })]);
+    let [d] = await Promise.all([details(), trail().then((t) => { trailD = t; }), prices().then((p) => { priceD = p; })]);
     if (current !== info) return;
     if (!d?.items?.[info.k] && window.tn.api) {
       render(info, { ...(d || {}), items: {}, pending: true });   // "Loading…" stays until the live details arrive

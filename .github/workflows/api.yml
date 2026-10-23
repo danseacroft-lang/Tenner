@@ -20,6 +20,21 @@ jobs:
         run: |
           if [ -n "$M" ]; then echo "mail=yes" >> "$GITHUB_OUTPUT"; else echo "::notice title=Contact form not connected::Add SUPPORT_EMAIL (the inbox for Contact messages) under Settings > Secrets and variables > Actions."; fi
           if [ -z "$T" ] || [ -z "$A" ]; then echo "::notice title=Search API not deployed::Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID under Settings > Secrets and variables > Actions."; echo "go=no" >> "$GITHUB_OUTPUT"; else echo "go=yes" >> "$GITHUB_OUTPUT"; fi
+      # Watchlist alerts keep each subscriber in Workers KV. The store is made the first time and found after that; its
+      # binding is added to wrangler.toml just for this deploy. If the token can't make it, alerts stay off; nothing else changes.
+      - name: Set up the alerts store
+        if: steps.ready.outputs.go == 'yes'
+        continue-on-error: true
+        working-directory: worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          LIST=$(npx --yes wrangler@4 kv namespace list 2>/dev/null || true)
+          ID=$(printf '%s' "$LIST" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const a=JSON.parse(s.slice(s.indexOf("[")));const n=a.find(x=>/tenner-push$/.test(x.title));console.log(n?n.id:"")}catch{console.log("")}})')
+          if [ -z "$ID" ]; then OUT=$(npx --yes wrangler@4 kv namespace create tenner-push 2>&1 || true); ID=$(printf '%s' "$OUT" | grep -oE '[0-9a-f]{32}' | head -1); fi
+          if [ -n "$ID" ]; then printf '\n[[kv_namespaces]]\nbinding = "PUSH"\nid = "%s"\n' "$ID" >> wrangler.toml; echo "Alerts store ready"
+          else echo "::warning title=Watchlist alerts are off::Couldn't make the alerts store. Give the Cloudflare API token 'Workers KV Storage: Edit' and run this again."; fi
       - name: Deploy to Cloudflare
         if: steps.ready.outputs.go == 'yes'
         uses: cloudflare/wrangler-action@v3
@@ -30,6 +45,18 @@ jobs:
           secrets: TMDB_TOKEN
         env:
           TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
+      # The alerts' signing key: made once, here, and kept only as a Worker secret (never printed or stored anywhere else)
+      - name: Make the alerts signing key
+        if: steps.ready.outputs.go == 'yes'
+        continue-on-error: true
+        working-directory: worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if npx --yes wrangler@4 secret list 2>/dev/null | grep -q VAPID_JWK; then echo "Signing key already there"; else
+            node -e 'crypto.subtle.generateKey({name:"ECDSA",namedCurve:"P-256"},true,["sign"]).then(k=>crypto.subtle.exportKey("jwk",k.privateKey)).then(j=>process.stdout.write(JSON.stringify({kty:j.kty,crv:j.crv,d:j.d,x:j.x,y:j.y})))' | npx --yes wrangler@4 secret put VAPID_JWK
+          fi
       - name: Connect the Contact form to the inbox
         if: steps.ready.outputs.go == 'yes' && steps.ready.outputs.mail == 'yes'
         working-directory: worker
@@ -50,5 +77,7 @@ jobs:
           P=$(curl -s -H "Origin: https://tenner.stream" "$U/people?q=bette%20midler" | jq -r '.results[0].id // empty')
           echo "People: Bette Midler is $P"
           [ -n "$P" ] && echo "::notice title=Cast & Crew::Bette Midler known for: $(curl -s -H "Origin: https://tenner.stream" "$U/person/$P" | jq -r '[.known[]?.title] | .[:6] | join(", ")')"
+          K=$(curl -s -H "Origin: https://tenner.stream" "$U/push/key" | jq -r '.key // .error')
+          echo "::notice title=Watchlist alerts::$([ ${#K} -gt 60 ] && echo 'ready' || echo "not ready: $K")"
           echo "Others blocked: $(curl -s -o /dev/null -w '%{http_code}' -H 'Origin: https://example.com' "$U/search?q=matrix")"
           echo "$S" | jq -e '.results | length > 0' > /dev/null

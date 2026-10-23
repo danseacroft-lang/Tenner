@@ -2,7 +2,7 @@
 // Pages, scripts, styles and the hourly data: the network first (so a new deploy or a new hour always wins), with the
 // last copy kept for when there's no connection, or when the network is too slow to answer within a few seconds. Fonts and icons: from the cache. TMDB's posters: from the cache, the most recent
 // 60 or so. The search API is never cached here (Cloudflare caches it).
-const SHELL = 'tenner-shell-1.22.6', IMGS = 'tenner-img-v1';   // the shell cache follows the version
+const SHELL = 'tenner-shell-1.23.0', IMGS = 'tenner-img-v1';   // the shell cache follows the version
 const CORE = ['./', 'index.html', 'browse.html', 'about.html', 'settings.html', 'people.html', 'styles.css', 'browse.css', 'about.css', 'people.css', 'shell.js', 'links.js', 'sheet.js', 'app.js', 'browse.js', 'people.js',
   'fonts/inter-latin.woff2', 'fonts/inter-tight-latin.woff2', 'logo.svg', 'favicon.svg', 'favicon.ico'];
 
@@ -54,3 +54,17 @@ async function cacheFirst(e, name, max) {
   }
   return res;
 }
+
+// ---------- Watchlist alerts (the Worker's push.js sends them): show it, and open the title when it's tapped ----------
+self.addEventListener('push', (e) => {
+  let d = {}; try { d = e.data?.json() || {}; } catch { d = { title: 'Tenner', body: e.data?.text() || '' }; }
+  e.waitUntil(self.registration.showNotification(d.title || 'Tenner', { body: d.body || '', icon: 'icon-192.png', badge: 'icon-96.png', tag: d.tag || 'tenner', data: { url: d.url || '/' } }));
+});
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const url = new URL(e.notification.data?.url || '/', self.location.origin).href;
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+    const open = list.find((c) => new URL(c.url).origin === self.location.origin);
+    return open ? open.focus().then((c) => c.navigate(url)) : self.clients.openWindow(url);
+  }));
+});

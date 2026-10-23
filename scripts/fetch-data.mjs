@@ -311,8 +311,8 @@ export async function buildNetflixOfficial() {
 }
 
 // ---------- Chart movement: up, down or new since about a day ago, and days at No. 1 ----------
-// Every run saves a small snapshot of each chart (data/history.json: the last 30 hours by the hour, and the last 10
-// days). Each title is compared with the snapshot nearest 24 hours ago (or, in a chart's first day, the oldest one at
+// Every run saves a small snapshot of each chart (data/history.json: the last 30 hours by the hour, and the last 30
+// days), plus each title's life on the charts so far (h.life, see trackLife). Each title is compared with the snapshot nearest 24 hours ago (or, in a chart's first day, the oldest one at
 // least 3 hours old), and a No. 1 counts the days it has held the top spot.
 export function addMovement(data, prev, now = new Date()) {
   const h = prev?.v === 1 ? prev : { v: 1, hours: {}, days: {} };
@@ -324,7 +324,8 @@ export function addMovement(data, prev, now = new Date()) {
   const hour = now.toISOString().slice(0, 13), day = now.toISOString().slice(0, 10), age = (k) => (now - Date.parse(k.length === 13 ? `${k}:00:00Z` : `${k}T12:00:00Z`)) / 3600e3;
   h.hours[hour] = snap; h.days[day] = snap;
   for (const k of Object.keys(h.hours)) if (age(k) > 30) delete h.hours[k];
-  for (const k of Object.keys(h.days)) if (age(k) > 24 * 10) delete h.days[k];
+  for (const k of Object.keys(h.days)) if (age(k) > 24 * 30) delete h.days[k];
+  trackLife(h, data, day, keyOf);
   // the reference: nearest to 24 hours ago, or the oldest at least 3 hours old
   const past = Object.keys(h.hours).filter((k) => age(k) >= 3).sort();
   const ref = past.filter((k) => age(k) >= 20).sort((a, b) => Math.abs(age(a) - 24) - Math.abs(age(b) - 24))[0] || past[0];
@@ -341,9 +342,39 @@ export function addMovement(data, prev, now = new Date()) {
   return h;
 }
 
+// ---------- Each title's life on the charts: kept for a year after it was last in one ----------
+// life[k] = { f: first day in a chart, l: last day, n: days in a chart, u: best UK rank, b: [best rank, service] on a
+// service's own chart, o: days at No. 1 }. Streaming charts only (not buy or rent). The first time, it's filled in from
+// the days already kept.
+function lifeDay(life, snap, day, svcs) {
+  const seen = new Map();   // key -> { u, b: [rank, svc] }
+  for (const [c, list] of Object.entries(snap)) {
+    const [sv] = c.split(':'); if (sv !== 'all' && !svcs.has(sv)) continue;
+    list.forEach((k, i) => {
+      if (k[0] === 'x') return;
+      const x = seen.get(k) || {}; if (sv === 'all') x.u = Math.min(x.u || 99, i + 1); else if (!x.b || i + 1 < x.b[0]) x.b = [i + 1, sv];
+      seen.set(k, x);
+    });
+  }
+  for (const [k, x] of seen) {
+    const e = life[k] || (life[k] = { f: day, l: '', n: 0, o: 0 });
+    if (e.l === day) { if (x.u && x.u < (e.u || 99)) e.u = x.u; if (x.b && (!e.b || x.b[0] < e.b[0])) e.b = x.b; continue; }
+    e.l = day; e.n++; if (x.u === 1 || x.b?.[0] === 1) e.o++;
+    if (x.u && x.u < (e.u || 99)) e.u = x.u; if (x.b && (!e.b || x.b[0] < e.b[0])) e.b = x.b;
+  }
+}
+function trackLife(h, data, day, keyOf) {
+  const svcs = new Set((data.services || []).filter((s) => !s.store && !s.shop).map((s) => s.key));
+  if (!h.life) { h.life = {}; for (const d of Object.keys(h.days).sort()) if (d !== day) lifeDay(h.life, h.days[d], d, svcs); }
+  lifeDay(h.life, h.days[day], day, svcs);
+  const cut = new Date(Date.parse(`${day}T12:00:00Z`) - 400 * 864e5).toISOString().slice(0, 10);
+  for (const [k, e] of Object.entries(h.life)) if (e.l < cut) delete h.life[k];
+}
+
 // ---------- Trackers from the same history: each title's recent ranks, and the week's round-up ----------
 // trail.json: for every charted title, its rank in its main chart (the UK chart if it's there, else its service's)
-//   by day for the last 10 days and by hour for the last 24, for the little line in the title sheet (0 = not in it).
+//   by day for the last 30 days and by hour for the last 24, for the line in the title sheet (0 = not in it), and its
+//   life on the charts so far (p, from trackLife).
 // week.json: "This week on Tenner": the biggest climbers, new arrivals and each chart's No. 1, against a week ago
 //   (or the oldest day kept, while the history is still building up).
 export function buildTrackers(data, h, now = new Date()) {
@@ -365,7 +396,7 @@ export function buildTrackers(data, h, now = new Date()) {
     const cands = [`all:${t}`, ...Object.keys(label).map((s) => `${s}:${t}`)].filter((c) => seen(c));
     if (!cands.length) continue;
     const c = cands.includes(`all:${t}`) ? `all:${t}` : cands.sort((a, b) => seen(b) - seen(a))[0];
-    trail.items[k] = { c, d: days.map((d) => rank(h.days[d], c, k)), h: hours.map((x) => rank(h.hours[x], c, k)) };
+    trail.items[k] = { c, d: days.map((d) => rank(h.days[d], c, k)), h: hours.map((x) => rank(h.hours[x], c, k)), ...(h.life?.[k] ? { p: h.life[k] } : {}) };
   }
   // ---- the week
   const today = now.toISOString().slice(0, 10);
@@ -495,7 +526,7 @@ export async function buildNew() {
 
   // Reuse the copy already live on the site if it's less than 20 hours old.
   const prev = await liveCopy('new.json');
-  if (realNew(prev) && hoursOld(prev) < 20) {
+  if (realNew(prev) && prev.leaving && hoursOld(prev) < 20) {   // (an older copy without Coming soon or Leaving soon is fetched afresh)
     console.log('Reusing live new.json from', prev.generatedAt);
     return prev;
   }
@@ -509,12 +540,13 @@ export async function buildNew() {
 
   const day = (d) => Number(d.toISOString().slice(0, 10).replace(/-/g, ''));
   const now = new Date();
-  const start = day(new Date(now - 7 * 864e5));
-  const end = day(new Date(+now + 7 * 864e5));
-  const url = `https://api.watchmode.com/v1/releases/?start_date=${start}&end_date=${end}&limit=250`;
-  const json = await getJSON(url, { 'X-API-Key': key });
+  // two asks of up to 250 each: the last week, and what's coming over the next month (the list's Coming soon)
+  const ask = (a, b) => getJSON(`https://api.watchmode.com/v1/releases/?start_date=${day(a)}&end_date=${day(b)}&limit=250`, { 'X-API-Key': key });
+  const [past, next] = await Promise.all([ask(new Date(now - 7 * 864e5), now), ask(new Date(+now + 864e5), new Date(+now + 31 * 864e5)).catch(() => ({ releases: [] }))]);
+  const seenRel = new Set();
+  const releases = [...(past.releases || []), ...(next.releases || [])].filter((r) => { const k = `${r.id}:${r.source_id}:${r.season_number}`; if (seenRel.has(k)) return false; seenRel.add(k); return true; });
 
-  const items = (json.releases || [])
+  const items = releases
     .map((r) => ({ r, s: serviceFor(r.source_name || '') }))
     .filter(({ s }) => s)
     .map(({ r, s }) => ({
@@ -530,7 +562,50 @@ export async function buildNew() {
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  return { generatedAt: new Date().toISOString(), note: 'Release dates are mostly US dates from Watchmode.', items };
+  return { generatedAt: new Date().toISOString(), note: 'Release dates are mostly US dates from Watchmode.', items, leaving: await buildLeaving(key) };
+}
+
+// Leaving soon: Watchmode's calendar of titles about to leave a service (the free plan shows the next ten). The dates
+// are mostly American, so the page says so. A missing or changed answer just means no Leaving soon section.
+async function buildLeaving(key) {
+  try {
+    const json = await getJSON('https://api.watchmode.com/v1/title-leaving-dates/', { 'X-API-Key': key }, 2);
+    const list = Array.isArray(json) ? json : json.titles || json.results || json.leaving || json.releases || json.data || [];
+    if (list[0]) console.log('Leaving dates fields:', Object.keys(list[0]).join(', '));
+    const dateOf = (r) => { for (const [f, v] of Object.entries(r)) if (/date|leav|expir|end/i.test(f) && /^\d{4}-?\d{2}-?\d{2}/.test(String(v))) return String(v).replace(/^(\d{4})-?(\d{2})-?(\d{2}).*/, '$1-$2-$3'); return null; };
+    const today = new Date().toISOString().slice(0, 10);
+    return list.map((r) => ({ r, s: serviceFor(r.source_name || r.source || r.service || '') })).filter(({ s }) => s).map(({ r, s }) => ({
+      title: r.title || r.name, type: (r.tmdb_type || r.type) === 'movie' ? 'movie' : 'tv', date: dateOf(r), service: s.key,
+      poster: r.poster_url || r.poster || null, id: r.tmdb_id || null,
+      url: r.tmdb_id ? `https://www.themoviedb.org/${(r.tmdb_type || r.type) === 'movie' ? 'movie' : 'tv'}/${r.tmdb_id}/watch?locale=${REGION}` : null,
+    })).filter((x) => x.title && x.date && x.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+  } catch (err) { console.log('Leaving soon skipped:', err.message); return []; }
+}
+
+// ---------- What it costs to rent or buy: the buy-or-rent chart's films and shows, from Watchmode ----------
+// Watchmode lists each title's rental and purchase offers with prices. Each title costs two credits (one to look it up by
+// its TMDB number), so prices are kept for three days and only the buy-or-rent chart is priced: about 15 credits a day,
+// well inside the free 2,500 a month. prices.json: { k: { at, o: [[service, 'rent'|'buy', price, quality, link]] } }.
+export async function buildPrices(data, prev) {
+  const key = process.env.WATCHMODE_API_KEY; if (!key) return null;
+  const out = { generatedAt: new Date().toISOString(), items: {} }, now = Date.now();
+  const want = new Map();
+  for (const sv of data.services || []) if (sv.store || sv.shop) for (const t of ['tv', 'movie']) for (const it of sv[t] || []) if (/^\d+$/.test(String(it.id))) want.set(`${t === 'movie' ? 'm' : 't'}${it.id}`, t);
+  let asked = 0;
+  for (const [k, t] of want) {
+    const old = prev?.items?.[k];
+    if (old && now - old.at < 3 * 864e5) { out.items[k] = old; continue; }
+    if (asked >= 12) { if (old) out.items[k] = old; continue; }   // a dozen new lookups a run at most
+    asked++;
+    try {
+      const list = await getJSON(`https://api.watchmode.com/v1/title/${t === 'movie' ? 'movie' : 'tv'}-${k.slice(1)}/sources/?regions=${REGION}`, { 'X-API-Key': key }, 2);
+      const o = (Array.isArray(list) ? list : []).filter((x) => (x.type === 'rent' || x.type === 'buy') && x.price > 0 && (!x.region || x.region === REGION))
+        .map((x) => [x.name, x.type, +x.price, x.format || '', x.web_url || '']).sort((a, b) => a[2] - b[2]);
+      out.items[k] = { at: now, o };
+    } catch (err) { if (old) out.items[k] = old; if (/40[13]/.test(err.message)) break; }
+  }
+  console.log(`Prices: ${Object.values(out.items).filter((x) => x.o.length).length} of ${want.size} buy-or-rent titles priced (${asked} looked up)`);
+  return out;
 }
 
 // ---------- Browse catalogue ----------
@@ -622,10 +697,12 @@ function sample() {
   const iso = (d) => new Date(+today + d * 864e5).toISOString().slice(0, 10);
   const fresh = {
     generatedAt: today.toISOString(), note: 'Sample data.',
-    items: [-5, -3, -1, 0, 2, 4, 6].map((d, i) => ({
+    items: [-5, -3, -1, 0, 2, 4, 6, 9, 13, 18, 24].map((d, i) => ({
       title: names[(i * 5 + 2) % names.length], type: i % 3 ? 'tv' : 'movie', season: i % 3 ? (i % 4) + 1 : null,
       date: iso(d), service: SERVICES[(i * 3) % SERVICES.length].key, original: i % 2 === 0, poster: null, url: null,
     })),
+    leaving: [3, 5, 11].map((d, i) => ({ title: names[(i * 7 + 4) % names.length], type: i % 2 ? 'tv' : 'movie', date: iso(d),
+      service: SERVICES[(i * 2 + 1) % SERVICES.length].key, poster: null, id: null, url: null })),
   };
   return {
     trending: { generatedAt: today.toISOString(), region: REGION, sample: true, services: [...services, ...shopCharts, storeChart], overall: overall(services) },
@@ -685,6 +762,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const st = buildTrackers(trending, sh);
     await write('trending.json', trending); await write('trail.json', st.trail); await write('week.json', st.week);
     await write('titles.json', { v: 1, generatedAt: trending.generatedAt, logo: '', providers: sp, items: sItems, sample: true });
+    const pItems = {};   // sample prices for the buy-or-rent chart
+    for (const it of trending.services.find((x) => x.store).movie) pItems[`m${it.id}`] = { at: Date.now(), o: [['Apple TV', 'rent', 3.99 + (it.id % 3), 'HD', ''], ['Sky Store', 'rent', 4.99, 'HD', ''], ['Apple TV', 'buy', 9.99 + (it.id % 5), '4K', '']].sort((x, y) => x[2] - y[2]) };
+    await write('prices.json', { generatedAt: trending.generatedAt, items: pItems, sample: true });
     const sc = sampleCatalogue();
     await write('browse.json', sc);
     await write('browse-more.json', { generatedAt: sc.generatedAt, img: '', sample: true,
@@ -770,6 +850,13 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       warn('New this week', `Watchmode step failed (${err.message})${keep ? ', keeping the live list' : ''}`);
       await write('new.json', keep ? prev : { generatedAt: data.generatedAt, error: true, items: [] });
       if (keep) newList = prev;
+    }
+
+    // 3b. Rent and buy prices for the buy-or-rent chart (Watchmode); the live copy carries on if it fails.
+    if (built) {
+      const prevP = await liveCopy('prices.json');
+      try { const pr = await buildPrices(data, prevP); if (pr) await write('prices.json', pr); else if (prevP) await write('prices.json', prevP); }
+      catch (err) { warn('Prices', err.message); if (prevP) await write('prices.json', prevP); }
     }
 
     // 4. Title details (where to watch, runtime, age rating, trailer) for everything Tenner shows.

@@ -4,22 +4,28 @@
 //   GET /people?q=…   people (cast and crew) matching a name; without q, this week's most talked-about people
 //   GET /person/123   one person: biography, and everything they've been in or made
 //   GET /credits/m123 a title's main cast and key crew
+//   /push/…           Watchlist alerts (push.js)
 //   POST /contact     the Contact page's form: emailed to Tenner's inbox (Cloudflare Email Routing). The inbox's
 //                     address is a Worker secret (SUPPORT_EMAIL), so it's never in the website or this code
 // Only Tenner's own pages may call it (CORS), and answers are cached at Cloudflare's edge, so popular searches and
 // titles barely touch TMDB: searches for a day, titles for six hours.
 import { EmailMessage } from 'cloudflare:email';
+import { pushRoute, pushRun, pushSend } from './push.js';
 
 const TMDB = 'https://api.themoviedb.org/3', IMG = 'https://image.tmdb.org/t/p', REGION = 'GB';
 
 export default {
+  // every hour: Watchlist alerts for anything new (push.js)
+  async scheduled(event, env, ctx) { ctx.waitUntil(pushRun(env)); },
   async fetch(req, env, ctx) {
     const url = new URL(req.url), origin = req.headers.get('origin') || '';
+    if (url.pathname === '/push/send' && req.method === 'POST') return pushSend(req, env);   // the hourly run's batches (signed)
     const allowed = (env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
     const ok = allowed.includes(origin);
     const cors = ok ? { 'access-control-allow-origin': origin, vary: 'origin' } : {};
     if (req.method === 'OPTIONS') return new Response(null, { status: ok ? 204 : 403, headers: { ...cors, 'access-control-allow-methods': 'GET, POST', 'access-control-allow-headers': 'content-type', 'access-control-max-age': '86400' } });
     if (!ok) return json({ error: 'Not allowed from this site' }, 403, cors);
+    if (url.pathname.startsWith('/push/')) return pushRoute(req, env, ctx, url, json, cors);
     if (url.pathname === '/contact') return req.method === 'POST' ? contact(req, env, cors) : json({ error: 'POST only' }, 405, cors);
     if (req.method !== 'GET') return json({ error: 'GET only' }, 405, cors);
     if (!env.TMDB_TOKEN) return json({ error: 'Not set up yet' }, 503, cors);

@@ -50,6 +50,92 @@
       show(); say(`Imported ${add.length} new title${add.length === 1 ? '' : 's'}`);
     } catch { say("That file isn't a Tenner export"); }
   });
+  // ---------- Watchlist alerts (shell.js tn.alerts, sent by the Worker) ----------
+  const al = document.getElementById('setAlerts'), alNow = document.getElementById('alNow');
+  const AL_TEXT = {
+    on: 'On. You’ll hear when something you’ve saved arrives, or gets a new season',
+    off: 'A notification when something you’ve saved arrives, or gets a new season',
+    blocked: 'Notifications are turned off for Tenner in your browser’s settings',
+    install: 'On iPhone and iPad: add Tenner to your Home Screen first (Share, then Add to Home Screen), then open it from there',
+    unsupported: 'This browser can’t show notifications from websites',
+  };
+  async function showAlerts(st) {
+    st ||= await window.tn.alerts.state();
+    al.checked = st === 'on'; al.disabled = st === 'install' || st === 'unsupported' || st === 'blocked'; alNow.textContent = AL_TEXT[st];
+  }
+  al.addEventListener('change', async () => {
+    al.disabled = true;
+    try { const st = await (al.checked ? window.tn.alerts.enable() : window.tn.alerts.disable()); await showAlerts(st); say(st === 'on' ? 'Alerts on' : 'Alerts off'); }
+    catch { await showAlerts(); say('Alerts aren’t available right now. Try again later'); }
+  });
+  showAlerts();
+
+  // ---------- Move to another device: everything in a link (and a QR code of it); nothing is uploaded ----------
+  // The link carries the Watchlist (key, title, year, poster), progress and services, squeezed with the browser's own
+  // compression. Opening it on the other device shows what's coming and asks before adding anything.
+  const IMG = 'https://image.tmdb.org/t/p/w342';
+  const b64u = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const unb64u = (t) => Uint8Array.from(atob(t.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((t.length + 3) % 4)), (c) => c.charCodeAt(0));
+  const squeeze = async (text) => {
+    if (!('CompressionStream' in window)) return `j${b64u(new TextEncoder().encode(text))}`;
+    const out = await new Response(new Blob([text]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer();
+    return `z${b64u(new Uint8Array(out))}`;
+  };
+  const unsqueeze = async (t) => {
+    const bytes = unb64u(t.slice(1));
+    if (t[0] === 'j') return new TextDecoder().decode(bytes);
+    return new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+  };
+  async function moveLink(posters) {
+    const w = saved.all().map((x) => [x.k, x.title, x.year || 0, posters && x.poster ? String(x.poster).replace(IMG, '') : 0]);
+    const data = { v: 1, w, p: progress.all(), s: mine.get() };
+    return `${location.origin}${location.pathname.replace(/[^/]*$/, '')}settings.html#take=${await squeeze(JSON.stringify(data))}`;
+  }
+  let qrLib = null;
+  const loadQr = () => (qrLib ||= new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'qrcode.js'; sc.onload = () => res(window.qrcode); sc.onerror = rej; document.head.append(sc); }));
+  document.getElementById('setMove').addEventListener('click', async () => {
+    const dlg = document.getElementById('moveDlg'), box = document.getElementById('moveQr');
+    let link = await moveLink(true);
+    if (link.length > 1100) link = await moveLink(false);   // a long Watchlist: leave the posters out (they come back by themselves)
+    dlg.dataset.link = link; box.innerHTML = '';
+    if (link.length <= 2300) {
+      try {
+        const qrcode = await loadQr(), q = qrcode(0, 'L'); q.addData(link); q.make();
+        const n = q.getModuleCount(); let d = '';
+        for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c} ${r}h1v1h-1z`;
+        box.innerHTML = `<svg viewBox="-3 -3 ${n + 6} ${n + 6}" role="img" aria-label="QR code of the link"><rect x="-3" y="-3" width="${n + 6}" height="${n + 6}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+      } catch { box.innerHTML = '<p class="move-none">The code didn’t load. Copy the link instead.</p>'; }
+    } else box.innerHTML = '<p class="move-none">Your Watchlist is too long for a code. Copy the link and open it on the other device.</p>';
+    dlg.showModal();
+  });
+  document.getElementById('moveCopy').addEventListener('click', async (e) => {
+    const link = document.getElementById('moveDlg').dataset.link;
+    if (navigator.share && window.tn.isIOS) { navigator.share({ title: 'My Tenner', url: link }).catch(() => {}); return; }
+    try { await navigator.clipboard.writeText(link); e.target.textContent = 'Copied'; setTimeout(() => { e.target.textContent = 'Copy link'; }, 1600); } catch { prompt('Copy this link', link); }
+  });
+  document.getElementById('moveDlg').addEventListener('click', (e) => { if (e.target.id === 'moveDlg') e.target.close(); });
+  // arriving with a link from another device
+  (async () => {
+    const m = location.hash.match(/^#take=([jz][\w-]+)$/); if (!m) return;
+    history.replaceState(null, '', location.pathname);
+    let d; try { d = JSON.parse(await unsqueeze(m[1])); if (d?.v !== 1) throw 0; } catch { say('That link didn’t work. Make a new one on the other device'); return; }
+    const have = new Set(saved.all().map((x) => x.k)), add = (d.w || []).filter(([k]) => /^[mt]\d+$/.test(k) && !have.has(k));
+    const prog = Object.keys(d.p || {}).filter((k) => !progress.get(k)).length, svcs = (d.s || []).filter((k) => LABELS[k]);
+    const bits = [add.length ? `${add.length} title${add.length === 1 ? '' : 's'} for your Watchlist` : '', prog ? `where you’re up to in ${prog} show${prog === 1 ? '' : 's'}` : '',
+      svcs.length && !mine.get().length ? `your services (${svcs.map((k) => LABELS[k]).join(', ')})` : ''].filter(Boolean);
+    const dlg = document.getElementById('takeDlg');
+    if (!bits.length) { say('Everything in that link is already here'); return; }
+    document.getElementById('takeP').textContent = `From your other device: ${bits.join(', ')}. It’s added to what’s already here.`;
+    dlg.returnValue = ''; dlg.showModal();
+    dlg.addEventListener('close', () => {
+      if (dlg.returnValue !== 'yes') return;
+      saved.set([...add.map(([k, title, year, poster]) => ({ k, type: k[0] === 'm' ? 'movie' : 'tv', title, year: year || null, poster: poster ? (poster.startsWith('http') ? poster : IMG + poster) : null, at: Date.now() })), ...saved.all()].slice(0, 500));
+      for (const [k, p] of Object.entries(d.p || {})) if (!progress.get(k) && Array.isArray(p)) progress.set(k, p);
+      if (svcs.length && !mine.get().length) mine.set(svcs);
+      show(); say(`Added ${add.length} title${add.length === 1 ? '' : 's'}`);
+    }, { once: true });
+  })();
+
   document.getElementById('setClear').addEventListener('click', () => {
     if (!confirm('Clear your Watchlist, progress, My services and settings on this device? This can’t be undone.')) return;
     try { ['tenner-watchlist', 'tenner-progress', 'tenner-services', 'tenner-settings', 'tenner-kind'].forEach((k) => localStorage.removeItem(k)); } catch {}

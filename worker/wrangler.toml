@@ -13,3 +13,8 @@ ALLOWED_ORIGINS = "https://tenner.stream,https://www.tenner.stream,https://danse
 # inbox is a Worker secret (SUPPORT_EMAIL), and it has to be a verified destination address in Email Routing.
 [[send_email]]
 name = "MAILER"
+
+# Watchlist alerts (src/push.js): checked every hour. The KV namespace (PUSH) is created by the deploy workflow, which
+# adds its binding here before deploying.
+[triggers]
+crons = ["23 * * * *"]

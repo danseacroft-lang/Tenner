@@ -203,8 +203,8 @@ function draw() {
   const isNew = state.route === 'new';
   $('#controls').hidden = isNew || state.route === 'watchlist' || state.route === 'week';
   if (state.route === 'week') { shown = new Map(); banners([]); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWeek()}</div>`; document.title = 'This Week | Tenner'; openFromUrl(); return; }
-  if (state.route === 'watchlist') { shown = new Map(); banners([]); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWatchlist()}</div>`; document.title = 'Watchlist | Tenner'; openFromUrl(); wantTitles(); return; }
-  if (isNew) { shown = new Map(); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; newBanners(state.fresh?.items || []); document.title = 'New This Week | Tenner'; openFromUrl(); return; }
+  if (state.route === 'watchlist') { shown = new Map(); banners([]); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWatchlist()}</div>`; document.title = 'Watchlist | Tenner'; openFromUrl(); wantTitles(); alertCard(); return; }
+  if (isNew) { shown = new Map(); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; newBanners((state.fresh?.items || []).filter((x) => x.date <= todayIso())); document.title = 'New This Week | Tenner'; openFromUrl(); return; }
 
   markSvcLink();
   shown = new Map();
@@ -229,6 +229,7 @@ function draw() {
     ? `${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up. Add your TMDB key and run the workflow to see the real chart.</p>` : ''}
        ${hero(picks, s)}
        ${kinds.map((k, r) => `${kinds.length > 1 ? `<h2 class="row-h kind-h">Top 10 ${words(k)}</h2>` : ''}${posterRow(listOf(k), k, r === 0)}`).join('')}
+       ${s?.store ? '' : tonightCard()}
        ${s?.store ? '' : features(s)}
        ${kinds.map((k) => chartList(listOf(k), s, k)).join('')}
        ${s?.store ? '' : savedRow()}${s && !s.mine ? '' : weekRow()}${s?.store ? '' : newRow(s)}`
@@ -514,6 +515,92 @@ function posterRow(list, kind = state.kind, first = true) {
 // Three wide feature cards (eyebrow, title, subtitle, then the artwork with a caption and the poster in the corner).
 const firstSentence = (t) => { const m = String(t || '').match(/^.{20,140}?[.!?](\s|$)/); return m ? m[0].trim() : String(t || '').slice(0, 120); };
 const onText = (it, fallback) => (it.on || []).map((k) => svc(k)?.label).filter(Boolean).slice(0, 2).join(', ') || fallback || '';
+// ---------- "What should I watch tonight?": three taps, three picks from your services ----------
+// How long you've got (an episode or two, a film, either), the mood, and who's watching; then the best-rated, most-watched
+// matches from the Browse catalogue on your services (or all five), a few at random from the top so it's never the same.
+function tonightCard() {
+  return `<section class="tn-card"><div class="tn-c-copy"><h2>What should I watch tonight?</h2><p>Three quick taps and Tenner picks from ${window.tn.mine.get().length ? 'your services' : 'all five services'}.</p></div>
+    <button type="button" class="btn btn-tinted" data-tonight>Help me choose</button></section>`;
+}
+const MOODS = [
+  ['laugh', 'A laugh', 'Comedy, sitcoms, animation', [35, 16]],
+  ['edge', 'Edge of my seat', 'Thrillers, crime, action', [53, 80, 28, 10759, 9648]],
+  ['feel', 'Something feel-good', 'Family, romance, heart-warming', [10751, 10749, 10762, 35]],
+  ['mind', 'Mind-bending', 'Sci-fi, fantasy, mystery', [878, 10765, 14, 9648]],
+  ['real', 'Something real', 'Documentaries and true stories', [99, 36, 10764]],
+  ['scare', 'A scare', 'Horror', [27]],
+];
+const DARK = [27, 80, 53, 10752];   // left out when the family's watching
+let tnCat = null;
+const tonight = { step: 0, len: null, mood: null, who: null, seen: new Set() };
+function tonightDialog() {
+  let d = $('#tnDlg');
+  if (!d) {
+    document.body.insertAdjacentHTML('beforeend', `<dialog class="mine-dlg tn-dlg" id="tnDlg" aria-labelledby="tnH"><form method="dialog">
+      <button class="tn-x" value="x" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+      <div id="tnBody"></div></form></dialog>`);
+    d = $('#tnDlg');
+    d.addEventListener('click', (e) => {
+      if (e.target === d) { d.close(); return; }
+      const o = e.target.closest('[data-tn]'); if (!o) return;
+      e.preventDefault();
+      const [f, v] = o.dataset.tn.split(':');
+      if (f === 'again') { tonight.step = 0; tonight.seen.clear(); }
+      else if (f === 'more') { /* same answers, the next few */ }
+      else if (f === 'back') tonight.step = Math.max(0, tonight.step - 1);
+      else { tonight[f] = v; tonight.step++; }
+      drawTonight();
+    });
+    d.addEventListener('click', (e) => {   // a pick opens its title card
+      const a = e.target.closest('[data-sheet]'); if (!a || e.metaKey || e.ctrlKey) return;
+      e.preventDefault(); d.close(); window.tnSheet?.open(shown.get(a.dataset.sheet));
+    });
+  }
+  return d;
+}
+function drawTonight() {
+  const b = $('#tnBody'), opt = (f, v, label, sub) => `<button type="button" class="tn-opt" data-tn="${f}:${v}"><b>${esc(label)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</button>`;
+  const head = (n, q) => `<p class="tn-step">${n} of 3</p><h2 id="tnH">${q}</h2>`;
+  const back = '<button type="button" class="tn-back" data-tn="back">Back</button>';
+  if (tonight.step === 0) b.innerHTML = head(1, 'How long have you got?') + `<div class="tn-opts">${opt('len', 'tv', 'An episode or two', 'Shows')}${opt('len', 'movie', 'A film', 'Films')}${opt('len', 'any', 'Either', 'Surprise me')}</div>`;
+  else if (tonight.step === 1) b.innerHTML = head(2, 'What are you in the mood for?') + `<div class="tn-opts tn-grid">${MOODS.map(([v, l, sub]) => opt('mood', v, l, sub)).join('')}</div>${back}`;
+  else if (tonight.step === 2) b.innerHTML = head(3, 'Who’s watching?') + `<div class="tn-opts">${opt('who', 'me', 'Just me')}${opt('who', 'two', 'Me and someone else')}${opt('who', 'family', 'The family', 'Nothing too scary or grown-up')}</div>${back}`;
+  else { b.innerHTML = '<p class="tn-step">Picking…</p>'; tonightPicks().then((h) => { b.innerHTML = h; }); }
+}
+async function tonightPicks() {
+  tnCat ||= fetch('data/browse.json').then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  const cat = await tnCat; if (!cat?.items) return `<h2 id="tnH">Couldn’t load the picks</h2><p>Try again in a moment.</p><button type="button" class="btn btn-tinted" data-tn="again">Start again</button>`;
+  const mineSvcs = window.tn.mine.get(), want = new Set(mineSvcs.length ? mineSvcs : services().filter((x) => !x.store && !x.shop).map((x) => x.key));
+  const genres = new Set(MOODS.find((m) => m[0] === tonight.mood)?.[3] || []), no18 = window.tn.prefs.get().no18;
+  const pool = cat.items.filter((x) => (tonight.len === 'any' || x.t === tonight.len) && x.s?.some((k) => want.has(k)) && x.g?.some((g) => genres.has(g))
+      && (tonight.who !== 'family' || !x.g.some((g) => DARK.includes(g))) && (x.r || 0) >= 6.4 && (x.v || 0) >= 40 && !(no18 && state.titles?.items?.[`${x.t === 'movie' ? 'm' : 't'}${x.i}`]?.c === '18'))
+    .map((x) => ({ x, score: (x.r || 0) * Math.log10(10 + (x.v || 0)) + Math.log10(1 + (x.p || 0)) }))
+    .sort((a, b) => b.score - a.score).slice(0, 30).filter(({ x }) => !tonight.seen.has(`${x.t}${x.i}`));
+  if (!pool.length) return `<h2 id="tnH">${tonight.seen.size ? 'That’s all for those answers' : 'Nothing quite fits'}</h2><p>Try a different mood${mineSvcs.length ? ', or add more of your services in Settings' : ''}.</p><button type="button" class="btn btn-tinted" data-tn="again">Start again</button>`;
+  // three, each from a different part of the best thirty, so the very best one usually shows and the others vary
+  const picks = []; const bag = [...pool];
+  while (picks.length < 3 && bag.length) { const i = Math.floor(Math.pow(Math.random(), 1.6) * bag.length); picks.push(bag.splice(i, 1)[0].x); }
+  picks.forEach((x) => tonight.seen.add(`${x.t}${x.i}`));
+  const why = MOODS.find((m) => m[0] === tonight.mood)?.[1].toLowerCase();
+  return `<p class="tn-step">For ${tonight.who === 'family' ? 'the family' : tonight.who === 'two' ? 'the two of you' : 'you'}, in the mood for ${esc(why)}</p><h2 id="tnH">Tonight, try…</h2>
+    <ul class="tn-picks">${picks.map((x) => {
+      const poster = x.img ? (x.img.startsWith('/') ? cat.img + x.img : x.img) : null;
+      const svcs = x.s.filter((k) => want.has(k)).map(svc).filter(Boolean);
+      const info = { k: `${x.t === 'movie' ? 'm' : 't'}${x.i}`, type: x.t, title: x.n, year: (x.d || '').slice(0, 4) || null, rating: x.r, poster, eye: 'Tenner’s pick for tonight',
+        tmdb: tmdbUrl(x.t, x.i), services: svcs.map((s) => ({ label: s.label, logo: s.logo })), genres: (x.g || []).map((g) => cat.genres?.[g]).filter(Boolean).slice(0, 3) };
+      return `<li><a href="${esc(info.tmdb)}" target="_blank" rel="noopener" ${reg(info)}>
+        ${poster ? `<img src="${esc(thumb(poster))}" alt="" loading="lazy">` : `<span class="tn-ph" style="background:hsl(${hue(x.n)} 45% 35%)"></span>`}
+        <span class="tn-t"><b>${esc(x.n)}</b><small>${esc([x.t === 'movie' ? 'Film' : 'Series', info.year, x.r ? `★ ${x.r.toFixed(1)}` : ''].filter(Boolean).join(' · '))}</small>
+        <small>On ${esc(svcs.map((s) => s.label).join(', '))}</small></span></a></li>`;
+    }).join('')}</ul>
+    <div class="mine-acts"><button type="button" class="btn btn-tinted" data-tn="again">Start again</button><button type="button" class="btn btn-tinted mine-done" data-tn="more">Show me others</button></div>`;
+}
+view.addEventListener('click', (e) => {
+  if (!e.target.closest('[data-tonight]')) return;
+  Object.assign(tonight, { step: 0, len: null, mood: null, who: null }); tonight.seen.clear();
+  const d = tonightDialog(); drawTonight(); d.showModal();
+});
+
 function features(s) {
   const shows = s ? s.tv : state.trending.overall.tv, films = s ? s.movie : state.trending.overall.movie;
   const store = services().find((x) => x.store)?.movie || [];
@@ -593,7 +680,8 @@ function newRow(s) {
   const f = state.fresh; if (!f?.items?.length) return '';
   const today = new Date().toISOString().slice(0, 10);
   let items = f.items.filter((x) => !s || (s.mine ? s.keys.includes(x.service) : x.service === s.key));
-  items = [...items.filter((x) => x.date <= today).reverse(), ...items.filter((x) => x.date > today)].slice(0, 14);
+  const wk = new Date(Date.parse(today + 'T12:00:00Z') + 7 * 864e5).toISOString().slice(0, 10);   // the next week's arrivals after them (the rest are in Coming soon)
+  items = [...items.filter((x) => x.date <= today).reverse(), ...items.filter((x) => x.date > today && x.date <= wk)].slice(0, 14);
   if (!items.length) return '';
   const when = (d) => d === today ? 'Today' : new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
   return `<section class="nrow" aria-labelledby="nr-h">
@@ -637,6 +725,22 @@ function wantTitles() {
   if (state.titles) return more();
   window.tnSheet.details().then((d) => { if (d && !state.titles) { state.titles = d; if (state.route === 'watchlist') render(); } more(); });
 }
+// on the Watchlist: an offer to turn on alerts (or, on an iPhone in Safari, how to get them), until they're on
+const BELL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M10 20.5a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
+async function alertCard() {
+  const box = $('#wlAlert'); if (!box) return;
+  const st = await window.tn.alerts.state();
+  if (st === 'on' || st === 'unsupported' || st === 'blocked' || !box.isConnected) return;
+  box.innerHTML = st === 'install'
+    ? `<span class="wl-al-ic">${BELL}</span><p><b>Get an alert when these arrive.</b> Add Tenner to your Home Screen (Share, then Add to Home Screen) and open it from there.</p>`
+    : `<span class="wl-al-ic">${BELL}</span><p><b>Get an alert when these arrive.</b> A notification when something here lands on a service, or gets a new season.</p><button type="button" class="btn btn-tinted" id="wlAlertOn">Turn on</button>`;
+  box.hidden = false;
+  $('#wlAlertOn')?.addEventListener('click', async (e) => {
+    e.target.disabled = true;
+    try { const r = await window.tn.alerts.enable(); if (r === 'on') { box.hidden = true; toast('Alerts on. Change it any time in Settings'); } else { e.target.disabled = false; toast(r === 'blocked' ? 'Notifications are off for Tenner in your browser’s settings' : 'Alerts stay off'); } }
+    catch { e.target.disabled = false; toast('Alerts aren’t available right now'); }
+  });
+}
 function pageWatchlist() {
   const list = window.tn.saved.all(), spots = chartSpots(), d = state.titles;
   const onLogos = (k) => {
@@ -661,8 +765,8 @@ function pageWatchlist() {
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></li>`;
       }).join('')}</ul>`;
   return `<h1 class="large-title page-title">Watchlist</h1>
-    <p class="lede">${list.length ? `${list.length} title${list.length === 1 ? '' : 's'}, newest first. ` : ''}Saved on this device only: no account, nothing sent anywhere.</p>
-    ${comingUp(list)}${body}`;
+    <p class="lede">${list.length ? `${list.length} title${list.length === 1 ? '' : 's'}, newest first. ` : ''}Saved on this device only, no account needed.</p>
+    ${list.length ? '<div class="wl-alert" id="wlAlert" hidden></div>' : ''}${comingUp(list)}${body}`;
 }
 // shows: where you're up to, and when the next episode lands
 function showLine(x) {
@@ -741,38 +845,81 @@ function weekRow() {
   </section>`;
 }
 
+// New This Week, newest first; then Coming soon (the next month, each with Add to Calendar) and Leaving soon
+const todayIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+let calItems = [];
+function newItem(x, mode) {
+  const s = svc(x.service), i = mode === 'soon' ? calItems.push(x) - 1 : -1;
+  const kind = x.type === 'movie' ? 'Film' : x.season ? `Season ${x.season}` : 'Series';
+  const what = [kind, x.original ? `${s?.label} original` : ''].filter(Boolean).join(', ');
+  const whatPhone = [s?.label, kind].filter(Boolean).join(' · ');
+  const eye = mode === 'soon' ? `Coming to ${s?.label || 'streaming'}` : mode === 'leaving' ? `Leaving ${s?.label || 'streaming'}` : `New on ${s?.label || 'streaming'}`;
+  const art = x.poster ? `<img class="nl-art" src="${esc(thumb(x.poster))}" alt="" loading="lazy">` : `<span class="nl-art" style="background:hsl(${hue(x.title)} 45% 35%)"></span>`;
+  const cal = i >= 0 ? `<button type="button" class="cal-add" data-cal="${i}" aria-label="${esc(`Add ${x.title} to your calendar`)}" title="Add to Calendar"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 12.6v5M9.5 15.1h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>` : '';
+  return `<li>${art}<div class="grow">
+    ${x.url ? `<a class="title" href="${esc(x.url)}" target="_blank" rel="noopener" ${reg(infoFor(x, x.type, eye, s ? [s] : []))}>${esc(x.title)}</a>` : `<span class="title">${esc(x.title)}</span>`}
+    <span class="what">${esc(what)}</span><span class="what-ph">${esc(whatPhone)}${x.original ? ' · Original' : ''}</span></div>
+    ${cal}${s ? `<a class="btn btn-tinted chip" href="#${s.key}">${esc(s.label)}</a>${s.logo ? `<a class="nl-logo" href="#${s.key}" aria-label="${esc(s.label)} Top 10"><img src="${esc(s.logo)}" alt=""></a>` : ''}` : ''}</li>`;
+}
+function dayGroups(list, mode, today) {
+  const days = new Map();
+  for (const x of list) days.set(x.date, [...(days.get(x.date) || []), x]);
+  const tomorrow = new Date(Date.parse(today + 'T12:00:00') + 864e5).toISOString().slice(0, 10);
+  return [...days].map(([d, items]) => `<section class="group">
+    <h2 class="${d === today ? 'today' : ''}">${d === today ? 'Today' : d === tomorrow ? 'Tomorrow' : esc(fmtDate(new Date(d + 'T12:00:00'), { weekday: 'long', day: 'numeric', month: 'long' }))}</h2>
+    <ul class="list">${items.map((x) => newItem(x, mode)).join('')}</ul></section>`).join('');
+}
 function pageNew() {
   const f = state.fresh;
-  let body;
+  calItems = [];
+  let body, soon = [], leaving = [];
   if (!f || f.disabled || f.error) {
     body = `<div class="empty"><span class="empty-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.5 3.5l1.8 4.9 4.9 1.8-4.9 1.8-1.8 4.9-1.8-4.9-4.9-1.8 4.9-1.8z" fill="currentColor"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z" fill="currentColor"/></svg></span>
       <h2>${f?.error ? 'Back shortly' : 'Coming soon'}</h2>
       <p>${f?.error ? "The latest releases didn't load this time. They'll be back after the next hourly update." : "New releases from all five services will appear here soon. In the meantime, the top 10 is live."}</p>
       <a class="btn btn-tinted" href="#top">See the top 10</a></div>`;
-  } else if (!f.items.length) {
-    body = `<p class="lede">Nothing new on these services this week.</p>`;
   } else {
-    const today = new Date().toISOString().slice(0, 10);
-    const days = new Map();
-    for (const x of f.items) days.set(x.date, [...(days.get(x.date) || []), x]);
-    body = [...days].map(([d, items]) => `<section class="group">
-      <h2 class="${d === today ? 'today' : ''}">${d === today ? 'Today' : esc(fmtDate(new Date(d + 'T12:00:00'), { weekday: 'long', day: 'numeric', month: 'long' }))}</h2>
-      <ul class="list">${items.map((x) => {
-        const s = svc(x.service);
-        const what = [x.type === 'movie' ? 'Film' : x.season ? `Season ${x.season}` : 'Series', x.original ? `${s?.label} original` : ''].filter(Boolean).join(', ');
-        const whatPhone = [s?.label, x.type === 'movie' ? 'Film' : x.season ? `Season ${x.season}` : 'Series'].filter(Boolean).join(' · ');
-        const art = x.poster ? `<img class="nl-art" src="${esc(thumb(x.poster))}" alt="" loading="lazy">` : `<span class="nl-art" style="background:hsl(${hue(x.title)} 45% 35%)"></span>`;
-        return `<li>${art}<div class="grow">
-          ${x.url ? `<a class="title" href="${esc(x.url)}" target="_blank" rel="noopener" ${reg(infoFor(x, x.type, `New on ${s?.label || 'streaming'}`, s ? [s] : []))}>${esc(x.title)}</a>` : `<span class="title">${esc(x.title)}</span>`}
-          <span class="what">${esc(what)}</span><span class="what-ph">${esc(whatPhone)}${x.original ? ' · Original' : ''}</span></div>
-          ${s ? `<a class="btn btn-tinted chip" href="#${s.key}">${esc(s.label)}</a>${s.logo ? `<a class="nl-logo" href="#${s.key}" aria-label="${esc(s.label)} Top 10"><img src="${esc(s.logo)}" alt=""></a>` : ''}` : ''}</li>`;
-      }).join('')}</ul></section>`).join('');
+    const today = todayIso();
+    const past = f.items.filter((x) => x.date <= today).reverse();   // newest first
+    soon = f.items.filter((x) => x.date > today);
+    leaving = (f.leaving || []).filter((x) => x.date >= today);
+    body = past.length ? dayGroups(past, 'new', today) : `<p class="lede">Nothing new on these services this week.</p>`;
+    if (soon.length) body += `<h2 class="row-h nw-h" id="soon">Coming soon</h2><p class="nw-sub">The next month across the five services. Tap the calendar to be reminded on the day.</p>${dayGroups(soon, 'soon', today)}`;
+    if (leaving.length) body += `<h2 class="row-h nw-h" id="leaving">Leaving soon</h2><p class="nw-sub">Catch them before they go. Dates come from US listings, so the UK may differ.</p>${dayGroups(leaving, 'leaving', today)}`;
   }
+  const jumps = [soon.length ? '<a class="nw-jump" href="#soon" data-jump="soon">Coming soon<span class="chev" aria-hidden="true"></span></a>' : '',
+    leaving.length ? '<a class="nw-jump" href="#leaving" data-jump="leaving">Leaving soon<span class="chev" aria-hidden="true"></span></a>' : ''].join('');
   return `<h1 class="large-title page-title">New This Week</h1>
-    <p class="lede">Arriving over the last and next seven days. Dates come from US listings, so a few UK dates may differ.${state.week?.climbers?.length ? ' <a href="#week">See what moved on the charts this week</a>.' : ''}</p>
+    <p class="lede">Arriving over the last seven days. Dates come from US listings, so a few UK dates may differ.${state.week?.climbers?.length ? ' <a href="#week">See what moved on the charts this week</a>.' : ''}</p>
+    ${jumps ? `<div class="nw-jumps">${jumps}</div>` : ''}
     ${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up.</p>` : ''}
     ${body}`;
 }
+// Add to Calendar: an all-day event on the day it arrives, as a calendar file (the iPhone and Mac open it in Calendar)
+function calendarFile(x) {
+  const s = svc(x.service), d = x.date.replace(/-/g, ''), end = new Date(Date.parse(x.date + 'T12:00:00Z') + 864e5).toISOString().slice(0, 10).replace(/-/g, '');
+  const k = x.id ? `${x.type === 'movie' ? 'm' : 't'}${x.id}` : x.title.replace(/\W+/g, '-').toLowerCase();
+  const what = `${x.title}${x.season ? ` season ${x.season}` : ''}`, on = s?.label || 'streaming';
+  const link = x.id ? `https://tenner.stream/?t=${k}` : 'https://tenner.stream/#new';
+  const fold = (line) => line.replace(/(.{72})/g, '$1\r\n ').replace(/\r\n $/, '');
+  const txt = (t) => t.replace(/[\;,]/g, (c) => `\\${c}`).replace(/\n/g, '\\n');
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Tenner//Coming soon//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'BEGIN:VEVENT',
+    `UID:${k}-${d}@tenner.stream`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').slice(0, 15)}Z`, `DTSTART;VALUE=DATE:${d}`, `DTEND;VALUE=DATE:${end}`,
+    fold(`SUMMARY:${txt(`${what} on ${on}`)}`), fold(`DESCRIPTION:${txt(`${what} arrives on ${on} today. Where to watch: ${link}`)}`), `URL:${link}`,
+    'TRANSP:TRANSPARENT', 'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${txt(`${what} is on ${on} today`)}`, 'TRIGGER:PT9H', 'END:VALARM',
+    'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+}
+view.addEventListener('click', (e) => {
+  const j = e.target.closest('[data-jump]');
+  if (j) { e.preventDefault(); $(`#${j.dataset.jump}`)?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' }); return; }
+  const b = e.target.closest('[data-cal]'); if (!b) return;
+  const x = calItems[+b.dataset.cal]; if (!x) return;
+  const url = `data:text/calendar;charset=utf-8,${encodeURIComponent(calendarFile(x))}`, a = document.createElement('a');
+  a.href = url;
+  if (!/iPhone|iPad|iPod/.test(navigator.userAgent) && !(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) a.download = `${x.title.replace(/[^\w ]+/g, '').trim() || 'Tenner'}.ics`;   // iPhone and iPad: Safari opens it straight into Calendar
+  document.body.append(a); a.click(); a.remove();
+  toast(a.download ? `Downloaded: open it to put ${x.title} in your calendar` : `Opening Calendar for ${x.title}`);
+});
 
 let toastTimer;
 function toast(text) {

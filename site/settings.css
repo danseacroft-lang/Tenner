@@ -27,3 +27,8 @@
 @media (max-width: 999px) { .set-wide { display: none; } }   /* the featured artwork is a computer thing */
 
 .set-note:empty { display: none; }   /* only takes up room when it has something to say */
+
+/* Move to another device: the QR code, white on any theme so phone cameras read it */
+.move-qr { display: grid; place-items: center; margin: 16px 0 4px; }
+.move-qr svg { width: min(260px, 70vw); height: auto; border-radius: 14px; box-shadow: 0 0 0 .5px var(--sep), 0 10px 30px rgba(0, 0, 0, .18); }
+.move-none { margin: 0; font-size: 14px; color: var(--label2); text-align: center; }

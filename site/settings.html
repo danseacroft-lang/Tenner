@@ -36,9 +36,9 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.22.6">
-  <link rel="stylesheet" href="legal.css?v=1.22.6">
-  <link rel="stylesheet" href="settings.css?v=1.22.6">
+  <link rel="stylesheet" href="styles.css?v=1.23.0">
+  <link rel="stylesheet" href="legal.css?v=1.23.0">
+  <link rel="stylesheet" href="settings.css?v=1.23.0">
 </head>
 <body class="legal">
   <a class="skip" href="#main">Skip to the page</a>
@@ -88,7 +88,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.22.6</span>
+      <span class="side-ver">Tenner 1.23.0</span>
     </div>
   </div>
 
@@ -134,8 +134,15 @@
           <input type="checkbox" switch role="switch" name="no18"><i class="sw" aria-hidden="true"></i></label>
       </div>
 
+      <h2 class="section-label">Alerts</h2>
+      <div class="set-group">
+        <label class="set-row"><span class="set-l">Watchlist alerts<small id="alNow">A notification when something you’ve saved arrives, or gets a new season</small></span>
+          <input type="checkbox" switch role="switch" id="setAlerts"><i class="sw" aria-hidden="true"></i></label>
+      </div>
+
       <h2 class="section-label">Your data</h2>
       <div class="set-group">
+        <button type="button" class="set-row set-link" id="setMove"><span class="set-l">Move to another device<small>A code to scan or a link to open on your other phone or computer</small></span><span class="set-chev" aria-hidden="true"></span></button>
         <button type="button" class="set-row set-link" id="setExport"><span class="set-l">Export Watchlist and progress<small>A file to move them to another device</small></span><span class="set-chev" aria-hidden="true"></span></button>
         <label class="set-row set-link"><span class="set-l">Import from a file<small>Adds to what's already here</small></span><span class="set-chev" aria-hidden="true"></span>
           <input type="file" id="setImport" accept="application/json,.json" class="set-file"></label>
@@ -143,11 +150,23 @@
       </div>
       <p class="set-note" id="setNote" role="status" aria-live="polite"></p>
     </form>
+    <!-- Move to another device: a QR code and a link carrying the Watchlist, progress and services (nothing is uploaded) -->
+    <dialog class="mine-dlg move-dlg" id="moveDlg" aria-labelledby="moveH">
+      <form method="dialog"><h2 id="moveH">Move to another device</h2>
+        <p id="moveP">Scan this with the other phone’s camera, or open the link there. Your Watchlist, where you’re up to and your services come with it. Nothing is uploaded: it’s all in the link.</p>
+        <div class="move-qr" id="moveQr"></div>
+        <div class="mine-acts"><button type="button" class="btn btn-tinted" id="moveCopy">Copy link</button><button class="btn btn-tinted mine-done" value="done">Done</button></div>
+      </form></dialog>
+    <dialog class="mine-dlg move-dlg" id="takeDlg" aria-labelledby="takeH">
+      <form method="dialog"><h2 id="takeH">Bring your Tenner here?</h2>
+        <p id="takeP"></p>
+        <div class="mine-acts"><button class="btn btn-tinted" value="no">Not now</button><button class="btn btn-tinted mine-done" value="yes">Add them</button></div>
+      </form></dialog>
     <p class="set-ver side-ver-text">Tenner</p>
   </main>
 
 
-  <script src="shell.js?v=1.22.6" defer></script>
-  <script src="settings.js?v=1.22.6" defer></script>
+  <script src="shell.js?v=1.23.0" defer></script>
+  <script src="settings.js?v=1.23.0" defer></script>
 </body>
 </html>
