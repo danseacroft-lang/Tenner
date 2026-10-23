@@ -25,7 +25,7 @@
 
   let cat = null, logos = {}, labels = {}, shown = 0, list = [];
   const shops = new Set();   // stores (Sky Store): in the Where to watch filter, not in My services
-  const state = { c: 'popular', k: 'tv', s: [], g: [], sort: null, r: 0, q: '', all: false };   // all: search every film and show, not just the services
+  const state = { c: 'popular', k: 'tv', s: [], g: [], sort: null, r: 0, q: '' };
 
   // ---------- URL <-> state ----------
   function readHash() {
@@ -39,7 +39,6 @@
     state.sort = SORTS.some((s) => s.key === q.get('sort')) ? q.get('sort') : null;
     state.r = Math.min(9, Math.max(0, parseFloat(q.get('r')) || 0));
     state.q = (q.get('q') || '').slice(0, 80);
-    state.all = q.get('all') === '1' || (!q.has('all') && (() => { try { return localStorage.getItem('tenner-search-all') === '1'; } catch { return false; } })());
     if (collection().films) state.k = 'movie';
   }
   function writeHash() {
@@ -53,7 +52,6 @@
     if (state.sort) q.set('sort', state.sort);
     if (state.r) q.set('r', state.r);
     if (state.q) q.set('q', state.q);
-    if (state.q && state.all) q.set('all', '1');
     const h = q.toString();
     history.replaceState(null, '', h ? '#' + h : location.pathname);
   }
@@ -141,15 +139,6 @@
     qi.addEventListener('input', () => { state.q = qi.value; apply(true, true); if (scrollY > 300) scrollTo({ top: 0, behavior: 'auto' }); });
     qi.addEventListener('keydown', (e) => { if (e.key === 'Escape' && qi.value) { e.preventDefault(); state.q = ''; apply(true); } if (e.key === 'Enter') qi.blur(); });
     $('#qClear').addEventListener('click', () => { state.q = ''; apply(true); qi.focus(); });
-    // where to search: the choice shows while you search, and is remembered
-    qi.addEventListener('focus', () => { $('#scope').hidden = false; });
-    qi.addEventListener('blur', () => setTimeout(() => { if (!state.q && !$('#scope').contains(document.activeElement)) $('#scope').hidden = true; }, 150));
-    $('#scope').addEventListener('click', (e) => {
-      const b = e.target.closest('[data-all]'); if (!b) return;
-      state.all = b.dataset.all === '1'; try { localStorage.setItem('tenner-search-all', state.all ? '1' : '0'); } catch {}
-      web.q = ''; apply(true); if (!state.q) qi.focus();
-    });
-    arrows($('#scope'), () => [...document.querySelectorAll('#scope [data-all]')], (b) => b.click());
 
     // phones: the filters open as a sheet from the bottom
     const sheet = $('#filters'), scrim = $('#scrim'), openBtn = $('#openFilters');
@@ -208,7 +197,7 @@
     if (q) {
       // searching looks across shows and films and every collection, closest matches first
       list = cat.items.map((x) => [x, score(x, q)]).filter(([x, sc]) => sc && ok18(x)
-        && (state.all || !state.s.length || x.s.some((k) => state.s.includes(k)))
+
         && (!state.g.length || x.g.some((g) => state.g.includes(g)))
         && (!state.r || x.r >= state.r))
         .sort((a, b) => (state.sort ? sortFn(a[0], b[0]) : (b[1] - a[1] || b[0].p - a[0].p))).map(([x]) => x);
@@ -232,12 +221,9 @@
     $('#clear').disabled = !n;
 
     // nothing on the services: no "0 results" line; the full catalogue's results below say it
-    $('#count').textContent = !q || (!list.length && window.tn.api) ? '' : state.all ? `Every film and show matching “${state.q.trim()}”` : `${list.length.toLocaleString('en-GB')} ${list.length === 1 ? 'result' : 'results'} for “${state.q.trim()}” on ${$('#scopeSvc').textContent.replace(/^On /, '')}`;
+    $('#count').textContent = !q || (!list.length && window.tn.api) ? '' : `${list.length.toLocaleString('en-GB')} on the five services`;
     document.body.classList.toggle('searching', !!q);
-    document.body.classList.toggle('search-all', !!q && state.all);
-    $('#scope').hidden = !q && document.activeElement !== $('#q');
-    document.querySelectorAll('#scope [data-all]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.all === '1') === String(state.all)));
-    $('#scopeSvc').textContent = state.s.length && state.s.length < Object.keys(labels).length ? (state.s.length === 1 ? `On ${labels[state.s[0]]}` : 'On your services') : 'On the five services';
+
     document.body.classList.toggle('mixed', !!q || state.k === 'both');   // show/film labels on the tiles when both are listed
     $('#qClear').hidden = !state.q;
     if ($('#q').value !== state.q) $('#q').value = state.q;
@@ -433,16 +419,16 @@
     const q = state.q.trim(), box = $('#web');
     web.on = !!window.tn.api && q.length >= 2;
     if (!web.on) { box.hidden = true; web.q = ''; web.ctl?.abort(); return; }
-    box.classList.toggle('merged', state.all);   // everything: one list, the catalogue's matches first, then the rest of TMDB
-    $('#webH').textContent = !list.length ? `Results for “${q}”` : state.all ? 'Every film and show' : 'All films & shows';
-    if (q === web.q && web.all === state.all) return;
-    web.q = q; web.all = state.all; web.page = 0; web.pages = 1; clearTimeout(web.t); web.ctl?.abort();
+    box.classList.add('merged');   // one list: the services' matches first, then every other film and show (TMDB)
+    $('#webH').textContent = list.length ? 'Every other film and show' : `Results for “${q}”`;
+    if (q === web.q) return;
+    web.q = q; web.page = 0; web.pages = 1; clearTimeout(web.t); web.ctl?.abort();
     web.items = new Map(); $('#webGrid').innerHTML = '';
     box.hidden = false; $('#webNote').textContent = 'Searching…';
     web.t = setTimeout(() => webMore(), 280);
   }
   async function webMore() {
-    const q = web.q; if (!q || web.busy || web.page >= web.pages || (!state.all && web.page >= 1)) return;   // services only: the first page, as a taster
+    const q = web.q; if (!q || web.busy || web.page >= web.pages) return;
     web.busy = true; web.ctl = new AbortController();
     try {
       const r = await fetch(`${window.tn.api}/search?q=${encodeURIComponent(q)}${web.page ? `&page=${web.page + 1}` : ''}`, { signal: web.ctl.signal });
@@ -454,15 +440,13 @@
       $('#webGrid').insertAdjacentHTML('beforeend', res.map((x, i) => webCard(web.items.get(x.k), i)).join(''));
       $('#web').classList.toggle('solo', !list.length);   // nothing in the catalogue: these are the results
       const n = web.items.size;
-      $('#webNote').textContent = !d ? 'Couldn’t search everything right now.' : n && !list.length && !state.all ? `Not on ${$('#scopeSvc').textContent.replace(/^On /, '')} right now · ${n} found` : n ? (state.all ? `${(list.length + n).toLocaleString('en-GB')}${web.page < web.pages ? '+' : ''} results` : `${n} ${list.length ? 'more ' : ''}from TMDB`) : list.length ? 'Nothing more on TMDB.' : `Nothing found for “${q}”. Try another spelling.`;
+      $('#webNote').textContent = !d ? 'Couldn’t search everything right now.' : n ? `${n.toLocaleString('en-GB')}${web.page < web.pages ? '+' : ''}${list.length ? '' : ' · not on the five services right now'}` : list.length ? '' : `Nothing found for “${q}”. Try another spelling.`;
       if (!list.length && !n) { web.on = false; $('#web').hidden = true; empty(); }
-      if (!state.all && n) $('#webNote').insertAdjacentHTML('beforeend', ' <button type="button" class="web-all" id="webAll">Search everything</button>');
     } catch (e) { if (e.name !== 'AbortError') $('#webNote').textContent = 'Couldn’t search everything right now.'; }
     finally { web.busy = false; }
   }
-  $('#web').addEventListener('click', (e) => { if (e.target.id === 'webAll') $('#scope [data-all="1"]').click(); });
-  // everything: the next page of TMDB's results as you near the end
-  new IntersectionObserver((es) => { if (es[0].isIntersecting && state.all && web.on) webMore(); }, { rootMargin: '800px 0px' }).observe($('#webEnd'));
+  // the next page of every other film and show as you near the end
+  new IntersectionObserver((es) => { if (es[0].isIntersecting && web.on) webMore(); }, { rootMargin: '800px 0px' }).observe($('#webEnd'));
   function webCard(x, i) {
     const h = hue(x.title);
     const art = x.poster ? `<img src="${esc(x.poster)}" alt="" loading="lazy" decoding="async" width="342" height="513">`
