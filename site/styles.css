@@ -596,7 +596,7 @@ a.tb-btn:hover { text-decoration: none; }
 .cl li { border-top: .5px solid var(--sep); transition: background-color .15s ease; }
 .cl li:nth-child(5n + 1) { border-top: 0; }
 /* the row you point at frosts over, a touch more solid than the page behind it, square-cornered */
-@media (hover: hover) { .cl li:hover { background: color-mix(in srgb, var(--bg) 62%, transparent); -webkit-backdrop-filter: blur(20px) saturate(1.5); backdrop-filter: blur(20px) saturate(1.5); } }
+@media (hover: hover) { .cl li:hover { background: color-mix(in srgb, var(--bg) 50%, transparent); -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); } }
 .cl a { display: flex; align-items: center; gap: 14px; padding: 9px 10px; color: inherit; }
 .cl a:hover { text-decoration: none; }
 .cl-n { width: 22px; flex: none; display: grid; justify-items: center; gap: 3px; font: 700 17px/1 var(--font-display); color: var(--label2); font-variant-numeric: tabular-nums; }
