@@ -1341,6 +1341,14 @@ span.av:not([style*="--h"]) { background: var(--fill-strong); color: var(--label
 .drawer .side-acct { padding: 10px 12px; margin: 0 0 10px; }
 
 /* buttons: regular weight, smoothed (greyscale antialiasing, as on Apple's own) rather than bold */
-button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .chip, .share-chart, .pv-ok, .sh-main .btn, .tn-opt, .coll-b, .seg-thumb + button, .segmented button, .ac-sso, .nw-jump, .svc-link {
+button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .chip, .share-chart, .pv-ok, .sh-main .btn, .tn-opt, .coll-b, .segmented button, .ac-sso, .nw-jump, .svc-link {
   -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 .btn, .h-cta, .sh-main .btn, .pv-ok, .dd-kind, .segmented button, .ac-main { font-weight: 500 !important; }
+
+/* Shows | Films | Both and the other segmented switches: the same glass as the buttons beside them (Filters), with
+   softly rounded corners, and the chosen option a lighter glass tile */
+.segmented { border-radius: 12px; background: var(--gl-fill); box-shadow: inset 0 0 0 1px var(--gl-rim), 0 1px 2px rgba(0, 0, 0, .06);
+  -webkit-backdrop-filter: blur(24px) saturate(1.7); backdrop-filter: blur(24px) saturate(1.7); }
+.segmented button { border-radius: 9px; font-weight: 500; }
+.seg-thumb { border-radius: 9px; background: var(--gl-hover); box-shadow: inset 0 0 0 1px var(--gl-rim), 0 2px 6px rgba(0, 0, 0, .12); }
+.cmd .segmented, .cmd .f-btn { height: 44px; }
