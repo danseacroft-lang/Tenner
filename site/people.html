@@ -38,8 +38,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.31.1">
-  <link rel="stylesheet" href="people.css?v=1.31.1">
+  <link rel="stylesheet" href="styles.css?v=1.32.0">
+  <link rel="stylesheet" href="people.css?v=1.32.0">
 </head>
 <body class="people">
   <a class="skip" href="#main">Skip to the page</a>
@@ -89,7 +89,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.31.1</span>
+      <span class="side-ver">Tenner 1.32.0</span>
     </div>
   </div>
 
@@ -101,13 +101,18 @@
 
   <main id="main" class="pwrap" tabindex="-1">
     <section class="p-find" id="find">
-      <header class="p-head">
-        <h1 class="large-title">Cast &amp; Crew</h1>
-        <p class="lede">The actors, directors and writers behind every show and film, and everything they’ve made.</p>
+      <!-- the faces of the week drifting past behind the title, melting into the page -->
+      <header class="pc-hero">
+        <div class="pc-wall" id="pcWall" aria-hidden="true"></div>
+        <div class="pc-copy">
+          <p class="pc-eye">Cast &amp; Crew</p>
+          <h1 class="pc-h" data-title="Cast &amp; Crew">The people behind the screen.</h1>
+          <p class="pc-lede">Every actor, director and writer, and everything they’ve made, with where to watch it.</p>
+        </div>
       </header>
-      <div class="p-search" role="search">
+      <div class="p-cmd" role="search">
         <svg class="s-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 20 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
-        <input id="pq" type="search" placeholder="Search cast & crew" autocomplete="off" spellcheck="false" enterkeyhint="search" aria-label="Search cast and crew">
+        <input id="pq" type="search" placeholder="Search actors, directors, writers" autocomplete="off" spellcheck="false" enterkeyhint="search" aria-label="Search cast and crew">
         <button type="button" class="s-clear" id="pqClear" aria-label="Clear search" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke="var(--bg)" stroke-width="2" stroke-linecap="round"/></svg></button>
       </div>
       <p class="p-note" id="pNote" aria-live="polite"></p>
@@ -117,9 +122,9 @@
   </main>
 
 
-  <script src="shell.js?v=1.31.1" defer></script>
-  <script src="links.js?v=1.31.1" defer></script>
-  <script src="sheet.js?v=1.31.1" defer></script>
-  <script src="people.js?v=1.31.1" defer></script>
+  <script src="shell.js?v=1.32.0" defer></script>
+  <script src="links.js?v=1.32.0" defer></script>
+  <script src="sheet.js?v=1.32.0" defer></script>
+  <script src="people.js?v=1.32.0" defer></script>
 </body>
 </html>
