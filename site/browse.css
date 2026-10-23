@@ -352,3 +352,7 @@
 .web.merged .web-hd { border-top: 0; padding-top: 0; }
 .web.merged:not(.solo) .web-hd h2 { font-size: 17px; color: var(--label2); }
 .searching #pWhere { opacity: .4; pointer-events: none; }   /* searching covers every film and show: the services filter has nothing to do */
+/* the bar's two controls: one height, one shape, side by side (after the phone rules above, so they win) */
+.cmd .segmented, .cmd .f-btn { height: 42px; border-radius: 12px; }
+.cmd .f-btn { padding: 0 16px; gap: 8px; }
+.cmd .segmented button { min-width: 64px; }
