@@ -742,22 +742,21 @@ async function alertCard() {
   });
 }
 function pageWatchlist() {
-  const list = window.tn.saved.all(), spots = chartSpots(), d = state.titles, kind = state.wlKind || 'all';
+  const list = window.tn.saved.all(), spots = chartSpots(), d = state.titles, kind = state.wlKind || 'both';
   const onLogos = (k) => {
     const x = d?.items?.[k]; if (!x?.f?.length || !d.logo) return '';
     const seen = new Set();
     return x.f.map((id) => d.providers[id]).filter((p) => p?.[1] && !seen.has(p[0].split(' ')[0]) && seen.add(p[0].split(' ')[0])).slice(0, 3)
-      .map(([n, logo]) => `<img src="${esc(d.logo + logo)}" alt="${esc(n)}" title="${esc(n)}">`).join('');
+      .map(([n, logo]) => `<img class="nw-logo" src="${esc(d.logo + logo)}" alt="${esc(n)}" title="${esc(n)}">`).join('');
   };
-  const X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
-  let streaming = 0;
-  const cards = list.map((x) => {
-    const spot = spots.get(x.k), sh = reg(wlInfo(x, spot || 'In your Watchlist')), on = onLogos(x.k); if (on) streaming++;
-    const what = [x.type === 'movie' ? 'Film' : 'Series', x.year].filter(Boolean).join(' · ');
-    const art = x.poster ? `<img src="${esc(x.poster)}" alt="" loading="lazy">` : placeholder({ title: x.title });
+  const X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+  // the homepage's chart list: poster, title, what it is (and where it charts), where it's streaming, then remove
+  const rows = list.map((x) => {
+    const spot = spots.get(x.k), sh = reg(wlInfo(x, spot || 'In your Watchlist')), on = onLogos(x.k);
+    const what = [x.type === 'movie' ? 'Film' : 'Series', x.year, spot].filter(Boolean).join(' · ');
+    const art = x.poster ? `<img src="${esc(thumb(x.poster))}" alt="" loading="lazy" decoding="async">` : `<span class="cl-ph" style="background:hsl(${hue(x.title)} 45% 35%)"></span>`;
     return `<li data-type="${x.type === 'movie' ? 'movie' : 'tv'}"><a href="${esc(tmdbUrl(x.type, x.k.slice(1)))}" target="_blank" rel="noopener" ${sh}>
-        <span class="wl-art">${art}${on ? `<span class="wl-on">${on}</span>` : ''}${spot ? `<span class="wl-spot">${esc(spot)}</span>` : ''}</span>
-        <b class="wl-t">${esc(x.title)}</b><span class="wl-what">${esc(what)}</span>${showLine(x)}</a>
+        ${art}<span class="cl-t"><b>${esc(x.title)}</b><small>${esc(what)}</small>${showLine(x)}</span>${on ? `<span class="wl-on">${on}</span>` : ''}</a>
       <button type="button" class="wl-x" data-unsave="${esc(x.k)}" aria-label="Remove ${esc(x.title)} from your Watchlist" title="Remove">${X}</button></li>`;
   }).join('');
   const both = list.some((x) => x.type === 'movie') && list.some((x) => x.type !== 'movie');
@@ -765,21 +764,19 @@ function pageWatchlist() {
     ? `<div class="empty"><span class="empty-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12v18.4l-6-4.2-6 4.2z" fill="currentColor"/></svg></span>
         <h2>Nothing saved yet</h2><p>Open any title and press Watchlist to keep it here, with where to watch it.</p>
         <a class="btn btn-tinted" href="#top">See the top 10</a></div>`
-    : `<div class="wl-bar"><h2 class="row-h">Saved</h2>${both ? `<div class="segmented" id="wlKind" role="radiogroup" aria-label="Shows, films or both"><span class="seg-thumb" aria-hidden="true"></span>${[['all', 'All'], ['tv', 'Shows'], ['movie', 'Films']].map(([k, l]) => `<button type="button" role="radio" data-kind="${k}" aria-checked="${k === kind}">${l}</button>`).join('')}</div>` : ''}</div>
-      <ul class="wl-grid" data-kind="${both ? kind : 'all'}">${cards}</ul>`;
-  const amb = list.find((x) => x.poster)?.poster;
-  const stats = list.length ? `<p class="wl-stats"><span><b>${list.length}</b> saved</span>${streaming ? `<span><b>${streaming}</b> streaming now</span>` : ''}</p>` : '';
-  return `<header class="wl-hd">${amb ? `<img class="wl-amb" src="${esc(amb)}" alt="" aria-hidden="true">` : ''}
-      <h1 class="large-title page-title">Watchlist</h1>${stats}
-      <p class="lede">${window.tn.account.user() ? 'Kept in step on every device you’re signed in on.' : 'Saved on this device. <a href="account.html">Sign in</a> to have it on all your devices.'}</p></header>
+    : `<section class="wk" aria-labelledby="wl-saved"><div class="row-hd wl-hd"><h2 class="row-h" id="wl-saved">Saved</h2>${both ? `<label class="dd dd-kind"><span class="dd-l" id="wlKindL">${{ tv: 'Shows', movie: 'Films', both: 'Shows and films' }[kind]}</span><span class="dd-chev" aria-hidden="true"></span>
+        <select id="wlKind" aria-label="Shows, films or both">${[['tv', 'Shows'], ['movie', 'Films'], ['both', 'Shows and films']].map(([k, l]) => `<option value="${k}"${k === kind ? ' selected' : ''}>${l}</option>`).join('')}</select></label>` : ''}</div>
+      <ol class="cl nw-cl wl-cl" data-kind="${both ? kind : 'both'}">${rows}</ol></section>`;
+  return `<h1 class="large-title page-title">Watchlist</h1>
+    <p class="lede">${list.length ? `${list.length} title${list.length === 1 ? '' : 's'}, newest first. ` : ''}${window.tn.account.user() ? 'Kept in step on every device you’re signed in on.' : 'Saved on this device. <a href="account.html">Sign in</a> to have it on all your devices.'}</p>
     ${list.length ? '<div class="wl-alert" id="wlAlert" hidden></div>' : ''}${comingUp(list)}${body}`;
 }
-// Shows, Films or All, without redrawing
+// Shows, Films or both, without redrawing
 function wlKindInit() {
-  const seg = $('#wlKind'); if (!seg) return;
-  const pick = (b) => { seg.querySelectorAll('button').forEach((n) => n.setAttribute('aria-checked', n === b)); state.wlKind = b.dataset.kind; $('.wl-grid').dataset.kind = b.dataset.kind; };
-  seg.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) pick(b); });
-  window.tn.arrows(seg, () => [...seg.querySelectorAll('button')], pick); window.tn.segment(seg, pick);
+  $('#wlKind')?.addEventListener('change', (e) => {
+    state.wlKind = e.target.value; $('.wl-cl').dataset.kind = e.target.value;
+    $('#wlKindL').textContent = { tv: 'Shows', movie: 'Films', both: 'Shows and films' }[e.target.value];
+  });
 }
 // shows: where you're up to, and when the next episode lands
 function showLine(x) {
@@ -787,7 +784,7 @@ function showLine(x) {
   const d = det(x.k), p = window.tn.progress.get(x.k), up = p && window.tn.nextUp(p, d?.sz);
   const bits = [p ? (up ? `<b class="wl-go">Continue S${up[0]} E${up[1]}</b>` : '<b class="wl-go">All caught up</b>') : '',
     d?.nx ? `New episode ${esc(window.tn.whenText(d.nx[0]))}` : d?.en ? 'Ended' : ''].filter(Boolean);
-  return bits.length ? `<span class="what wl-next">${bits.join(' · ')}</span>` : '';
+  return bits.length ? `<small class="wl-next">${bits.join(' · ')}</small>` : '';
 }
 // Coming up: new episodes of your saved shows over the next month, soonest first
 function comingUp(list) {
@@ -795,7 +792,7 @@ function comingUp(list) {
   const items = list.filter((x) => x.type === 'tv' && det(x.k)?.nx && det(x.k).nx[0] >= today && det(x.k).nx[0] <= soon)
     .sort((a, b) => det(a.k).nx[0].localeCompare(det(b.k).nx[0]));
   if (!items.length) return '';
-  return `<section class="nrow wl-soon" aria-labelledby="cu-h"><h2 class="row-h" id="cu-h">Coming Up</h2>
+  return `<section class="nrow wl-soon" aria-labelledby="cu-h"><div class="wk-hd"><h2 class="row-h" id="cu-h">Coming Up</h2><p>New episodes of your shows this month</p></div>
     <ul class="nr">${items.map((x) => { const n = det(x.k).nx; return `<li><a href="${esc(tmdbUrl('tv', x.k.slice(1)))}" target="_blank" rel="noopener" ${reg(wlInfo(x, `New episode ${window.tn.whenText(n[0])}`))}>
       <span class="nr-art">${x.poster ? `<img src="${esc(x.poster)}" alt="" loading="lazy">` : placeholder({ title: x.title })}<span class="cu-when">${esc(window.tn.whenText(n[0]))}</span></span>
       <b>${esc(x.title)}</b><small>Season ${n[1]}, episode ${n[2]}</small></a></li>`; }).join('')}</ul></section>`;
