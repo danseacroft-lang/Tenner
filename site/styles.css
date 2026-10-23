@@ -112,7 +112,6 @@ main:focus { outline: none; }
 .btn:active { transform: scale(.95); }
 .btn-tinted { background: var(--frost); box-shadow: var(--frost-line); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); }
 .btn-icon { width: 44px; height: 44px; padding: 0; border-radius: 12px; }
-.btn.chip { height: 26px; padding: 0 10px; border-radius: 8px; font-size: 12.5px; font-weight: 600; }
 
 /* ============================================================ the shell: Liquid Glass
    A bar that floats at the top (logo, the tabs, the round Theme button), with the tabs floating at the bottom on phones
@@ -649,6 +648,7 @@ a.tb-btn:hover { text-decoration: none; }
   .cl { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-flow: row; }
   .cl li:nth-child(5n + 1) { border-top: .5px solid var(--sep); }
   .cl li:first-child { border-top: 0; }
+  .nw-cl li:nth-child(2) { border-top: .5px solid var(--sep) !important; }
   .row-h { margin-top: 34px; font-size: 20px; }
   .row-hd { margin-top: 34px; }
   .see-all { font-size: 14px; }
@@ -659,11 +659,15 @@ a.tb-btn:hover { text-decoration: none; }
 .group { margin: 26px 0 0; animation: riseIn .6s var(--ease-out) both; }
 .group:nth-of-type(2) { animation-delay: .05s; } .group:nth-of-type(3) { animation-delay: .1s; }
 .group:nth-of-type(4) { animation-delay: .15s; } .group:nth-of-type(n+5) { animation-delay: .2s; }
-.group h2 { margin: 0 0 8px 16px; font: 600 13px/1.3 var(--font); color: var(--label2); letter-spacing: 0; }
+.group h2 { margin: 0 0 6px; font: 700 17px/1.3 var(--font-display); color: var(--label); letter-spacing: -.015em; }
+/* each day: the homepage's chart list (.cl), in rows, with the service's logo and (coming soon) Add to Calendar */
+.nw-cl { grid-template-rows: none; grid-auto-flow: row; }
+.nw-cl li { display: flex; align-items: center; border-top: .5px solid var(--sep) !important; }
+.nw-cl li:nth-child(-n + 2) { border-top: 0 !important; }
+.nw-cl li > a, .nw-cl .nw-row { flex: 1; min-width: 0; display: flex; align-items: center; gap: 14px; padding: 9px 10px; color: inherit; }
+.nw-cl .nw-logo { width: 26px; height: 26px; flex: none; border-radius: 7px; box-shadow: 0 0 0 .5px var(--sep); }
+.nw-cl .cal-add { margin-right: 6px; }
 .group h2.today { color: var(--accent); }
-.list { list-style: none; margin: 0; padding: 0; background: var(--bg2); border-radius: var(--radius); overflow: hidden; }
-.list li { display: flex; align-items: center; gap: 12px; padding: 9px 16px; position: relative; }
-.list li + li::before { content: ""; position: absolute; top: 0; left: 16px; right: 0; border-top: .5px solid var(--sep); }
 /* New This Week: links down to Coming soon and Leaving soon, their headings, and the Add to Calendar button */
 .nw-jumps { display: flex; gap: 18px; margin: 10px 0 0; }
 .nw-jump { display: inline-flex; align-items: center; gap: 6px; padding: 8px 0; font-size: 15px; font-weight: 500; letter-spacing: -.016em; }
@@ -716,10 +720,6 @@ a.tb-btn:hover { text-decoration: none; }
 .wl-alert p { flex: 1; margin: 0; font-size: 14px; line-height: 1.4; color: var(--label2); text-wrap: pretty; }
 .wl-alert p b { display: block; color: var(--label); font-weight: 600; }
 .wl-alert .btn { flex: none; }
-.list .nl-art { width: 40px; height: 60px; flex: none; object-fit: cover; border-radius: 5px; box-shadow: 0 0 0 .5px var(--sep); }
-.list .grow { flex: 1; min-width: 0; }
-.list .title { color: var(--label); font-weight: 500; }
-.list .what { display: block; color: var(--label2); font-size: 14px; }
 /* Watchlist rows: where it's included, then remove */
 /* This Week */
 .wk { margin-top: 30px; }
@@ -1318,7 +1318,6 @@ a.sh-prov:hover { text-decoration: none; }
 /* ============================================================ phones: New This Week, laid out like the homepage
    Banners first (the poster on the right, its colours blurred behind, the words on the left, as on Rakuten), then each
    day as a bold heading over a list like "Top rated at a glance": poster, title, service and what it is, the logo. */
-.what-ph, .nl-logo { display: none; }
 @media (max-width: 560px) {
   .mb-pc { background: #0b0b10; }
   .mb-pc .mb-glow { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(28px) saturate(1.5) brightness(.75); scale: 1.4; }
@@ -1333,28 +1332,18 @@ a.sh-prov:hover { text-decoration: none; }
   .group { margin-top: 30px; }
   .group h2 { margin: 0 0 6px; font: 800 21px/1.2 var(--font-display); letter-spacing: -.015em; color: var(--label); }
   .group h2.today { color: var(--accent); }
-  .group .list { background: none; border-radius: 0; overflow: visible; }
-  .group .list li { gap: 14px; padding: 12px 0; }
-  .group .list li + li::before { left: 0; }
-  .group .list .nl-art { width: 46px; height: 69px; border-radius: 7px; box-shadow: 0 0 0 .5px var(--sep), 0 4px 10px rgba(0, 0, 0, .25); }
-  .group .list .title { display: block; font-size: 17px; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .group .list .what { display: none; }
-  .group .list .what-ph { display: block; margin-top: 2px; color: var(--label2); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .group .list .chip:has(+ .nl-logo) { display: none; }
-  .nl-logo { display: block; flex: none; width: 30px; height: 30px; border-radius: 8px; overflow: hidden; box-shadow: 0 0 0 .5px var(--sep); }
-  .nl-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 }
 
 /* ============================================================ glass buttons, everywhere
    One look for every button and pill: a see-through fill, a thin light rim, softly rounded corners and bold words
    (the visionOS / iOS 26 way). Round icon buttons keep their circles in the same glass. */
-.btn-tinted, .dd, .h-badge, .mb-badge, .btn.chip, .share-chart, .pv-ok, .h-cta, .sh-main .btn, .h-add, .tb-round, .cal-add {
+.btn-tinted, .dd, .h-badge, .mb-badge, .share-chart, .pv-ok, .h-cta, .sh-main .btn, .h-add, .tb-round, .cal-add {
   background: var(--gl-fill) !important; color: var(--label) !important;
   box-shadow: inset 0 0 0 1px var(--gl-rim), 0 1px 2px rgba(0, 0, 0, .06) !important;
   -webkit-backdrop-filter: blur(24px) saturate(1.7); backdrop-filter: blur(24px) saturate(1.7);
 }
 .btn-tinted, .dd, .h-badge, .share-chart, .pv-ok, .h-cta, .sh-main .btn { border-radius: 12px; font-weight: 500; letter-spacing: -.012em; }
-.btn.chip, .mb-badge { border-radius: 8px; font-weight: 500; }
+.mb-badge { border-radius: 8px; font-weight: 500; }
 .h-badge { border-radius: 12px; }
 .mine-done { color: var(--label) !important; }
 @media (hover: hover) {
@@ -1362,7 +1351,7 @@ a.sh-prov:hover { text-decoration: none; }
 }
 .cal-add, .h-add[aria-pressed="true"], .sh-more .btn[aria-pressed="true"] { color: var(--accent) !important; }
 @media (prefers-reduced-transparency: reduce) {
-  .btn-tinted, .dd, .h-badge, .mb-badge, .btn.chip, .share-chart, .pv-ok, .h-cta, .sh-main .btn, .h-add, .tb-round, .cal-add { background: var(--bg2) !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .btn-tinted, .dd, .h-badge, .mb-badge, .share-chart, .pv-ok, .h-cta, .sh-main .btn, .h-add, .tb-round, .cal-add { background: var(--bg2) !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
 /* ============================================================ accounts: your picture and name at the foot of the sidebar
@@ -1381,7 +1370,7 @@ span.av:not([style*="--h"]) { background: var(--fill-strong); color: var(--label
 .drawer .side-acct { padding: 10px 12px; margin: 0 0 10px; }
 
 /* buttons: regular weight, smoothed (greyscale antialiasing, as on Apple's own) rather than bold */
-button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .chip, .share-chart, .pv-ok, .sh-main .btn, .tn-opt, .coll-b, .segmented button, .ac-sso, .nw-jump, .svc-link {
+button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .btn, .tn-opt, .coll-b, .segmented button, .ac-sso, .nw-jump, .svc-link {
   -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 .btn, .h-cta, .sh-main .btn, .pv-ok, .dd-kind, .segmented button, .ac-main { font-weight: 500 !important; }
 

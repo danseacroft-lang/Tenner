@@ -866,15 +866,12 @@ let calItems = [];
 function newItem(x, mode) {
   const s = svc(x.service), i = mode === 'soon' ? calItems.push(x) - 1 : -1;
   const kind = x.type === 'movie' ? 'Film' : x.season ? `Season ${x.season}` : 'Series';
-  const what = [kind, x.original ? `${s?.label} original` : ''].filter(Boolean).join(', ');
-  const whatPhone = [s?.label, kind].filter(Boolean).join(' · ');
+  const what = [kind, s ? `${s.label}${x.original ? ' original' : ''}` : ''].filter(Boolean).join(' · ');
   const eye = mode === 'soon' ? `Coming to ${s?.label || 'streaming'}` : mode === 'leaving' ? `Leaving ${s?.label || 'streaming'}` : `New on ${s?.label || 'streaming'}`;
-  const art = x.poster ? `<img class="nl-art" src="${esc(thumb(x.poster))}" alt="" loading="lazy">` : `<span class="nl-art" style="background:hsl(${hue(x.title)} 45% 35%)"></span>`;
+  const art = x.poster ? `<img src="${esc(thumb(x.poster))}" alt="" loading="lazy" decoding="async">` : `<span class="cl-ph" style="background:hsl(${hue(x.title)} 45% 35%)"></span>`;
   const cal = i >= 0 ? `<button type="button" class="cal-add" data-cal="${i}" aria-label="${esc(`Add ${x.title} to your calendar`)}" title="Add to Calendar"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 12.6v5M9.5 15.1h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>` : '';
-  return `<li>${art}<div class="grow">
-    ${x.url ? `<a class="title" href="${esc(x.url)}" target="_blank" rel="noopener" ${reg(infoFor(x, x.type, eye, s ? [s] : []))}>${esc(x.title)}</a>` : `<span class="title">${esc(x.title)}</span>`}
-    <span class="what">${esc(what)}</span><span class="what-ph">${esc(whatPhone)}${x.original ? ' · Original' : ''}</span></div>
-    ${cal}${s ? `<a class="btn btn-tinted chip" href="#${s.key}">${esc(s.label)}</a>${s.logo ? `<a class="nl-logo" href="#${s.key}" aria-label="${esc(s.label)} Top 10"><img src="${esc(s.logo)}" alt=""></a>` : ''}` : ''}</li>`;
+  const row = `${art}<span class="cl-t"><b>${esc(x.title)}</b><small>${esc(what)}</small></span>${s?.logo ? `<img class="nw-logo" src="${esc(s.logo)}" alt="">` : ''}`;
+  return `<li>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener" ${reg(infoFor(x, x.type, eye, s ? [s] : []))}>${row}</a>` : `<span class="nw-row">${row}</span>`}${cal}</li>`;
 }
 function dayGroups(list, mode, today) {
   const days = new Map();
@@ -882,7 +879,7 @@ function dayGroups(list, mode, today) {
   const tomorrow = new Date(Date.parse(today + 'T12:00:00') + 864e5).toISOString().slice(0, 10);
   return [...days].map(([d, items]) => `<section class="group">
     <h2 class="${d === today ? 'today' : ''}">${d === today ? 'Today' : d === tomorrow ? 'Tomorrow' : esc(fmtDate(new Date(d + 'T12:00:00'), { weekday: 'long', day: 'numeric', month: 'long' }))}</h2>
-    <ul class="list">${items.map((x) => newItem(x, mode)).join('')}</ul></section>`).join('');
+    <ul class="cl nw-cl">${items.map((x) => newItem(x, mode)).join('')}</ul></section>`).join('');
 }
 function pageNew() {
   const f = state.fresh;
