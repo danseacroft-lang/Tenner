@@ -36,10 +36,10 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.28.0">
-  <link rel="stylesheet" href="legal.css?v=1.28.0">
-  <link rel="stylesheet" href="settings.css?v=1.28.0">
-  <link rel="stylesheet" href="account.css?v=1.28.0">
+  <link rel="stylesheet" href="styles.css?v=1.29.0">
+  <link rel="stylesheet" href="legal.css?v=1.29.0">
+  <link rel="stylesheet" href="settings.css?v=1.29.0">
+  <link rel="stylesheet" href="account.css?v=1.29.0">
 </head>
 <body class="legal">
   <a class="skip" href="#main">Skip to the page</a>
@@ -89,7 +89,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.28.0</span>
+      <span class="side-ver">Tenner 1.29.0</span>
     </div>
   </div>
 
@@ -173,7 +173,16 @@
 
       <h2 class="section-label">Account</h2>
       <div class="set-group">
-        <button type="button" class="set-row set-link" id="acOutBtn"><span class="set-l">Sign out</span></button>
+        <!-- slide to sign out, the iPhone's "slide to power off" way -->
+        <div class="set-row ac-slide-row">
+          <div class="ac-slide" id="acSlide" role="slider" tabindex="0" aria-label="Slide to sign out" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="Slide right, or press Enter, to sign out">
+            <span class="ac-fill" aria-hidden="true"></span>
+            <span class="ac-slide-t" aria-hidden="true">slide to sign out</span>
+            <span class="ac-knob" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 4.5H6.5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2H10M14.5 8l4 4-4 4M18.5 12H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+        </div>
+        <label class="set-row"><span class="set-l">Also remove from this device<small>Your Watchlist and progress stay safe in your account</small></span>
+          <input type="checkbox" switch role="switch" id="acClear"><i class="sw" aria-hidden="true"></i></label>
         <button type="button" class="set-row set-link set-danger" id="acDelete"><span class="set-l">Delete account<small>Removes it and everything in it from Tenner. What’s on this device stays</small></span></button>
       </div>
       <p class="set-note" id="acNote" role="status" aria-live="polite"></p>
@@ -181,7 +190,7 @@
   </main>
 
 
-  <script src="shell.js?v=1.28.0" defer></script>
-  <script src="account.js?v=1.28.0" defer></script>
+  <script src="shell.js?v=1.29.0" defer></script>
+  <script src="account.js?v=1.29.0" defer></script>
 </body>
 </html>

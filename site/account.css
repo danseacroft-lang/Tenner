@@ -85,3 +85,19 @@
 .ac-mail svg { width: 34px; height: 34px; }
 .ac-warn { color: #ff9f0a; font-weight: 600; }
 .ac-inline { display: inline; padding: 0; font-size: inherit; }
+/* slide to sign out */
+.ac-slide-row { padding-top: 10px; padding-bottom: 10px; }
+.ac-slide { --x: 0px; --p: 0; position: relative; width: 100%; height: 56px; border-radius: 28px; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none;
+  background: var(--gl-fill); box-shadow: inset 0 0 0 1px var(--gl-rim); }
+.ac-slide:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.ac-fill { position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--x) + 52px); border-radius: inherit; background: linear-gradient(90deg, rgba(255, 69, 58, .15), rgba(255, 69, 58, .45)); opacity: calc(.4 + var(--p) * .6); }
+.ac-slide-t { position: absolute; inset: 0; display: grid; place-items: center; padding-left: 40px; font: 400 17px/1 var(--font); letter-spacing: -.01em; -webkit-font-smoothing: antialiased;
+  color: transparent; background: linear-gradient(100deg, var(--label3) 0%, var(--label3) 40%, var(--label) 50%, var(--label3) 60%, var(--label3) 100%) 0 0 / 250% 100%;
+  -webkit-background-clip: text; background-clip: text; opacity: calc(1 - var(--p) * 1.6); }
+:root:not(.still) .ac-slide-t { animation: acShine 2.6s linear infinite; }
+@keyframes acShine { from { background-position: 100% 0; } to { background-position: -150% 0; } }
+.ac-knob { position: absolute; top: 4px; left: 4px; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; cursor: grab; color: #fff;
+  background: #ff453a; box-shadow: 0 4px 14px rgba(255, 69, 58, .45); transform: translateX(var(--x)); transition: transform .45s var(--ease-spring); }
+.ac-slide.held .ac-knob { transition: none; cursor: grabbing; }
+.ac-slide.done .ac-knob { transition: transform .25s ease-out; }
+.ac-knob svg { width: 22px; height: 22px; }

@@ -73,6 +73,9 @@
 .coll-b[aria-checked="true"] { color: var(--label); }
 @media (hover: hover) { .coll-b[aria-checked="false"]:hover { color: var(--label2); } }
 .coll-b:active { transform: scale(.96); }
+.coll-b::after { content: ""; position: absolute; left: 0; right: 0; bottom: -8px; height: 4px; border-radius: 2px; pointer-events: none;
+  background: linear-gradient(90deg, #ff375f, #ff9f0a, #ffd60a, #30d158, #0a84ff, #bf5af2); opacity: 0; transform: scaleX(.4); transition: opacity .3s ease, transform .45s var(--ease-spring); }
+@media (hover: hover) { .coll-b[aria-checked="false"]:hover::after { opacity: .35; transform: none; } }
 .coll-b:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
 
 /* ---------- explore by genre ---------- */
@@ -81,8 +84,13 @@
 .moods-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(230px, 1fr); gap: 14px; overflow-x: auto; scrollbar-width: none; padding: 6px 2px 18px; margin: -6px -2px 0; scroll-snap-type: x mandatory; }
 .moods-row::-webkit-scrollbar { display: none; }
 .mood { position: relative; height: 132px; padding: 0; border: 0; border-radius: 20px; overflow: hidden; cursor: pointer; scroll-snap-align: start; text-align: left; color: #fff;
-  background: linear-gradient(135deg, hsl(var(--h) 70% 46%), hsl(calc(var(--h) + 50) 75% 26%)); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14), 0 10px 26px -10px hsl(var(--h) 70% 30% / .7);
+  background: #0c0c10; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12), 0 16px 34px -16px rgba(0, 0, 0, .65);
   transition: transform .45s var(--ease-spring), box-shadow .3s ease; }
+/* each tile glows with its own top poster's colours, blurred deep behind dark glass (Apple Music's way) */
+.mood-bg { position: absolute; z-index: 0; inset: -35%; width: 170%; height: 170%; object-fit: cover; pointer-events: none;
+  filter: blur(28px) saturate(1.6) brightness(.62); transition: filter .5s ease, transform .8s var(--ease-out); }
+.mood::before { content: ""; position: absolute; z-index: 4; inset: 0; pointer-events: none; border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .1), transparent 38%); }
 .mood::after { content: ""; position: absolute; z-index: 4; inset: 0; background: linear-gradient(90deg, rgba(0, 0, 0, .5) 0%, rgba(0, 0, 0, .18) 55%, transparent 75%); pointer-events: none; }
 .mood-fan { position: absolute; right: 8px; top: 16px; bottom: -22px; width: 104px; perspective: 600px; }
 .mood-fan img { position: absolute; right: calc(var(--j) * 21px); top: calc(var(--j) * 6px); width: 62px; aspect-ratio: 2 / 3; border-radius: 8px; object-fit: cover;
@@ -91,7 +99,8 @@
 .mood-l { position: absolute; z-index: 5; left: 16px; bottom: 14px; right: 40%; display: grid; gap: 2px; }
 .mood-l b { font: 800 21px/1.1 var(--font-display); letter-spacing: -.02em; text-shadow: 0 2px 12px rgba(0, 0, 0, .35); }
 .mood-l small { font-size: 13px; opacity: .85; }
-@media (hover: hover) { .mood:hover { transform: translateY(-4px); }
+@media (hover: hover) { .mood:hover { transform: translateY(-4px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .2), 0 22px 40px -16px rgba(0, 0, 0, .7); }
+  .mood:hover .mood-bg { filter: blur(28px) saturate(1.8) brightness(.78); transform: scale(1.08); }
   :root:not(.still) .mood:hover .mood-fan img { transform: rotateY(-8deg) rotateZ(calc(var(--j) * -11deg + 6deg)) translateY(-6px); } }
 .mood:active { transform: scale(.97); }
 .mood:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
@@ -286,8 +295,7 @@
 /* with a mouse or trackpad: the macOS way (see styles.css) — shade, not size */
 @media (hover: hover) and (pointer: fine) {
   .coll-b:active, .g-b:active { transform: none; }
-  .coll-b[aria-checked="false"]:hover { background: var(--fill); }
-  .coll-b[aria-checked="false"]:active, .w-b:active, .s-b:active { background: var(--fill-strong); }
+  .w-b:active, .s-b:active { background: var(--fill-strong); }
   .g-b:active { filter: var(--press); }
   .coll-b, .g-b, .w-b, .s-b { transition-duration: .1s; }
 }

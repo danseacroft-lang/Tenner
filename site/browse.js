@@ -289,9 +289,10 @@
     const count = new Map(); for (const x of pool) for (const g of new Set(x.g)) count.set(g, (count.get(g) || 0) + 1);
     const top = [...count].filter(([g, n]) => cat.genres[g] && n >= 6).sort((a, b) => b[1] - a[1]).slice(0, 8);
     if (top.length < 3) { box.hidden = true; return; }
-    box.innerHTML = `<h2 class="moods-h">Explore by genre</h2><div class="moods-row">${top.map(([g, n], i) => {
+    box.innerHTML = `<h2 class="moods-h">Explore by genre</h2><div class="moods-row">${top.map(([g, n]) => {
       const best = pool.filter((x) => x.g.includes(g)).sort((a, b) => b.p - a.p).slice(0, 3);
-      return `<button type="button" class="mood" data-g="${g}" style="--h:${hue(cat.genres[g])};--i:${i}">
+      return `<button type="button" class="mood" data-g="${g}">
+        <img class="mood-bg" src="${esc(best[0].img.startsWith('/') ? cat.img + best[0].img : best[0].img)}" alt="" loading="lazy" aria-hidden="true">
         <span class="mood-fan" aria-hidden="true">${best.map((x, j) => `<img src="${esc(x.img.startsWith('/') ? cat.img + x.img : x.img)}" alt="" loading="lazy" style="--j:${j}">`).join('')}</span>
         <span class="mood-l"><b>${esc(cat.genres[g])}</b><small>${n} ${state.k === 'movie' ? 'films' : state.k === 'both' ? 'titles' : 'shows'}</small></span></button>`;
     }).join('')}</div>`;

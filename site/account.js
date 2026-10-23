@@ -223,7 +223,6 @@
       else if (t.id === 'acAddPk') { await makePasskey(); load(); say('#acNote', 'Passkey added'); }
       else if (t.id === 'acOthers') { await account.call('DELETE', '/me/sessions'); load(); say('#acNote', 'Signed out everywhere else'); }
       else if (t.id === 'acCopy') { const link = $('#acUrl').textContent; if (navigator.share && window.tn.isIOS) navigator.share({ title: `${me.user.name}’s Watchlist`, url: link }).catch(() => {}); else { await navigator.clipboard.writeText(link); t.textContent = 'Copied'; setTimeout(() => (t.textContent = 'Copy'), 1500); } }
-      else if (t.id === 'acOutBtn') { await account.signOut(confirm('Also remove your Watchlist and progress from this device? (They stay in your account.)')); show(); }
       else if (t.id === 'acDelete') {
         if (!confirm('Delete your Tenner account? Your Watchlist, progress and settings are removed from Tenner. What’s on this device stays. This can’t be undone.')) return;
         await account.call('DELETE', '/me'); account.forget(); show(); say('#acMsg', 'Your account has been deleted');
@@ -237,6 +236,25 @@
     try { const r = await account.call('POST', '/me/password', { email, key: await pwKey(email, pw) }); load(); say('#acNote', r.verify ? `Password saved. Tap the link we sent to ${r.verify} to confirm it` : 'Password saved'); }
     catch (err) { say('#acNote', friendly(err), true); }
   });
+  // ---------- slide to sign out: drag the knob across (or press Enter); let go early and it springs back ----------
+  const slide = $('#acSlide'), knob = slide.querySelector('.ac-knob');
+  let drag = null;
+  const travel = () => slide.clientWidth - knob.offsetWidth - 8;
+  const setX = (x) => { const max = travel(), v = Math.max(0, Math.min(max, x)); slide.style.setProperty('--x', `${v}px`); slide.style.setProperty('--p', (v / max).toFixed(3)); slide.setAttribute('aria-valuenow', Math.round((v / max) * 100)); return v / max; };
+  async function goOut() {
+    slide.classList.add('done'); setX(travel());
+    await account.signOut($('#acClear').checked);
+    setTimeout(() => { slide.classList.remove('done'); setX(0); $('#acClear').checked = false; show(); say('#acMsg', 'Signed out'); }, 350);
+  }
+  knob.addEventListener('pointerdown', (e) => { drag = { x0: e.clientX, id: e.pointerId }; knob.setPointerCapture(e.pointerId); slide.classList.add('held'); });
+  knob.addEventListener('pointermove', (e) => { if (drag && e.pointerId === drag.id) setX(e.clientX - drag.x0); });
+  const end = (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const p = setX(e.clientX - drag.x0); drag = null; slide.classList.remove('held');
+    if (p > 0.88) goOut(); else setX(0);   // not far enough: back it goes
+  };
+  knob.addEventListener('pointerup', end); knob.addEventListener('pointercancel', end);
+  slide.addEventListener('keydown', (e) => { if (['Enter', ' ', 'ArrowRight', 'End'].includes(e.key)) { e.preventDefault(); goOut(); } });
   $('#acShare').addEventListener('change', async (e) => {
     try { const { share_id } = await account.call('POST', '/me/share', { on: e.target.checked }); me.user.share_id = share_id; draw(); }
     catch (err) { e.target.checked = !e.target.checked; say('#acNote', friendly(err), true); }
