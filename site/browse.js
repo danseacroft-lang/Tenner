@@ -107,8 +107,8 @@
       state.k = k; state.g = state.g.filter((g) => genreSet().has(g)); apply(true);
     };
     document.querySelectorAll('[data-kind]').forEach((b) => b.addEventListener('click', () => setKind(b.dataset.kind)));
-    arrows($('.b-head .segmented'), () => [...document.querySelectorAll('[data-kind]')], (b) => setKind(b.dataset.kind));
-    window.tn.segment($('.b-head .segmented'), (b) => setKind(b.dataset.kind));
+    arrows($('.cmd .segmented'), () => [...document.querySelectorAll('[data-kind]')], (b) => setKind(b.dataset.kind));
+    window.tn.segment($('.cmd .segmented'), (b) => setKind(b.dataset.kind));
     arrows($('#coll'), () => [...document.querySelectorAll('.coll-b')], (b) => b.click());
     arrows($('#sort'), () => [...document.querySelectorAll('.s-b')], (b) => b.click());
     $('#grid').addEventListener('click', (e) => {   // the empty state's button clears whatever is hiding the results
@@ -231,7 +231,97 @@
     const draw = () => { shown = 0; $('#grid').innerHTML = ''; more(); empty(); };
     webSearch();
     if (user && !quiet && document.startViewTransition && !reduce) document.startViewTransition(draw); else draw();
+    if (!q) { spotlight(); moods(); } else $('#moods').hidden = true;
   }
+
+  // ---------- the spotlight: the best five of whatever you're browsing, each a full-width picture for a few seconds ----------
+  // The wide artwork comes from browse-more.json (fetched once, after the grid). A frosted card names the one showing;
+  // click it for where to watch. It moves on by itself unless Animations are off, you're pointing at it, or a sheet is open.
+  const still = () => reduce || document.documentElement.classList.contains('still');
+  const spot = { key: '', picks: [], at: 0, timer: 0 };
+  const kindWord = () => (state.k === 'movie' ? 'Films' : state.k === 'both' ? 'Shows and films' : 'Shows');
+  async function spotlight() {
+    const col = collection();
+    $('#spotEye').textContent = `${col.label} · ${col.films ? 'Films' : kindWord()}${state.s.length && col.key !== 'store' ? ` · ${state.s.length === 1 ? labels[state.s[0]] : `${state.s.length} services`}` : ''}`;
+    const m = await moreData(); if (!m?.items) return;
+    const picks = list.slice(0, 24).filter((x) => m.items[`${x.t[0]}${x.i}`]?.[1]).slice(0, 5);
+    const key = picks.map((x) => x.i).join(',');
+    if (key === spot.key) return;
+    spot.key = key; spot.picks = picks; spot.at = 0; clearInterval(spot.timer);
+    const art = $('#spotArt'), now = $('#spotNow');
+    if (!picks.length) { art.innerHTML = ''; now.hidden = true; $('#spot').classList.remove('has-art'); return; }
+    art.innerHTML = picks.map((x, i) => `<img ${i ? 'data-' : 'fetchpriority="high" '}src="${esc(m.img.replace('/w780', '/w1280') + m.items[`${x.t[0]}${x.i}`][1])}" alt="" decoding="async">`).join('');
+    $('#spot').classList.add('has-art');
+    showSpot(0);
+    if (!still() && picks.length > 1) spot.timer = setInterval(() => { if (!document.hidden && !window.tnSheet?.isOpen() && !$('#spot').matches(':hover')) showSpot(spot.at + 1); }, 7000);
+  }
+  function showSpot(n) {
+    const imgs = [...$('#spotArt').children], picks = spot.picks; if (!picks.length) return;
+    spot.at = (n + picks.length) % picks.length;
+    const want = (img) => { if (img?.dataset.src) { img.src = img.dataset.src; delete img.dataset.src; } };
+    want(imgs[spot.at]); want(imgs[(spot.at + 1) % imgs.length]);
+    imgs.forEach((img, i) => img.classList.toggle('on', i === spot.at));
+    const x = picks[spot.at], now = $('#spotNow'), poster = x.img ? (x.img.startsWith('/') ? cat.img + x.img : x.img) : '';
+    const meta = [x.t === 'tv' ? 'Show' : 'Film', (x.d || '').slice(0, 4), x.r ? `★ ${x.r.toFixed(1)}` : ''].filter(Boolean).join(' · ');
+    now.dataset.k = `${x.t[0]}${x.i}`; now.href = `https://www.themoviedb.org/${x.t}/${x.i}`;
+    now.setAttribute('aria-label', `${x.n}: where to watch`);
+    now.innerHTML = `${poster ? `<img src="${esc(poster)}" alt="">` : ''}<span class="sn-copy"><small>No. ${list.indexOf(x) + 1} in ${esc(collection().label)}</small><b>${esc(x.n)}</b><span class="sn-meta">${esc(meta)}</span>
+      <span class="sn-dots" aria-hidden="true">${picks.map((_, i) => `<i${i === spot.at ? ' class="on"' : ''}></i>`).join('')}</span></span><span class="sn-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg></span>`;
+    now.hidden = false;
+  }
+  $('#spotNow').addEventListener('click', async (e) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
+    e.preventDefault(); const x = item(e.currentTarget.dataset.k); if (x) window.tnSheet?.open(await sheetFor(x));
+  });
+  // swipe the spotlight on a phone or tablet
+  let spX = null;
+  $('#spot').addEventListener('touchstart', (e) => { spX = [e.touches[0].clientX, e.touches[0].clientY]; }, { passive: true });
+  $('#spot').addEventListener('touchend', (e) => {
+    if (!spX || spot.picks.length < 2) return; const t = e.changedTouches[0], dx = t.clientX - spX[0], dy = t.clientY - spX[1]; spX = null;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) { showSpot(spot.at + (dx < 0 ? 1 : -1)); clearInterval(spot.timer); }
+  }, { passive: true });
+
+  // ---------- explore by genre: a tile for each of the biggest genres, three of its best posters fanned out ----------
+  function moods() {
+    const box = $('#moods');
+    if (state.g.length || collection().key === 'store') { box.hidden = true; return; }
+    const pool = cat.items.filter((x) => kindOk(x) && x.img && x.s.length && ok18(x) && (!state.s.length || x.s.some((k) => state.s.includes(k))));
+    const count = new Map(); for (const x of pool) for (const g of new Set(x.g)) count.set(g, (count.get(g) || 0) + 1);
+    const top = [...count].filter(([g, n]) => cat.genres[g] && n >= 6).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    if (top.length < 3) { box.hidden = true; return; }
+    box.innerHTML = `<h2 class="moods-h">Explore by genre</h2><div class="moods-row">${top.map(([g, n], i) => {
+      const best = pool.filter((x) => x.g.includes(g)).sort((a, b) => b.p - a.p).slice(0, 3);
+      return `<button type="button" class="mood" data-g="${g}" style="--h:${hue(cat.genres[g])};--i:${i}">
+        <span class="mood-fan" aria-hidden="true">${best.map((x, j) => `<img src="${esc(x.img.startsWith('/') ? cat.img + x.img : x.img)}" alt="" loading="lazy" style="--j:${j}">`).join('')}</span>
+        <span class="mood-l"><b>${esc(cat.genres[g])}</b><small>${n} ${state.k === 'movie' ? 'films' : state.k === 'both' ? 'titles' : 'shows'}</small></span></button>`;
+    }).join('')}</div>`;
+    box.hidden = false;
+  }
+  $('#moods').addEventListener('click', (e) => {
+    const b = e.target.closest('.mood'); if (!b) return;
+    state.g = [+b.dataset.g]; apply(true);
+    $('#cmdMark').scrollIntoView({ behavior: still() ? 'auto' : 'smooth', block: 'start' });
+  });
+
+  // ---------- the command bar: glass that firms up once it's holding on at the top ----------
+  new IntersectionObserver(([e]) => $('#cmd').classList.toggle('stuck', !e.isIntersecting && e.boundingClientRect.top < 200), { rootMargin: '-90px 0px 0px 0px' }).observe($('#cmdMark'));
+
+  // ---------- posters lean towards the pointer, with a sheen of light across them (computers) ----------
+  const tiltOk = () => fine.matches && !still();
+  let tiltEl = null, tiltRaf = 0;
+  function tilt(e) {
+    const art = e.target?.closest?.('.tile .art');
+    if (art !== tiltEl) { if (tiltEl) { tiltEl.style.removeProperty('--rx'); tiltEl.style.removeProperty('--ry'); tiltEl.classList.remove('tilt'); } tiltEl = art; }
+    if (!art || !tiltOk()) return;
+    cancelAnimationFrame(tiltRaf);
+    tiltRaf = requestAnimationFrame(() => {
+      const r = art.getBoundingClientRect(), px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+      art.classList.add('tilt');
+      art.style.setProperty('--rx', `${((0.5 - py) * 14).toFixed(2)}deg`); art.style.setProperty('--ry', `${((px - 0.5) * 16).toFixed(2)}deg`);
+      art.style.setProperty('--gx', `${(px * 100).toFixed(1)}%`); art.style.setProperty('--gy', `${(py * 100).toFixed(1)}%`);
+    });
+  }
+  for (const g of [$('#grid'), $('#webGrid')]) { g.addEventListener('pointermove', tilt, { passive: true }); g.addEventListener('pointerleave', () => tilt({ target: null }), { passive: true }); }
 
   function empty() {
     if (list.length) return;

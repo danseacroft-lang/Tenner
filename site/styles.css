@@ -34,7 +34,7 @@
   --frost-blur: blur(14px) saturate(180%);
   /* sheets (the title sheet, My services, the Theme card, Browse's filters on phones): one frosted glass */
   --sheet-bg: color-mix(in srgb, var(--bg) 62%, transparent); --sheet-blur: blur(28px) saturate(180%);
-  --r-ctl: 10px; --r-in: 7px;
+  --r-ctl: 10px;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
