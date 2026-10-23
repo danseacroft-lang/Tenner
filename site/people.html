@@ -38,8 +38,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.34.5">
-  <link rel="stylesheet" href="people.css?v=1.34.5">
+  <link rel="stylesheet" href="styles.css?v=1.34.6">
+  <link rel="stylesheet" href="people.css?v=1.34.6">
 </head>
 <body class="people">
   <a class="skip" href="#main">Skip to the page</a>
@@ -51,10 +51,6 @@
       <span class="brand-name">Tenner</span>
     </div>
     <nav class="tabbar" aria-label="Pages"><div class="tabs" role="tablist" id="tabs"><span class="tab-ind" id="tabInd" aria-hidden="true"></span>
-      <button type="button" role="tab" data-tab="search" aria-selected="false" tabindex="-1">
-        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 20 20"/></svg>
-        <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><circle class="thick" cx="10.5" cy="10.5" r="6.5" fill="none"/><path class="thick" d="M15.5 15.5 20 20"/></svg>
-        <span>Search</span></button>
       <button type="button" role="tab" data-tab="top" aria-selected="false" tabindex="-1">
         <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4.5h8v5a4 4 0 0 1-8 0z"/><path d="M8 6.5H5.5a2.5 2.5 0 0 0 2.6 3.4M16 6.5h2.5a2.5 2.5 0 0 1-2.6 3.4M12 13.5v3.5M8.5 20h7M10 17h4"/></svg>
         <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><path class="solid" d="M7.3 3.8h9.4v5.7a4.7 4.7 0 0 1-9.4 0z"/><path class="thick" d="M7.6 6.5H5.5a2.5 2.5 0 0 0 2.6 3.4M16.4 6.5h2.1a2.5 2.5 0 0 1-2.6 3.4M12 14v3M8.5 20h7"/></svg>
@@ -93,7 +89,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.34.5</span>
+      <span class="side-ver">Tenner 1.34.6</span>
     </div>
   </div>
 
@@ -126,9 +122,9 @@
   </main>
 
 
-  <script src="shell.js?v=1.34.5" defer></script>
-  <script src="links.js?v=1.34.5" defer></script>
-  <script src="sheet.js?v=1.34.5" defer></script>
-  <script src="people.js?v=1.34.5" defer></script>
+  <script src="shell.js?v=1.34.6" defer></script>
+  <script src="links.js?v=1.34.6" defer></script>
+  <script src="sheet.js?v=1.34.6" defer></script>
+  <script src="people.js?v=1.34.6" defer></script>
 </body>
 </html>
