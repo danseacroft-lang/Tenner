@@ -998,12 +998,13 @@ function wireDrag(row, sig) {
   row.addEventListener('dragstart', (e) => e.preventDefault(), { signal: sig.signal });
 }
 
-// ---------- tabs (pages): Search, Top 10, New, Browse, About. The bar itself lives in shell.js ----------
+// ---------- tabs (pages): Search, Top 10, New, Browse, Cast & Crew, Watchlist, About. The bar itself lives in shell.js ----------
 const selectTab = (name) => window.tnShell.select(name);
 function openTab(name) {
   if (name === 'about') { location.href = 'about.html'; return; }
   if (name === 'browse') { location.href = 'browse.html'; return; }
   if (name === 'search') { location.href = 'browse.html#search'; return; }
+  if (name === 'people') { location.href = 'people.html'; return; }   // Cast & Crew
   const at = state.route === 'new' || state.route === 'watchlist' ? state.route : state.route === 'week' ? 'new' : 'top';
   if (name === at) { scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }); return; } // tap the open tab: back to the top
   location.hash = name === 'new' || name === 'watchlist' ? name : (state.lastChart || 'top');

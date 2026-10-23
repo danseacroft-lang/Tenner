@@ -38,8 +38,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.31.0">
-  <link rel="stylesheet" href="browse.css?v=1.31.0">
+  <link rel="stylesheet" href="styles.css?v=1.31.1">
+  <link rel="stylesheet" href="browse.css?v=1.31.1">
 </head>
 <body class="browse">
   <a class="skip" href="#grid">Skip to the titles</a>
@@ -89,7 +89,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.31.0</span>
+      <span class="side-ver">Tenner 1.31.1</span>
     </div>
   </div>
 
@@ -121,8 +121,6 @@
         <kbd class="s-key" aria-hidden="true">/</kbd>
         <button type="button" class="s-clear" id="qClear" aria-label="Clear search" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke="var(--bg)" stroke-width="2" stroke-linecap="round"/></svg></button>
       </div>
-      <!-- recent searches: under the box when it's empty and you tap into it -->
-      <div class="recent" id="recent" role="listbox" aria-label="Recent searches" hidden></div>
       <div class="b-ctl">
       <div class="segmented" role="radiogroup" aria-label="Shows, films or both">
         <span class="seg-thumb" aria-hidden="true"></span>
@@ -181,9 +179,9 @@
   <div class="scrim" id="scrim" hidden></div>
 
 
-  <script src="shell.js?v=1.31.0" defer></script>
-  <script src="links.js?v=1.31.0" defer></script>
-  <script src="sheet.js?v=1.31.0" defer></script>
-  <script src="browse.js?v=1.31.0" defer></script>
+  <script src="shell.js?v=1.31.1" defer></script>
+  <script src="links.js?v=1.31.1" defer></script>
+  <script src="sheet.js?v=1.31.1" defer></script>
+  <script src="browse.js?v=1.31.1" defer></script>
 </body>
 </html>
