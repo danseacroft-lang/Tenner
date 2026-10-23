@@ -2,7 +2,7 @@
 // your Watchlist, left to skip it, down (or tap) for the details sheet. The buttons and arrow keys do the same.
 // Skipped titles are remembered on this device so they don't come round again; Undo takes back the last swipe.
 (() => {
-  const { esc, hue, reduce, arrows, segment, saved } = window.tn;   // from shell.js
+  const { esc, hue, reduce, saved } = window.tn;   // from shell.js
   const $ = (s) => document.querySelector(s);
   const SKIP = 'tenner-skipped', KIND = 'tenner-discover-kind', HINTED = 'tenner-discover-hinted';
   const stage = $('#dStage'), desk = matchMedia('(min-width: 720px)');
@@ -213,16 +213,14 @@
       { duration: 1400, easing: 'cubic-bezier(.45,0,.3,1)' }), 700);
   }
 
-  // ---------- Shows, Films or Both ----------
-  const seg = $('#dKind'), pick = (b) => {
-    seg.querySelectorAll('button').forEach((n) => n.setAttribute('aria-checked', n === b));
-    if (kind === b.dataset.kind) return;
-    kind = b.dataset.kind; try { localStorage.setItem(KIND, kind); } catch {}
+  // ---------- Shows, Films or Both: a native menu, as on the Top 10 ----------
+  const NAMES = { tv: 'Shows', movie: 'Films', both: 'Shows and films' };
+  $('#dKind').value = kind; $('#dKindL').textContent = NAMES[kind];
+  $('#dKind').addEventListener('change', (e) => {
+    kind = e.target.value; $('#dKindL').textContent = NAMES[kind];
+    try { localStorage.setItem(KIND, kind); } catch {}
     if (cat) build();
-  };
-  seg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-checked', b.dataset.kind === kind));
-  seg.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) pick(b); });
-  arrows(seg, () => [...seg.querySelectorAll('button')], pick); segment(seg, pick);
+  });
   // your services changed (in another tab, or the menu): a fresh deck
   addEventListener('tn:mine', () => cat && build());
 })();

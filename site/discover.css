@@ -14,9 +14,7 @@ body.discover { overflow-x: clip; }
 
 .d-hd { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 6px; }
 .d-h { margin: 0; font: 800 31px/1.1 var(--font-display); letter-spacing: -.03em; }
-.d-hd .segmented { flex: none; }
-.d-hd .segmented { height: 36px; }
-.d-hd .segmented button { padding: 0 11px; font-size: 14px; }
+.d-hd .dd { flex: none; }
 .d-hint { margin: 4px 0 0; font-size: 13.5px; color: var(--label2); letter-spacing: -.008em; }
 
 /* ---------- the deck ---------- */
@@ -95,4 +93,4 @@ body.discover { overflow-x: clip; }
 .d-on-desk .dwrap { max-width: 900px; }
 .d-on-desk .d-hd, .d-on-desk .d-hint, .d-on-desk .d-stage, .d-on-desk .d-acts, .d-on-desk .d-count, .d-on-desk .d-amb { display: none; }
 
-@media (max-width: 380px) { .d-h { font-size: 27px; } .d-hd .segmented button { padding: 0 8px; } .d-acts { gap: 14px; } }
+@media (max-width: 380px) { .d-h { font-size: 27px; } .d-acts { gap: 14px; } }
