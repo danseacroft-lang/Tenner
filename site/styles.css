@@ -330,7 +330,7 @@ a.tb-btn:hover { text-decoration: none; }
 /* a compact capsule, its width just its words, right above the services link */
 .dd-kind { min-width: 0; height: 38px; padding: 0 14px 0 18px; gap: 10px; font: 600 16px/1 var(--font-display); letter-spacing: -.02em; }
 .dd-kind .dd-chev { opacity: .7; }
-@media (min-width: 561px) { .controls { flex-direction: column; align-items: flex-start; gap: 10px; } }
+@media (min-width: 561px) { .controls { flex-direction: column; align-items: flex-start; gap: 2px; } }
 /* the services: a plain link in Tenner's blue, like "See more in Browse", that opens the picker */
 .svc-link { display: inline-flex; align-items: center; gap: 6px; padding: 6px 0; border: 0; background: none; cursor: pointer; color: var(--accent);
   font: 500 16px/1.2 var(--font); letter-spacing: -.016em; -webkit-tap-highlight-color: transparent; }
@@ -340,7 +340,7 @@ a.tb-btn:hover { text-decoration: none; }
 @media (hover: hover) { .svc-link:hover { text-decoration: underline; text-underline-offset: 3px; } }
 
 @media (max-width: 560px) {
-  .controls { gap: 16px; flex-wrap: nowrap; align-items: center; }
+  .controls { gap: 10px; flex-wrap: nowrap; align-items: center; }
   #kindDD { flex: none; height: 40px; }
 }
 
