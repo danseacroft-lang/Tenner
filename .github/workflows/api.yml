@@ -16,8 +16,9 @@ jobs:
       - uses: actions/checkout@v5
       - name: Check the Cloudflare secrets are there
         id: ready
-        env: { T: '${{ secrets.CLOUDFLARE_API_TOKEN }}', A: '${{ secrets.CLOUDFLARE_ACCOUNT_ID }}', M: '${{ secrets.SUPPORT_EMAIL }}' }
+        env: { T: '${{ secrets.CLOUDFLARE_API_TOKEN }}', A: '${{ secrets.CLOUDFLARE_ACCOUNT_ID }}', M: '${{ secrets.SUPPORT_EMAIL }}', R: '${{ secrets.RESEND_API_KEY }}' }
         run: |
+          if [ -n "$R" ]; then echo "resend=yes" >> "$GITHUB_OUTPUT"; else echo "::notice title=Password reset emails are off::Add RESEND_API_KEY (from resend.com) under Settings > Secrets and variables > Actions."; fi
           if [ -n "$M" ]; then echo "mail=yes" >> "$GITHUB_OUTPUT"; else echo "::notice title=Contact form not connected::Add SUPPORT_EMAIL (the inbox for Contact messages) under Settings > Secrets and variables > Actions."; fi
           if [ -z "$T" ] || [ -z "$A" ]; then echo "::notice title=Search API not deployed::Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID under Settings > Secrets and variables > Actions."; echo "go=no" >> "$GITHUB_OUTPUT"; else echo "go=yes" >> "$GITHUB_OUTPUT"; fi
       # Watchlist alerts keep each subscriber in Workers KV. The store is made the first time and found after that; its
@@ -82,6 +83,14 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           SUPPORT_EMAIL: ${{ secrets.SUPPORT_EMAIL }}
         run: printf '%s' "$SUPPORT_EMAIL" | npx --yes wrangler@4 secret put SUPPORT_EMAIL
+      - name: Connect password reset emails
+        if: steps.ready.outputs.go == 'yes' && steps.ready.outputs.resend == 'yes'
+        working-directory: worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: printf '%s' "$RESEND_API_KEY" | npx --yes wrangler@4 secret put RESEND_API_KEY
       - name: Check it answers
         if: steps.ready.outputs.go == 'yes'
         run: |

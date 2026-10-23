@@ -36,10 +36,10 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.26.1">
-  <link rel="stylesheet" href="legal.css?v=1.26.1">
-  <link rel="stylesheet" href="settings.css?v=1.26.1">
-  <link rel="stylesheet" href="account.css?v=1.26.1">
+  <link rel="stylesheet" href="styles.css?v=1.27.0">
+  <link rel="stylesheet" href="legal.css?v=1.27.0">
+  <link rel="stylesheet" href="settings.css?v=1.27.0">
+  <link rel="stylesheet" href="account.css?v=1.27.0">
 </head>
 <body class="legal">
   <a class="skip" href="#main">Skip to the page</a>
@@ -89,7 +89,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.26.1</span>
+      <span class="side-ver">Tenner 1.27.0</span>
     </div>
   </div>
 
@@ -110,15 +110,31 @@
         <button type="button" class="ac-sso ac-apple" id="acApple" hidden><svg viewBox="0 0 17 20" aria-hidden="true"><path fill="currentColor" d="M14.1 10.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3.1.9-3.9.9-.8 0-2.1-.9-3.4-.9-1.7 0-3.4 1-4.3 2.6-1.8 3.2-.5 7.9 1.3 10.5.9 1.3 1.9 2.7 3.2 2.6 1.3 0 1.8-.8 3.3-.8 1.6 0 2 .8 3.4.8 1.4 0 2.3-1.3 3.1-2.6 1-1.5 1.4-2.9 1.4-3-.1 0-2.6-1-2.6-4.2zM11.6 3c.7-.9 1.2-2 1-3.2-1 0-2.3.7-3 1.6-.7.8-1.2 2-1.1 3.1 1.2.1 2.3-.6 3.1-1.5z"/></svg>Continue with Apple</button>
         <button type="button" class="ac-sso ac-fb" id="acFb" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7.1V12h3V9.4c0-3 1.8-4.7 4.5-4.7 1.3 0 2.7.2 2.7.2v3h-1.5c-1.5 0-2 .9-2 1.9V12h3.4l-.5 3.5h-2.9v8.4A12 12 0 0 0 24 12z"/></svg>Continue with Facebook</button>
         <p class="ac-or" id="acOr" hidden><span>or</span></p>
-        <button type="button" class="btn btn-tinted ac-main" id="acPasskey"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5H5.5a2 2 0 0 0-2 2V7M17 3.5h1.5a2 2 0 0 1 2 2V7M7 20.5H5.5a2 2 0 0 1-2-2V17M17 20.5h1.5a2 2 0 0 0 2-2V17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1M9.5 16a4 4 0 0 0 5 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Sign in with a passkey</button>
+        <!-- email and password (Safari and Chrome offer to save it, or make a strong one) -->
+        <form class="ac-form" id="acLogin">
+          <input type="email" id="acEmail" autocomplete="username" placeholder="Email" aria-label="Email" required>
+          <input type="password" id="acPw" autocomplete="current-password" placeholder="Password" aria-label="Password" required>
+          <button class="btn btn-tinted ac-main">Sign in</button>
+          <button type="button" class="ac-link" id="acForgot">Forgot password?</button>
+        </form>
+        <button type="button" class="btn btn-tinted ac-alt" id="acPasskey"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5H5.5a2 2 0 0 0-2 2V7M17 3.5h1.5a2 2 0 0 1 2 2V7M7 20.5H5.5a2 2 0 0 1-2-2V17M17 20.5h1.5a2 2 0 0 0 2-2V17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1M9.5 16a4 4 0 0 0 5 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Sign in with a passkey</button>
         <button type="button" class="ac-new" id="acNewOpen">New to Tenner? <b>Create an account</b></button>
-        <form class="ac-newform" id="acNew" hidden>
-          <label for="acName">What should we call you?</label>
-          <input id="acName" maxlength="40" autocomplete="given-name" placeholder="Your first name" required>
-          <button class="btn btn-tinted ac-main">Create with a passkey</button>
+        <form class="ac-form" id="acNew" hidden>
+          <h2>Create your account</h2>
+          <input id="acName" maxlength="40" autocomplete="given-name" placeholder="What should we call you?" aria-label="Your name" required>
+          <input type="email" id="acNewEmail" autocomplete="username" placeholder="Email" aria-label="Email">
+          <input type="password" id="acNewPw" autocomplete="new-password" minlength="8" placeholder="Password (8 or more characters)" aria-label="New password">
+          <button class="btn btn-tinted ac-main" id="acMakePw">Create account</button>
+          <button class="ac-link" id="acMakePk">Or create it with a passkey instead (no password)</button>
+        </form>
+        <form class="ac-form" id="acReset" hidden>
+          <h2>Choose a new password</h2>
+          <input type="email" id="acResetEmail" autocomplete="username" aria-label="Email" readonly>
+          <input type="password" id="acResetPw" autocomplete="new-password" minlength="8" placeholder="New password (8 or more characters)" aria-label="New password" required>
+          <button class="btn btn-tinted ac-main">Save and sign in</button>
         </form>
       </div>
-      <p class="ac-fine">No passwords. A passkey is a key your device makes for Tenner and keeps in your iCloud Keychain (or Google Password Manager, or Windows Hello), unlocked with Face ID, Touch ID or your screen lock. <a href="legal.html#privacy">What we keep</a></p>
+      <p class="ac-fine">A passkey needs no password: it’s a key your device makes for Tenner and keeps in your iCloud Keychain (or Google Password Manager, or Windows Hello), unlocked with Face ID, Touch ID or your screen lock. Passwords are scrambled on your device before they’re sent, and we never see them. <a href="legal.html#privacy">What we keep</a></p>
       <p class="set-note" id="acMsg" role="status" aria-live="polite"></p>
     </section>
 
@@ -158,7 +174,7 @@
   </main>
 
 
-  <script src="shell.js?v=1.26.1" defer></script>
-  <script src="account.js?v=1.26.1" defer></script>
+  <script src="shell.js?v=1.27.0" defer></script>
+  <script src="account.js?v=1.27.0" defer></script>
 </body>
 </html>

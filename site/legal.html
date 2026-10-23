@@ -36,8 +36,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.26.1">
-  <link rel="stylesheet" href="legal.css?v=1.26.1">
+  <link rel="stylesheet" href="styles.css?v=1.27.0">
+  <link rel="stylesheet" href="legal.css?v=1.27.0">
 </head>
 <body class="legal">
   <a class="skip" href="#main">Skip to the page</a>
@@ -87,7 +87,7 @@
       <a class="side-link" href="legal.html#privacy" aria-current="page">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies" aria-current="page">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.26.1</span>
+      <span class="side-ver">Tenner 1.27.0</span>
     </div>
   </div>
 
@@ -123,7 +123,7 @@
       <p><strong>If you create an account.</strong> Accounts are optional; Tenner works the same without one. If you make one, we keep:</p>
       <ul>
         <li><strong>Your name</strong>, as you typed it (or your first name from Google), and the colour you choose for your initial;</li>
-        <li><strong>How you sign in:</strong> the public half of each passkey you add (the private half never leaves your device or password manager); if you use Google, Google’s number for your account, your email address and your profile picture’s address; if you use Apple, Apple’s number for you and the email address Apple gives us (which can be a private relay address); if you use Facebook, Facebook’s number for you, your name there and your profile picture’s address. We keep these only to recognise you and show which accounts are linked;</li>
+        <li><strong>How you sign in:</strong> the public half of each passkey you add (the private half never leaves your device or password manager); if you use Google, Google’s number for your account, your email address and your profile picture’s address; if you use Apple, Apple’s number for you and the email address Apple gives us (which can be a private relay address); if you use Facebook, Facebook’s number for you, your name there and your profile picture’s address. if you use an email and password, your email address and a scrambled copy of your password (it’s scrambled on your device before it’s sent, and again by us, so we never see or keep the password itself). We keep these only to recognise you, show which accounts are linked and, if you ask, email you a link to reset your password;</li>
         <li><strong>What you keep in Tenner:</strong> your Watchlist, where you’re up to in shows, your services and your settings, so they’re the same on every device you sign in on;</li>
         <li><strong>Where you’re signed in:</strong> the kind of device (such as “iPhone”), when you signed in and when it was last used. The sign-in itself is a random code kept on your device; we store only a scrambled copy of it;</li>
         <li><strong>Your shared list link</strong>, if you turn sharing on. Anyone with the link can see your name, picture and Watchlist until you turn it off.</li>
@@ -151,6 +151,7 @@
         <li><strong>TMDB</strong> (The Movie Database) supplies the posters, artwork and service logos, which your browser loads directly from TMDB’s image servers. See <a href="https://www.themoviedb.org/privacy-policy" target="_blank" rel="noopener">TMDB’s Privacy Policy</a>.</li>
         <li><strong>Cloudflare</strong> runs Tenner’s search service. When you search all films and shows, search Cast &amp; Crew or open a cast list, what you typed or opened is passed to TMDB to find the answer. It also passes on messages from the Contact page to our inbox, keeps the push address and Watchlist of anyone who turns on alerts, and holds accounts for anyone who makes one (see section 2). Nothing else is stored against you. See <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare’s Privacy Policy</a>.</li>
         <li><strong>Google</strong> provides Sign in with Google. Its button loads from Google only on the Account page, and only Google’s sign-in is involved: if you use it, Google tells us your account number, name, email address and picture. See <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google’s Privacy Policy</a>.</li>
+        <li><strong>Resend</strong> sends the email when you ask to reset your password: it receives your email address and that email. See <a href="https://resend.com/legal/privacy-policy" target="_blank" rel="noopener">Resend’s Privacy Policy</a>.</li>
         <li><strong>Apple</strong> provides Sign in with Apple, and <strong>Meta</strong> provides Facebook Login. Apple’s sign-in script loads only on the Account page; Facebook’s sign-in happens on Facebook’s own page, and nothing from Facebook loads on Tenner. If you use either, they tell us the details listed in section 2. See <a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener">Apple’s Privacy Policy</a> and <a href="https://www.facebook.com/privacy/policy/" target="_blank" rel="noopener">Meta’s Privacy Policy</a>.</li>
         <li><strong>YouTube</strong> plays trailers, but only when you press Trailer on a title. Tenner uses YouTube’s privacy-enhanced mode (youtube-nocookie.com), and nothing loads from YouTube until you press play. See <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google’s Privacy Policy</a>.</li>
       </ul>
@@ -219,6 +220,6 @@
   </main>
 
 
-  <script src="shell.js?v=1.26.1" defer></script>
+  <script src="shell.js?v=1.27.0" defer></script>
 </body>
 </html>

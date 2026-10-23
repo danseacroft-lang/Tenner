@@ -41,11 +41,61 @@
   $('#acNewOpen').addEventListener('click', () => { $('#acNew').hidden = false; $('#acNewOpen').hidden = true; $('#acName').focus(); });
   $('#acNew').addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!passkeys) { say('#acMsg', 'This browser can’t make passkeys. Try Safari, Chrome or Edge', true); return; }
-    const b = e.submitter; b.disabled = true;
-    try { await makePasskey($('#acName').value.trim()); } catch (err) { say('#acMsg', friendly(err), err.name !== 'NotAllowedError'); }
+    const b = e.submitter, name = $('#acName').value.trim(); b.disabled = true;
+    try {
+      if (b?.id === 'acMakePk') {   // a passkey instead of a password
+        if (!passkeys) throw new Error('This browser can’t make passkeys. Try Safari, Chrome or Edge');
+        await makePasskey(name);
+      } else {
+        const email = $('#acNewEmail').value.trim(), pw = $('#acNewPw').value;
+        if (!email) { $('#acNewEmail').focus(); throw new Error('Enter your email address'); }
+        if (pw.length < 8) { $('#acNewPw').focus(); throw new Error('Use 8 or more characters for your password'); }
+        const out = await account.call('POST', '/auth/password/signup', { email, name, key: await pwKey(email, pw) });
+        await account.signedIn(out.token, out.user);
+      }
+    } catch (err) { say('#acMsg', friendly(err), err.name !== 'NotAllowedError'); }
     b.disabled = false;
   });
+  // the name is all a passkey account needs; email and password only for a password one
+  $('#acMakePk').addEventListener('click', () => { $('#acNewEmail').required = false; $('#acNewPw').required = false; });
+  $('#acMakePw').addEventListener('click', () => { $('#acNewEmail').required = true; $('#acNewPw').required = true; });
+
+  // ---------- email and password ----------
+  // The password is stretched here first (PBKDF2, 310,000 rounds, salted with the email), so what's sent is a key, never
+  // the password; the account server salts and hashes that once more.
+  async function pwKey(email, pw) {
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw.normalize('NFKC')), 'PBKDF2', false, ['deriveBits']);
+    return b64u(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: new TextEncoder().encode(`tenner.stream:${email.trim().toLowerCase()}`), iterations: 310000 }, base, 256));
+  }
+  $('#acLogin').addEventListener('submit', async (e) => {
+    e.preventDefault(); const b = e.submitter; b.disabled = true;
+    try {
+      const email = $('#acEmail').value.trim(), out = await account.call('POST', '/auth/password/login', { email, key: await pwKey(email, $('#acPw').value) });
+      await account.signedIn(out.token, out.user);
+    } catch (err) { say('#acMsg', friendly(err), true); }
+    b.disabled = false;
+  });
+  $('#acForgot').addEventListener('click', async () => {
+    const email = $('#acEmail').value.trim();
+    if (!email) { $('#acEmail').focus(); say('#acMsg', 'Enter your email above, then tap Forgot password again'); return; }
+    try { await account.call('POST', '/auth/password/forgot', { email }); say('#acMsg', `If there’s a Tenner account for ${email}, we’ve emailed it a link to choose a new password. Check your inbox (and junk)`); }
+    catch (err) { say('#acMsg', friendly(err), true); }
+  });
+  // arriving from the email's link: account.html#reset=…&e=…
+  addEventListener('hashchange', () => { if (/^#reset=/.test(location.hash)) location.reload(); });   // the link opened in a tab already on this page
+  const resetIn = new URLSearchParams(location.hash.slice(1));
+  if (resetIn.has('reset')) {
+    history.replaceState(null, '', location.pathname);
+    $('#acReset').hidden = false; $('#acLogin').hidden = true; $('#acResetEmail').value = resetIn.get('e') || '';
+    $('#acReset').addEventListener('submit', async (e) => {
+      e.preventDefault(); const b = e.submitter, pw = $('#acResetPw').value;
+      if (pw.length < 8) { say('#acMsg', 'Use 8 or more characters for your password', true); return; }
+      b.disabled = true;
+      try { const out = await account.call('POST', '/auth/password/reset', { token: resetIn.get('reset'), key: await pwKey($('#acResetEmail').value, pw) }); $('#acReset').hidden = true; $('#acLogin').hidden = false; await account.signedIn(out.token, out.user); }
+      catch (err) { say('#acMsg', friendly(err), true); }
+      b.disabled = false;
+    });
+  }
 
   // Google's own button (their script loads only on this page, and only once the client ID is set)
   let gReady = null;
@@ -113,6 +163,9 @@
     if (u.share_id) $('#acUrl').textContent = `${location.origin}/list.html?u=${u.share_id}`;
     $('#acWays').innerHTML = me.passkeys.map((p) => `<div class="set-row"><span class="set-l">${esc(p.label || 'Passkey')}<small>Added ${esc(when(p.created))}${p.used ? ` · last used ${esc(when(p.used).toLowerCase())}` : ''}</small></span><button type="button" class="ac-x" data-pk="${esc(p.id)}">Remove</button></div>`).join('')
       + (u.google ? `<div class="set-row"><span class="set-l">Google<small>${esc(u.email || 'Linked')}</small></span><button type="button" class="ac-x" data-unlink>Unlink</button></div>` : '')
+      + (me.password ? `<div class="set-row"><span class="set-l">Email and password<small>${esc(me.password)}</small></span><span class="ac-btns"><button type="button" class="ac-x ac-ok" data-pw-open>Change</button><button type="button" class="ac-x" data-pw-remove>Remove</button></span></div>`
+        : '<button type="button" class="set-row set-link" data-pw-open><span class="set-l">Add a password<small>Sign in with your email and a password too</small></span><span class="set-chev" aria-hidden="true"></span></button>')
+      + `<form class="set-row ac-pwform" id="acPwForm" hidden><input type="email" id="acSetEmail" autocomplete="username" placeholder="Email" aria-label="Email" required value="${esc(me.password || '')}"><input type="password" id="acSetPw" autocomplete="new-password" minlength="8" placeholder="New password" aria-label="New password" required><button class="btn btn-tinted">Save</button></form>`
       + (me.logins || []).map((l) => `<div class="set-row"><span class="set-l">${l.provider === 'apple' ? 'Apple' : 'Facebook'}<small>${esc(l.name || 'Linked')}</small></span><button type="button" class="ac-x" data-unlink-svc="${esc(l.provider)}">Unlink</button></div>`).join('')
       + (APPLE_SERVICES_ID && !(me.logins || []).some((l) => l.provider === 'apple') ? '<button type="button" class="set-row set-link" id="acLinkApple"><span class="set-l">Link Apple</span><span class="set-chev" aria-hidden="true"></span></button>' : '')
       + (FACEBOOK_APP_ID && !(me.logins || []).some((l) => l.provider === 'facebook') ? '<button type="button" class="set-row set-link" id="acLinkFb"><span class="set-l">Link Facebook</span><span class="set-chev" aria-hidden="true"></span></button>' : '')
@@ -138,6 +191,8 @@
     try {
       if (t.dataset.hue) { me.user = (await account.call('PATCH', '/me', { hue: +t.dataset.hue })).user; account.setUser(me.user); draw(); }
       else if (t.dataset.pk) { if (!confirm('Remove this passkey? You won’t be able to sign in with it any more.')) return; await account.call('DELETE', `/me/passkeys/${encodeURIComponent(t.dataset.pk)}`); load(); say('#acNote', 'Passkey removed'); }
+      else if ('pwOpen' in t.dataset) { $('#acPwForm').hidden = false; $('#acSetEmail').focus(); }
+      else if ('pwRemove' in t.dataset) { if (!confirm('Remove your password? You’ll sign in another way.')) return; await account.call('DELETE', '/me/password'); load(); say('#acNote', 'Password removed'); }
       else if (t.dataset.unlinkSvc) { await account.call('DELETE', `/me/${t.dataset.unlinkSvc}`); load(); say('#acNote', 'Unlinked'); }
       else if (t.id === 'acLinkApple') { await apple(true); }
       else if (t.id === 'acLinkFb') { facebook(true); }
@@ -151,6 +206,13 @@
         await account.call('DELETE', '/me'); account.forget(); show(); say('#acMsg', 'Your account has been deleted');
       }
     } catch (err) { say('#acNote', friendly(err), err.name !== 'NotAllowedError'); }
+  });
+  $('#acIn').addEventListener('submit', async (e) => {
+    if (e.target.id !== 'acPwForm') return; e.preventDefault();
+    const email = $('#acSetEmail').value.trim(), pw = $('#acSetPw').value;
+    if (pw.length < 8) { say('#acNote', 'Use 8 or more characters for your password', true); return; }
+    try { await account.call('POST', '/me/password', { email, key: await pwKey(email, pw) }); load(); say('#acNote', 'Password saved'); }
+    catch (err) { say('#acNote', friendly(err), true); }
   });
   $('#acShare').addEventListener('change', async (e) => {
     try { const { share_id } = await account.call('POST', '/me/share', { on: e.target.checked }); me.user.share_id = share_id; draw(); }

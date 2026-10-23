@@ -54,3 +54,17 @@ CREATE TABLE IF NOT EXISTS logins (   -- other sign-in services (Facebook, Apple
   PRIMARY KEY (provider, sub)
 );
 CREATE INDEX IF NOT EXISTS logins_user ON logins(user_id);
+CREATE TABLE IF NOT EXISTS passwords (  -- email and password sign-in
+  user_id TEXT PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,           -- lower case
+  salt TEXT NOT NULL,
+  hash TEXT NOT NULL,                   -- a hash of the key the browser stretched from the password (never the password)
+  fails INTEGER NOT NULL DEFAULT 0,
+  fail_at INTEGER NOT NULL DEFAULT 0,
+  created INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS resets (     -- "Forgot password?" links, for an hour each
+  token TEXT PRIMARY KEY,               -- a hash of the token in the link
+  user_id TEXT NOT NULL,
+  expires INTEGER NOT NULL
+);

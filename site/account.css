@@ -14,11 +14,9 @@
 .ac-google:not([hidden]) { display: flex; justify-content: center; width: 100%; min-height: 44px; }
 .ac-new { margin-top: 4px; padding: 8px; border: 0; background: none; cursor: pointer; color: var(--label2); font: 400 15px/1.3 var(--font); }
 .ac-new b { color: var(--accent); font-weight: 600; }
-.ac-newform:not([hidden]) { display: grid; gap: 10px; width: 100%; text-align: left; }
-.ac-newform label { font-size: 14px; font-weight: 600; color: var(--label2); }
-.ac-newform input, .ac-input { height: 44px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--fill); color: var(--label); font: 400 17px/1 var(--font); }
+.ac-input { height: 44px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--fill); color: var(--label); font: 400 17px/1 var(--font); }
 .ac-input { height: 36px; max-width: 55%; text-align: right; background: transparent; }
-.ac-input:focus, .ac-newform input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+.ac-input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
 .ac-fine { margin: 26px auto 0; max-width: 440px; font-size: 13px; line-height: 1.45; color: var(--label2); }
 .set-note.bad { color: #ff453a; }
 /* signed in */
@@ -49,7 +47,6 @@
 @media (max-width: 560px) { .ls-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .ac-or { display: flex; align-items: center; gap: 12px; width: 100%; margin: 2px 0; color: var(--label3); font-size: 13px; }
 .ac-or::before, .ac-or::after { content: ""; flex: 1; height: .5px; background: var(--sep); }
-.ac-google:not([hidden]) + .ac-or:not([hidden]) ~ .ac-main { height: 46px; font-size: 16px; }
 /* Google's button is a light-scheme frame; on a dark page the browser paints a white box behind it unless the frame is
    told it's light too, so it stays see-through */
 .ac-google, .ac-google *, #acGLink, #acGLink * { color-scheme: light; }
@@ -66,3 +63,17 @@
 @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .ac-apple { color: #fff; background: #000; } }
 .ac-fb { color: #fff; background: #1877f2; }
 .ac-fb svg { width: 20px; height: 20px; }
+/* email and password */
+.ac-form:not([hidden]) { display: grid; gap: 10px; width: 100%; text-align: left; }
+.ac-form h2 { margin: 6px 0 2px; font: 700 20px/1.2 var(--font-display); }
+.ac-form input { height: 46px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--fill); color: var(--label); font: 400 17px/1 var(--font); }
+.ac-form input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+.ac-form input[readonly] { color: var(--label2); }
+.ac-link { justify-self: center; padding: 6px; border: 0; background: none; cursor: pointer; color: var(--accent); font: 400 14px/1.3 var(--font); }
+.ac-alt { width: 100%; height: 44px; gap: 9px; }
+.ac-alt svg { width: 20px; height: 20px; }
+.ac-btns { display: flex; gap: 14px; flex: none; }
+.ac-ok { color: var(--accent); }
+.ac-pwform:not([hidden]) { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
+.ac-pwform input { min-width: 0; height: 38px; padding: 0 12px; border: 0; border-radius: 10px; background: var(--fill); color: var(--label); font: 400 15px/1 var(--font); }
+@media (max-width: 560px) { .ac-pwform:not([hidden]) { grid-template-columns: 1fr; } }

@@ -9,6 +9,10 @@
 //   POST /auth/google             { credential } → { token, user } (links Google if you're signed in already)
 //   POST /auth/facebook           { token } → { token, user } (likewise for Facebook)
 //   POST /auth/apple              { id_token, name? } → { token, user } (likewise for Apple)
+//   POST /auth/password/signup    { email, name, key } → { token, user }; /login { email, key }; /forgot { email } (emails a
+//                                 reset link); /reset { token, key } → { token, user }. The key is what the browser
+//                                 stretched from the password (PBKDF2, 310,000 rounds); only a salted hash of it is kept
+//   POST /me/password { email, key } (add or change), DELETE /me/password
 //   POST /auth/logout
 //   GET  /me                      → { user, data, passkeys, sessions }
 //   PATCH /me                     { name?, hue? }
@@ -270,6 +274,55 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
       return viaLogin(req, env, ok, fail, { provider: 'apple', who: 'Apple', sub: a.sub, label: a.email || 'Apple ID', first, pic: null });
     }
 
+    // ---- email and password
+    mm = p.match(/^\/auth\/password\/(signup|login|forgot|reset)$/);
+    if (mm && m === 'POST') {
+      const email = normEmail(body.email), key = String(body.key || '');
+      if (mm[1] === 'forgot') {
+        if (email) {
+          const row = await env.DB.prepare('SELECT user_id FROM passwords WHERE email = ?').bind(email).first();
+          if (row && env.RESEND_API_KEY) {
+            const t = rand(32);
+            await env.DB.prepare('INSERT INTO resets (token, user_id, expires) VALUES (?, ?, ?)').bind(await hashToken(t), row.user_id, now() + 3600e3).run();
+            await sendMail(env, email, 'Reset your Tenner password', resetMail(`${origin}/account.html#reset=${t}&e=${encodeURIComponent(email)}`));
+          }
+        }
+        return ok({ ok: true });   // the same answer either way, so it never says who has an account
+      }
+      if (mm[1] === 'reset') {
+        const r = await env.DB.prepare('SELECT * FROM resets WHERE token = ?').bind(await hashToken(String(body.token || ''))).first();
+        if (!r || r.expires < now()) return fail('That reset link has expired. Ask for a new one');
+        if (!validKey(key)) return fail('Something went wrong');
+        const salt = rand(16);
+        await env.DB.batch([env.DB.prepare('UPDATE passwords SET salt = ?, hash = ?, fails = 0 WHERE user_id = ?').bind(salt, await pwHash(salt, key), r.user_id),
+          env.DB.prepare('DELETE FROM resets WHERE user_id = ?').bind(r.user_id), env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(r.user_id)]);
+        const u = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(r.user_id).first();
+        return ok({ token: await newSession(env, r.user_id, req), user: publicUser(u) });
+      }
+      if (!email) return fail('Enter your email address');
+      if (!validKey(key)) return fail('Something went wrong');
+      if (mm[1] === 'signup') {
+        const name = String(body.name || '').trim().slice(0, 40);
+        if (!name) return fail('Add your name first');
+        if (await env.DB.prepare('SELECT 1 FROM passwords WHERE email = ?').bind(email).first()) return fail('There’s already an account with that email. Sign in instead', 409);
+        const uid = rand(16), salt = rand(16);
+        await env.DB.batch([env.DB.prepare('INSERT INTO users (id, name, hue, created) VALUES (?, ?, ?, ?)').bind(uid, name, Math.floor(Math.random() * 360), now()),
+          env.DB.prepare('INSERT INTO passwords (user_id, email, salt, hash, created) VALUES (?, ?, ?, ?, ?)').bind(uid, email, salt, await pwHash(salt, key), now())]);
+        const u = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(uid).first();
+        return ok({ token: await newSession(env, uid, req), user: publicUser(u) });
+      }
+      // login: a few wrong tries in a row, and that email has to wait a quarter of an hour
+      const row = await env.DB.prepare('SELECT * FROM passwords WHERE email = ?').bind(email).first();
+      if (row && row.fails >= 8 && now() - row.fail_at < 15 * 60e3) return fail('Too many tries. Wait a few minutes, or reset your password', 429);
+      if (!row || await pwHash(row.salt, key) !== row.hash) {
+        if (row) await env.DB.prepare('UPDATE passwords SET fails = fails + 1, fail_at = ? WHERE user_id = ?').bind(now(), row.user_id).run();
+        return fail('That email and password don’t match', 401);
+      }
+      await env.DB.prepare('UPDATE passwords SET fails = 0 WHERE user_id = ?').bind(row.user_id).run();
+      const u = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(row.user_id).first();
+      return ok({ token: await newSession(env, row.user_id, req), user: publicUser(u) });
+    }
+
     // ---- everything else needs you signed in
     const me = await sessionUser(req, env);
     if (!me) return fail('Signed out', 401);
@@ -282,7 +335,8 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
       return ok({ user: publicUser(me), data: d ? JSON.parse(d.data) : null, updated: d?.updated || 0,
         passkeys: pks.results.map((x) => ({ id: x.id, label: x.label, created: x.created, used: x.used })),
         sessions: ss.results.map((x) => ({ label: x.label, created: x.created, seen: x.seen, here: x.token === me.token })),
-        logins: (await env.DB.prepare('SELECT provider, name FROM logins WHERE user_id = ?').bind(me.id).all()).results });
+        logins: (await env.DB.prepare('SELECT provider, name FROM logins WHERE user_id = ?').bind(me.id).all()).results,
+        password: (await env.DB.prepare('SELECT email FROM passwords WHERE user_id = ?').bind(me.id).first())?.email || null, mail: !!env.RESEND_API_KEY });
     }
     if (p === '/me' && m === 'PATCH') {
       const name = typeof body.name === 'string' ? body.name.trim().slice(0, 40) : null, hue = Number.isFinite(+body.hue) ? ((+body.hue % 360) + 360) % 360 : null;
@@ -319,13 +373,29 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
       await env.DB.prepare('DELETE FROM logins WHERE provider = ? AND user_id = ?').bind(mm[1], me.id).run();
       return ok({ ok: true });
     }
+    if (p === '/me/password' && m === 'POST') {
+      const email = normEmail(body.email), key = String(body.key || '');
+      if (!email) return fail('Enter your email address');
+      if (!validKey(key)) return fail('Something went wrong');
+      const taken = await env.DB.prepare('SELECT user_id FROM passwords WHERE email = ?').bind(email).first();
+      if (taken && taken.user_id !== me.id) return fail('That email is already used by another Tenner account', 409);
+      const salt = rand(16);
+      await env.DB.prepare('INSERT INTO passwords (user_id, email, salt, hash, created) VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET email = excluded.email, salt = excluded.salt, hash = excluded.hash, fails = 0')
+        .bind(me.id, email, salt, await pwHash(salt, key), now()).run();
+      return ok({ ok: true });
+    }
+    if (p === '/me/password' && m === 'DELETE') {
+      if (await ways(env, me) <= 1) return fail('Your password is your only way to sign in. Add another way first');
+      await env.DB.prepare('DELETE FROM passwords WHERE user_id = ?').bind(me.id).run();
+      return ok({ ok: true });
+    }
     if (p === '/me/sessions' && m === 'DELETE') {   // sign out everywhere else
       await env.DB.prepare('DELETE FROM sessions WHERE user_id = ? AND token != ?').bind(me.id, me.token).run();
       return ok({ ok: true });
     }
     if (p === '/me' && m === 'DELETE') {
       const subs = (await env.DB.prepare('SELECT sub_key FROM pushsubs WHERE user_id = ?').bind(me.id).all()).results;
-      await env.DB.batch(['DELETE FROM passkeys WHERE user_id = ?', 'DELETE FROM logins WHERE user_id = ?', 'DELETE FROM sessions WHERE user_id = ?', 'DELETE FROM userdata WHERE user_id = ?', 'DELETE FROM pushsubs WHERE user_id = ?', 'DELETE FROM users WHERE id = ?']
+      await env.DB.batch(['DELETE FROM passkeys WHERE user_id = ?', 'DELETE FROM logins WHERE user_id = ?', 'DELETE FROM passwords WHERE user_id = ?', 'DELETE FROM resets WHERE user_id = ?', 'DELETE FROM sessions WHERE user_id = ?', 'DELETE FROM userdata WHERE user_id = ?', 'DELETE FROM pushsubs WHERE user_id = ?', 'DELETE FROM users WHERE id = ?']
         .map((q) => env.DB.prepare(q).bind(me.id)));
       if (env.PUSH) for (const s of subs) { const v = await env.PUSH.get(s.sub_key, 'json'); if (v) { delete v.user; await env.PUSH.put(s.sub_key, JSON.stringify(v)); } }
       return ok({ ok: true });
@@ -359,7 +429,29 @@ async function viaLogin(req, env, ok, fail, { provider, who, sub, label, first, 
 async function ways(env, me) {
   const pk = (await env.DB.prepare('SELECT COUNT(*) AS n FROM passkeys WHERE user_id = ?').bind(me.id).first()).n;
   const other = (await env.DB.prepare('SELECT COUNT(*) AS n FROM logins WHERE user_id = ?').bind(me.id).first()).n;
-  return pk + other + (me.google_sub ? 1 : 0);
+  const pw = (await env.DB.prepare('SELECT COUNT(*) AS n FROM passwords WHERE user_id = ?').bind(me.id).first()).n;
+  return pk + other + pw + (me.google_sub ? 1 : 0);
+}
+// ---------- passwords: the browser stretches the password (slow on purpose); here it's salted and hashed once more ----------
+const normEmail = (e) => { const x = String(e || '').trim().toLowerCase().slice(0, 200); return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(x) ? x : null; };
+const validKey = (k) => /^[\w-]{43}$/.test(k);   // 32 bytes, base64url
+const pwHash = async (salt, key) => b64u(await sha(`${salt}|${key}`));
+// email through Resend (RESEND_API_KEY, a Worker secret), from Tenner's own address
+async function sendMail(env, to, subject, { html, text }) {
+  const r = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ from: 'Tenner <account@tenner.stream>', to: [to], subject, html, text }) });
+  if (!r.ok) console.log('Resend', r.status, (await r.text()).slice(0, 200));
+}
+function resetMail(link) {
+  const text = `Someone (hopefully you) asked to reset the password for your Tenner account.\n\nChoose a new password: ${link}\n\nThe link works for an hour. If you didn't ask, ignore this email and nothing changes.\n\nTenner · tenner.stream`;
+  const html = `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;color:#1c1c1e">
+    <img src="https://tenner.stream/apple-touch-icon.png" width="56" height="56" alt="Tenner" style="border-radius:13px">
+    <h1 style="font-size:24px;margin:24px 0 8px">Reset your password</h1>
+    <p style="font-size:16px;line-height:1.5;color:#3a3a3c">Someone (hopefully you) asked to reset the password for your Tenner account.</p>
+    <p style="margin:28px 0"><a href="${link}" style="display:inline-block;padding:14px 22px;border-radius:12px;background:#0a84ff;color:#fff;text-decoration:none;font-size:16px;font-weight:500">Choose a new password</a></p>
+    <p style="font-size:14px;line-height:1.5;color:#6e6e73">The link works for an hour. If you didn’t ask, ignore this email and nothing changes.</p>
+    <p style="font-size:13px;color:#8e8e93;margin-top:32px">Tenner · <a href="https://tenner.stream" style="color:#8e8e93">tenner.stream</a></p></div>`;
+  return { html, text };
 }
 async function takeChallenge(env, id) {
   const ch = await env.DB.prepare('SELECT * FROM challenges WHERE id = ?').bind(String(id || '')).first();
