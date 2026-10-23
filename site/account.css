@@ -56,7 +56,7 @@
 .ac-google iframe, #acGLink iframe { background: transparent !important; }
 /* Apple and Facebook: their own colours (Apple: white on dark, black by day), the same size as Google's button */
 .ac-sso { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%; max-width: 360px; height: 44px; padding: 0 16px; border: 0; border-radius: 10px; cursor: pointer;
-  font: 600 16px/1 var(--font); letter-spacing: -.016em; -webkit-tap-highlight-color: transparent; transition: transform .3s var(--ease-spring), filter .2s ease; }
+  font: 500 16px/1 var(--font); letter-spacing: -.012em; -webkit-tap-highlight-color: transparent; transition: transform .3s var(--ease-spring), filter .2s ease; }
 .ac-sso svg { width: 18px; height: 18px; flex: none; }
 .ac-sso:active { transform: scale(.97); }
 @media (hover: hover) { .ac-sso:hover { filter: brightness(1.08); } }

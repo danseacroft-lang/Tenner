@@ -2,7 +2,7 @@
 // Pages, scripts, styles and the hourly data: the network first (so a new deploy or a new hour always wins), with the
 // last copy kept for when there's no connection, or when the network is too slow to answer within a few seconds. Fonts and icons: from the cache. TMDB's posters: from the cache, the most recent
 // 60 or so. The search API is never cached here (Cloudflare caches it).
-const SHELL = 'tenner-shell-1.26.0', IMGS = 'tenner-img-v1';   // the shell cache follows the version
+const SHELL = 'tenner-shell-1.26.1', IMGS = 'tenner-img-v1';   // the shell cache follows the version
 const CORE = ['./', 'index.html', 'browse.html', 'about.html', 'settings.html', 'people.html', 'account.html', 'account.css', 'account.js', 'styles.css', 'browse.css', 'about.css', 'people.css', 'shell.js', 'links.js', 'sheet.js', 'app.js', 'browse.js', 'people.js',
   'fonts/inter-latin.woff2', 'fonts/inter-tight-latin.woff2', 'logo.svg', 'favicon.svg', 'favicon.ico'];
 

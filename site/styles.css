@@ -1313,8 +1313,8 @@ a.sh-prov:hover { text-decoration: none; }
   box-shadow: inset 0 0 0 1px var(--gl-rim), 0 1px 2px rgba(0, 0, 0, .06) !important;
   -webkit-backdrop-filter: blur(24px) saturate(1.7); backdrop-filter: blur(24px) saturate(1.7);
 }
-.btn-tinted, .dd, .h-badge, .share-chart, .pv-ok, .h-cta, .sh-main .btn { border-radius: 12px; font-weight: 700; letter-spacing: -.018em; }
-.btn.chip, .mb-badge { border-radius: 8px; font-weight: 700; }
+.btn-tinted, .dd, .h-badge, .share-chart, .pv-ok, .h-cta, .sh-main .btn { border-radius: 12px; font-weight: 500; letter-spacing: -.012em; }
+.btn.chip, .mb-badge { border-radius: 8px; font-weight: 500; }
 .h-badge { border-radius: 12px; }
 .mine-done { color: var(--label) !important; }
 @media (hover: hover) {
@@ -1339,3 +1339,8 @@ span.av:not([style*="--h"]) { background: var(--fill-strong); color: var(--label
 .side-acct b { font: 600 14px/1.25 var(--font); letter-spacing: -.012em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .side-acct small { font-size: 12px; color: var(--label2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .drawer .side-acct { padding: 10px 12px; margin: 0 0 10px; }
+
+/* buttons: regular weight, smoothed (greyscale antialiasing, as on Apple's own) rather than bold */
+button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .chip, .share-chart, .pv-ok, .sh-main .btn, .tn-opt, .coll-b, .seg-thumb + button, .segmented button, .ac-sso, .nw-jump, .svc-link {
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+.btn, .h-cta, .sh-main .btn, .pv-ok, .dd-kind, .segmented button, .ac-main { font-weight: 500 !important; }
