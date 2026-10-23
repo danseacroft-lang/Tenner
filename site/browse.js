@@ -227,11 +227,12 @@
     const gs = [...genreSet()].filter((g) => cat.genres[g]).sort((a, b) => cat.genres[a].localeCompare(cat.genres[b]));
     $('#genres').innerHTML = gs.map((g) => `<button type="button" class="g-b" data-g="${g}" aria-pressed="${state.g.includes(g)}">${esc(cat.genres[g])}</button>`).join('');
     paintRating();
-    const n = state.s.length + state.g.length + (state.r ? 1 : 0) + (state.sort ? 1 : 0);
+    const n = (state.s.length ? 1 : 0) + state.g.length + (state.r ? 1 : 0) + (state.sort ? 1 : 0);   // services count once, however many
     $('#fCount').hidden = !n; $('#fCount').textContent = n;
     $('#clear').disabled = !n;
 
-    $('#count').textContent = q ? (state.all ? `Every film and show matching “${state.q.trim()}”` : `${list.length.toLocaleString('en-GB')} ${list.length === 1 ? 'result' : 'results'} for “${state.q.trim()}” on ${$('#scopeSvc').textContent.replace(/^On /, '')}`) : '';
+    // nothing on the services: no "0 results" line; the full catalogue's results below say it
+    $('#count').textContent = !q || (!list.length && window.tn.api) ? '' : state.all ? `Every film and show matching “${state.q.trim()}”` : `${list.length.toLocaleString('en-GB')} ${list.length === 1 ? 'result' : 'results'} for “${state.q.trim()}” on ${$('#scopeSvc').textContent.replace(/^On /, '')}`;
     document.body.classList.toggle('searching', !!q);
     document.body.classList.toggle('search-all', !!q && state.all);
     $('#scope').hidden = !q && document.activeElement !== $('#q');
@@ -433,7 +434,7 @@
     web.on = !!window.tn.api && q.length >= 2;
     if (!web.on) { box.hidden = true; web.q = ''; web.ctl?.abort(); return; }
     box.classList.toggle('merged', state.all);   // everything: one list, the catalogue's matches first, then the rest of TMDB
-    $('#webH').textContent = state.all ? 'Every film and show' : 'All films & shows';
+    $('#webH').textContent = !list.length ? `Results for “${q}”` : state.all ? 'Every film and show' : 'All films & shows';
     if (q === web.q && web.all === state.all) return;
     web.q = q; web.all = state.all; web.page = 0; web.pages = 1; clearTimeout(web.t); web.ctl?.abort();
     web.items = new Map(); $('#webGrid').innerHTML = '';
@@ -453,7 +454,7 @@
       $('#webGrid').insertAdjacentHTML('beforeend', res.map((x, i) => webCard(web.items.get(x.k), i)).join(''));
       $('#web').classList.toggle('solo', !list.length);   // nothing in the catalogue: these are the results
       const n = web.items.size;
-      $('#webNote').textContent = !d ? 'Couldn’t search everything right now.' : n ? (state.all ? `${(list.length + n).toLocaleString('en-GB')}${web.page < web.pages ? '+' : ''} results` : `${n} ${list.length ? 'more ' : ''}from TMDB`) : list.length ? 'Nothing more on TMDB.' : `Nothing found for “${q}”. Try another spelling.`;
+      $('#webNote').textContent = !d ? 'Couldn’t search everything right now.' : n && !list.length && !state.all ? `Not on ${$('#scopeSvc').textContent.replace(/^On /, '')} right now · ${n} found` : n ? (state.all ? `${(list.length + n).toLocaleString('en-GB')}${web.page < web.pages ? '+' : ''} results` : `${n} ${list.length ? 'more ' : ''}from TMDB`) : list.length ? 'Nothing more on TMDB.' : `Nothing found for “${q}”. Try another spelling.`;
       if (!list.length && !n) { web.on = false; $('#web').hidden = true; empty(); }
       if (!state.all && n) $('#webNote').insertAdjacentHTML('beforeend', ' <button type="button" class="web-all" id="webAll">Search everything</button>');
     } catch (e) { if (e.name !== 'AbortError') $('#webNote').textContent = 'Couldn’t search everything right now.'; }

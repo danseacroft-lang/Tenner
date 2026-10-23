@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.30.1';
+  const version = '1.30.2';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -177,7 +177,7 @@
     ['Share on Facebook', (t, u) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(u)}`,
       '<circle cx="12" cy="12" r="11" fill="#0866FF"/><path fill="#fff" d="M13.4 23v-8.1h2.7l.42-3.2H13.4V9.7c0-.92.26-1.55 1.58-1.55h1.68V5.3a22 22 0 0 0-2.45-.13c-2.43 0-4.09 1.48-4.09 4.2v2.35H7.37v3.2h2.75V23z"/>'],
     ['Send on WhatsApp', (t, u) => `https://wa.me/?text=${encodeURIComponent(`${t} ${u}`)}`,
-      '<path fill="#25D366" d="M12 1.5A10.4 10.4 0 0 0 3.05 17.2L1.6 22.5l5.45-1.43A10.4 10.4 0 1 0 12 1.5Z"/><path fill="#fff" d="M17.6 14.5c-.3-.15-1.8-.88-2.07-.98-.28-.1-.48-.15-.68.15-.2.3-.78.98-.96 1.18-.18.2-.35.22-.65.07a8.5 8.5 0 0 1-4.2-3.67c-.32-.55.32-.5.9-1.68.1-.2.05-.37-.02-.52-.08-.15-.68-1.64-.93-2.24-.25-.59-.5-.5-.68-.51h-.58c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.5 0 1.47 1.07 2.9 1.22 3.1.30.1 2.1 3.2 5.08 4.49 1.89.81 2.62.88 3.56.74.57-.09 1.8-.74 2.04-1.45.25-.71.25-1.32.18-1.45-.07-.13-.27-.2-.57-.35Z"/>'],
+      '<path fill="#25D366" d="M12 1.5A10.4 10.4 0 0 0 3.05 17.2L1.6 22.5l5.45-1.43A10.4 10.4 0 1 0 12 1.5Z"/><path fill="#fff" d="M17.6 14.5c-.3-.15-1.8-.88-2.07-.98-.28-.1-.48-.15-.68.15-.2.3-.78.98-.96 1.18-.18.2-.35.22-.65.07a8.5 8.5 0 0 1-4.2-3.67c-.32-.55.32-.5.9-1.68.1-.2.05-.37-.02-.52-.08-.15-.68-1.64-.93-2.24-.25-.59-.5-.5-.68-.51h-.58c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.5 0 1.47 1.07 2.9 1.22 3.1.30.2 2.1 3.2 5.08 4.49 1.89.81 2.62.88 3.56.74.57-.09 1.8-.74 2.04-1.45.25-.71.25-1.32.18-1.45-.07-.13-.27-.2-.57-.35Z"/>'],
     ['Send on Telegram', (t, u) => `https://t.me/share/url?url=${encodeURIComponent(u)}&text=${encodeURIComponent(t)}`,
       '<circle cx="12" cy="12" r="11" fill="#29A9EB"/><path fill="#fff" d="M5.3 11.7 16.9 7.2c.54-.2 1.01.13.83.95l-1.97 9.3c-.15.66-.54.82-1.09.51l-3-2.22-1.45 1.4c-.16.16-.3.3-.6.3l.21-3.05 5.55-5.01c.24-.21-.05-.33-.38-.12l-6.86 4.32-2.96-.92c-.64-.2-.65-.64.14-.95Z"/>'],
   ];
