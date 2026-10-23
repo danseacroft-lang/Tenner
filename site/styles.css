@@ -595,18 +595,8 @@ a.tb-btn:hover { text-decoration: none; }
 .cl { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(5, auto); grid-auto-flow: column; column-gap: 36px; }
 .cl li { border-top: .5px solid var(--sep); transition: background-color .15s ease; }
 .cl li:nth-child(5n + 1) { border-top: 0; }
-@media (hover: hover) { .cl li:hover { background: var(--fill); } }
-/* over the big artwork (computers): the list sits on a frosted panel so it reads in either theme, and the row you point
-   at frosts more strongly still */
-@media (min-width: 1000px) {
-  :root:has(.backdrop > *) .cl { padding: 6px; border-radius: 20px; background: color-mix(in srgb, var(--bg) 72%, transparent);
-    -webkit-backdrop-filter: blur(30px) saturate(1.6); backdrop-filter: blur(30px) saturate(1.6); box-shadow: inset 0 0 0 .5px var(--frost-edge); }
-  :root:has(.backdrop > *) .cl li { border-radius: 14px; }
-  :root:has(.backdrop > *) .see-all { text-shadow: 0 0 10px var(--bg), 0 0 18px var(--bg); }
-  :root:has(.backdrop > *) .cl li:hover { background: color-mix(in srgb, var(--bg) 88%, var(--label) 6%); box-shadow: 0 6px 20px rgba(0, 0, 0, .12); }
-  :root:has(.backdrop > *) .cl li:hover + li, :root:has(.backdrop > *) .cl li:has(+ li:hover) { border-color: transparent; }
-}
-@media (min-width: 1000px) and (prefers-reduced-transparency: reduce) { :root:has(.backdrop > *) .cl { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+/* the row you point at frosts over, a touch more solid than the page behind it, square-cornered */
+@media (hover: hover) { .cl li:hover { background: color-mix(in srgb, var(--bg) 62%, transparent); -webkit-backdrop-filter: blur(20px) saturate(1.5); backdrop-filter: blur(20px) saturate(1.5); } }
 .cl a { display: flex; align-items: center; gap: 14px; padding: 9px 10px; color: inherit; }
 .cl a:hover { text-decoration: none; }
 .cl-n { width: 22px; flex: none; display: grid; justify-items: center; gap: 3px; font: 700 17px/1 var(--font-display); color: var(--label2); font-variant-numeric: tabular-nums; }
