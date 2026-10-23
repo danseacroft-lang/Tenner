@@ -6,7 +6,7 @@ body.people { overflow-x: clip; }
 
 /* ---------- the front: the wall of faces ---------- */
 .pc-hero { position: relative; isolation: isolate; display: flex; align-items: flex-end; min-height: clamp(340px, 52vh, 520px); margin: 0 calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); padding: 0 var(--gutter-r) 28px var(--gutter); }
-.pc-wall { position: absolute; inset: -70px 0 -20px; z-index: -1; display: grid; align-content: center; gap: 14px; overflow: hidden; pointer-events: none; opacity: 0; transition: opacity 1.2s ease;
+.pc-wall { position: absolute; top: -70px; bottom: -20px; left: calc(50% - (100vw - var(--side, 0px)) / 2); width: calc(100vw - var(--side, 0px)); z-index: -1; display: grid; align-content: center; gap: 14px; overflow: hidden; pointer-events: none; opacity: 0; transition: opacity 1.2s ease;
   -webkit-mask-image: radial-gradient(120% 90% at 70% 35%, #000 25%, rgba(0, 0, 0, .55) 55%, transparent 85%); mask-image: radial-gradient(120% 90% at 70% 35%, #000 25%, rgba(0, 0, 0, .55) 55%, transparent 85%); }
 .pc-wall.in { opacity: 1; }
 .pc-wall::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, var(--bg) 0%, color-mix(in srgb, var(--bg) 70%, transparent) 30%, color-mix(in srgb, var(--bg) 20%, transparent) 70%), linear-gradient(0deg, var(--bg), transparent 45%); }

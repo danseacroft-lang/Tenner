@@ -3,15 +3,18 @@
    panels (a sheet on phones), and a poster grid where each poster leans towards the pointer under a sheen of light.
    Built on the tokens and shell in styles.css. */
 
+body.browse { overflow-x: clip; }
 .bwrap { max-width: 1240px; margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter-r); }
 
 
 /* ---------- the spotlight ---------- */
 .spot { position: relative; isolation: isolate; display: flex; align-items: flex-end; min-height: clamp(380px, 62vh, 620px); margin: 0 calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); padding: 0 var(--gutter-r) 34px var(--gutter); }
-.spot-bg { position: absolute; inset: -80px 0 -60px; z-index: -1; pointer-events: none; overflow: hidden;
+/* the artwork runs the full width beside the sidebar (not just the column), so it never ends in a hard edge */
+.spot-bg { position: absolute; top: -80px; bottom: -60px; left: calc(50% - (100vw - var(--side, 0px)) / 2); width: calc(100vw - var(--side, 0px)); z-index: -1; pointer-events: none; overflow: hidden;
   -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 16%, #000 52%, rgba(0, 0, 0, .45) 76%, transparent 100%);
   mask-image: linear-gradient(180deg, transparent 0, #000 16%, #000 52%, rgba(0, 0, 0, .45) 76%, transparent 100%); }
-.spot-art { position: absolute; inset: 0; -webkit-mask-image: linear-gradient(90deg, transparent 0, rgba(0, 0, 0, .55) 18%, #000 52%); mask-image: linear-gradient(90deg, transparent 0, rgba(0, 0, 0, .55) 18%, #000 52%); }
+.spot-art { position: absolute; top: 0; bottom: 0; right: 0; width: min(100%, 1760px);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, rgba(0, 0, 0, .55) 22%, #000 55%, #000 92%, rgba(0, 0, 0, .7) 100%); mask-image: linear-gradient(90deg, transparent 0, rgba(0, 0, 0, .55) 22%, #000 55%, #000 92%, rgba(0, 0, 0, .7) 100%); }
 .spot-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 60% 25%; opacity: 0; scale: 1.06; transition: opacity 1.4s ease, scale 9s linear; }
 .spot-art img.on { opacity: 1; scale: 1; }
 /* Tenner's colours through it, softly, and the page colour rising from the bottom left where the words sit */
