@@ -45,3 +45,12 @@ CREATE TABLE IF NOT EXISTS pushsubs (
   user_id TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS pushsubs_user ON pushsubs(user_id);
+CREATE TABLE IF NOT EXISTS logins (   -- other sign-in services (Facebook, Apple), linked to an account
+  provider TEXT NOT NULL,
+  sub TEXT NOT NULL,                  -- the service's number for the person
+  user_id TEXT NOT NULL,
+  name TEXT,                          -- what it's called there, to show which account is linked
+  created INTEGER NOT NULL,
+  PRIMARY KEY (provider, sub)
+);
+CREATE INDEX IF NOT EXISTS logins_user ON logins(user_id);
