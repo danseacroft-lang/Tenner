@@ -373,7 +373,7 @@ a.tb-btn:hover { text-decoration: none; }
 }
 .posters::-webkit-scrollbar { display: none; }
 .pcard { scroll-snap-align: start; position: relative; padding-top: 40px; animation: cardIn .7s var(--ease-out) both; animation-delay: calc(var(--d, 0) * 55ms); }
-@keyframes cardIn { from { opacity: 0; transform: translateY(26px) scale(.94); filter: blur(6px); } }
+@keyframes cardIn { from { opacity: 0; transform: translateY(26px) scale(.94); } }
 
 /* each rank is a neon sign in four layers: a soft aura, a glassy body, the rainbow tube with bloom, a white-hot core */
 .num { position: absolute; top: -14px; left: -12px; width: 156px; height: 112px; overflow: visible; pointer-events: none; z-index: 1; transition: transform .5s var(--ease-spring); }
@@ -383,7 +383,11 @@ a.tb-btn:hover { text-decoration: none; }
 .num .tube { fill: none; stroke-width: 3.4; stroke-linejoin: round; stroke-linecap: round; }
 .num .core { fill: none; stroke: url(#coreFade); stroke-width: .9; stroke-linejoin: round; opacity: var(--core); }
 .pcard:hover .num { transform: translateY(-3px); }
-.pcard:hover .num .aura { opacity: calc(var(--aura) * 1.5); }
+/* pointing at a card runs the rainbow round its number: a colour turn on its own layer, done by the graphics card
+   (the glow is drawn once, not every frame) */
+@media (hover: hover) { :root:not(.still) .num { will-change: transform, filter; }
+  :root:not(.still) .pcard:hover .num, :root:not(.still) .pcard:focus-within .num { animation: rbTurn 1.4s var(--ease-out); } }
+@keyframes rbTurn { to { filter: hue-rotate(-360deg); } }
 
 /* posters, the Apple TV way: flat artwork, softly rounded, a hairline edge and a quiet shadow, always shown whole
    (height: auto beats the img's height attribute, and contain means nothing is ever cut off). On hover it lifts a touch. */
@@ -786,7 +790,7 @@ main { padding-bottom: 56px; }   /* breathing room at the end of every page */
 /* switching tab or service crossfades (View Transitions) */
 ::view-transition-old(root) { animation: vtOut .22s ease both; }
 ::view-transition-new(root) { animation: vtIn .38s var(--ease-out) both; }
-@keyframes vtOut { to { opacity: 0; transform: scale(.985); filter: blur(4px); } }
+@keyframes vtOut { to { opacity: 0; transform: scale(.985); } }
 @keyframes vtIn { from { opacity: 0; transform: translateY(10px); } }
 
 

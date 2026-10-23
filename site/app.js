@@ -236,7 +236,7 @@ function draw() {
   view.innerHTML = `<div class="wrap chart">${chart}</div>`;
   openFromUrl();
   setBackdrop(heroOn() && list.length ? heroList[heroAt]?.it || list[0] : null);   // the hero's pick
-  wireScroller(); wireRanks();
+  wireScroller();
 }
 
 // ---------- computers: the hero, the Apple TV way ----------
@@ -470,15 +470,13 @@ const RAINBOW = ['#ff375f', '#ff9f0a', '#ffd60a', '#30d158', '#40c8e0', '#5e5ce6
 const RB_STOPS = RAINBOW.map((c, k) => `<stop offset="${(k / (RAINBOW.length - 1)).toFixed(3)}" stop-color="${c}"/>`).join('');
 // Each rank is a neon tube, drawn in four layers: a soft aura, a tinted glass body (lighter at the top),
 // the rainbow tube with a two-step bloom, and a white-hot core that fades towards the bottom like a lit tube.
-// The rainbow sweeps through each number once as the row arrives (rippling along) and again on hover; otherwise
-// the numbers are still, so an idle page costs nothing.
+// The rainbow runs round each number when you point at it (styles.css): the colours turn on the graphics card, so the
+// number is drawn once and never again, however long you play with it.
 function rankSvg(i, row = '') {
   const id = `rk${row}${i}`, n = pad(i + 1);
   const t = (cls, extra = '') => `<text class="${cls}" x="0" y="80" ${extra}>${n}</text>`;
   return `<svg class="num" viewBox="-16 -14 156 112" aria-hidden="true">
-    <defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="-30" y1="0" x2="150" y2="30" spreadMethod="repeat">${RB_STOPS}
-      <animateTransform attributeName="gradientTransform" type="translate" from="-180 -30" to="0 0" dur="2.4s" begin="${(0.15 + i * 0.08).toFixed(2)}s" calcMode="spline" keyTimes="0;1" keySplines=".45 0 .2 1" fill="freeze"/>
-    </linearGradient></defs>
+    <defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="-30" y1="0" x2="150" y2="30" spreadMethod="repeat">${RB_STOPS}</linearGradient></defs>
     ${t('aura', `fill="url(#${id})" filter="url(#aura)"`)}
     ${t('glass')}
     ${t('tube', `stroke="url(#${id})" filter="url(#bloom)"`)}
@@ -486,18 +484,6 @@ function rankSvg(i, row = '') {
   </svg>`;
 }
 
-// Hovering (or focusing) a card replays its rainbow sweep. Nothing loops.
-function wireRanks() {
-  if (reduceMotion) { document.querySelectorAll('svg.num').forEach((s) => s.pauseAnimations?.()); return; }
-  const replay = (e) => {
-    const t = e.target.closest?.('.pcard'); if (!t || t.contains(e.relatedTarget)) return;
-    const a = t.querySelector('svg.num animateTransform'); try { a?.beginElement(); } catch {}
-  };
-  document.querySelectorAll('.posters').forEach((row) => {
-    row.addEventListener('pointerover', replay, { signal: rowAbort?.signal });
-    row.addEventListener('focusin', replay, { signal: rowAbort?.signal });
-  });
-}
 
 const scope = () => (state.route === 'top' ? null : svc(state.route));
 const eyeFor = (n, type) => { const s = scope(), what = type === 'tv' ? 'show' : 'film';
