@@ -38,8 +38,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.33.1">
-  <link rel="stylesheet" href="browse.css?v=1.33.1">
+  <link rel="stylesheet" href="styles.css?v=1.34.0">
+  <link rel="stylesheet" href="browse.css?v=1.34.0">
 </head>
 <body class="browse">
   <a class="skip" href="#grid">Skip to the titles</a>
@@ -67,6 +67,10 @@
         <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>
         <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><rect class="solid" x="3" y="3" width="8" height="8" rx="2.2"/><rect class="solid" x="13" y="3" width="8" height="8" rx="2.2"/><rect class="solid" x="3" y="13" width="8" height="8" rx="2.2"/><rect class="solid" x="13" y="13" width="8" height="8" rx="2.2"/></svg>
         <span>Browse</span></button>
+      <button type="button" role="tab" data-tab="discover" aria-selected="false" tabindex="-1">
+        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><rect x="8.6" y="3" width="10.5" height="15" rx="2.6" transform="rotate(12 13.85 10.5)"/><rect x="4.5" y="5.8" width="10.5" height="15" rx="2.6"/></svg>
+        <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><rect class="solid" x="8.6" y="3" width="10.5" height="15" rx="2.6" transform="rotate(12 13.85 10.5)" opacity=".45"/><rect class="solid" x="4.2" y="5.5" width="11" height="15.6" rx="2.8"/></svg>
+        <span>Discover</span></button>
       <button type="button" role="tab" data-tab="people" aria-selected="false" tabindex="-1">
         <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 19.5c.8-3.4 3.3-5.3 6.2-5.3s5.4 1.9 6.2 5.3"/><circle cx="17" cy="9.5" r="2.6"/><path d="M16.2 14.4c2.4.1 4.3 1.7 5 4.6"/></svg>
         <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><circle class="solid" cx="9" cy="8.5" r="3.8"/><path class="solid" d="M2.5 20c.7-3.8 3.4-6.2 6.5-6.2s5.8 2.4 6.5 6.2z"/><circle class="solid" cx="17.2" cy="9.4" r="2.9"/><path class="solid" d="M16.6 14c2.9 0 5 2 5.6 5.4h-4.9c-.2-2-.8-3.8-1.9-5.2z"/></svg>
@@ -89,7 +93,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.33.1</span>
+      <span class="side-ver">Tenner 1.34.0</span>
     </div>
   </div>
 
@@ -179,9 +183,9 @@
   <div class="scrim" id="scrim" hidden></div>
 
 
-  <script src="shell.js?v=1.33.1" defer></script>
-  <script src="links.js?v=1.33.1" defer></script>
-  <script src="sheet.js?v=1.33.1" defer></script>
-  <script src="browse.js?v=1.33.1" defer></script>
+  <script src="shell.js?v=1.34.0" defer></script>
+  <script src="links.js?v=1.34.0" defer></script>
+  <script src="sheet.js?v=1.34.0" defer></script>
+  <script src="browse.js?v=1.34.0" defer></script>
 </body>
 </html>

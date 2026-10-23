@@ -203,6 +203,8 @@ a.tb-btn:hover { text-decoration: none; }
 .tabs [aria-selected="true"] .i-o { display: none; }
 .tabs [aria-selected="true"] .i-f { display: block; }
 .tabs .i-f .solid { fill: currentColor; stroke: none; }
+/* Discover (swipe through titles) is made for phones: it's only in the phone menu */
+@media (min-width: 720px) { .tabs [data-tab="discover"] { display: none; } }
 .tabs .i-f .thick { stroke-width: 2.7; }
 /* Liquid Glass answers a touch by swelling slightly and lighting up, rather than shrinking */
 .tabs button:active, .tb-btn:active { transform: scale(1.08); filter: brightness(1.12); }

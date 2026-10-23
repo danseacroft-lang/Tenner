@@ -1020,6 +1020,7 @@ function openTab(name) {
   if (name === 'browse') { location.href = 'browse.html'; return; }
   if (name === 'search') { location.href = 'browse.html#search'; return; }
   if (name === 'people') { location.href = 'people.html'; return; }   // Cast & Crew
+  if (name === 'discover') { location.href = 'discover.html'; return; }   // Discover (phones)
   const at = state.route === 'new' || state.route === 'watchlist' ? state.route : state.route === 'week' ? 'new' : 'top';
   if (name === at) { scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }); return; } // tap the open tab: back to the top
   location.hash = name === 'new' || name === 'watchlist' ? name : (state.lastChart || 'top');
