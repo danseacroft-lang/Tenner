@@ -178,9 +178,10 @@ function route() {
   const h = location.hash.slice(1);
   const mine = window.tn.mine.get(), start = window.tn.prefs.get().start;   // Settings: "Open Tenner on"
   const first = !h ? (start === 'auto' || start === 'mine' ? (mine.length ? 'mine' : 'top') : start) : h;
-  state.route = ['new', 'watchlist', 'week'].includes(first) || (first !== 'mine' && svc(first)) ? first : first === 'mine' && mine.length ? 'mine' : 'top';
+  if (first === 'week') { history.replaceState(null, '', '#new'); return route(); }   // This Week now lives on New
+  state.route = ['new', 'watchlist'].includes(first) || (first !== 'mine' && svc(first)) ? first : first === 'mine' && mine.length ? 'mine' : 'top';
   if (svc(state.route)?.store) state.kind = 'movie';
-  if (!['new', 'watchlist', 'week'].includes(state.route)) state.lastChart = state.route;
+  if (!['new', 'watchlist'].includes(state.route)) state.lastChart = state.route;
   render();
 }
 
@@ -198,11 +199,10 @@ function adult(list, k) {
   return list.filter((it) => det(wlKey(it, it.type || k))?.c !== '18');
 }
 function draw() {
-  selectTab(state.route === 'new' || state.route === 'watchlist' ? state.route : state.route === 'week' ? 'new' : 'top');
+  selectTab(state.route === 'new' || state.route === 'watchlist' ? state.route : 'top');
   $('#kindSel').value = state.kind; $('#kindL').textContent = { tv: 'Shows', movie: 'Films', both: 'Shows and films' }[state.kind];
   const isNew = state.route === 'new';
-  $('#controls').hidden = isNew || state.route === 'watchlist' || state.route === 'week';
-  if (state.route === 'week') { shown = new Map(); banners([]); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWeek()}</div>`; document.title = 'This Week | Tenner'; openFromUrl(); return; }
+  $('#controls').hidden = isNew || state.route === 'watchlist';
   if (state.route === 'watchlist') { shown = new Map(); banners([]); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWatchlist()}</div>`; document.title = 'Watchlist | Tenner'; wlKindInit(); openFromUrl(); wantTitles(); alertCard(); return; }
   if (isNew) { shown = new Map(); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; newBanners((state.fresh?.items || []).filter((x) => x.date <= todayIso())); document.title = 'New This Week | Tenner'; openFromUrl(); return; }
 
@@ -833,29 +833,11 @@ function weekCard(x, sub) {
     <span class="nr-art">${it.poster ? `<img src="${esc(it.poster)}" alt="" loading="lazy">` : placeholder(it)}</span>
     <b>${esc(it.title)}</b><small>${esc(sub)}</small></a></li>`;
 }
-function pageWeek() {
-  const w = state.week;
-  if (!w || (!w.climbers?.length && !w.ones?.length)) return `<h1 class="large-title page-title">This Week</h1>
-    <div class="empty"><h2>Building up</h2><p>The round-up fills in as Tenner keeps an eye on the charts. Check back tomorrow.</p><a class="btn btn-tinted" href="#top">See the top 10</a></div>`;
-  const ones = w.ones.filter((x, i, all) => w.items[x.k] && all.findIndex((y) => y.k === x.k) === i);   // once each, its biggest chart first
-  const sec = (id, title, sub, inner) => inner ? `<section class="wk" aria-labelledby="${id}"><div class="wk-hd"><h2 class="row-h" id="${id}">${title}</h2>${sub ? `<p>${esc(sub)}</p>` : ''}</div>${inner}</section>` : '';
-  return `<h1 class="large-title page-title">This Week</h1>
-    <p class="lede">What moved on the UK's charts ${esc(sinceText(w))}, rebuilt every hour.${w.days < 6 ? ' The full week builds up over seven days.' : ''}</p>
-    ${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up.</p>` : ''}
-    ${sec('wk-1', 'The No. 1s', 'Top of each chart right now, and for how long', `<ul class="nr">${ones.map((x) => weekCard(x, `${x.fresh ? 'New No. 1 ' : 'No. 1 '}${chartName(x.c)}${x.days > 1 ? ` · ${x.days} days` : ''}`)).join('')}</ul>`)}
-    ${sec('wk-2', 'Biggest Climbers', `Up the most places ${sinceText(w)}`, w.climbers.length ? `<ol class="wk-list">${w.climbers.filter((x) => w.items[x.k]).map((x) => {
-      const it = w.items[x.k];
-      return `<li><a href="${esc(tmdbUrl(it.type, it.id))}" target="_blank" rel="noopener" ${reg(weekInfo(x, `Up ${x.by} to No. ${x.to} ${chartName(x.c)}`))}>
-        ${it.poster ? `<img src="${esc(thumb(it.poster))}" alt="" loading="lazy">` : `<span class="cl-ph" style="background:hsl(${hue(it.title)} 45% 35%)"></span>`}
-        <span class="cl-t"><b>${esc(it.title)}</b><small>No. ${x.from} → No. ${x.to} ${esc(chartName(x.c))}</small></span>
-        <span class="mv up">▲${x.by}</span></a></li>`; }).join('')}</ol>` : '')}
-    ${sec('wk-3', 'New Arrivals', `In the UK's top 10 now, nowhere in the charts ${w.days >= 6 ? 'a week ago' : 'before'}`, w.arrivals.length ? `<ul class="nr">${w.arrivals.map((x) => weekCard(x, `New at No. ${x.to} ${chartName(x.c)}`)).join('')}</ul>` : '')}`;
-}
 // On the Top 10: a taste of the week, the way in
 function weekRow() {
   const w = state.week; if (!w?.climbers?.length) return '';
   return `<section class="nrow" aria-labelledby="wk-h">
-    <h2 class="row-h" id="wk-h"><a href="#week">This Week<span class="chev" aria-hidden="true"></span></a></h2>
+    <h2 class="row-h" id="wk-h"><a href="#new">This Week<span class="chev" aria-hidden="true"></span></a></h2>
     <ul class="nr">${w.climbers.slice(0, 8).map((x) => weekCard(x, `▲${x.by} to No. ${x.to} ${chartName(x.c)}`)).join('')}</ul>
   </section>`;
 }
@@ -881,31 +863,45 @@ function dayGroups(list, mode, today) {
     <h2 class="${d === today ? 'today' : ''}">${d === today ? 'Today' : d === tomorrow ? 'Tomorrow' : esc(fmtDate(new Date(d + 'T12:00:00'), { weekday: 'long', day: 'numeric', month: 'long' }))}</h2>
     <ul class="cl nw-cl">${items.map((x) => newItem(x, mode)).join('')}</ul></section>`).join('');
 }
+// New: the week on the charts (the No. 1s, the biggest climbers, new arrivals), then new on the services, coming soon
+// and leaving soon. All in the homepage's styles: rows of posters and the chart list.
 function pageNew() {
-  const f = state.fresh;
+  const f = state.fresh, w = state.week, today = todayIso();
   calItems = [];
-  let body, soon = [], leaving = [];
-  if (!f || f.disabled || f.error) {
-    body = `<div class="empty"><span class="empty-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.5 3.5l1.8 4.9 4.9 1.8-4.9 1.8-1.8 4.9-1.8-4.9-4.9-1.8 4.9-1.8z" fill="currentColor"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z" fill="currentColor"/></svg></span>
-      <h2>${f?.error ? 'Back shortly' : 'Coming soon'}</h2>
-      <p>${f?.error ? "The latest releases didn't load this time. They'll be back after the next hourly update." : "New releases from all five services will appear here soon. In the meantime, the top 10 is live."}</p>
-      <a class="btn btn-tinted" href="#top">See the top 10</a></div>`;
-  } else {
-    const today = todayIso();
+  const sec = (id, title, sub, inner) => inner ? `<section class="wk" aria-labelledby="${id}"><div class="wk-hd"><h2 class="row-h" id="${id}">${title}</h2>${sub ? `<p>${esc(sub)}</p>` : ''}</div>${inner}</section>` : '';
+  let charts = '';
+  if (w && (w.climbers?.length || w.ones?.length)) {
+    const ones = (w.ones || []).filter((x, i, all) => w.items[x.k] && all.findIndex((y) => y.k === x.k) === i);   // once each, its biggest chart first
+    const climbers = (w.climbers || []).filter((x) => w.items[x.k]);
+    charts = sec('wk-1', 'The No. 1s', 'Top of each chart right now, and for how long', ones.length ? `<ul class="nr">${ones.map((x) => weekCard(x, `${x.fresh ? 'New No. 1 ' : 'No. 1 '}${chartName(x.c)}${x.days > 1 ? ` · ${x.days} days` : ''}`)).join('')}</ul>` : '')
+      + sec('wk-2', 'Biggest Climbers', `Up the most places ${sinceText(w)}`, climbers.length ? `<ol class="cl nw-cl">${climbers.map((x) => {
+        const it = w.items[x.k];
+        return `<li><a href="${esc(tmdbUrl(it.type, it.id))}" target="_blank" rel="noopener" ${reg(weekInfo(x, `Up ${x.by} to No. ${x.to} ${chartName(x.c)}`))}>
+          ${it.poster ? `<img src="${esc(thumb(it.poster))}" alt="" loading="lazy" decoding="async">` : `<span class="cl-ph" style="background:hsl(${hue(it.title)} 45% 35%)"></span>`}
+          <span class="cl-t"><b>${esc(it.title)}</b><small>No. ${x.from} → No. ${x.to} ${esc(chartName(x.c))}</small></span>
+          <span class="mv up">▲${x.by}</span></a></li>`; }).join('')}</ol>` : '')
+      + sec('wk-3', 'New Arrivals', `In the UK's top 10 now, nowhere in the charts ${w.days >= 6 ? 'a week ago' : 'before'}`, w.arrivals?.length ? `<ul class="nr">${w.arrivals.map((x) => weekCard(x, `New at No. ${x.to} ${chartName(x.c)}`)).join('')}</ul>` : '');
+  }
+  let releases = '', soon = [], leaving = [];
+  if (f && !f.disabled && !f.error) {
     const past = f.items.filter((x) => x.date <= today).reverse();   // newest first
     soon = f.items.filter((x) => x.date > today);
     leaving = (f.leaving || []).filter((x) => x.date >= today);
-    body = past.length ? dayGroups(past, 'new', today) : `<p class="lede">Nothing new on these services this week.</p>`;
-    if (soon.length) body += `<h2 class="row-h nw-h" id="soon">Coming soon</h2><p class="nw-sub">The next month across the five services. Tap the calendar to be reminded on the day.</p>${dayGroups(soon, 'soon', today)}`;
-    if (leaving.length) body += `<h2 class="row-h nw-h" id="leaving">Leaving soon</h2><p class="nw-sub">Catch them before they go. Dates come from US listings, so the UK may differ.</p>${dayGroups(leaving, 'leaving', today)}`;
+    releases = sec('released', 'New on the Services', 'Arriving over the last seven days', past.length ? dayGroups(past, 'new', today) : '<p class="nw-none">Nothing new on these services this week.</p>')
+      + sec('soon', 'Coming Soon', 'The next month. Tap the calendar to be reminded on the day', soon.length ? dayGroups(soon, 'soon', today) : '')
+      + sec('leaving', 'Leaving Soon', 'Catch them before they go', leaving.length ? dayGroups(leaving, 'leaving', today) : '');
   }
-  const jumps = [soon.length ? '<a class="nw-jump" href="#soon" data-jump="soon">Coming soon<span class="chev" aria-hidden="true"></span></a>' : '',
-    leaving.length ? '<a class="nw-jump" href="#leaving" data-jump="leaving">Leaving soon<span class="chev" aria-hidden="true"></span></a>' : ''].join('');
+  if (!charts && !releases) return `<h1 class="large-title page-title">New This Week</h1>
+    <div class="empty"><span class="empty-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.5 3.5l1.8 4.9 4.9 1.8-4.9 1.8-1.8 4.9-1.8-4.9-4.9-1.8 4.9-1.8z" fill="currentColor"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z" fill="currentColor"/></svg></span>
+      <h2>${f?.error ? 'Back shortly' : 'Building up'}</h2><p>${f?.error ? "This week's round-up didn't load this time. It'll be back after the next hourly update." : 'The week fills in as Tenner keeps an eye on the charts and the services. Check back tomorrow.'}</p>
+      <a class="btn btn-tinted" href="#top">See the top 10</a></div>`;
+  const jumps = [['released', 'New on the services', releases.includes('id="released"')], ['soon', 'Coming soon', soon.length], ['leaving', 'Leaving soon', leaving.length]]
+    .filter((j) => j[2] && charts).map(([id, label]) => `<a class="nw-jump" href="#${id}" data-jump="${id}">${label}<span class="chev" aria-hidden="true"></span></a>`).join('');
   return `<h1 class="large-title page-title">New This Week</h1>
-    <p class="lede">Arriving over the last seven days. Dates come from US listings, so a few UK dates may differ.${state.week?.climbers?.length ? ' <a href="#week">See what moved on the charts this week</a>.' : ''}</p>
+    <p class="lede">${w?.climbers?.length ? `What moved on the UK's charts ${esc(sinceText(w))}, and what's new on the services. Rebuilt every hour.` : 'What’s new on the services, rebuilt every hour.'} Release dates come from US listings, so a few UK dates may differ.</p>
     ${jumps ? `<div class="nw-jumps">${jumps}</div>` : ''}
     ${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up.</p>` : ''}
-    ${body}`;
+    ${charts}${releases}`;
 }
 // Add to Calendar: an all-day event on the day it arrives, as a calendar file (the iPhone and Mac open it in Calendar)
 function calendarFile(x) {
@@ -1017,7 +1013,7 @@ function openTab(name) {
   if (name === 'browse') { location.href = 'browse.html'; return; }
   if (name === 'people') { location.href = 'people.html'; return; }   // Cast & Crew
   if (name === 'discover') { location.href = 'discover.html'; return; }   // Discover (phones)
-  const at = state.route === 'new' || state.route === 'watchlist' ? state.route : state.route === 'week' ? 'new' : 'top';
+  const at = state.route === 'new' || state.route === 'watchlist' ? state.route : 'top';
   if (name === at) { scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }); return; } // tap the open tab: back to the top
   location.hash = name === 'new' || name === 'watchlist' ? name : (state.lastChart || 'top');
 }
