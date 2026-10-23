@@ -26,5 +26,4 @@
     }
     send.disabled = false; send.classList.remove('busy');
   });
-  $('#cAgain').addEventListener('click', () => { done.hidden = true; form.hidden = false; $('.c-actions').hidden = false; $('#cName').focus(); });
 })();
