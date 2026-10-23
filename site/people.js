@@ -113,12 +113,12 @@
   async function showPerson(id, push) {
     if (push) history.pushState({ p: id }, '', `?p=${id}`);
     find.hidden = true; person.hidden = false; person.dataset.id = id;
-    person.innerHTML = `<div class="pp-hero"><div class="pp-in">${back}<span class="pf pp-ph sk"></span><div class="pp-id"><p class="pp-dept">&nbsp;</p><h1 class="sk-t">Loading…</h1></div></div></div>`;
+    person.innerHTML = `<div class="pp-hero"><div class="pp-in"><span class="pf pp-ph sk"></span><div class="pp-id">${back}<p class="pp-dept">&nbsp;</p><h1 class="sk-t">Loading…</h1></div></div></div>`;
     scrollTo({ top: 0, behavior: 'instant' });
     let d; try { [d, cat] = await Promise.all([get(`/person/${id}`), catalogue()]); } catch { d = null; }
     pd = d;
     if (person.dataset.id !== String(id)) return;
-    if (!pd) { person.innerHTML = `<div class="pp-hero"><div class="pp-in">${back}</div></div><div class="p-empty"><h2>Couldn’t load this person</h2><p>Check your connection and try again.</p></div>`; return; }
+    if (!pd) { person.innerHTML = `<div class="pp-hero"><div class="pp-in"><div class="pp-id">${back}</div></div></div><div class="p-empty"><h2>Couldn’t load this person</h2><p>Check your connection and try again.</p></div>`; return; }
     document.title = `${pd.name} · Cast & Crew · Tenner`;
     const dated = (l) => [...l.filter((x) => x.year), ...l.filter((x) => !x.year)];   // undated (unannounced) work goes last
     const tabs = [['acting', 'Acting', dated(pd.acting)], ['crew', 'Behind the Camera', dated(pd.crew)]].filter((t) => t[2].length);
@@ -134,12 +134,12 @@
       : pd.photo ? `<img class="pp-glow" src="${esc(pd.photo)}" alt="" aria-hidden="true">` : '';
     const cap = sp ? `<a class="pp-now" href="./?t=${sp.k}" data-k="${sp.k}">${sp.poster ? `<img src="${esc(sp.poster)}" alt="">` : ''}<span><small>Best known for</small><b>${esc(sp.title)}</b></span></a>` : '';
     nowOn.sort((a, b) => (b.votes || 0) - (a.votes || 0));
-    person.innerHTML = `<div class="pp-hero${sp ? ' splash' : ''}" style="--h:${hue(pd.name)}">${bg}${cap}${back}
+    person.innerHTML = `<div class="pp-hero${sp ? ' splash' : ''}" style="--h:${hue(pd.name)}">${bg}
       <div class="pp-in">${photo(pd, 'pf pp-ph')}
-        <div class="pp-id"><p class="pp-dept">${esc(DEPT[pd.dept] || pd.dept || '')}</p><h1 tabindex="-1">${esc(pd.name)}</h1>
+        <div class="pp-id">${back}<p class="pp-dept">${esc(DEPT[pd.dept] || pd.dept || '')}</p><h1 tabindex="-1">${esc(pd.name)}</h1>
           ${chips.length ? `<p class="pp-chips">${chips.map((c) => `<span>${esc(c)}</span>`).join('')}</p>` : ''}
           ${figs.length ? `<dl class="pp-figs">${figs.map(([n, l]) => `<div><dt>${n}</dt><dd>${esc(l)}</dd></div>`).join('')}</dl>` : ''}
-          <div class="pp-acts"><button type="button" class="btn btn-tinted" id="ppShare"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M6 11v8.5h12V11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Share</button></div>
+          <div class="pp-acts"><button type="button" class="btn btn-tinted" id="ppShare"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M6 11v8.5h12V11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Share</button>${cap}</div>
         </div></div></div>
       ${pd.bio ? `<section class="pp-bio"><p id="ppBio">${esc(pd.bio).replace(/\n\n+/g, '</p><p>')}</p><button type="button" class="pp-more" id="ppMore" hidden>More</button></section>` : ''}
       ${nowOn.length ? `<section class="p-sec"><div class="p-sh"><h2>Watch ${esc(pd.name.split(' ')[0])} Now</h2><p>On the five services right now.</p></div><ul class="pp-known p-shelf">${nowOn.slice(0, 20).map((x) =>
