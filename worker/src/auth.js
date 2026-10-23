@@ -275,7 +275,7 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
     }
 
     // ---- email and password
-    mm = p.match(/^\/auth\/password\/(signup|login|forgot|reset)$/);
+    mm = p.match(/^\/auth\/password\/(signup|login|forgot|reset|verify|resend)$/);
     if (mm && m === 'POST') {
       const email = normEmail(body.email), key = String(body.key || '');
       if (mm[1] === 'forgot') {
@@ -289,13 +289,31 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
         }
         return ok({ ok: true });   // the same answer either way, so it never says who has an account
       }
+      // the link in the welcome email: the address is theirs, so sign them in here
+      if (mm[1] === 'verify') {
+        const v = await env.DB.prepare('SELECT * FROM verifies WHERE token = ?').bind(await hashToken(String(body.token || ''))).first();
+        if (!v || v.expires < now()) return fail('That link has expired. Sign in to have a new one sent');
+        await env.DB.batch([env.DB.prepare('INSERT OR REPLACE INTO verified (email, user_id, at) VALUES (?, ?, ?)').bind(v.email, v.user_id, now()),
+          env.DB.prepare('DELETE FROM verifies WHERE user_id = ?').bind(v.user_id)]);
+        const u = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(v.user_id).first();
+        if (!u) return fail('That account has been deleted', 404);
+        return ok({ token: await newSession(env, v.user_id, req), user: publicUser(u), verified: v.email });
+      }
+      if (mm[1] === 'resend') {
+        if (email) {
+          const row = await env.DB.prepare('SELECT user_id FROM passwords WHERE email = ?').bind(email).first();
+          if (row && !await isVerified(env, email)) await sendVerify(env, row.user_id, email, origin);
+        }
+        return ok({ ok: true });
+      }
       if (mm[1] === 'reset') {
         const r = await env.DB.prepare('SELECT * FROM resets WHERE token = ?').bind(await hashToken(String(body.token || ''))).first();
         if (!r || r.expires < now()) return fail('That reset link has expired. Ask for a new one');
         if (!validKey(key)) return fail('Something went wrong');
         const salt = rand(16);
         await env.DB.batch([env.DB.prepare('UPDATE passwords SET salt = ?, hash = ?, fails = 0 WHERE user_id = ?').bind(salt, await pwHash(salt, key), r.user_id),
-          env.DB.prepare('DELETE FROM resets WHERE user_id = ?').bind(r.user_id), env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(r.user_id)]);
+          env.DB.prepare('DELETE FROM resets WHERE user_id = ?').bind(r.user_id), env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(r.user_id),
+          env.DB.prepare('INSERT OR REPLACE INTO verified (email, user_id, at) SELECT email, user_id, ? FROM passwords WHERE user_id = ?').bind(now(), r.user_id)]);   // the reset link proved the address
         const u = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(r.user_id).first();
         return ok({ token: await newSession(env, r.user_id, req), user: publicUser(u) });
       }
@@ -308,6 +326,7 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
         const uid = rand(16), salt = rand(16);
         await env.DB.batch([env.DB.prepare('INSERT INTO users (id, name, hue, created) VALUES (?, ?, ?, ?)').bind(uid, name, Math.floor(Math.random() * 360), now()),
           env.DB.prepare('INSERT INTO passwords (user_id, email, salt, hash, created) VALUES (?, ?, ?, ?, ?)').bind(uid, email, salt, await pwHash(salt, key), now())]);
+        if (env.RESEND_API_KEY) { await sendVerify(env, uid, email, origin); return ok({ verify: email }); }   // signed in once they've clicked the link
         const u = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(uid).first();
         return ok({ token: await newSession(env, uid, req), user: publicUser(u) });
       }
@@ -319,6 +338,7 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
         return fail('That email and password don’t match', 401);
       }
       await env.DB.prepare('UPDATE passwords SET fails = 0 WHERE user_id = ?').bind(row.user_id).run();
+      if (env.RESEND_API_KEY && !await isVerified(env, email)) return json({ error: 'Confirm your email first: tap the link we sent you', unverified: email }, 403, cors);
       const u = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(row.user_id).first();
       return ok({ token: await newSession(env, row.user_id, req), user: publicUser(u) });
     }
@@ -336,7 +356,8 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
         passkeys: pks.results.map((x) => ({ id: x.id, label: x.label, created: x.created, used: x.used })),
         sessions: ss.results.map((x) => ({ label: x.label, created: x.created, seen: x.seen, here: x.token === me.token })),
         logins: (await env.DB.prepare('SELECT provider, name FROM logins WHERE user_id = ?').bind(me.id).all()).results,
-        password: (await env.DB.prepare('SELECT email FROM passwords WHERE user_id = ?').bind(me.id).first())?.email || null, mail: !!env.RESEND_API_KEY });
+        ...await (async () => { const pw = (await env.DB.prepare('SELECT email FROM passwords WHERE user_id = ?').bind(me.id).first())?.email || null;
+          return { password: pw, password_ok: !pw || !env.RESEND_API_KEY || await isVerified(env, pw) }; })(), mail: !!env.RESEND_API_KEY });
     }
     if (p === '/me' && m === 'PATCH') {
       const name = typeof body.name === 'string' ? body.name.trim().slice(0, 40) : null, hue = Number.isFinite(+body.hue) ? ((+body.hue % 360) + 360) % 360 : null;
@@ -382,6 +403,12 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
       const salt = rand(16);
       await env.DB.prepare('INSERT INTO passwords (user_id, email, salt, hash, created) VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET email = excluded.email, salt = excluded.salt, hash = excluded.hash, fails = 0')
         .bind(me.id, email, salt, await pwHash(salt, key), now()).run();
+      if (env.RESEND_API_KEY && !await isVerified(env, email)) { await sendVerify(env, me.id, email, origin); return ok({ verify: email }); }
+      return ok({ ok: true });
+    }
+    if (p === '/me/verify' && m === 'POST') {   // send the link again
+      const pw = await env.DB.prepare('SELECT email FROM passwords WHERE user_id = ?').bind(me.id).first();
+      if (pw && env.RESEND_API_KEY && !await isVerified(env, pw.email)) await sendVerify(env, me.id, pw.email, origin);
       return ok({ ok: true });
     }
     if (p === '/me/password' && m === 'DELETE') {
@@ -395,7 +422,7 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
     }
     if (p === '/me' && m === 'DELETE') {
       const subs = (await env.DB.prepare('SELECT sub_key FROM pushsubs WHERE user_id = ?').bind(me.id).all()).results;
-      await env.DB.batch(['DELETE FROM passkeys WHERE user_id = ?', 'DELETE FROM logins WHERE user_id = ?', 'DELETE FROM passwords WHERE user_id = ?', 'DELETE FROM resets WHERE user_id = ?', 'DELETE FROM sessions WHERE user_id = ?', 'DELETE FROM userdata WHERE user_id = ?', 'DELETE FROM pushsubs WHERE user_id = ?', 'DELETE FROM users WHERE id = ?']
+      await env.DB.batch(['DELETE FROM passkeys WHERE user_id = ?', 'DELETE FROM logins WHERE user_id = ?', 'DELETE FROM passwords WHERE user_id = ?', 'DELETE FROM resets WHERE user_id = ?', 'DELETE FROM verified WHERE user_id = ?', 'DELETE FROM verifies WHERE user_id = ?', 'DELETE FROM sessions WHERE user_id = ?', 'DELETE FROM userdata WHERE user_id = ?', 'DELETE FROM pushsubs WHERE user_id = ?', 'DELETE FROM users WHERE id = ?']
         .map((q) => env.DB.prepare(q).bind(me.id)));
       if (env.PUSH) for (const s of subs) { const v = await env.PUSH.get(s.sub_key, 'json'); if (v) { delete v.user; await env.PUSH.put(s.sub_key, JSON.stringify(v)); } }
       return ok({ ok: true });
@@ -442,6 +469,27 @@ async function sendMail(env, to, subject, { html, text }) {
     body: JSON.stringify({ from: 'Tenner <account@tenner.stream>', to: [to], subject, html, text }) });
   if (!r.ok) console.log('Resend', r.status, (await r.text()).slice(0, 200));
 }
+const isVerified = async (env, email) => !!(await env.DB.prepare('SELECT 1 FROM verified WHERE email = ?').bind(email).first());
+// the welcome email with its "Confirm your email" link (a day to use it; at most one a minute)
+async function sendVerify(env, userId, email, origin) {
+  const last = await env.DB.prepare('SELECT MAX(created) AS t FROM verifies WHERE user_id = ?').bind(userId).first();
+  if (last?.t && now() - last.t < 60e3) return;
+  const t = rand(32);
+  await env.DB.prepare('INSERT INTO verifies (token, user_id, email, created, expires) VALUES (?, ?, ?, ?, ?)').bind(await hashToken(t), userId, email, now(), now() + 864e5).run();
+  await sendMail(env, email, 'Confirm your email for Tenner', verifyMail(`${origin}/account.html#verify=${t}`));
+}
+function verifyMail(link) {
+  const text = `Welcome to Tenner.\n\nConfirm this is your email address to finish making your account: ${link}\n\nThe link works for a day. If you didn't sign up, ignore this email and nothing happens.\n\nTenner · tenner.stream`;
+  const html = mailShell('Confirm your email', 'Welcome to Tenner. Tap below to confirm this is your email address and finish making your account. Your Watchlist and settings will be kept in step on every device you sign in on.', link, 'Confirm my email', 'The link works for a day. If you didn’t sign up, ignore this email and nothing happens.');
+  return { html, text };
+}
+const mailShell = (title, lede, link, cta, fine) => `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;color:#1c1c1e">
+    <img src="https://tenner.stream/apple-touch-icon.png" width="56" height="56" alt="Tenner" style="border-radius:13px">
+    <h1 style="font-size:24px;margin:24px 0 8px">${title}</h1>
+    <p style="font-size:16px;line-height:1.5;color:#3a3a3c">${lede}</p>
+    <p style="margin:28px 0"><a href="${link}" style="display:inline-block;padding:14px 22px;border-radius:12px;background:#0a84ff;color:#fff;text-decoration:none;font-size:16px;font-weight:500">${cta}</a></p>
+    <p style="font-size:14px;line-height:1.5;color:#6e6e73">${fine}</p>
+    <p style="font-size:13px;color:#8e8e93;margin-top:32px">Tenner · <a href="https://tenner.stream" style="color:#8e8e93">tenner.stream</a></p></div>`;
 function resetMail(link) {
   const text = `Someone (hopefully you) asked to reset the password for your Tenner account.\n\nChoose a new password: ${link}\n\nThe link works for an hour. If you didn't ask, ignore this email and nothing changes.\n\nTenner · tenner.stream`;
   const html = `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;color:#1c1c1e">

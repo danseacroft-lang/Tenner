@@ -51,7 +51,7 @@
         if (!email) { $('#acNewEmail').focus(); throw new Error('Enter your email address'); }
         if (pw.length < 8) { $('#acNewPw').focus(); throw new Error('Use 8 or more characters for your password'); }
         const out = await account.call('POST', '/auth/password/signup', { email, name, key: await pwKey(email, pw) });
-        await account.signedIn(out.token, out.user);
+        if (out.verify) checkInbox(out.verify, true); else await account.signedIn(out.token, out.user);
       }
     } catch (err) { say('#acMsg', friendly(err), err.name !== 'NotAllowedError'); }
     b.disabled = false;
@@ -72,9 +72,31 @@
     try {
       const email = $('#acEmail').value.trim(), out = await account.call('POST', '/auth/password/login', { email, key: await pwKey(email, $('#acPw').value) });
       await account.signedIn(out.token, out.user);
-    } catch (err) { say('#acMsg', friendly(err), true); }
+    } catch (err) { if (err.data?.unverified) checkInbox(err.data.unverified, false); else say('#acMsg', friendly(err), true); }
     b.disabled = false;
   });
+  // confirming the email: after signing up (or signing in before confirming), a "Check your inbox" screen
+  let checkEmail = '';
+  function checkInbox(email, fresh) {
+    checkEmail = email;
+    $('#acCheckP').textContent = fresh ? `We’ve sent a link to ${email}. Tap it to confirm your email and finish making your account.`
+      : `${email} isn’t confirmed yet. Tap the link we emailed you, or have it sent again.`;
+    for (const id of ['#acLogin', '#acNew', '#acNewOpen', '#acPasskey', '#acGoogle', '#acApple', '#acFb', '#acOr']) $(id).hidden = true;
+    $('#acCheck').hidden = false; $('#acMsg').textContent = '';
+  }
+  $('#acResend').addEventListener('click', async (e) => {
+    try { await account.call('POST', '/auth/password/resend', { email: checkEmail }); e.target.textContent = 'Sent'; setTimeout(() => { e.target.textContent = 'Send it again'; }, 4000); }
+    catch (err) { say('#acMsg', friendly(err), true); }
+  });
+  $('#acBack').addEventListener('click', () => { $('#acCheck').hidden = true; show(); });
+  // arriving from the welcome email's link: account.html#verify=…
+  const verifyIn = new URLSearchParams(location.hash.slice(1)).get('verify');
+  if (verifyIn) {
+    history.replaceState(null, '', location.pathname);
+    account.call('POST', '/auth/password/verify', { token: verifyIn })
+      .then(async (out) => { await account.signedIn(out.token, out.user); say('#acNote', 'Email confirmed. You’re in'); })
+      .catch((err) => say('#acMsg', friendly(err), true));
+  }
   $('#acForgot').addEventListener('click', async () => {
     const email = $('#acEmail').value.trim();
     if (!email) { $('#acEmail').focus(); say('#acMsg', 'Enter your email above, then tap Forgot password again'); return; }
@@ -82,7 +104,7 @@
     catch (err) { say('#acMsg', friendly(err), true); }
   });
   // arriving from the email's link: account.html#reset=…&e=…
-  addEventListener('hashchange', () => { if (/^#reset=/.test(location.hash)) location.reload(); });   // the link opened in a tab already on this page
+  addEventListener('hashchange', () => { if (/^#(reset|verify)=/.test(location.hash)) location.reload(); });   // the link opened in a tab already on this page
   const resetIn = new URLSearchParams(location.hash.slice(1));
   if (resetIn.has('reset')) {
     history.replaceState(null, '', location.pathname);
@@ -163,7 +185,7 @@
     if (u.share_id) $('#acUrl').textContent = `${location.origin}/list.html?u=${u.share_id}`;
     $('#acWays').innerHTML = me.passkeys.map((p) => `<div class="set-row"><span class="set-l">${esc(p.label || 'Passkey')}<small>Added ${esc(when(p.created))}${p.used ? ` · last used ${esc(when(p.used).toLowerCase())}` : ''}</small></span><button type="button" class="ac-x" data-pk="${esc(p.id)}">Remove</button></div>`).join('')
       + (u.google ? `<div class="set-row"><span class="set-l">Google<small>${esc(u.email || 'Linked')}</small></span><button type="button" class="ac-x" data-unlink>Unlink</button></div>` : '')
-      + (me.password ? `<div class="set-row"><span class="set-l">Email and password<small>${esc(me.password)}</small></span><span class="ac-btns"><button type="button" class="ac-x ac-ok" data-pw-open>Change</button><button type="button" class="ac-x" data-pw-remove>Remove</button></span></div>`
+      + (me.password ? `<div class="set-row"><span class="set-l">Email and password<small>${esc(me.password)}${me.password_ok ? '' : ' · <b class="ac-warn">not confirmed yet</b> <button type="button" class="ac-link ac-inline" data-reverify>Send the link again</button>'}</small></span><span class="ac-btns"><button type="button" class="ac-x ac-ok" data-pw-open>Change</button><button type="button" class="ac-x" data-pw-remove>Remove</button></span></div>`
         : '<button type="button" class="set-row set-link" data-pw-open><span class="set-l">Add a password<small>Sign in with your email and a password too</small></span><span class="set-chev" aria-hidden="true"></span></button>')
       + `<form class="set-row ac-pwform" id="acPwForm" hidden><input type="email" id="acSetEmail" autocomplete="username" placeholder="Email" aria-label="Email" required value="${esc(me.password || '')}"><input type="password" id="acSetPw" autocomplete="new-password" minlength="8" placeholder="New password" aria-label="New password" required><button class="btn btn-tinted">Save</button></form>`
       + (me.logins || []).map((l) => `<div class="set-row"><span class="set-l">${l.provider === 'apple' ? 'Apple' : 'Facebook'}<small>${esc(l.name || 'Linked')}</small></span><button type="button" class="ac-x" data-unlink-svc="${esc(l.provider)}">Unlink</button></div>`).join('')
@@ -191,6 +213,7 @@
     try {
       if (t.dataset.hue) { me.user = (await account.call('PATCH', '/me', { hue: +t.dataset.hue })).user; account.setUser(me.user); draw(); }
       else if (t.dataset.pk) { if (!confirm('Remove this passkey? You won’t be able to sign in with it any more.')) return; await account.call('DELETE', `/me/passkeys/${encodeURIComponent(t.dataset.pk)}`); load(); say('#acNote', 'Passkey removed'); }
+      else if ('reverify' in t.dataset) { await account.call('POST', '/me/verify'); say('#acNote', `Sent. Check ${me.password}`); }
       else if ('pwOpen' in t.dataset) { $('#acPwForm').hidden = false; $('#acSetEmail').focus(); }
       else if ('pwRemove' in t.dataset) { if (!confirm('Remove your password? You’ll sign in another way.')) return; await account.call('DELETE', '/me/password'); load(); say('#acNote', 'Password removed'); }
       else if (t.dataset.unlinkSvc) { await account.call('DELETE', `/me/${t.dataset.unlinkSvc}`); load(); say('#acNote', 'Unlinked'); }
@@ -211,7 +234,7 @@
     if (e.target.id !== 'acPwForm') return; e.preventDefault();
     const email = $('#acSetEmail').value.trim(), pw = $('#acSetPw').value;
     if (pw.length < 8) { say('#acNote', 'Use 8 or more characters for your password', true); return; }
-    try { await account.call('POST', '/me/password', { email, key: await pwKey(email, pw) }); load(); say('#acNote', 'Password saved'); }
+    try { const r = await account.call('POST', '/me/password', { email, key: await pwKey(email, pw) }); load(); say('#acNote', r.verify ? `Password saved. Tap the link we sent to ${r.verify} to confirm it` : 'Password saved'); }
     catch (err) { say('#acNote', friendly(err), true); }
   });
   $('#acShare').addEventListener('change', async (e) => {
@@ -224,7 +247,9 @@
     $('#acOut').hidden = inn; $('#acIn').hidden = !inn;
     if (inn) { const u = account.user(); if (u) { me ||= { user: u, passkeys: [], sessions: [] }; draw(); } load(); }
     else {
-      $('#acNew').hidden = true; $('#acNewOpen').hidden = false; google($('#acGoogle'), false);
+      $('#acNew').hidden = true; $('#acNewOpen').hidden = false; $('#acPasskey').hidden = false; $('#acCheck').hidden = true;
+      if ($('#acReset').hidden) $('#acLogin').hidden = false;
+      google($('#acGoogle'), false);
       $('#acApple').hidden = !APPLE_SERVICES_ID; $('#acFb').hidden = !FACEBOOK_APP_ID;
       if (APPLE_SERVICES_ID) appleLib().catch(() => {});   // ready before the tap, so its window isn't blocked
       if (APPLE_SERVICES_ID || FACEBOOK_APP_ID) $('#acOr').hidden = false;

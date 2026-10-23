@@ -68,3 +68,17 @@ CREATE TABLE IF NOT EXISTS resets (     -- "Forgot password?" links, for an hour
   user_id TEXT NOT NULL,
   expires INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS verified (   -- email addresses whose owners clicked the link we sent
+  email TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS verifies (   -- "Confirm your email" links, for a day each
+  token TEXT PRIMARY KEY,               -- a hash of the token in the link
+  user_id TEXT NOT NULL,
+  email TEXT NOT NULL,
+  created INTEGER NOT NULL,
+  expires INTEGER NOT NULL
+);
+-- passwords made before email checks began count as checked
+INSERT OR IGNORE INTO verified (email, user_id, at) SELECT email, user_id, created FROM passwords WHERE created < 1792755100000;
