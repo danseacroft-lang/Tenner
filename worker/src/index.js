@@ -1,5 +1,5 @@
 // Tenner's go-between for searching every film and show on TMDB, without putting the TMDB key in the website.
-//   GET /search?q=…   up to 20 films and shows, best match first
+//   GET /search?q=…&page=…   films and shows, best match first, 20 a page (up to ten pages)
 //   GET /title/m123   one title's details and UK where-to-watch, in the same shape as data/titles.json
 //   GET /people?q=…   people (cast and crew) matching a name; without q, this week's most talked-about people
 //   GET /person/123   one person: biography, and everything they've been in or made
@@ -37,7 +37,8 @@ export default {
     if (url.pathname === '/search') {
       const q = (url.searchParams.get('q') || '').trim().slice(0, 80);
       if (q.length < 2) return json({ results: [] }, 200, cors);
-      path = '/search/multi'; params = { query: q, language: 'en-GB', region: REGION, include_adult: 'false' }; shape = searchShape; ttl = 86400;
+      const page = Math.min(10, Math.max(1, parseInt(url.searchParams.get('page'), 10) || 1));   // more as you scroll, up to ten pages
+      path = '/search/multi'; params = { query: q, language: 'en-GB', region: REGION, include_adult: 'false', ...(page > 1 ? { page: String(page) } : {}) }; shape = searchShape; ttl = 86400;
     } else if (url.pathname === '/people') {
       const q = (url.searchParams.get('q') || '').trim().slice(0, 80);
       if (q.length === 1) return json({ results: [] }, 200, cors);
@@ -77,7 +78,7 @@ const json = (o, status, headers) => new Response(JSON.stringify(o), { status, h
 
 function searchShape(d) {
   return {
-    img: `${IMG}/w342`, bd: `${IMG}/w780`,
+    img: `${IMG}/w342`, bd: `${IMG}/w780`, page: d.page || 1, pages: Math.min(10, d.total_pages || 1),
     results: (d.results || []).filter((x) => x.media_type === 'movie' || x.media_type === 'tv').slice(0, 20).map((x) => ({
       k: `${x.media_type === 'movie' ? 'm' : 't'}${x.id}`, type: x.media_type, title: x.title || x.name,
       year: (x.release_date || x.first_air_date || '').slice(0, 4) || null, rating: x.vote_count >= 20 ? Math.round(x.vote_average * 10) / 10 : null,

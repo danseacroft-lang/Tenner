@@ -346,3 +346,20 @@
 .b-people { color: var(--accent); font-weight: 500; text-decoration: none; white-space: nowrap; }
 .b-people::after { content: " ›"; }
 @media (hover: hover) { .b-people:hover { text-decoration: underline; } }
+
+/* where to search: the five services, or every film and show there is */
+.scope { display: flex; gap: 8px; margin: 12px 0 0; flex-wrap: wrap; }
+.scope[hidden] { display: none; }
+.scope button { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 14px; border: 0; border-radius: 999px; cursor: pointer; color: var(--label2);
+  font: 500 14px/1 var(--font); letter-spacing: -.01em; -webkit-font-smoothing: antialiased; background: var(--gl-fill); box-shadow: inset 0 0 0 1px var(--gl-rim);
+  transition: color .2s ease, background-color .2s ease, box-shadow .2s ease; }
+.scope button svg { width: 16px; height: 16px; }
+.scope button[aria-checked="true"] { color: var(--label); background: var(--gl-hover); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.scope button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (hover: hover) { .scope button[aria-checked="false"]:hover { color: var(--label); } }
+/* everything: TMDB's results carry straight on from the catalogue's, as one list */
+.web.merged { margin-top: 26px; }
+.web.merged .web-hd { border-top: 0; padding-top: 0; }
+.web.merged:not(.solo) .web-hd h2 { font-size: 17px; color: var(--label2); }
+.web-all { margin-left: 6px; padding: 0; border: 0; background: none; cursor: pointer; color: var(--accent); font-family: inherit; font-size: inherit; font-weight: 500; }
+.search-all #pWhere { opacity: .4; pointer-events: none; }   /* every film and show: the services filter has nothing to do */
