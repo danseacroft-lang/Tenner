@@ -203,7 +203,7 @@ function draw() {
   const isNew = state.route === 'new';
   $('#controls').hidden = isNew || state.route === 'watchlist' || state.route === 'week';
   if (state.route === 'week') { shown = new Map(); banners([]); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWeek()}</div>`; document.title = 'This Week | Tenner'; openFromUrl(); return; }
-  if (state.route === 'watchlist') { shown = new Map(); banners([]); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWatchlist()}</div>`; document.title = 'Watchlist | Tenner'; openFromUrl(); wantTitles(); alertCard(); return; }
+  if (state.route === 'watchlist') { shown = new Map(); banners([]); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWatchlist()}</div>`; document.title = 'Watchlist | Tenner'; wlKindInit(); openFromUrl(); wantTitles(); alertCard(); return; }
   if (isNew) { shown = new Map(); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; newBanners((state.fresh?.items || []).filter((x) => x.date <= todayIso())); document.title = 'New This Week | Tenner'; openFromUrl(); return; }
 
   markSvcLink();
@@ -742,31 +742,44 @@ async function alertCard() {
   });
 }
 function pageWatchlist() {
-  const list = window.tn.saved.all(), spots = chartSpots(), d = state.titles;
+  const list = window.tn.saved.all(), spots = chartSpots(), d = state.titles, kind = state.wlKind || 'all';
   const onLogos = (k) => {
-    const x = d?.items?.[k]; if (!x?.f?.length) return '';
+    const x = d?.items?.[k]; if (!x?.f?.length || !d.logo) return '';
     const seen = new Set();
-    return x.f.map((id) => d.providers[id]).filter((p) => p && !seen.has(p[0].split(' ')[0]) && seen.add(p[0].split(' ')[0])).slice(0, 3)
-      .map(([n, logo]) => (logo && d.logo ? `<img src="${esc(d.logo + logo)}" alt="${esc(n)}" title="${esc(n)}">` : '')).join('');
+    return x.f.map((id) => d.providers[id]).filter((p) => p?.[1] && !seen.has(p[0].split(' ')[0]) && seen.add(p[0].split(' ')[0])).slice(0, 3)
+      .map(([n, logo]) => `<img src="${esc(d.logo + logo)}" alt="${esc(n)}" title="${esc(n)}">`).join('');
   };
+  const X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
+  let streaming = 0;
+  const cards = list.map((x) => {
+    const spot = spots.get(x.k), sh = reg(wlInfo(x, spot || 'In your Watchlist')), on = onLogos(x.k); if (on) streaming++;
+    const what = [x.type === 'movie' ? 'Film' : 'Series', x.year].filter(Boolean).join(' · ');
+    const art = x.poster ? `<img src="${esc(x.poster)}" alt="" loading="lazy">` : placeholder({ title: x.title });
+    return `<li data-type="${x.type === 'movie' ? 'movie' : 'tv'}"><a href="${esc(tmdbUrl(x.type, x.k.slice(1)))}" target="_blank" rel="noopener" ${sh}>
+        <span class="wl-art">${art}${on ? `<span class="wl-on">${on}</span>` : ''}${spot ? `<span class="wl-spot">${esc(spot)}</span>` : ''}</span>
+        <b class="wl-t">${esc(x.title)}</b><span class="wl-what">${esc(what)}</span>${showLine(x)}</a>
+      <button type="button" class="wl-x" data-unsave="${esc(x.k)}" aria-label="Remove ${esc(x.title)} from your Watchlist" title="Remove">${X}</button></li>`;
+  }).join('');
+  const both = list.some((x) => x.type === 'movie') && list.some((x) => x.type !== 'movie');
   const body = !list.length
     ? `<div class="empty"><span class="empty-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12v18.4l-6-4.2-6 4.2z" fill="currentColor"/></svg></span>
         <h2>Nothing saved yet</h2><p>Open any title and press Watchlist to keep it here, with where to watch it.</p>
         <a class="btn btn-tinted" href="#top">See the top 10</a></div>`
-    : `<ul class="list wl">${list.map((x) => {
-        const spot = spots.get(x.k), sh = reg(wlInfo(x, spot || 'In your Watchlist'));
-        const what = [x.type === 'movie' ? 'Film' : 'Series', x.year].filter(Boolean).join(' · ');
-        const art = x.poster ? `<img class="nl-art" src="${esc(thumb(x.poster))}" alt="" loading="lazy">` : `<span class="nl-art" style="background:hsl(${hue(x.title)} 45% 35%)"></span>`;
-        return `<li>${art}<div class="grow">
-          <a class="title" href="${esc(tmdbUrl(x.type, x.k.slice(1)))}" target="_blank" rel="noopener" ${sh}>${esc(x.title)}</a>
-          <span class="what">${esc(what)}${spot ? ` · <b class="wl-spot">${esc(spot)}</b>` : ''}</span>${showLine(x)}</div>
-          <span class="wl-on">${onLogos(x.k)}</span>
-          <button type="button" class="btn btn-icon wl-x" data-unsave="${esc(x.k)}" aria-label="Remove ${esc(x.title)} from your Watchlist" title="Remove">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></li>`;
-      }).join('')}</ul>`;
-  return `<h1 class="large-title page-title">Watchlist</h1>
-    <p class="lede">${list.length ? `${list.length} title${list.length === 1 ? '' : 's'}, newest first. ` : ''}${window.tn.account.user() ? 'Kept in step on every device you’re signed in on.' : 'Saved on this device. <a href="account.html">Sign in</a> to have it on all your devices.'}</p>
+    : `<div class="wl-bar"><h2 class="row-h">Saved</h2>${both ? `<div class="segmented" id="wlKind" role="radiogroup" aria-label="Shows, films or both"><span class="seg-thumb" aria-hidden="true"></span>${[['all', 'All'], ['tv', 'Shows'], ['movie', 'Films']].map(([k, l]) => `<button type="button" role="radio" data-kind="${k}" aria-checked="${k === kind}">${l}</button>`).join('')}</div>` : ''}</div>
+      <ul class="wl-grid" data-kind="${both ? kind : 'all'}">${cards}</ul>`;
+  const amb = list.find((x) => x.poster)?.poster;
+  const stats = list.length ? `<p class="wl-stats"><span><b>${list.length}</b> saved</span>${streaming ? `<span><b>${streaming}</b> streaming now</span>` : ''}</p>` : '';
+  return `<header class="wl-hd">${amb ? `<img class="wl-amb" src="${esc(amb)}" alt="" aria-hidden="true">` : ''}
+      <h1 class="large-title page-title">Watchlist</h1>${stats}
+      <p class="lede">${window.tn.account.user() ? 'Kept in step on every device you’re signed in on.' : 'Saved on this device. <a href="account.html">Sign in</a> to have it on all your devices.'}</p></header>
     ${list.length ? '<div class="wl-alert" id="wlAlert" hidden></div>' : ''}${comingUp(list)}${body}`;
+}
+// Shows, Films or All, without redrawing
+function wlKindInit() {
+  const seg = $('#wlKind'); if (!seg) return;
+  const pick = (b) => { seg.querySelectorAll('button').forEach((n) => n.setAttribute('aria-checked', n === b)); state.wlKind = b.dataset.kind; $('.wl-grid').dataset.kind = b.dataset.kind; };
+  seg.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) pick(b); });
+  window.tn.arrows(seg, () => [...seg.querySelectorAll('button')], pick); window.tn.segment(seg, pick);
 }
 // shows: where you're up to, and when the next episode lands
 function showLine(x) {
@@ -800,9 +813,11 @@ function savedRow() {
 }
 view.addEventListener('click', (e) => {
   const b = e.target.closest('[data-unsave]'); if (!b) return;
-  const li = b.closest('li'), next = li.nextElementSibling || li.previousElementSibling;
-  window.tn.saved.remove(b.dataset.unsave);
-  requestAnimationFrame(() => next?.querySelector('[data-unsave]')?.focus({ preventScroll: true }));
+  const li = b.closest('li'), next = li.nextElementSibling || li.previousElementSibling, k = b.dataset.unsave;
+  const done = () => { window.tn.saved.remove(k); requestAnimationFrame(() => $(`[data-unsave="${CSS.escape(next?.querySelector('[data-unsave]')?.dataset.unsave || '')}"]`)?.focus({ preventScroll: true })); };
+  if (window.tn.reduce || !li.animate) return done();
+  b.disabled = true;
+  li.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.9)', filter: 'blur(6px)' }], { duration: 260, easing: 'cubic-bezier(.3,0,.2,1)', fill: 'forwards' }).finished.then(done, done);
 });
 // saving or removing (here, in a sheet or in another tab) redraws the Watchlist and the row
 addEventListener('tn:sheet-closed', () => { if (state.savedDirty) { state.savedDirty = false; const y = scrollY; draw(); scrollTo(0, y); } });
