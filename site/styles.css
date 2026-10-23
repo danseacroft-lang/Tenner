@@ -1226,8 +1226,9 @@ a.sh-prov:hover { text-decoration: none; }
   .top-brand { grid-column: 2; justify-self: center; }
   .top-row > .tb-search, .top-row > .share-chart { grid-column: 3; justify-self: end; }
   /* Share moves up into the bar: a round button like the menu's */
-  .top-row > .share-chart { position: static; display: grid; place-items: center; width: 42px; height: 42px; padding: 0; border-radius: 50%; font-size: 0; gap: 0; pointer-events: auto; }
-  .top-row > .share-chart svg { width: 20px; height: 20px; margin-top: -2px; }
+  /* centred like the menu and search buttons (the hidden word mustn't take a row of its own, which pushed the icon up) */
+  .top-row > .share-chart { position: static; display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; padding: 0; border-radius: 50% !important; font-size: 0; line-height: 0; gap: 0; pointer-events: auto; }
+  .top-row > .share-chart svg { width: 21px; height: 21px; margin: -1px 0 0; }
   .intro .large-title { padding-right: 0; }
   body { padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }   /* no tab bar along the bottom to clear */
   .toast { bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }

@@ -137,7 +137,28 @@
     // search: results as you type; / or ⌘K jumps to the box (shell.js); Escape clears it
     const qi = $('#q');
     qi.addEventListener('input', () => { state.q = qi.value; apply(true, true); if (scrollY > 300) scrollTo({ top: 0, behavior: 'auto' }); });
-    qi.addEventListener('keydown', (e) => { if (e.key === 'Escape' && qi.value) { e.preventDefault(); state.q = ''; apply(true); } if (e.key === 'Enter') qi.blur(); });
+    qi.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && qi.value) { e.preventDefault(); state.q = ''; apply(true); }
+      if (e.key === 'Escape' && !qi.value) hideRecent();
+      if (e.key === 'Enter') { remember(qi.value); qi.blur(); }
+      if (e.key === 'ArrowDown' && !$('#recent').hidden) { e.preventDefault(); $('#recent .rc-q')?.focus(); }
+    });
+    // recent searches: shown when you tap into an empty box; a search counts once you pause on it, press Enter or open a result
+    qi.addEventListener('focus', () => { if (!qi.value) showRecent(); });
+    qi.addEventListener('input', () => { if (qi.value) hideRecent(); else showRecent(); clearTimeout(rememberT); rememberT = setTimeout(() => remember(qi.value), 2500); });
+    document.addEventListener('pointerdown', (e) => { if (!e.target.closest('.search, #recent')) hideRecent(); });
+    $('#recent').addEventListener('click', (e) => {
+      if (e.target.closest('#rcClear')) { saveRecent([]); hideRecent(); qi.focus(); return; }
+      const x = e.target.closest('[data-x]'); if (x) { saveRecent(recent().filter((q) => q !== x.dataset.x)); showRecent(); qi.focus(); return; }
+      const b = e.target.closest('.rc-q'); if (!b) return;
+      state.q = b.dataset.q; apply(true); remember(b.dataset.q); hideRecent(); qi.focus();
+    });
+    $('#recent').addEventListener('keydown', (e) => {
+      const items = [...document.querySelectorAll('#recent .rc-q')], i = items.indexOf(document.activeElement);
+      if (e.key === 'ArrowDown' && i >= 0) { e.preventDefault(); items[Math.min(items.length - 1, i + 1)].focus(); }
+      if (e.key === 'ArrowUp' && i >= 0) { e.preventDefault(); (i ? items[i - 1] : qi).focus(); }
+      if (e.key === 'Escape') { hideRecent(); qi.focus(); }
+    });
     $('#qClear').addEventListener('click', () => { state.q = ''; apply(true); qi.focus(); });
 
     // phones: the filters open as a sheet from the bottom
@@ -169,6 +190,26 @@
     $('#ratingOut').textContent = state.r ? `${state.r}+` : 'Any';
     r.style.setProperty('--fill', `${(state.r / 9) * 100}%`);
   }
+
+  // ---------- recent searches: the last ten, on this device only ----------
+  const RS = 'tenner-searches';
+  let rememberT = 0;
+  const recent = () => { try { const l = JSON.parse(localStorage.getItem(RS) || '[]'); return Array.isArray(l) ? l.filter((q) => typeof q === 'string') : []; } catch { return []; } };
+  const saveRecent = (l) => { try { if (l.length) localStorage.setItem(RS, JSON.stringify(l.slice(0, 10))); else localStorage.removeItem(RS); } catch {} };
+  function remember(q) {
+    q = String(q || '').trim().slice(0, 80); if (q.length < 2) return;
+    const low = q.toLowerCase();
+    saveRecent([q, ...recent().filter((x) => x.toLowerCase() !== low && !low.startsWith(x.toLowerCase()))]);   // "bet" then "betty blue": just the latter
+  }
+  const CLOCK = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  function showRecent() {
+    const l = recent(), box = $('#recent');
+    if (!l.length) { box.hidden = true; return; }
+    box.innerHTML = `<div class="rc-h"><span>Recent</span><button type="button" id="rcClear">Clear</button></div>`
+      + l.map((q) => `<div class="rc-row"><button type="button" class="rc-q" role="option" data-q="${esc(q)}">${CLOCK}<span>${esc(q)}</span></button><button type="button" class="rc-x" data-x="${esc(q)}" aria-label="Remove ${esc(q)} from recent searches"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>`).join('');
+    box.hidden = false;
+  }
+  const hideRecent = () => { $('#recent').hidden = true; };
 
   // ---------- search ----------
   // Accents, case and punctuation don't matter: 'Amelie' finds 'Amélie', 'spiderman' finds 'Spider-Man'.
@@ -396,6 +437,8 @@
       tmdb: `https://www.themoviedb.org/${x.t}/${x.i}`, services: x.s.map((s) => ({ label: labels[s] || s, logo: logos[s] })),
     };
   }
+  grid.addEventListener('click', () => { if (state.q) remember(state.q); });   // opening a result counts the search
+  $('#webGrid').addEventListener('click', () => { if (state.q) remember(state.q); });
   grid.addEventListener('click', async (e) => {
     const a = e.target.closest('.tile a'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
     e.preventDefault(); hidePv();
