@@ -200,9 +200,6 @@
   }
 
   // with a mouse and keyboard, the hint says how
-  // on a computer Discover isn't in the sidebar (it's found on Browse), so Browse stays highlighted there
-  const tab = document.querySelector('[data-tab="discover"]');
-  if (tab && !tab.offsetWidth) window.tnShell?.select('browse');
   if (mouse.matches) $('#dHint').textContent = 'Drag right to save, left to skip · or use ← → and ↓ for details';
 
   // ---------- Shows, Films or Both: a native menu, as on the Top 10 ----------

@@ -86,11 +86,5 @@ body.discover { overflow-x: clip; }
 
 @media (max-width: 380px) { .d-h { font-size: 27px; } .d-acts { gap: 14px; } }
 
-/* on a computer: a little room at the top, and a way back to Browse (where Discover is found) */
-.d-back { display: none; }
-@media (min-width: 720px) {
-  .dwrap { padding-top: 26px; }
-  .d-back { display: inline-flex; align-items: center; gap: 2px; margin: 0 0 6px -4px; padding: 4px 8px 4px 2px; border-radius: 999px; color: var(--label2); font: 500 15px/1 var(--font); text-decoration: none; }
-  .d-back::before { content: "‹"; font-size: 20px; line-height: .8; margin-right: 3px; }
-  .d-back:hover { color: var(--label); background: var(--fill); text-decoration: none; }
-}
+/* on a computer: a little room at the top */
+@media (min-width: 720px) { .dwrap { padding-top: 26px; } }

@@ -266,7 +266,7 @@
     r.style.setProperty('--fill', `${(state.r / 9) * 100}%`);
   }
 
-  try { localStorage.removeItem('tenner-searches'); } catch {}   // recent searches were tried and taken out: tidy away any that were kept
+  try { localStorage.removeItem('tenner-searches'); localStorage.removeItem('tenner-recent'); } catch {}   // recent searches and Recently Viewed were tried and taken out: tidy away what they kept
 
   // ---------- search ----------
   // Accents, case and punctuation don't matter: 'Amelie' finds 'Amélie', 'spiderman' finds 'Spider-Man'.
@@ -612,8 +612,7 @@
     window.tnSheet?.open({ ...(await sheetFor(x)), eye: 'Tenner’s surprise pick' });
   }
 
-  // ---------- For You (from your Watchlist) and Recently viewed: rows of posters above the genres ----------
-  const recent = () => { try { const r = JSON.parse(localStorage.getItem('tenner-recent') || '[]'); return Array.isArray(r) ? r.filter((x) => x?.k && x.title) : []; } catch { return []; } };
+  // ---------- For You (from your Watchlist): a row of posters above the genres ----------
   function forYou() {
     const saved = window.tn.saved.all(), have = saved.map((s) => item(s.k)).filter((x) => x && !x._x);
     if (!have.length) return null;
@@ -632,33 +631,18 @@
     if (state.q || state.g.length || state.c !== 'popular') { box.hidden = true; return; }
     const poster = (x) => x.img ? (x.img.startsWith('/') ? cat.img + x.img : x.img) : null;
     const art = (src, title) => src ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async">` : `<span class="ph" style="background:linear-gradient(160deg,hsl(${hue(title)} 45% 42%),hsl(${(hue(title) + 40) % 360} 55% 18%))">${esc(title)}</span>`;
-    const fy = forYou(), rec = recent();
+    const fy = forYou();
     box.innerHTML = (fy ? `<section class="b-row" aria-labelledby="fyH"><div class="b-row-hd"><h2 id="fyH">For You</h2><p>Because you saved ${esc(fy.because.n)}</p></div>
         <ul class="nr">${fy.picks.map((x) => `<li><a href="https://www.themoviedb.org/${x.t}/${x.i}" target="_blank" rel="noopener" data-row="${x.t[0]}${x.i}">
-          <span class="nr-art">${art(poster(x), x.n)}</span><b>${esc(x.n)}</b><small>${esc([x.t === 'tv' ? 'Show' : 'Film', (x.d || '').slice(0, 4), x.r ? `★ ${x.r.toFixed(1)}` : ''].filter(Boolean).join(' · '))}</small></a></li>`).join('')}</ul></section>` : '')
-      + (rec.length ? `<section class="b-row" aria-labelledby="rvH"><div class="b-row-hd"><h2 id="rvH">Recently Viewed</h2><button type="button" class="b-row-x" id="rvClear">Clear</button></div>
-        <ul class="nr">${rec.map((r) => `<li><a href="https://www.themoviedb.org/${r.type === 'movie' ? 'movie' : 'tv'}/${esc(r.k.slice(1))}" target="_blank" rel="noopener" data-row="${esc(r.k)}">
-          <span class="nr-art">${art(r.poster, r.title)}</span><b>${esc(r.title)}</b><small>${esc([r.type === 'movie' ? 'Film' : 'Show', r.year].filter(Boolean).join(' · '))}</small></a></li>`).join('')}</ul></section>` : '');
-    box.insertAdjacentHTML('beforeend', discoverCard(poster));
+          <span class="nr-art">${art(poster(x), x.n)}</span><b>${esc(x.n)}</b><small>${esc([x.t === 'tv' ? 'Show' : 'Film', (x.d || '').slice(0, 4), x.r ? `★ ${x.r.toFixed(1)}` : ''].filter(Boolean).join(' · '))}</small></a></li>`).join('')}</ul></section>` : '');
     box.hidden = !box.innerHTML;
   }
-  // Discover (swipe through titles), offered here: the only way in on a computer. Three of your services' top posters as a deck.
-  function discoverCard(poster) {
-    const deck = cat.items.filter((x) => !x._x && x.img && x.s.length && (!state.s.length || x.s.some((k) => state.s.includes(k))) && ok18(x) && x.r >= 7).sort((a, b) => b.p - a.p).slice(0, 3);
-    return `<a class="b-disc" href="discover.html"><span class="bd-deck" aria-hidden="true">${deck.map((x, i) => `<img src="${esc(poster(x))}" alt="" loading="lazy" style="--i:${i}">`).join('')}</span>
-      <span class="bd-copy"><b>Discover</b><span>Swipe through what’s on your services: right to save it to your Watchlist, left to skip.</span></span>
-      <span class="btn btn-tinted bd-go">Start swiping<span class="chev" aria-hidden="true"></span></span></a>`;
-  }
   $('#bRows').addEventListener('click', async (e) => {
-    if (e.target.closest('#rvClear')) { try { localStorage.removeItem('tenner-recent'); } catch {} rows(); return; }
     const a = e.target.closest('[data-row]'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
     e.preventDefault();
-    const k = a.dataset.row, x = item(k), r = recent().find((y) => y.k === k);
-    if (x) window.tnSheet?.open(await sheetFor(x));
-    else if (r) window.tnSheet?.open({ k, type: r.type, title: r.title, year: r.year, poster: r.poster, tmdb: `https://www.themoviedb.org/${r.type === 'movie' ? 'movie' : 'tv'}/${k.slice(1)}`, services: [] });
+    const x = item(a.dataset.row); if (x) window.tnSheet?.open(await sheetFor(x));
   });
-  // a sheet closed: Recently viewed has a new first title; saving changes For You
-  addEventListener('tn:sheet-closed', () => cat && rows());
+  // saving changes For You
   addEventListener('tn:saved', () => cat && !window.tnSheet?.isOpen() && rows());
 
   // ---------- the grid ----------

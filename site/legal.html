@@ -36,8 +36,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.39.1">
-  <link rel="stylesheet" href="legal.css?v=1.39.1">
+  <link rel="stylesheet" href="styles.css?v=1.40.0">
+  <link rel="stylesheet" href="legal.css?v=1.40.0">
 </head>
 <body class="legal">
   <a class="skip" href="#main">Skip to the page</a>
@@ -87,7 +87,7 @@
       <a class="side-link" href="legal.html#privacy" aria-current="page">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies" aria-current="page">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.39.1</span>
+      <span class="side-ver">Tenner 1.40.0</span>
     </div>
   </div>
 
@@ -141,7 +141,7 @@
         <li><strong>Your settings:</strong> the choices you make on the Settings page, such as which page Tenner opens on.</li>
         <li><strong>Your progress:</strong> the season and episode you’re up to in shows you’re watching, if you set it. Like your Watchlist, it stays on this device.</li>
         <li><strong>Discover:</strong> the titles you’ve swiped past, so they don’t come round again (up to the 3,000 most recent), and whether you last chose shows, films or both.</li>
-        <li><strong>Browse:</strong> the last ten titles you opened (for Recently Viewed, which you can clear), whether you like posters or a list, and that you’ve seen the note about Browse changing.</li>
+        <li><strong>Browse:</strong> whether you like posters or a list, and that you’ve seen the note about Browse changing.</li>
         <li><strong>The privacy note:</strong> that you’ve pressed Got it, so the note about cookies isn’t shown again.</li>
       </ul>
       <p>Your filters and searches on Browse live only in the page’s address, so you can bookmark or share them; they aren’t saved anywhere. <strong>Move to another device</strong> (in Settings) puts your Watchlist, progress and services into a link or QR code that only you see; nothing is uploaded. Apart from Watchlist alerts and your account, if you choose them (above), none of this is ever sent to us or anyone else. You can remove it at any time by clearing your browser’s data for this site.</p>
@@ -221,6 +221,6 @@
   </main>
 
 
-  <script src="shell.js?v=1.39.1" defer></script>
+  <script src="shell.js?v=1.40.0" defer></script>
 </body>
 </html>

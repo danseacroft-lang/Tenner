@@ -38,8 +38,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.39.1">
-  <link rel="stylesheet" href="browse.css?v=1.39.1">
+  <link rel="stylesheet" href="styles.css?v=1.40.0">
+  <link rel="stylesheet" href="browse.css?v=1.40.0">
 </head>
 <body class="browse">
   <a class="skip" href="#grid">Skip to the titles</a>
@@ -89,7 +89,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.39.1</span>
+      <span class="side-ver">Tenner 1.40.0</span>
     </div>
   </div>
 
@@ -138,7 +138,7 @@
 
     <div class="coll"><div class="coll-track" id="coll" role="radiogroup" aria-label="Collections"></div></div>
 
-    <!-- for you (from your Watchlist) and recently viewed: rows of posters -->
+    <!-- for you: a row of posters picked from your Watchlist -->
     <div class="b-rows" id="bRows" hidden></div>
 
     <!-- explore by genre: big tiles of three fanned posters each -->
@@ -201,9 +201,9 @@
   <div class="scrim" id="scrim" hidden></div>
 
 
-  <script src="shell.js?v=1.39.1" defer></script>
-  <script src="links.js?v=1.39.1" defer></script>
-  <script src="sheet.js?v=1.39.1" defer></script>
-  <script src="browse.js?v=1.39.1" defer></script>
+  <script src="shell.js?v=1.40.0" defer></script>
+  <script src="links.js?v=1.40.0" defer></script>
+  <script src="sheet.js?v=1.40.0" defer></script>
+  <script src="browse.js?v=1.40.0" defer></script>
 </body>
 </html>

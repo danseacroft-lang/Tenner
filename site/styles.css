@@ -182,6 +182,11 @@ a.tb-btn:hover { text-decoration: none; }
   -webkit-tap-highlight-color: transparent;
 }
 .tabs button svg { display: block; width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+/* tablets and small laptops (the floating bar at the top): tighter tabs and just the logo, so all of them fit */
+@media (min-width: 720px) and (max-width: 999px) {
+  .tabs button { padding: 0 9px; gap: 5px; font-size: 14px; }
+  .top-brand .brand-name { display: none; }
+}
 .tabs button[aria-selected="true"] { color: var(--accent); }
 .tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 @media (hover: hover) { .tabs button[aria-selected="false"]:hover { color: var(--accent); } }
@@ -202,8 +207,6 @@ a.tb-btn:hover { text-decoration: none; }
 .tabs [aria-selected="true"] .i-o { display: none; }
 .tabs [aria-selected="true"] .i-f { display: block; }
 .tabs .i-f .solid { fill: currentColor; stroke: none; }
-/* Discover (swipe through titles) is made for phones: it's only in the phone menu */
-@media (min-width: 720px) { .tabs [data-tab="discover"] { display: none; } }
 .tabs .i-f .thick { stroke-width: 2.7; }
 /* Liquid Glass answers a touch by swelling slightly and lighting up, rather than shrinking */
 .tabs button:active, .tb-btn:active { transform: scale(1.08); filter: brightness(1.12); }
