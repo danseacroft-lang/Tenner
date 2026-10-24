@@ -1,4 +1,5 @@
-# Deploys Tenner TV (tv/) to Cloudflare Workers, at tv.tenner.stream, whenever it changes (or when run by hand).
+# Deploys Tenner TV (tv/) to Cloudflare Workers, at tv.tenner.stream: every three hours with fresh Freeview listings
+# (scripts/fetch-tv.mjs), whenever tv/ changes, or when run by hand.
 # Uses the same GitHub secrets as the search API: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, plus TMDB_TOKEN (copied in as a
 # Worker secret, only to find the channels' logos).
 name: Deploy Tenner TV
@@ -6,10 +7,13 @@ on:
   push:
     branches: [main]
     paths: ['tv/**', '.github/workflows/tv.yml']
+  schedule:
+    - cron: '17 */3 * * *'
   workflow_dispatch:
 concurrency: { group: tv, cancel-in-progress: true }
 permissions:
   contents: read
+  actions: write   # only to keep this schedule alive
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -27,6 +31,9 @@ jobs:
       # the Worker is tried against stand-in listings first; if anything's broken, nothing is deployed
       - name: Check Tenner TV works
         run: node tv/test.mjs
+      # the week's Freeview listings for the 35 main channels (the live copy carries over if the feed can't be read)
+      - name: Build the listings
+        run: node scripts/fetch-tv.mjs
       # the shared copy of the listings lives in Workers KV: made the first time, found after that, bound for this deploy.
       # If the token can't make it, Tenner TV still works (from the edge cache alone).
       - name: Set up the listings store
@@ -68,3 +75,9 @@ jobs:
           npx --yes wrangler@4 deploy
           if [ -n "$TMDB_TOKEN" ]; then printf '%s' "$TMDB_TOKEN" | npx --yes wrangler@4 secret put TMDB_TOKEN; fi
           echo "::warning title=Connect tv.tenner.stream::Tenner TV is live on its workers.dev address. To put it on tv.tenner.stream: Cloudflare dashboard > Workers & Pages > tenner-tv > Settings > Domains & Routes > Add > Custom domain > tv.tenner.stream. (Or give the API token 'Zone: Workers Routes: Edit' and 'Zone: DNS: Edit' for tenner.stream and run this again.)"
+      # GitHub pauses scheduled workflows after 60 days without a commit; re-enabling every run keeps this one going
+      - name: Keep the listings schedule alive
+        if: github.event_name == 'schedule'
+        continue-on-error: true
+        env: { GH_TOKEN: '${{ github.token }}', GH_REPO: '${{ github.repository }}' }
+        run: gh workflow enable tv.yml

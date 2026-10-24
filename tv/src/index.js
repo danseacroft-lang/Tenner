@@ -1,6 +1,7 @@
-// Tenner TV's endpoint: GET /api/day?d=YYYY-MM-DD → that day's UK TV, channel by channel, from TVmaze (CC BY-SA 4.0,
-// credited on the page), with each channel's logo from TMDB where it has one. Anything else is the page itself (public/).
-// Days from yesterday to a week ahead.
+// Tenner TV's endpoint: GET /api/day?d=YYYY-MM-DD → that day's UK TV, channel by channel. First choice: the Freeview
+// listings built every three hours into public/data/ (scripts/fetch-tv.mjs: the 35 main channels, complete schedules,
+// our own logos). Only a day those don't cover falls back to TVmaze (CC BY-SA 4.0), with logos from TMDB.
+// Anything else is the page itself (public/). Days from yesterday to a week ahead.
 const TVMAZE = 'https://api.tvmaze.com';
 // the channels people look for first, in the order of a remote control; anything else follows, busiest first
 const ORDER = ['BBC One', 'BBC Two', 'ITV1', 'Channel 4', 'Channel 5', 'Sky Atlantic', 'Sky Max', 'Sky Showcase', 'BBC Three', 'BBC Four',
@@ -102,6 +103,9 @@ export default {
     const d = url.searchParams.get('d') || ukDay();
     const ok = /^\d{4}-\d{2}-\d{2}$/.test(d) && d >= ukDay(Date.now() - 864e5) && d <= ukDay(Date.now() + 7 * 864e5);
     if (!ok) return json({ error: 'Pick a day from yesterday to a week ahead' }, 400, 60);
+    // the Freeview listings, if that day's been built (a missing file would come back as the page, hence the type check)
+    const a = await env.ASSETS.fetch(new Request(new URL(`/data/${d}.json`, url.origin)));
+    if (a.ok && (a.headers.get('content-type') || '').includes('json')) return new Response(a.body, { headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=900' } });
     return day(env, ctx, d);
   },
   // every half hour, on its own: today's and tomorrow's listings (and the logos) fetched ahead of anyone asking, so the

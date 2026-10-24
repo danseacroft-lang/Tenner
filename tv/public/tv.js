@@ -14,7 +14,8 @@
   const length = (ms) => { const m = Math.round(ms / 60e3); return m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m} min`; };
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const today = ukDay(), days = Array.from({ length: 8 }, (_, i) => ukDay(Date.now() + i * 864e5));   // tonight and a week ahead
+  const today = ukDay();
+  let days = Array.from({ length: 8 }, (_, i) => ukDay(Date.now() + i * 864e5));   // tonight and a week ahead, until the listings say otherwise
   const q = new URLSearchParams(location.search).get('d');
   // base: the first day shown; loaded: every day fetched so far, in order (the strips run on through them); day: the one in view
   const state = { base: days.includes(q) ? q : today, day: null, data: null, loaded: new Map(), loading: null };
@@ -22,7 +23,8 @@
   const word = (d) => (d === today ? 'tonight' : d === days[1] ? 'tomorrow' : dayName(d, { weekday: 'long' }));
 
   // ---------- the days ----------
-  $('#days').innerHTML = days.map((d) => `<button type="button" data-d="${d}">${esc(label(d))}</button>`).join('');
+  const drawDays = () => { $('#days').innerHTML = days.map((d) => `<button type="button" data-d="${d}"${d === state.day ? ' aria-current="date"' : ''}>${esc(label(d))}</button>`).join(''); };
+  drawDays();
   $('#days').addEventListener('click', (e) => { const b = e.target.closest('[data-d]'); if (b) goDay(b.dataset.d); });
 
   const shown = new Map();   // every drawn programme, by id: for the preview and the sheet
@@ -39,7 +41,7 @@
     const w = n.replace(/\b(One|Two|Three|Four)\b/, (x) => ({ One: '1', Two: '2', Three: '3', Four: '4' }[x])).split(/\s+/), d = w.join(' ').match(/\d+$/);
     return (d ? w[0][0] + d[0] : w.map((x) => x[0]).join('').slice(0, 3)).toUpperCase();   // BBC One → B1, More4 → M4, Sky Atlantic → SA
   };
-  const badge = (n) => (logo(n) ? `<span class="ch-badge"><img src="${esc(logo(n))}" alt="" decoding="async"></span>`
+  const badge = (n) => (logo(n) ? `<span class="ch-badge"><img src="${esc(logo(n))}" alt="" decoding="async" width="40" height="40"></span>`
     : `<span class="ch-badge ch-mono" style="--h:${hue(n)}" aria-hidden="true">${esc(initials(n))}</span>`);
   // watching live: each channel's own official player (a TV licence is needed to watch live TV in the UK). The watchdog
   // checks these still open, every three hours.
@@ -102,13 +104,12 @@
   // ---------- which channels: a category, or your own (pinned channels always come first) ----------
   const CATS = [['all', 'All channels', /./], ['mine', 'My channels', null],
     ['main', 'Main five', /^(BBC One|BBC Two|ITV1|Channel 4|Channel 5)$/],
-    ['ent', 'Entertainment', /Sky (Max|Showcase|Comedy)|^ITV2$|^ITVBe$|^E4|^Dave|^Gold|^W$|Comedy Central|^5Star|^BBC Three|Really|Quest Red|^Pick/],
-    ['drama', 'Drama & crime', /Sky Atlantic|Alibi|Sky (Crime|Witness)|^ITV3$|^ITV4$|^Drama|^5USA|U&Drama/],
-    ['fact', 'Factual', /BBC Four|More4|Yesterday|Sky (Arts|History|Nature|Documentaries)|Discovery|National Geographic|^Quest$|Blaze|^PBS|Channel 5 Factual/],
-    ['film', 'Films', /Film4|Sky Cinema|Talking Pictures|Great!|Movies/],
-    ['kids', 'Kids', /CBBC|CBeebies|CITV|Nick|Disney|Cartoon|^POP|Boomerang|Tiny Pop/],
-    ['sport', 'Sport', /Sport|Eurosport|TNT|Premier/],
-    ['news', 'News', /News|GB News|Parliament/]];
+    ['ent', 'Entertainment', /^(ITV2|E4|Sky Mix|U&Dave|Really|5Star|BBC Three|Challenge|4seven|Sky Max|Dave|W|U&W)$/],
+    ['drama', 'Drama & crime', /^(U&Drama|ITV3|ITV4|5USA|Alibi|U&Alibi|Sky Atlantic|True Crime)$/],
+    ['fact', 'Factual', /^(Quest|Quest Red|DMAX|Blaze|U&Yesterday|Sky Arts|More4|BBC Four|PBS America)$/],
+    ['film', 'Films', /^(Film4|Talking Pictures TV|GREAT! movies|5Action|Sky Cinema.*)$/],
+    ['kids', 'Kids', /^(CBBC|CBeebies|CITV|POP|Tiny Pop)$/],
+    ['news', 'News', /^(BBC News|Sky News|GB News|BBC Parliament)$/]];
   const FAV = 'tenner-tv-fav';
   const favs = { all() { try { return JSON.parse(localStorage.getItem(FAV) || '[]'); } catch { return []; } }, set(l) { try { localStorage.setItem(FAV, JSON.stringify(l)); } catch {} } };
   let cat = 'all';
@@ -162,13 +163,13 @@
         const end = ends(x, items[j + 1]), live = x.at <= now && now < end, past = end <= now;
         const p = live ? Math.round(((now - x.at) / (end - x.at)) * 100) : 0;
         return `<button type="button" class="blk${live ? ' live' : past ? ' past' : ''}" style="width:${Math.max(150, ((end - x.at) / 60e3) * m)}px${live ? `;--p:${p}%` : ''}" ${reg(x, name, items[j + 1])} data-day="${d}"
-          aria-label="${esc(`${name}, ${dayName(d, { weekday: 'long' })} ${hm(x.at)}: ${x.t}`)}"><span class="bi"><b>${esc(x.t)}</b><small>${live ? `Now · ${Math.max(1, Math.round((end - now) / 60e3))} min left` : hm(x.at)}</small></span></button>`;
+          aria-label="${esc(`${name}, ${dayName(d, { weekday: 'long' })} ${hm(x.at)}: ${x.t}`)}"><span class="bi"><b>${x.isNew ? '<i class="new">New</i>' : ''}${esc(x.t)}</b><small>${live ? `Now · ${Math.max(1, Math.round((end - now) / 60e3))} min left` : hm(x.at)}</small></span></button>`;
       }).join('');
   }
   // a newly fetched day, added to the end of every strip without moving anything
   function appendDay(d, day) {
     const now = Date.now();
-    for (const st of document.querySelectorAll('.strip')) { st.insertAdjacentHTML('beforeend', dayBlocks(st.dataset.strip, d, day, true, now)); edges(st); }
+    for (const st of document.querySelectorAll('.strip')) { st.insertAdjacentHTML('beforeend', dayBlocks(st.dataset.strip, d, day, true, now)); st._b = null; }
   }
   // as a strip scrolls: the next day loads before you reach the end, and the day in view becomes the page's day
   const nearEnd = (st) => st.scrollLeft + st.clientWidth > st.scrollWidth - 1500;
@@ -176,18 +177,21 @@
   document.addEventListener('scroll', (e) => {
     const st = e.target; if (!(st instanceof Element) || !st.classList.contains('strip')) return;
     if (nearEnd(st)) loadNext();
-    if (!dayQ) dayQ = requestAnimationFrame(() => { dayQ = 0; const b = [...st.querySelectorAll('.blk')].find((n) => n.offsetLeft + n.offsetWidth - st.firstElementChild.offsetLeft > st.scrollLeft + 40); if (b) setDay(b.dataset.day); });
+    if (!dayQ) dayQ = requestAnimationFrame(() => { dayQ = 0; const k = blocksOf(st).length && blockAt(st, st.scrollLeft + 40); if (k) setDay(k.b.dataset.day); });
   }, { capture: true, passive: true });
 
-  // the words of a programme that runs off a strip's left edge start at the edge, so you can always read it
-  const queued = new Set();
+  // the words of a programme that runs off a strip's left edge start at the edge, so you can always read it. Only the
+  // block at the edge changes (found by binary search over the strip's blocks), so scrolling stays smooth all week.
+  const queued = new Set(), atEdge = new WeakMap();
   const queueEdge = (st) => { if (queued.has(st)) return; queued.add(st); requestAnimationFrame(() => { queued.delete(st); edges(st); }); };
+  const blocksOf = (st) => st._b || (st._b = [...st.querySelectorAll('.blk')].map((b) => ({ b, l: b.offsetLeft, w: b.offsetWidth })));
+  const blockAt = (st, x) => { const l = blocksOf(st); let lo = 0, hi = l.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (l[m].l - l[0].l <= x) lo = m; else hi = m - 1; } return l[lo]; };
   function edges(st) {
-    const x = st.scrollLeft;
-    for (const b of st.querySelectorAll('.blk')) {
-      const l = b.offsetLeft - st.firstElementChild.offsetLeft, r = l + b.offsetWidth;
-      if (l < x && r > x + 60) b.style.setProperty('--off', `${Math.min(x - l, b.offsetWidth - 120)}px`); else b.style.removeProperty('--off');
-    }
+    const l = blocksOf(st); if (!l.length) return;
+    const x = st.scrollLeft, k = blockAt(st, x), prev = atEdge.get(st), rel = k.l - l[0].l;
+    const off = rel < x && rel + k.w > x + 60 ? Math.min(x - rel, k.w - 120) : 0;
+    if (prev && prev !== k.b) prev.style.removeProperty('--off');
+    if (off > 0) { k.b.style.setProperty('--off', `${off}px`); atEdge.set(st, k.b); } else { k.b.style.removeProperty('--off'); atEdge.delete(st); }
   }
   // a strip to now (on today), or to the programme on at 7pm on day d
   function jumpStrip(st, smooth, d = state.day) {
@@ -226,7 +230,8 @@
     for (const c of main) c.items.forEach((x, j) => {
       const h = hour(x.at); if (h < 19 || h > 22.5) return;
       const g = (x.g || []).join(' ') + ' ' + (x.type || '');
-      const score = (x.r || 6.2) + (x.wide ? 1.4 : x.poster ? .8 : 0) + (x.sum ? .3 : 0) + (/Scripted|Documentary|Drama|Comedy/.test(g) ? .6 : 0) - (/News|Talk Show|Weather/.test(g) ? 4 : 0);
+      const score = (x.r || 6.2) + (x.wide ? 1.4 : x.poster ? .8 : 0) + (x.sum ? .3 : 0) + (x.isNew ? .8 : 0) + (x.rt >= 45 ? .5 : 0) + (/Scripted|Documentary|Drama|Comedy/.test(g) ? .6 : 0)
+        - (/News|Talk Show|Weather/.test(g) || /\b(News|Weather|Lottery|Teleshopping|Party Political|Regional)\b/i.test(x.t) ? 6 : 0);
       list.push({ x, c: c.name, next: c.items[j + 1], score });
     });
     const picks = list.sort((a, b) => b.score - a.score).filter(({ x }) => !seen.has(x.show) && seen.add(x.show)).slice(0, 10).sort((a, b) => a.x.at - b.x.at);
@@ -256,11 +261,15 @@
   sheet.addEventListener('click', (e) => { if (e.target === sheet || e.target.closest('#shX')) sheet.close(); });   // tap outside, or ×
 
   // ---------- start, and keep "now" moving ----------
-  load();
+  // the days the Freeview listings cover (a week or so); the guide runs through all of them
+  fetch('/data/meta.json').then((r) => (r.ok ? r.json() : null)).then((m) => {
+    const have = (m?.days || []).filter((d) => d >= today);
+    if (have.length >= 5) { days = have; drawDays(); }
+  }).catch(() => {}).finally(load);
   setInterval(() => {
     if (!state.loaded.has(today)) return;
     const now = Date.now();
-    document.querySelectorAll('.blk').forEach((b) => {
+    document.querySelectorAll(`.blk[data-day="${today}"]`).forEach((b) => {   // only today's can be live
       const x = shown.get(b.dataset.p); if (!x) return;
       const live = x.at <= now && now < x.end; b.classList.toggle('live', live); b.classList.toggle('past', x.end <= now);
       if (live) { b.style.setProperty('--p', `${Math.round(((now - x.at) / (x.end - x.at)) * 100)}%`); b.querySelector('small').textContent = `Now · ${Math.max(1, Math.round((x.end - now) / 60e3))} min left`; }

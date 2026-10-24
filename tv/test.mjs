@@ -21,7 +21,9 @@ globalThis.fetch = async (u) => {
 };
 const kv = { async get(k) { const v = kvs.get(k); return v ? JSON.parse(v.v) : null; }, async getWithMetadata(k) { const v = kvs.get(k); return v ? { value: JSON.parse(v.v), metadata: v.m } : { value: null }; }, async put(k, v, o) { kvs.set(k, { v, m: o?.metadata }); } };
 const { default: worker } = await import(new URL('./src/index.js', import.meta.url));
-const waits = [], ctx = { waitUntil: (p) => waits.push(p) }, env = { TV: kv, TMDB_TOKEN: 'x', ASSETS: { fetch: () => new Response('<!doctype html>') } };
+const files = new Map();   // stand-ins for public/data/*.json
+const waits = [], ctx = { waitUntil: (p) => waits.push(p) }, env = { TV: kv, TMDB_TOKEN: 'x', ASSETS: { fetch: (r) => {
+  const f = files.get(new URL(r.url).pathname); return f ? new Response(f, { headers: { 'content-type': 'application/json' } }) : new Response('<!doctype html>', { headers: { 'content-type': 'text/html' } }); } } };
 const get = async (q = '') => { const r = await worker.fetch(new Request(`https://tv.tenner.stream/api/day${q}`), env, ctx); await Promise.all(waits.splice(0)); return [r.status, await r.json()]; };
 
 let [s, d] = await get();
@@ -40,4 +42,16 @@ up = true; kvs.clear(); await worker.scheduled({}, env, ctx); await Promise.all(
 assert.equal([...kvs.keys()].filter((k) => k.startsWith('day:')).length, 2, 'the schedule fetches today and tomorrow');
 [s] = await get('?d=1999-01-01'); assert.equal(s, 400, 'days outside the week are refused');
 assert.equal(await (await worker.fetch(new Request('https://tv.tenner.stream/'), env, ctx)).text(), '<!doctype html>', 'the page is served');
+// the Freeview listings, when that day's been built, come before TVmaze
+const d0 = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
+files.set(`/data/${d0}.json`, JSON.stringify({ date: d0, source: 'freeview', logos: { 'BBC One': '/logos/bbc-one.webp' }, channels: [{ name: 'BBC One', items: [{ id: 'x', t: 'Freeview', at: Date.now(), rt: 60, g: [] }] }] }));
+store.clear(); [s, d] = await get(); assert.equal(d.source, 'freeview', 'the Freeview listings are used first');
+// the builder: the real XMLTV shape becomes days of channels
+const { build } = await import(new URL('../scripts/fetch-tv.mjs', import.meta.url));
+const xml = `<tv><programme channel="BBCOneLondonHD.uk" start="20261024203500 +0100" stop="20261024212000 +0100"><title lang="en">The Voice &amp; Friends</title><desc lang="en">Blind auditions.</desc><icon src="https://images.example/x/cover"/><episode-num system="onscreen">S1E6</episode-num><premiere/></programme>
+  <programme channel="Nope.uk" start="20261024203500 +0100" stop="20261024212000 +0100"><title>Other</title></programme></tv>`;
+const built = build(xml, [{ name: 'BBC One', id: 'BBCOneLondonHD.uk', logo: '/logos/bbc-one.webp' }], Date.parse('2026-10-24T12:00:00Z'));
+const p = built['2026-10-24'].channels[0].items[0];
+assert.deepEqual([p.t, p.s, p.n, p.rt, p.sum, p.isNew, new Date(p.at).toISOString()], ['The Voice & Friends', 1, 6, 45, 'Blind auditions.', true, '2026-10-24T19:35:00.000Z'], 'XMLTV is read correctly (times in UK time)');
+assert.equal(built['2026-10-24'].channels.length, 1, 'only the chosen channels');
 console.log('Tenner TV checks passed');

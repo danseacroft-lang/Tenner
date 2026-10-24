@@ -1,0 +1,177 @@
+[
+ {
+  "name": "BBC One",
+  "id": "BBCOneLondonHD.uk",
+  "logo": "/logos/bbc-one.webp"
+ },
+ {
+  "name": "BBC Two",
+  "id": "BBCTwoHD.uk",
+  "logo": "/logos/bbc-two.webp"
+ },
+ {
+  "name": "ITV1",
+  "id": "ITV1London.uk",
+  "logo": "/logos/itv-1.webp"
+ },
+ {
+  "name": "Channel 4",
+  "id": "Channel4London.uk",
+  "logo": "/logos/channel-4.webp"
+ },
+ {
+  "name": "Channel 5",
+  "id": "5.uk",
+  "logo": "/logos/channel-5.webp"
+ },
+ {
+  "name": "ITV2",
+  "id": "ITV2.uk",
+  "logo": "/logos/itv-2.webp"
+ },
+ {
+  "name": "BBC Three",
+  "id": "BBCThreeHD.uk",
+  "logo": "/logos/bbc-three.webp"
+ },
+ {
+  "name": "BBC Four",
+  "id": "BBCFourHD.uk",
+  "logo": "/logos/bbc-four.webp"
+ },
+ {
+  "name": "ITV3",
+  "id": "ITV3.uk",
+  "logo": "/logos/itv-3.webp"
+ },
+ {
+  "name": "Sky Mix",
+  "id": "SkyMix.uk",
+  "logo": "/logos/sky-mix.webp"
+ },
+ {
+  "name": "Quest",
+  "id": "QuestHD.uk",
+  "logo": "/logos/quest.webp"
+ },
+ {
+  "name": "E4",
+  "id": "E4.uk",
+  "logo": "/logos/e-4.webp"
+ },
+ {
+  "name": "Film4",
+  "id": "Film4.uk",
+  "logo": "/logos/film-4.webp"
+ },
+ {
+  "name": "Really",
+  "id": "Really.uk",
+  "logo": "/logos/really.webp"
+ },
+ {
+  "name": "More4",
+  "id": "More4.uk",
+  "logo": "/logos/4-more.webp"
+ },
+ {
+  "name": "U&Dave",
+  "id": "UAndDave.uk",
+  "logo": "/logos/u-and-dave.webp"
+ },
+ {
+  "name": "U&Drama",
+  "id": "UAndDrama.uk",
+  "logo": "/logos/u-and-drama.webp"
+ },
+ {
+  "name": "5USA",
+  "id": "5USA.uk",
+  "logo": "/logos/5-usa.webp"
+ },
+ {
+  "name": "ITV4",
+  "id": "ITV4.uk",
+  "logo": "/logos/itv-4.webp"
+ },
+ {
+  "name": "U&Yesterday",
+  "id": "UAndYesterday.uk",
+  "logo": "/logos/u-and-yesterday.webp"
+ },
+ {
+  "name": "Sky Arts",
+  "id": "SkyArts.uk",
+  "logo": "/logos/sky-arts.webp"
+ },
+ {
+  "name": "5Star",
+  "id": "5Star.uk",
+  "logo": "/logos/5-star.webp"
+ },
+ {
+  "name": "5Action",
+  "id": "5Action.uk",
+  "logo": "/logos/5-action.webp"
+ },
+ {
+  "name": "Quest Red",
+  "id": "QuestRed.uk",
+  "logo": "/logos/quest-red.webp"
+ },
+ {
+  "name": "DMAX",
+  "id": "DMAX.uk",
+  "logo": "/logos/dmax.webp"
+ },
+ {
+  "name": "Blaze",
+  "id": "Blaze.uk",
+  "logo": "/logos/blaze.webp"
+ },
+ {
+  "name": "Talking Pictures TV",
+  "id": "TalkingPicturesTV.uk",
+  "logo": "/logos/talking-pictures-tv.webp"
+ },
+ {
+  "name": "GREAT! movies",
+  "id": "GreatMovies.uk",
+  "logo": "/logos/great-movies.webp"
+ },
+ {
+  "name": "Challenge",
+  "id": "Challenge.uk",
+  "logo": "/logos/challenge.webp"
+ },
+ {
+  "name": "4seven",
+  "id": "4seven.uk",
+  "logo": "/logos/4-seven.webp"
+ },
+ {
+  "name": "CBBC",
+  "id": "CBBC.uk",
+  "logo": "/logos/bbc-cbbc.webp"
+ },
+ {
+  "name": "CBeebies",
+  "id": "CBeebies.uk",
+  "logo": "/logos/bbc-cbeebies.webp"
+ },
+ {
+  "name": "BBC News",
+  "id": "BBCNews.uk",
+  "logo": "/logos/bbc-news.webp"
+ },
+ {
+  "name": "Sky News",
+  "id": "SkyNews.uk",
+  "logo": "/logos/sky-news.webp"
+ },
+ {
+  "name": "GB News",
+  "id": "GBNews.uk",
+  "logo": "/logos/gb-news.webp"
+ }
+]
