@@ -11,6 +11,7 @@ const words = (k = state.kind) => KIND_WORDS[k] || 'Shows';
 const fmtDate = (d, opts) => d.toLocaleDateString('en-GB', opts);
 const fmtTime = (d) => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 const pad = (n) => String(n).padStart(2, '0');
+const todayIso = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };   // today's date where you are
 
 // ---------- data ----------
 async function fetchData(bust) {
@@ -231,7 +232,7 @@ function draw() {
        ${kinds.map((k, r) => `${kinds.length > 1 ? `<h2 class="row-h kind-h">Top 10 ${words(k)}</h2>` : ''}${posterRow(listOf(k), k, r === 0)}`).join('')}
        ${s?.store ? '' : tonightCard()}
        ${s?.store ? '' : features(s)}
-       ${kinds.map((k) => chartList(listOf(k), s, k)).join('')}
+       ${kinds.map((k) => chartList(s, k)).join('')}
        ${s?.store ? '' : savedRow()}${s && !s.mine ? '' : weekRow()}${s?.store ? '' : newRow(s)}`
     : `<div class="empty"><h2>Nothing here right now</h2><p>The chart for ${esc(where)} will be back after the next hourly update.</p><a class="btn btn-tinted" href="#top">See all five services</a></div>`;
   view.innerHTML = `<div class="wrap chart">${chart}</div>`;
@@ -374,7 +375,7 @@ function banners(picks, s) {
 // out like Rakuten's own: the words on the left, the poster crisp on the right, its colours blurred behind
 function newBanners(items) {
   if (!phone.matches) { mBan.hidden = true; mBan.innerHTML = ''; return; }
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIso();
   const list = items.filter((x) => x.poster).sort((a, b) => (b.original - a.original) || Math.abs(Date.parse(a.date) - Date.parse(today)) - Math.abs(Date.parse(b.date) - Date.parse(today))).slice(0, 6);
   if (!list.length) { mBan.hidden = true; mBan.innerHTML = ''; return; }
   mountBanners(list.map((x, i) => {
@@ -511,8 +512,6 @@ function posterRow(list, kind = state.kind, first = true) {
   </div>`;
 }
 
-// ---------- the Apple Music "New" layout ----------
-// Three wide feature cards (eyebrow, title, subtitle, then the artwork with a caption and the poster in the corner).
 const firstSentence = (t) => { const m = String(t || '').match(/^.{20,140}?[.!?](\s|$)/); return m ? m[0].trim() : String(t || '').slice(0, 120); };
 const onText = (it, fallback) => (it.on || []).map((k) => svc(k)?.label).filter(Boolean).slice(0, 2).join(', ') || fallback || '';
 // ---------- "What should I watch tonight?": three taps, three picks from your services ----------
@@ -568,7 +567,7 @@ function drawTonight() {
   else { b.innerHTML = '<p class="tn-step">Picking…</p>'; tonightPicks().then((h) => { b.innerHTML = h; }); }
 }
 async function tonightPicks() {
-  tnCat ||= fetch('data/browse.json').then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  tnCat ||= state.cat ? Promise.resolve(state.cat) : fetch('data/browse.json').then((r) => (r.ok ? r.json() : null)).catch(() => null);   // the page has it already, usually
   const cat = await tnCat; if (!cat?.items) return `<h2 id="tnH">Couldn’t load the picks</h2><p>Try again in a moment.</p><button type="button" class="btn btn-tinted" data-tn="again">Start again</button>`;
   const mineSvcs = window.tn.mine.get(), want = new Set(mineSvcs.length ? mineSvcs : services().filter((x) => !x.store && !x.shop).map((x) => x.key));
   const genres = new Set(MOODS.find((m) => m[0] === tonight.mood)?.[3] || []), no18 = window.tn.prefs.get().no18;
@@ -601,6 +600,8 @@ view.addEventListener('click', (e) => {
   const d = tonightDialog(); drawTonight(); d.showModal();
 });
 
+// ---------- the Apple Music "New" layout ----------
+// Three wide feature cards (eyebrow, title, subtitle, then the artwork with a caption and the poster in the corner).
 function features(s) {
   const shows = s ? s.tv : state.trending.overall.tv, films = s ? s.movie : state.trending.overall.movie;
   const store = services().find((x) => x.store)?.movie || [];
@@ -613,7 +614,7 @@ function features(s) {
   const climbs = (state.week?.climbers || []).filter((x) => !s || s.mine ? true : x.c.startsWith(`${s.key}:`)).sort((a, b) => b.c.startsWith('all:') - a.c.startsWith('all:'));
   const climb = climbs.find((x) => findIt(x.k)), climbIt = climb && findIt(climb.k);
   const fresh = (state.fresh?.items || []).filter((x) => !s || (s.mine ? s.keys.includes(x.service) : x.service === s.key))
-    .filter((x) => x.date <= new Date().toISOString().slice(0, 10)).reverse()[0];
+    .filter((x) => x.date <= todayIso()).reverse()[0];
   const where = s ? `on ${s.label}` : 'in the UK';
   // always three: the best of these, never one that's already the No. 1 above
   const cands = [
@@ -621,7 +622,7 @@ function features(s) {
     !showing.includes('movie') && films[0] && { eye: `No. 1 film ${where}`, it: films[0], type: 'movie', sub: s ? `${films[0].year || ''}` : `On ${onText(films[0], 'UK streaming')}` },
     !s && store[0] && { eye: 'No. 1 to buy or rent', it: store[0], type: 'movie', sub: 'Apple TV, Sky Store and others', href: '#store' },
     climbIt && { eye: 'Biggest climber this week', it: climbIt, type: climbIt.type, sub: `Up ${climb.by} to No. ${climb.to} ${chartName(climb.c).replace(/^(show|film) /, '')}` },
-    fresh && { eye: `New on ${svc(fresh.service)?.label || 'streaming'}`, it: fresh, type: fresh.type, sub: [fresh.type === 'movie' ? 'Film' : fresh.season ? `Season ${fresh.season}` : 'Series', fresh.date === new Date().toISOString().slice(0, 10) ? 'Today' : ''].filter(Boolean).join(' · '), svcs: svc(fresh.service) ? [svc(fresh.service)] : [] },
+    fresh && { eye: `New on ${svc(fresh.service)?.label || 'streaming'}`, it: fresh, type: fresh.type, sub: [fresh.type === 'movie' ? 'Film' : fresh.season ? `Season ${fresh.season}` : 'Series', fresh.date === todayIso() ? 'Today' : ''].filter(Boolean).join(' · '), svcs: svc(fresh.service) ? [svc(fresh.service)] : [] },
     showing.includes('tv') && shows[1] && { eye: `No. 2 show ${where}`, it: shows[1], type: 'tv', sub: s ? `${shows[1].year || ''}` : `On ${onText(shows[1], 'UK streaming')}` },
     showing.includes('movie') && films[1] && { eye: `No. 2 film ${where}`, it: films[1], type: 'movie', sub: s ? `${films[1].year || ''}` : `On ${onText(films[1], 'UK streaming')}` },
     shows[2] && { eye: `No. 3 show ${where}`, it: shows[2], type: 'tv', sub: s ? `${shows[2].year || ''}` : `On ${onText(shows[2], 'UK streaming')}` },
@@ -656,10 +657,10 @@ function topRated(k, s) {
     poster: x.img ? (x.img.startsWith('/') ? c.img + x.img : x.img) : null,
   }));
 }
-function chartList(list, s, k = state.kind) {
+function chartList(s, k = state.kind) {
   // the buy-or-rent chart's list is the best-rated films to buy or rent; if the catalogue has too few, it's left out
   // rather than repeating the posters above
-  list = topRated(k, s);
+  const list = topRated(k, s);
   if (!list.length) return '';
   const q = s?.store ? { c: 'store', k: 'movie', sort: 'rating' } : { c: 'top', ...(k === 'movie' ? { k: 'movie' } : {}), ...(s ? { s: s.mine ? s.keys.join(',') : s.key } : {}) };
   const browse = `browse.html#${new URLSearchParams(q)}`;
@@ -678,7 +679,7 @@ function chartList(list, s, k = state.kind) {
 // New this week, as a row of posters (from Watchmode), filtered to the service you're looking at.
 function newRow(s) {
   const f = state.fresh; if (!f?.items?.length) return '';
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIso();
   let items = f.items.filter((x) => !s || (s.mine ? s.keys.includes(x.service) : x.service === s.key));
   const wk = new Date(Date.parse(today + 'T12:00:00Z') + 7 * 864e5).toISOString().slice(0, 10);   // the next week's arrivals after them (the rest are in Coming soon)
   items = [...items.filter((x) => x.date <= today).reverse(), ...items.filter((x) => x.date > today && x.date <= wk)].slice(0, 14);
@@ -695,7 +696,7 @@ function newRow(s) {
   </section>`;
 }
 
-// ---------- the Watchlist: titles you've saved from a title sheet, kept on this device only ----------
+// ---------- the Watchlist: titles you've saved from a title sheet (on this device, and in your account if you sign in) ----------
 const wlKey = (it, type) => (/^\d+$/.test(String(it.id ?? '')) ? `${type === 'movie' ? 'm' : 't'}${it.id}` : null);
 // where each saved title sits in today's charts, e.g. "No. 3 on Netflix"
 function chartSpots() {
@@ -788,7 +789,7 @@ function showLine(x) {
 }
 // Coming up: new episodes of your saved shows over the next month, soonest first
 function comingUp(list) {
-  const today = new Date().toISOString().slice(0, 10), soon = new Date(Date.now() + 31 * 864e5).toISOString().slice(0, 10);
+  const today = todayIso(), soon = new Date(Date.now() + 31 * 864e5).toLocaleDateString('en-CA');
   const items = list.filter((x) => x.type === 'tv' && det(x.k)?.nx && det(x.k).nx[0] >= today && det(x.k).nx[0] <= soon)
     .sort((a, b) => det(a.k).nx[0].localeCompare(det(b.k).nx[0]));
   if (!items.length) return '';
@@ -812,7 +813,7 @@ view.addEventListener('click', (e) => {
   const b = e.target.closest('[data-unsave]'); if (!b) return;
   const li = b.closest('li'), next = li.nextElementSibling || li.previousElementSibling, k = b.dataset.unsave;
   const done = () => { window.tn.saved.remove(k); requestAnimationFrame(() => $(`[data-unsave="${CSS.escape(next?.querySelector('[data-unsave]')?.dataset.unsave || '')}"]`)?.focus({ preventScroll: true })); };
-  if (window.tn.reduce || !li.animate) return done();
+  if (reduceMotion || !li.animate) return done();
   b.disabled = true;
   li.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.9)', filter: 'blur(6px)' }], { duration: 260, easing: 'cubic-bezier(.3,0,.2,1)', fill: 'forwards' }).finished.then(done, done);
 });
@@ -840,7 +841,6 @@ function weekRow() {
 }
 
 // New This Week, newest first; then Coming soon (the next month, each with Add to Calendar) and Leaving soon
-const todayIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 let calItems = [];
 function newItem(x, mode) {
   const s = svc(x.service), i = mode === 'soon' ? calItems.push(x) - 1 : -1;
@@ -1016,7 +1016,7 @@ function openTab(name) {
 }
 window.tnOnTab = openTab;
 
-// ---------- Shows | Films | Both: one switch, the same as on Browse ----------
+// ---------- Shows, Films or both: the menu under the heading ----------
 function setKind(k) {
   if (k === state.kind) return;
   state.kind = k;

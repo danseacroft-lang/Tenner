@@ -291,7 +291,11 @@
     if (state.g.length || collection().key === 'store') { box.hidden = true; return; }
     const pool = cat.items.filter((x) => kindOk(x) && x.img && x.s.length && ok18(x) && (!state.s.length || x.s.some((k) => state.s.includes(k))));
     const count = new Map(); for (const x of pool) for (const g of new Set(x.g)) count.set(g, (count.get(g) || 0) + 1);
-    const top = [...count].filter(([g, n]) => cat.genres[g] && n >= 6).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    // Animation is left out; Sci-Fi (TV's "Sci-Fi & Fantasy", films' "Science Fiction") always gets a tile if there's enough of it
+    const SCIFI = [10765, 878], ok = ([g, n]) => cat.genres[g] && g !== 16 && n >= 6;
+    const ranked = [...count].filter(ok).sort((a, b) => b[1] - a[1]);
+    const top = ranked.slice(0, 8), sci = [...count].filter(([g, n]) => SCIFI.includes(g) && cat.genres[g] && n >= 3).sort((a, b) => b[1] - a[1])[0];
+    if (sci && !top.some(([g]) => g === sci[0])) top.splice(Math.min(top.length, 7), 1, sci);
     if (top.length < 3) { box.hidden = true; return; }
     box.innerHTML = `<h2 class="moods-h">Explore by genre</h2><div class="moods-row">${top.map(([g, n]) => {
       const best = pool.filter((x) => x.g.includes(g)).sort((a, b) => b.p - a.p).slice(0, 3);

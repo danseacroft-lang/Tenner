@@ -654,7 +654,7 @@ a.tb-btn:hover { text-decoration: none; }
   .nr { grid-auto-columns: 124px; gap: 12px; }
 }
 
-/* ============================================================ New This Week page: an inset grouped list by day */
+/* ============================================================ New This Week: the week on the charts, then releases day by day */
 .group { margin: 26px 0 0; animation: riseIn .6s var(--ease-out) both; }
 .group:nth-of-type(2) { animation-delay: .05s; } .group:nth-of-type(3) { animation-delay: .1s; }
 .group:nth-of-type(4) { animation-delay: .15s; } .group:nth-of-type(n+5) { animation-delay: .2s; }
@@ -1337,7 +1337,7 @@ span.av:not([style*="--h"]) { background: var(--fill-strong); color: var(--label
 .drawer .side-acct { padding: 10px 12px; margin: 0 0 10px; }
 
 /* buttons: regular weight, smoothed (greyscale antialiasing, as on Apple's own) rather than bold */
-button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .btn, .tn-opt, .coll-b, .segmented button, .ac-sso, .nw-jump, .svc-link {
+button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .btn, .tn-opt, .coll-b, .segmented button, .nw-jump, .svc-link {
   -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 .btn, .h-cta, .sh-main .btn, .pv-ok, .dd-kind, .segmented button, .ac-main { font-weight: 500 !important; }
 

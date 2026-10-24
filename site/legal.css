@@ -20,6 +20,9 @@
   background: var(--card); border: .5px solid var(--sep); border-radius: 12px; padding: 24px clamp(18px, 4vw, 32px);
 }
 .policy-box:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* the words fade out at the foot of the box as they scroll on, rather than being cut off */
+.policy-box::after { content: ""; position: sticky; bottom: -24px; display: block; height: 56px; margin: -32px calc(-1 * clamp(18px, 4vw, 32px)) -24px; pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--card) 85%); border-radius: 0 0 12px 12px; }
 .policy-box h2 { margin: 26px 0 8px; font: 600 17px/1.3 var(--font); letter-spacing: -.022em; }
 .policy-box h2:first-child { margin-top: 0; }
 .policy-box p, .policy-box li { margin: 0 0 12px; font-size: 15px; line-height: 1.55; letter-spacing: -.016em; }
@@ -34,7 +37,7 @@
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) :is(.policy-box, .c-sheet) { background: rgba(44, 44, 48, .62); border-color: transparent;
   box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .12); -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%); } }
 /* phones: no box scrolling inside the page; the text runs on */
-@media (max-width: 600px) { .policy-box { height: auto; overflow: visible; } }
+@media (max-width: 600px) { .policy-box { height: auto; overflow: visible; } .policy-box::after { display: none; } }
 
 /* ============================================================ Contact: a compose sheet, the Apple Mail way
    Rows like Mail's (To, From, Subject), a topic switch, then the message. Send opens your own email app with it all
