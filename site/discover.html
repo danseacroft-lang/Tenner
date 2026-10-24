@@ -38,8 +38,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.38.3">
-  <link rel="stylesheet" href="discover.css?v=1.38.3">
+  <link rel="stylesheet" href="styles.css?v=1.39.0">
+  <link rel="stylesheet" href="discover.css?v=1.39.0">
 </head>
 <body class="discover">
   <a class="skip" href="#main">Skip to the page</a>
@@ -89,7 +89,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.38.3</span>
+      <span class="side-ver">Tenner 1.39.0</span>
     </div>
   </div>
 
@@ -101,6 +101,7 @@
 
   <main id="main" class="dwrap" tabindex="-1">
     <img class="d-amb" id="dAmb" alt="" aria-hidden="true" hidden>
+    <a class="d-back" href="browse.html">Browse</a>
     <header class="d-hd">
       <h1 class="d-h">Discover</h1>
       <label class="dd dd-kind" id="dKindDD"><span class="dd-l" id="dKindL">Shows and films</span><span class="dd-chev" aria-hidden="true"></span>
@@ -117,18 +118,12 @@
     </div>
     <a class="d-count" id="dCount" href="./#watchlist" hidden></a>
     <p class="sr" id="dSay" aria-live="polite"></p>
-    <!-- on a computer: it's made for phones -->
-    <section class="d-desk" id="dDesk" hidden>
-      <div class="d-qr" id="dQr"></div>
-      <div><h2>Discover is made for your phone</h2><p>Swipe through shows and films on your services: right to save, left to skip, down for details. Scan the code with your iPhone’s camera to open it.</p>
-        <a class="btn btn-tinted" href="browse.html">Browse instead</a></div>
-    </section>
   </main>
 
 
-  <script src="shell.js?v=1.38.3" defer></script>
-  <script src="links.js?v=1.38.3" defer></script>
-  <script src="sheet.js?v=1.38.3" defer></script>
-  <script src="discover.js?v=1.38.3" defer></script>
+  <script src="shell.js?v=1.39.0" defer></script>
+  <script src="links.js?v=1.39.0" defer></script>
+  <script src="sheet.js?v=1.39.0" defer></script>
+  <script src="discover.js?v=1.39.0" defer></script>
 </body>
 </html>

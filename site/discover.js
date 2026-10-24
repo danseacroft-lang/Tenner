@@ -1,26 +1,12 @@
-// Tenner Discover (phones): a deck of shows and films on your services, one card at a time. Swipe right to add it to
+// Tenner Discover: a deck of shows and films on your services, one card at a time. Swipe right to add it to
 // your Watchlist, left to skip it, down (or tap) for the details sheet. The buttons and arrow keys do the same.
 // Skipped titles are remembered on this device so they don't come round again; Undo takes back the last swipe.
 (() => {
   const { esc, hue, reduce, saved } = window.tn;   // from shell.js
   const $ = (s) => document.querySelector(s);
   const SKIP = 'tenner-skipped', KIND = 'tenner-discover-kind', HINTED = 'tenner-discover-hinted';
-  const stage = $('#dStage'), desk = matchMedia('(min-width: 720px)');
+  const stage = $('#dStage'), mouse = matchMedia('(hover: hover) and (pointer: fine)');
 
-  // ---------- on a computer: a code to open it on your phone ----------
-  async function deskNote() {
-    $('#dDesk').hidden = !desk.matches;
-    document.body.classList.toggle('d-on-desk', desk.matches);
-    if (!desk.matches || $('#dQr').firstChild) return;
-    try {
-      await new Promise((res, rej) => { const sc = Object.assign(document.createElement('script'), { src: 'qrcode.js', onload: res, onerror: rej }); document.head.append(sc); });
-      const q = window.qrcode(0, 'M'); q.addData('https://tenner.stream/discover.html'); q.make();
-      const n = q.getModuleCount(); let d = '';
-      for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c} ${r}h1v1h-1z`;
-      $('#dQr').innerHTML = `<svg viewBox="-2 -2 ${n + 4} ${n + 4}" role="img" aria-label="QR code for tenner.stream/discover.html"><rect x="-2" y="-2" width="${n + 4}" height="${n + 4}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
-    } catch {}
-  }
-  deskNote(); desk.addEventListener('change', deskNote);
 
   // ---------- what's been skipped (this device only) ----------
   const skipped = {
@@ -208,10 +194,16 @@
   // the first time: the top card leans right, then left, to show it moves
   function hint() {
     let seen = false; try { seen = !!localStorage.getItem(HINTED); localStorage.setItem(HINTED, '1'); } catch {}
-    const el = cards[0]; if (seen || reduce || !el?.animate || desk.matches) return;
+    const el = cards[0]; if (seen || reduce || !el?.animate) return;
     setTimeout(() => el.isConnected && !el.leaving && el.animate([{ transform: 'none' }, { transform: 'translateX(46px) rotate(3deg)' }, { transform: 'translateX(-46px) rotate(-3deg)' }, { transform: 'none' }],
       { duration: 1400, easing: 'cubic-bezier(.45,0,.3,1)' }), 700);
   }
+
+  // with a mouse and keyboard, the hint says how
+  // on a computer Discover isn't in the sidebar (it's found on Browse), so Browse stays highlighted there
+  const tab = document.querySelector('[data-tab="discover"]');
+  if (tab && !tab.offsetWidth) window.tnShell?.select('browse');
+  if (mouse.matches) $('#dHint').textContent = 'Drag right to save, left to skip · or use ← → and ↓ for details';
 
   // ---------- Shows, Films or Both: a native menu, as on the Top 10 ----------
   const NAMES = { tv: 'Shows', movie: 'Films', both: 'Shows and films' };

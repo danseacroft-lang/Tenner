@@ -641,7 +641,15 @@
       + (rec.length ? `<section class="b-row" aria-labelledby="rvH"><div class="b-row-hd"><h2 id="rvH">Recently Viewed</h2><button type="button" class="b-row-x" id="rvClear">Clear</button></div>
         <ul class="nr">${rec.map((r) => `<li><a href="https://www.themoviedb.org/${r.type === 'movie' ? 'movie' : 'tv'}/${esc(r.k.slice(1))}" target="_blank" rel="noopener" data-row="${esc(r.k)}">
           <span class="nr-art">${art(r.poster, r.title)}</span><b>${esc(r.title)}</b><small>${esc([r.type === 'movie' ? 'Film' : 'Show', r.year].filter(Boolean).join(' · '))}</small></a></li>`).join('')}</ul></section>` : '');
+    box.insertAdjacentHTML('beforeend', discoverCard(poster));
     box.hidden = !box.innerHTML;
+  }
+  // Discover (swipe through titles), offered here: the only way in on a computer. Three of your services' top posters as a deck.
+  function discoverCard(poster) {
+    const deck = cat.items.filter((x) => !x._x && x.img && x.s.length && (!state.s.length || x.s.some((k) => state.s.includes(k))) && ok18(x) && x.r >= 7).sort((a, b) => b.p - a.p).slice(0, 3);
+    return `<a class="b-disc" href="discover.html"><span class="bd-deck" aria-hidden="true">${deck.map((x, i) => `<img src="${esc(poster(x))}" alt="" loading="lazy" style="--i:${i}">`).join('')}</span>
+      <span class="bd-copy"><b>Discover</b><span>Swipe through what’s on your services: right to save it to your Watchlist, left to skip.</span></span>
+      <span class="btn btn-tinted bd-go">Start swiping<span class="chev" aria-hidden="true"></span></span></a>`;
   }
   $('#bRows').addEventListener('click', async (e) => {
     if (e.target.closest('#rvClear')) { try { localStorage.removeItem('tenner-recent'); } catch {} rows(); return; }

@@ -1,4 +1,4 @@
-/* Tenner Discover (phones): a deck of poster cards to swipe, on a soft glow of the top card's colours, with four
+/* Tenner Discover: a deck of poster cards to swipe, on a soft glow of the top card's colours, with four
    round glass buttons beneath. Built on the tokens and glass in styles.css. */
 body.discover { overflow-x: clip; }
 .dwrap { position: relative; isolation: isolate; max-width: 560px; margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter-r);
@@ -83,14 +83,14 @@ body.discover { overflow-x: clip; }
 .d-count svg { width: 15px; height: 15px; color: #30d158; }
 .d-count b { color: var(--label); font-weight: 600; font-variant-numeric: tabular-nums; }
 
-/* ---------- on a computer: a note and a code for your phone ---------- */
-.d-desk:not([hidden]) { display: flex; align-items: center; gap: 32px; max-width: 720px; margin: 12vh auto 0; padding: 32px; border-radius: 28px;
-  background: var(--gl-fill); box-shadow: inset 0 0 0 1px var(--gl-rim); -webkit-backdrop-filter: blur(24px) saturate(1.8); backdrop-filter: blur(24px) saturate(1.8); }
-.d-qr { flex: none; width: 168px; height: 168px; padding: 10px; border-radius: 18px; background: #fff; }
-.d-qr svg { display: block; width: 100%; height: 100%; }
-.d-desk h2 { margin: 0 0 8px; font: 700 28px/1.15 var(--font-display); letter-spacing: -.025em; }
-.d-desk p { margin: 0 0 18px; color: var(--label2); font-size: 16px; line-height: 1.45; }
-.d-on-desk .dwrap { max-width: 900px; }
-.d-on-desk .d-hd, .d-on-desk .d-hint, .d-on-desk .d-stage, .d-on-desk .d-acts, .d-on-desk .d-count, .d-on-desk .d-amb { display: none; }
 
 @media (max-width: 380px) { .d-h { font-size: 27px; } .d-acts { gap: 14px; } }
+
+/* on a computer: a little room at the top, and a way back to Browse (where Discover is found) */
+.d-back { display: none; }
+@media (min-width: 720px) {
+  .dwrap { padding-top: 26px; }
+  .d-back { display: inline-flex; align-items: center; gap: 2px; margin: 0 0 6px -4px; padding: 4px 8px 4px 2px; border-radius: 999px; color: var(--label2); font: 500 15px/1 var(--font); text-decoration: none; }
+  .d-back::before { content: "‹"; font-size: 20px; line-height: .8; margin-right: 3px; }
+  .d-back:hover { color: var(--label); background: var(--fill); text-decoration: none; }
+}
