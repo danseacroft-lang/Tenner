@@ -1391,3 +1391,17 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .
 @keyframes pxPan { from { translate: 0 -6%; } to { translate: 0 6%; } }
 @keyframes pxRise { from { opacity: 0; translate: 0 34px; } }
 @keyframes pxSwipe { from { translate: 9% 0; } to { translate: -9% 0; } }
+
+/* the star (phones only): a square glass button beside Watchlist, Apple's yellow once starred, and a quiet thanks below
+   (last in the file, so it wins over the sheet's equal-width buttons and the blue "on" colour) */
+.sh-more:has(.sh-star) { display: flex; }
+.sh-more:has(.sh-star) > .btn { flex: 1 1 0; width: auto; }
+.sh-more > .btn.sh-star { flex: none; width: 44px; padding: 0; }
+.sh-more > .btn.sh-star svg { width: 20px; height: 20px; }
+.sh-more > .btn.sh-star[aria-pressed="true"] { color: #ffcc00 !important; }
+:root[data-theme="light"] .sh-more > .btn.sh-star[aria-pressed="true"] { color: #f0a000 !important; }
+@media (prefers-color-scheme: light) { :root:not([data-theme]) .sh-more > .btn.sh-star[aria-pressed="true"] { color: #f0a000 !important; } }
+@media (min-width: 821px) { .sh-more > .btn.sh-star { display: none; } }
+.sh-thanks { margin: 0; max-height: 0; opacity: 0; overflow: hidden; text-align: center; font-size: 13px; line-height: 1.35; color: var(--label2);
+  transition: max-height .4s var(--ease-out), opacity .3s ease, margin .4s var(--ease-out); }
+.sh-thanks.in { max-height: 60px; opacity: 1; margin-top: 2px; }

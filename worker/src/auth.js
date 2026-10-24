@@ -116,7 +116,8 @@ const publicUser = (u) => ({ name: u.name, picture: u.picture || null, hue: u.hu
 
 // ---------- merging what a device has with what the account has ----------
 // watchlist: [{ k, type, title, year, poster, at }], removed: { k: when }, progress: { k: [s, e] | null }, pat: { k: when },
-// services: [..] with sat (when), settings: {..} with pfat (when). The newest change wins, item by item.
+// services: [..] with sat (when), settings: {..} with pfat (when), stars: { k: [on (1 or 0), when] } (titles you've starred in
+// a title's sheet, for recommendations; a 0 is an unstar, kept a while so other devices hear of it). The newest change wins, item by item.
 export function merge(a = {}, b = {}) {
   const removed = { ...(a.removed || {}) };
   for (const [k, t] of Object.entries(b.removed || {})) if (!(removed[k] >= t)) removed[k] = t;
@@ -132,7 +133,10 @@ export function merge(a = {}, b = {}) {
     pat[k] = Math.max(ta, tb);
   }
   const newer = (f, t) => ((b[t] || 0) > (a[t] || 0) ? b[f] : a[f] ?? b[f]);
-  return { v: 1, watchlist, removed, progress, pat, services: newer('services', 'sat') || [], sat: Math.max(a.sat || 0, b.sat || 0), settings: newer('settings', 'pfat') || {}, pfat: Math.max(a.pfat || 0, b.pfat || 0) };
+  const stars = { ...(a.stars || {}) };
+  for (const [k, v] of Object.entries(b.stars || {})) if (!stars[k] || v[1] > stars[k][1]) stars[k] = v;
+  for (const k of Object.keys(stars)) if (!stars[k][0] && stars[k][1] < cut) delete stars[k];
+  return { v: 1, watchlist, removed, progress, pat, stars, services: newer('services', 'sat') || [], sat: Math.max(a.sat || 0, b.sat || 0), settings: newer('settings', 'pfat') || {}, pfat: Math.max(a.pfat || 0, b.pfat || 0) };
 }
 // keep what a device sends to the shape and size we expect
 function clean(d) {
@@ -143,6 +147,8 @@ function clean(d) {
     removed: Object.fromEntries(Object.entries(d?.removed || {}).filter(([k, t]) => /^[mt]\d{1,9}$/.test(k) && +t).slice(0, 1000).map(([k, t]) => [k, +t])),
     progress: Object.fromEntries(Object.entries(d?.progress || {}).filter(([k]) => /^t\d{1,9}$/.test(k)).slice(0, 600).map(([k, v]) => [k, Array.isArray(v) ? v.slice(0, 2).map((n) => n | 0) : null])),
     pat: Object.fromEntries(Object.entries(d?.pat || {}).filter(([k, t]) => /^t\d{1,9}$/.test(k) && +t).slice(0, 600).map(([k, t]) => [k, +t])),
+    stars: Object.fromEntries(Object.entries(d?.stars && typeof d.stars === 'object' ? d.stars : {})
+      .filter(([k, v]) => /^[mt]\d{1,9}$/.test(k) && Array.isArray(v) && +v[1]).slice(0, 1000).map(([k, v]) => [k, [v[0] ? 1 : 0, +v[1]]])),
     services: (Array.isArray(d?.services) ? d.services : []).filter((k) => /^[a-z+]{2,20}$/.test(k)).slice(0, 10), sat: +d?.sat || 0,
     settings: Object.fromEntries(Object.entries(d?.settings && typeof d.settings === 'object' ? d.settings : {}).filter(([k, v]) => /^[a-z0-9]{1,20}$/i.test(k) && ['string', 'boolean', 'number'].includes(typeof v)).slice(0, 30)), pfat: +d?.pfat || 0,
   };

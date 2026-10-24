@@ -76,6 +76,9 @@
   // the Watchlist button: a bookmark that fills in once saved
   const saveBtn = (on) => `<button type="button" class="btn btn-tinted sh-save${on ? ' on' : ''}" data-act="save" aria-pressed="${on}">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h11v17L12 16.6 6.5 20.5z" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>${on ? 'In Watchlist' : 'Watchlist'}</button>`;
+  // the star (phones): tells Tenner you like this, for better recommendations; it does nothing else
+  const starBtn = (on) => `<button type="button" class="btn btn-tinted sh-star${on ? ' on' : ''}" data-act="star" aria-pressed="${on}" aria-label="${on ? 'Starred' : 'Star'}: tell Tenner you like this" title="${on ? 'Starred' : 'Star it, for better recommendations'}">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.5l-5.1 2.7 1-5.6-4.1-4 5.7-.8z" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg></button>`;
   const $ = (s, el = document) => el.querySelector(s);
   let dataP = null;
   const details = () => (dataP ||= fetch(`data/titles.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
@@ -151,8 +154,8 @@
     const trailer = x.tr ? `<button type="button" class="btn btn-tinted" data-act="trailer"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>Trailer</button>` : '';
     const netflix = nf ? `<a class="btn btn-tinted" href="${esc(nf)}" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>Watch on Netflix</a>` : '';
     const share = `<button type="button" class="btn btn-tinted" data-act="share"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M6 11v8.5h12V11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Share</button>`;
-    const main = netflix || trailer, rest = [netflix ? trailer : '', info.k ? saveBtn(saved.has(info.k)) : '', share].filter(Boolean);
-    return `<div class="sh-btns">${main ? `<div class="sh-main">${main}</div>` : ''}<div class="sh-more">${rest.join('')}</div></div>`;
+    const main = netflix || trailer, rest = [netflix ? trailer : '', info.k ? saveBtn(saved.has(info.k)) : '', info.k ? starBtn(window.tn.stars.has(info.k)) : '', share].filter(Boolean);
+    return `<div class="sh-btns">${main ? `<div class="sh-main">${main}</div>` : ''}<div class="sh-more">${rest.join('')}</div><p class="sh-thanks" id="shThanks" role="status"></p></div>`;
   }
   // Cast & Crew: round faces in a row, each opening that person's page (people.html), from the search API
   const castCache = new Map();
@@ -267,6 +270,7 @@
   sheet.addEventListener('cancel', (e) => { e.preventDefault(); close(); });
 
   // ---------- trailer and share ----------
+  let thanksT = 0;
   sheet.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-act]'); if (!b || !current) return;
     if (b.dataset.act === 'trailer') {
@@ -279,6 +283,15 @@
     if (b.dataset.act === 'save') {
       const on = saved.toggle(current);
       b.outerHTML = saveBtn(on); sheet.querySelector('.sh-save')?.focus({ preventScroll: true });
+    }
+    if (b.dataset.act === 'star') {
+      const on = window.tn.stars.toggle(current.k);
+      b.outerHTML = starBtn(on); const nb = sheet.querySelector('.sh-star'); nb?.focus({ preventScroll: true });
+      if (on && !reduce && nb?.animate) nb.querySelector('svg').animate([{ scale: 1 }, { scale: 1.35 }, { scale: 1 }], { duration: 420, easing: 'cubic-bezier(.3,1.6,.5,1)' });
+      if (on) navigator.vibrate?.(10);
+      const t = $('#shThanks'); clearTimeout(thanksT);
+      t.textContent = on ? 'Thanks. We’ll use the shows and films you like to offer you better recommendations.' : ''; t.classList.toggle('in', on);
+      if (on) thanksT = setTimeout(() => t.classList.remove('in'), 4500);
     }
     if (b.dataset.act === 'watched' || b.dataset.act === 'reset') {
       const x = shown?.items?.[current.k]; if (!x?.sz) return;

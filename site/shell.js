@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.44.2';
+  const version = '1.45.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -112,6 +112,19 @@
     },
     remove(k) { saved.set(saved.all().filter((x) => x.k !== k)); },
   };
+  // stars: titles you've starred in a title's sheet (phones), so recommendations lean towards what you like. Nothing
+  // else uses them. { k: [1 or 0, when] }: a 0 is an unstar, so your other devices hear of it when your account syncs.
+  const ST = 'tenner-stars';
+  const stars = {
+    map() { try { const m = JSON.parse(localStorage.getItem(ST) || '{}'); return m && typeof m === 'object' ? m : {}; } catch { return {}; } },
+    all() { return Object.entries(stars.map()).filter(([, v]) => v?.[0]).sort((a, b) => b[1][1] - a[1][1]).map(([k]) => k); },
+    has(k) { return !!stars.map()[k]?.[0]; },
+    toggle(k) {
+      if (!k) return false;
+      const m = stars.map(), on = !m[k]?.[0]; m[k] = [on ? 1 : 0, Date.now()];
+      try { localStorage.setItem(ST, JSON.stringify(m)); } catch {} dispatchEvent(new Event('tn:saved')); return on;
+    },
+  };
   // where you're up to in a show: { k: [season, episode] } (the last episode you've watched), also on this device only
   const PR = 'tenner-progress';
   const progress = {
@@ -128,7 +141,7 @@
     return n <= 0 ? (n === 0 ? 'Today' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })) : n === 1 ? 'Tomorrow'
       : n < 7 ? d.toLocaleDateString('en-GB', { weekday: 'long' }) : d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
   };
-  addEventListener('storage', (e) => { if (e.key === WL || e.key === PR) dispatchEvent(new Event('tn:saved')); if (e.key === MS) dispatchEvent(new Event('tn:mine')); if (e.key === PREFS) { apply(); dispatchEvent(new Event('tn:prefs')); } });
+  addEventListener('storage', (e) => { if (e.key === WL || e.key === PR || e.key === ST) dispatchEvent(new Event('tn:saved')); if (e.key === MS) dispatchEvent(new Event('tn:mine')); if (e.key === PREFS) { apply(); dispatchEvent(new Event('tn:prefs')); } });
 
   // ---------- My services: the ones you pay for, on this device. The Top 10 gets a chart of just those, and Browse
   // starts filtered to them. Empty means "all five". ----------
@@ -176,7 +189,7 @@
     ['Share on Facebook', (t, u) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(u)}`,
       '<circle cx="12" cy="12" r="11" fill="#0866FF"/><path fill="#fff" d="M13.4 23v-8.1h2.7l.42-3.2H13.4V9.7c0-.92.26-1.55 1.58-1.55h1.68V5.3a22 22 0 0 0-2.45-.13c-2.43 0-4.09 1.48-4.09 4.2v2.35H7.37v3.2h2.75V23z"/>'],
     ['Send on WhatsApp', (t, u) => `https://wa.me/?text=${encodeURIComponent(`${t} ${u}`)}`,
-      '<path fill="#25D366" d="M12 1.5A10.4 10.4 0 0 0 3.05 17.2L1.6 22.5l5.45-1.43A10.4 10.4 0 1 0 12 1.5Z"/><path fill="#fff" d="M17.6 14.5c-.3-.15-1.8-.88-2.07-.98-.28-.1-.48-.15-.68.15-.2.3-.78.98-.96 1.18-.18.2-.35.22-.65.07a8.5 8.5 0 0 1-4.2-3.67c-.32-.55.32-.5.9-1.68.1-.2.05-.37-.02-.52-.08-.15-.68-1.64-.93-2.24-.25-.59-.5-.5-.68-.51h-.58c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.5 0 1.47 1.07 2.9 1.22 3.1.44.2 2.1 3.2 5.08 4.49 1.89.81 2.62.88 3.56.74.57-.09 1.8-.74 2.04-1.45.25-.71.25-1.44.28-1.45-.07-.13-.27-.2-.57-.35Z"/>'],
+      '<path fill="#25D366" d="M12 1.5A10.4 10.4 0 0 0 3.05 17.2L1.6 22.5l5.45-1.43A10.4 10.4 0 1 0 12 1.5Z"/><path fill="#fff" d="M17.6 14.5c-.3-.15-1.8-.88-2.07-.98-.28-.1-.48-.15-.68.15-.2.3-.78.98-.96 1.18-.18.2-.35.22-.65.07a8.5 8.5 0 0 1-4.2-3.67c-.32-.55.32-.5.9-1.68.1-.2.05-.37-.02-.52-.08-.15-.68-1.64-.93-2.24-.25-.59-.5-.5-.68-.51h-.58c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.5 0 1.47 1.07 2.9 1.22 3.1.45.0 2.1 3.2 5.08 4.49 1.89.81 2.62.88 3.56.74.57-.09 1.8-.74 2.04-1.45.25-.71.25-1.45.08-1.45-.07-.13-.27-.2-.57-.35Z"/>'],
     ['Send on Telegram', (t, u) => `https://t.me/share/url?url=${encodeURIComponent(u)}&text=${encodeURIComponent(t)}`,
       '<circle cx="12" cy="12" r="11" fill="#29A9EB"/><path fill="#fff" d="M5.3 11.7 16.9 7.2c.54-.2 1.01.13.83.95l-1.97 9.3c-.15.66-.54.82-1.09.51l-3-2.22-1.45 1.4c-.16.16-.3.3-.6.3l.21-3.05 5.55-5.01c.24-.21-.05-.33-.38-.12l-6.86 4.32-2.96-.92c-.64-.2-.65-.64.14-.95Z"/>'],
   ];
@@ -398,11 +411,11 @@
     async signOut(clear) {
       try { await account.call('POST', '/auth/logout'); } catch {}
       account.forget();
-      if (clear) { ['tenner-watchlist', 'tenner-progress', 'tenner-services', SYNC].forEach((k) => lsSet(k, null)); dispatchEvent(new Event('tn:saved')); dispatchEvent(new Event('tn:mine')); }
+      if (clear) { ['tenner-watchlist', 'tenner-progress', 'tenner-services', 'tenner-stars', SYNC].forEach((k) => lsSet(k, null)); dispatchEvent(new Event('tn:saved')); dispatchEvent(new Event('tn:mine')); }
     },
     local() {
       const m = meta.get();
-      return { watchlist: saved.all(), removed: m.removed, progress: progress.all(), pat: m.pat, services: mine.get(), sat: m.sat, settings: prefs.get(), pfat: m.pfat };
+      return { watchlist: saved.all(), removed: m.removed, progress: progress.all(), pat: m.pat, stars: stars.map(), services: mine.get(), sat: m.sat, settings: prefs.get(), pfat: m.pfat };
     },
     // send this device's copy; take back the merged one
     sync() {
@@ -419,6 +432,7 @@
     applying = true;
     lsSet(WL, JSON.stringify(d.watchlist || []));
     lsSet(PR, JSON.stringify(d.progress || {}));
+    lsSet(ST, JSON.stringify(d.stars || {}));
     lsSet(MS, d.services?.length ? JSON.stringify(d.services) : null);
     if (d.settings && Object.keys(d.settings).length) lsSet(PREFS, JSON.stringify({ ...DEF, ...d.settings }));
     lsSet(SYNC, JSON.stringify({ removed: d.removed || {}, pat: d.pat || {}, sat: d.sat || 0, pfat: d.pfat || 0 }));
@@ -441,7 +455,7 @@
     draw(); addEventListener('tn:account', draw);
   }
 
-  window.tn = { prefs, esc, hue, glide, arrows, segment, reduce, saved, progress, nextUp, whenText, mine, pickMine, api, share, alerts, isIOS, account, avatar };
+  window.tn = { prefs, esc, hue, glide, arrows, segment, reduce, saved, stars, progress, nextUp, whenText, mine, pickMine, api, share, alerts, isIOS, account, avatar };
 
   // ---------- tabs ----------
   const tabs = [...document.querySelectorAll('#tabs [role=tab]')], ind = $('#tabInd'), names = tabs.map((t) => t.dataset.tab);

@@ -36,8 +36,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.44.2">
-  <link rel="stylesheet" href="legal.css?v=1.44.2">
+  <link rel="stylesheet" href="styles.css?v=1.45.0">
+  <link rel="stylesheet" href="legal.css?v=1.45.0">
 </head>
 <body class="legal">
   <a class="skip" href="#main">Skip to the page</a>
@@ -87,7 +87,7 @@
       <a class="side-link" href="legal.html#privacy" aria-current="page">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies" aria-current="page">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.44.2</span>
+      <span class="side-ver">Tenner 1.45.0</span>
     </div>
   </div>
 
@@ -124,7 +124,7 @@
       <ul>
         <li><strong>Your name</strong>, as you typed it (or your first name from Google), and the colour you choose for your initial;</li>
         <li><strong>How you sign in:</strong> the public half of each passkey you add (the private half never leaves your device or password manager); if you use Google, Google’s number for your account, your email address and your profile picture’s address; if you use an email and password, your email address and a scrambled copy of your password (it’s scrambled on your device before it’s sent, and again by us, so we never see or keep the password itself). We keep these only to recognise you, show which accounts are linked and, if you ask, email you a link to reset your password;</li>
-        <li><strong>What you keep in Tenner:</strong> your Watchlist, where you’re up to in shows, your services and your settings, so they’re the same on every device you sign in on;</li>
+        <li><strong>What you keep in Tenner:</strong> your Watchlist, the titles you’ve starred, where you’re up to in shows, your services and your settings, so they’re the same on every device you sign in on;</li>
         <li><strong>Where you’re signed in:</strong> the kind of device (such as “iPhone”), when you signed in and when it was last used. The sign-in itself is a random code kept on your device; we store only a scrambled copy of it;</li>
         <li><strong>Your shared list link</strong>, if you turn sharing on. Anyone with the link can see your name, picture and Watchlist until you turn it off.</li>
       </ul>
@@ -142,6 +142,7 @@
         <li><strong>Your progress:</strong> the season and episode you’re up to in shows you’re watching, if you set it. Like your Watchlist, it stays on this device.</li>
         <li><strong>Discover:</strong> the titles you’ve swiped past, so they don’t come round again (up to the 3,000 most recent), and whether you last chose shows, films or both.</li>
         <li><strong>Browse:</strong> whether you like posters or a list, and that you’ve seen the note about Browse changing.</li>
+        <li><strong>Stars:</strong> the shows and films you’ve starred, used only to suggest things you might like in For You.</li>
         <li><strong>The privacy note:</strong> that you’ve pressed Got it, so the note about cookies isn’t shown again.</li>
       </ul>
       <p>Your filters and searches on Browse live only in the page’s address, so you can bookmark or share them; they aren’t saved anywhere. <strong>Move to another device</strong> (in Settings) puts your Watchlist, progress and services into a link or QR code that only you see; nothing is uploaded. Apart from Watchlist alerts and your account, if you choose them (above), none of this is ever sent to us or anyone else. You can remove it at any time by clearing your browser’s data for this site.</p>
@@ -221,6 +222,6 @@
   </main>
 
 
-  <script src="shell.js?v=1.44.2" defer></script>
+  <script src="shell.js?v=1.45.0" defer></script>
 </body>
 </html>
