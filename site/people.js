@@ -1,6 +1,6 @@
 // Cast & Crew: the people behind every show and film (TMDB, through Tenner's search API on Cloudflare).
-// The front: this week's faces drifting past behind the title, a glass search bar, the stars of the week's Top 10 as
-// portrait cards, who made them, and the Top 10 people everyone's looking up. A person (?p=ID): what they're best known
+// The front: faces from all of TMDB drifting past behind the title, a glass search bar, the Top 10 people everyone's
+// looking up, and who made this week's top 10 as round portraits. A person (?p=ID): what they're best known
 // for as a cinematic backdrop, their portrait and name, a few facts and figures, what of theirs is streaming on the
 // five services right now, Known For, and their whole career by decade. Any title opens the usual title sheet.
 (() => {
@@ -43,16 +43,15 @@
     ]);
     const seen = new Set(), stars = [], makers = [];
     for (const r of credits.filter(Boolean)) {
-      for (const p of r.c.cast.slice(0, 3)) if (!seen.has(p.id)) { seen.add(p.id); stars.push({ ...p, in: r.x }); }
+      for (const p of r.c.cast.slice(0, 3)) if (!seen.has(p.id)) { seen.add(p.id); stars.push(p); }   // only for the wall, if need be
       for (const p of r.c.crew.slice(0, 1)) if (!seen.has(p.id)) { seen.add(p.id); makers.push({ ...p, in: r.x }); }
     }
     const inPoster = (x) => (x.poster ? `<img class="pc-in" src="${esc(x.poster)}" alt="" loading="lazy">` : '');
     const top10 = (trend?.results || []).filter((p) => p.photo).slice(0, 10);
-    homeHtml = shelf('In This Week’s Top 10', 'The faces of the UK’s most-watched shows and films right now.', stars.map((p) => card(p, `${p.role ? `${p.role} in ` : ''}${p.in.title}`, inPoster(p.in))).join(''))
-      + shelf('Behind the Camera', 'Who made them.', makers.map((p) => card(p, `${p.role}, ${p.in.title}`, inPoster(p.in))).join(''))
-      + (top10.length ? `<section class="p-sec"><div class="p-sh"><h2>The Top 10 People This Week</h2><p>Who everyone’s looking up.</p></div>
+    homeHtml = (top10.length ? `<section class="p-sec"><div class="p-sh"><h2>The Top 10 People This Week</h2><p>Who everyone’s looking up.</p></div>
         <ol class="cl">${top10.map((p, i) => `<li><a href="?p=${p.id}" data-p="${p.id}"><span class="cl-n">${i + 1}</span>${photo(p, 'pf cl-pf')}
-          <span class="cl-t"><b>${esc(p.name)}</b><small>${esc([DEPT[p.dept] || p.dept, p.known.slice(0, 2).join(', ')].filter(Boolean).join(' · '))}</small></span></a></li>`).join('')}</ol></section>` : '');
+          <span class="cl-t"><b>${esc(p.name)}</b><small>${esc([DEPT[p.dept] || p.dept, p.known.slice(0, 2).join(', ')].filter(Boolean).join(' · '))}</small></span></a></li>`).join('')}</ol></section>` : '')
+      + shelf('Behind the Camera', 'Who made this week’s top 10.', makers.map((p) => card(p, `${p.role}, ${p.in.title}`, inPoster(p.in))).join(''));
     if (!homeHtml) homeHtml = `<div class="p-empty"><h2>Search for anyone</h2><p>Type a name to find an actor, director or writer.</p></div>`;
     wall([...stars, ...top10, ...makers]);   // only if the whole-catalogue faces didn't come
     if (!q.value.trim() && !person.dataset.id) out.innerHTML = homeHtml;
