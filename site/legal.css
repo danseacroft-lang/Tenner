@@ -6,7 +6,7 @@
   max-width: 680px; margin: 0 auto; padding: 8px var(--gutter-r) 0 var(--gutter);
   display: flex; flex-direction: column; align-items: center;
 }
-.lwrap h1 { margin: 18px 0 6px; font: 700 28px/1.15 var(--font-display); letter-spacing: .004em; text-align: center; text-wrap: balance; }
+.lwrap h1 { margin: 18px 0 6px; font: 700 28px/1.15 var(--font); letter-spacing: .004em; text-align: center; text-wrap: balance; }
 .l-updated, .l-lede { margin: 0 0 24px; font-size: 15px; color: var(--label2); text-align: center; text-wrap: balance; }
 .section-label {
   width: 100%; margin: 0 0 8px; padding-inline: 16px;
@@ -72,7 +72,7 @@
 .c-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 /* sent: a tick and a thank-you in place of the form */
 .c-done { width: 100%; display: grid; justify-items: center; gap: 6px; padding: 34px 20px 28px; text-align: center; border-radius: 12px; background: var(--card); border: .5px solid var(--sep); outline: none; }
-.c-done h2 { margin: 6px 0 0; font: 700 22px/1.2 var(--font-display); }
+.c-done h2 { margin: 6px 0 0; font: 700 22px/1.2 var(--font); }
 .c-done p { margin: 0 0 12px; color: var(--label2); }
 .c-tick { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; color: #fff; background: var(--green); }
 .c-tick svg { width: 30px; height: 30px; }

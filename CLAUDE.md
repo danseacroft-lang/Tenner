@@ -81,7 +81,8 @@ Mac. When in doubt, ask "would this look at home in Apple TV, Apple Music or the
 - **Popups** look like iOS alerts or sheets: centred glass, blurred backdrop, one clear primary button, tap outside to close.
 - **Colour:** premium and restrained. No muddy greens or browns; Apple system colours (blue `#0a84ff`, pink `#ff375f`,
   green `#30d158`, purple `#bf5af2`) and artwork colours, blurred.
-- **Type:** Inter for text, Inter Tight for display; big large-titles; sentence case for buttons and labels.
+- **Type:** one text font everywhere (`--font`: San Francisco on Apple devices, Inter elsewhere), the owner's favourite (the About
+  page's lede). The display font (`--font-display`) is only for big headlines, 30px and up. Sentence case for buttons and labels.
 - **Nothing off the page:** no element may run past the edge of the screen (check 320, 375, 390, 430, 768, 1100, 1440px).
 - **Writing:** plain British English, short and friendly, no jargon.
 - **Before shipping anything visual:** screenshot it on phone and computer, light and dark, and look at it critically.

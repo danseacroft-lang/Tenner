@@ -29,7 +29,7 @@
 .awrap { max-width: var(--max); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter-r); }
 .about svg { display: block; }
 .eyebrow { font: 600 14px/1.2 var(--font); letter-spacing: -.01em; color: var(--accent); margin: 0 0 10px; }
-.neon01s { font: 800 26px var(--font-display); letter-spacing: -.05em; }
+.neon01s { font: 700 26px var(--font); letter-spacing: -.05em; }
 
 /* ============================================================ the splash
    This hour's top shows and films, each a full poster for a few seconds, washed with Tenner's colours and dissolving
@@ -121,7 +121,7 @@
 .step .art { position: relative; aspect-ratio: 320 / 190; background: linear-gradient(180deg, var(--a-tile1), var(--a-tile2)); overflow: hidden; }
 .step .art > svg { width: 100%; height: 100%; }
 .step .txt { padding: 20px 24px 24px; }
-.step h3 { font: 700 21px/1.19 var(--font-display); letter-spacing: .004em; margin: 0 0 8px; }
+.step h3 { font: 700 21px/1.19 var(--font); letter-spacing: .004em; margin: 0 0 8px; }
 .step p { margin: 0; color: var(--label2); font-size: 16px; line-height: 1.5; letter-spacing: -.016em; }
 .step p strong { color: var(--label); font-weight: 600; }
 @media (min-width: 1000px) { .awrap { padding-top: 22px; } }
@@ -140,7 +140,7 @@
 .faq-list details { border-bottom: .5px solid var(--sep); }
 .faq-list summary {
   display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 24px 4px; cursor: pointer; list-style: none;
-  font: 500 clamp(19px, 2vw, 24px)/1.25 var(--font-display); letter-spacing: .009em; color: var(--label);
+  font: 500 clamp(19px, 2vw, 24px)/1.25 var(--font); letter-spacing: .009em; color: var(--label);
 }
 .faq-list summary::-webkit-details-marker { display: none; }
 .faq-list summary::after {

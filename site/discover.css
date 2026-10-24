@@ -34,7 +34,7 @@ body.discover { overflow-x: clip; }
 /* the words sit on a dark wash at the foot of the poster */
 .dc-info { position: absolute; inset: auto 0 0; display: grid; gap: 4px; padding: 90px 20px 20px;
   background: linear-gradient(to top, rgba(0, 0, 0, .86) 0%, rgba(0, 0, 0, .62) 45%, transparent); text-shadow: 0 1px 12px rgba(0, 0, 0, .35); }
-.dc-info h2 { margin: 0; font: 800 28px/1.05 var(--font-display); letter-spacing: -.03em; text-wrap: balance; }
+.dc-info h2 { margin: 0; font: 700 28px/1.05 var(--font); letter-spacing: -.03em; text-wrap: balance; }
 .dc-meta { margin: 0; font-size: 14px; color: rgba(255, 255, 255, .78); }
 .dc-ov { margin: 2px 0 0; font-size: 14px; line-height: 1.38; color: rgba(255, 255, 255, .86); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 .dc-ov:empty { display: none; }
@@ -59,7 +59,7 @@ body.discover { overflow-x: clip; }
   background: var(--gl-fill); box-shadow: inset 0 0 0 1px var(--gl-rim); -webkit-backdrop-filter: blur(24px) saturate(1.8); backdrop-filter: blur(24px) saturate(1.8); }
 .d-end-ic { display: grid; place-items: center; width: 56px; height: 56px; margin-bottom: 10px; border-radius: 16px; color: #fff; background: linear-gradient(135deg, #ff375f, #bf5af2 55%, #0a84ff); }
 .d-end-ic svg { width: 26px; height: 26px; }
-.d-end h2 { margin: 0; font: 700 24px/1.15 var(--font-display); letter-spacing: -.02em; }
+.d-end h2 { margin: 0; font: 700 24px/1.15 var(--font); letter-spacing: -.02em; }
 .d-end p { margin: 4px 0 14px; max-width: 30ch; color: var(--label2); font-size: 15px; text-wrap: balance; }
 .d-end-b { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 

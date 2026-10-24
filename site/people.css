@@ -44,7 +44,7 @@ body.people { overflow-x: clip; }
 /* ---------- shelves: portrait cards ---------- */
 .p-sec { margin-top: 40px; }
 .p-sh { margin-bottom: 14px; }
-.p-sh h2 { margin: 0; font: 700 22px/1.2 var(--font-display); letter-spacing: -.02em; }
+.p-sh h2 { margin: 0; font: 700 22px/1.2 var(--font); letter-spacing: -.02em; }
 .p-sh p { margin: 3px 0 0; color: var(--label2); font-size: 15px; }
 .p-shelf { list-style: none; display: grid; grid-auto-flow: column; grid-auto-columns: 132px; gap: 20px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
   scroll-snap-type: x mandatory; scroll-padding-left: var(--gutter); margin: 0 calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); padding: 8px var(--gutter-r) 14px var(--gutter); }
@@ -66,7 +66,7 @@ body.people { overflow-x: clip; }
   box-shadow: 0 8px 22px rgba(0, 0, 0, .22), inset 0 0 0 .5px rgba(255, 255, 255, .12);
   transition: transform .5s var(--ease-spring), box-shadow .45s ease; }
 .pf img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
-.pf i { font: 600 34cqw/1 var(--font-display); font-style: normal; color: rgba(255, 255, 255, .92); letter-spacing: .02em; }
+.pf i { font: 600 34cqw/1 var(--font); font-style: normal; color: rgba(255, 255, 255, .92); letter-spacing: .02em; }
 .pf-card { box-shadow: 0 14px 30px -14px rgba(0, 0, 0, .6), inset 0 0 0 .5px rgba(255, 255, 255, .14); }
 .pf-card::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: radial-gradient(90% 60% at 50% 0%, rgba(255, 255, 255, .14), transparent 70%); pointer-events: none; }
 @media (hover: hover) {
@@ -89,7 +89,7 @@ body.people { overflow-x: clip; }
 .p-load span:nth-child(2n) { animation-delay: .2s; }
 @keyframes pBreathe { to { opacity: .45; } }
 .p-empty { margin: 48px 0; text-align: center; color: var(--label2); list-style: none; }
-.p-empty h2 { margin: 0 0 6px; color: var(--label); font: 700 22px/1.2 var(--font-display); }
+.p-empty h2 { margin: 0 0 6px; color: var(--label); font: 700 22px/1.2 var(--font); }
 
 /* ---------- a person ---------- */
 .pp-hero { position: relative; isolation: isolate; margin: 0 calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); padding: 28px var(--gutter-r) 34px var(--gutter); }
@@ -163,7 +163,7 @@ body.people { overflow-x: clip; }
   background: linear-gradient(160deg, hsl(var(--h) 34% 40%), hsl(var(--h) 40% 18%)); box-shadow: 0 0 0 .5px var(--sep), 0 10px 22px -10px rgba(0, 0, 0, .55);
   transition: transform .5s var(--ease-spring), box-shadow .3s ease; }
 .pp-art img { width: 100%; height: 100%; object-fit: cover; }
-.pp-art i { padding: 8px; font: 700 13px/1.2 var(--font-display); font-style: normal; color: #fff; text-align: center; }
+.pp-art i { padding: 8px; font: 700 13px/1.2 var(--font); font-style: normal; color: #fff; text-align: center; }
 @media (hover: hover) { .pp-known a:hover .pp-art { transform: translateY(-3px); box-shadow: 0 0 0 .5px var(--sep), 0 18px 32px -12px rgba(0, 0, 0, .6); } }
 .pp-known a:focus-visible { outline: none; }
 .pp-known a:focus-visible .pp-art { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--accent); }
@@ -183,7 +183,7 @@ body.people { overflow-x: clip; }
 .pp-kinds button[aria-checked="true"] { color: var(--label); background: var(--gl-hover); box-shadow: inset 0 0 0 1.5px var(--accent); }
 .pp-kinds button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .pp-decs { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 22px; }
-.pp-dec h3 { display: flex; align-items: baseline; gap: 8px; margin: 0 0 4px; padding: 0 10px; font: 700 20px/1.2 var(--font-display); letter-spacing: -.02em; }
+.pp-dec h3 { display: flex; align-items: baseline; gap: 8px; margin: 0 0 4px; padding: 0 10px; font: 700 20px/1.2 var(--font); letter-spacing: -.02em; }
 .pp-dec h3 small { font: 500 14px/1 var(--font); color: var(--label3); letter-spacing: 0; }
 /* each decade: the homepage's chart list (.cl), with the poster, the role and where it's streaming */
 .pp-cl li > a { display: flex; align-items: center; gap: 14px; padding: 9px 10px; color: inherit; }
