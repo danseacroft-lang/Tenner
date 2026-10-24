@@ -86,25 +86,18 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
 /* ---------- the guide ---------- */
 .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .guide { margin-top: 26px; }
-/* the preview: the programme you point at, its artwork filling the right and melting into the page (no edge anywhere) */
-.pv { position: relative; isolation: isolate; display: flex; align-items: flex-end; min-height: 250px; padding: 22px 0 26px; }
-/* blended the way Tenner's homepage hero is: the still runs the full width of the screen and melts into the page to the
-   left (under the words), at the top and at the bottom, so there's no edge anywhere */
-.pv-art { position: absolute; z-index: -1; top: -90px; bottom: -70px; left: calc(50% - 50vw); width: 100vw; pointer-events: none;
-  -webkit-mask-image: linear-gradient(90deg, transparent 8%, rgba(0, 0, 0, .35) 34%, #000 62%), linear-gradient(180deg, transparent, #000 22%, #000 58%, transparent);
-  -webkit-mask-composite: source-in;
-  mask-image: linear-gradient(90deg, transparent 8%, rgba(0, 0, 0, .35) 34%, #000 62%), linear-gradient(180deg, transparent, #000 22%, #000 58%, transparent);
-  mask-composite: intersect; }
-.pv-art img { width: 100%; height: 100%; object-fit: cover; object-position: 75% 28%; opacity: 0; transition: opacity .6s ease; }
+/* the preview: a compact card for the programme you point at. A small still beside the words, nothing behind the guide */
+.pv { display: grid; grid-template-columns: 224px minmax(0, 1fr); gap: 20px; align-items: center; min-height: 126px; padding: 6px 0 18px; }
+.pv-art { position: relative; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; background: color-mix(in srgb, var(--label) 7%, transparent);
+  box-shadow: inset 0 0 0 .5px color-mix(in srgb, var(--label) 12%, transparent); }
+.pv-art img { display: block; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .25s ease; }
 .pv-art img.on { opacity: 1; }
-.pv-copy { position: relative; max-width: min(560px, 52%); }
-/* a shade inside the still, darkest under the words (as on the homepage hero), so they read over any picture */
-.pv-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, var(--wp-base) 18%, color-mix(in srgb, var(--wp-base) 55%, transparent) 42%, transparent 66%); }
-@media (max-width: 760px) { .pv-art::after { background: linear-gradient(180deg, transparent 30%, color-mix(in srgb, var(--wp-base) 70%, transparent)); } }
-.pv-ch { margin: 0 0 6px; color: var(--label2); font: 600 14px/1.2 var(--font); }
-.pv-t { margin: 0; font: 700 clamp(26px, 3vw, 36px)/1.08 var(--font); letter-spacing: -.025em; text-wrap: balance; }
-.pv-sum { margin: 10px 0 0; font-size: 16px; line-height: 1.45; color: color-mix(in srgb, var(--label) 82%, transparent); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
-.pv-meta { margin: 12px 0 0; color: var(--label2); font: 500 14px/1.2 var(--font); font-variant-numeric: tabular-nums; white-space: pre-wrap; }
+.pv.poster .pv-art img { object-fit: contain; background: #1c1c1e; }
+.pv-copy { min-width: 0; max-width: 680px; }
+.pv-ch { margin: 0 0 4px; color: var(--label2); font: 600 14px/1.2 var(--font); }
+.pv-t { margin: 0; font: 700 22px/1.15 var(--font); letter-spacing: -.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-sum { margin: 6px 0 0; font-size: 15px; line-height: 1.4; color: color-mix(in srgb, var(--label) 82%, transparent); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.pv-meta { margin: 8px 0 0; color: var(--label2); font: 500 14px/1.2 var(--font); font-variant-numeric: tabular-nums; white-space: pre-wrap; }
 .epg-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
 .now-btn { height: 34px; padding: 0 16px; border: 0; border-radius: 999px; cursor: pointer; font: 600 14px/1 var(--font); color: #fff;
   background: linear-gradient(100deg, #ff375f, #bf5af2 60%, #0a84ff); box-shadow: 0 6px 18px -6px rgba(191, 90, 242, .7); transition: transform .2s ease; }
@@ -204,13 +197,11 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
 
 @media (max-width: 760px) {
   .hero { padding-top: 14px; }
-  .pv { min-height: 240px; padding-top: 70px; }
-  /* phones: the still fills the top of the preview behind the words, fading out downwards and at the sides */
-  .pv-art { top: -20px; bottom: 25%; opacity: .75;
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent), linear-gradient(180deg, transparent, #000 20%, #000 45%, transparent);
-    mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent), linear-gradient(180deg, transparent, #000 20%, #000 45%, transparent); }
-  .pv-copy { max-width: none; }
-  .pv-sum { font-size: 15px; -webkit-line-clamp: 2; }
+  .pv { grid-template-columns: 112px minmax(0, 1fr); gap: 14px; align-items: start; min-height: 0; padding: 0 0 14px; }
+  .pv-art { border-radius: 10px; margin-top: 4px; }
+  .pv-t { font-size: 18px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .pv-meta { font-size: 13px; }
+  .pv-sum { font-size: 14px; }
   .epg { --px: 3.6px; --chw: 132px; --rowh: 62px; }
   .ch { padding: 0 6px 0 10px; font-size: 13px; }
   .ch svg { width: 13px; height: 13px; opacity: .55; }
@@ -236,7 +227,7 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
 .ch-badge { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 7px; border-radius: 11px; background: #1c1c1e; box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .14), 0 2px 6px rgba(0, 0, 0, .18); }
 .ch-badge img { width: 100%; height: 100%; object-fit: contain; image-rendering: auto; }
 .ch-mono { padding: 0; color: #fff; font: 700 13px/1 var(--font); letter-spacing: -.02em; background: linear-gradient(150deg, hsl(var(--h) 55% 50%), hsl(calc(var(--h) + 40) 60% 32%)); box-shadow: none; }
-.pv-logo { display: block; height: 30px; max-width: 140px; margin-bottom: 4px; padding: 5px 8px; border-radius: 9px; object-fit: contain; object-position: left center; background: #1c1c1e; box-sizing: content-box;
+.pv-logo { display: block; height: 20px; max-width: 110px; margin-bottom: 2px; padding: 4px 7px; border-radius: 9px; object-fit: contain; object-position: left center; background: #1c1c1e; box-sizing: content-box;
   box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .14); }
 /* ---------- pictures: a landscape still fills its frame; a portrait poster stands whole on a blur of itself ---------- */
 .pick-art { display: grid; place-items: center; }
@@ -246,12 +237,7 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
 .sh-poster .bed { inset: 0 -10%; height: 100%; -webkit-mask-image: linear-gradient(#000 40%, transparent); mask-image: linear-gradient(#000 40%, transparent); }
 .sh-poster + .sh-body { margin-top: 0; padding-top: 14px; }
 .sh-poster .pst { position: relative; height: 82%; width: auto; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 12px; box-shadow: 0 16px 40px rgba(0, 0, 0, .5); -webkit-mask-image: none; mask-image: none; }
-.pv.poster .pv-art::after { display: none; }
-.pv.poster .pv-art { top: 10px; bottom: 18px; left: auto; width: auto; right: 0; -webkit-mask-image: none; mask-image: none; }
-.pv.poster .pv-art img { width: auto; height: 100%; aspect-ratio: 2 / 3; border-radius: 14px; box-shadow: 0 22px 50px -10px rgba(0, 0, 0, .55), 0 0 0 .5px rgba(255, 255, 255, .18); }
 @media (max-width: 760px) {
-  .pv.poster .pv-art { top: 64px; bottom: auto; height: 170px; left: auto; right: 0; opacity: 1; }
-  .pv.poster .pv-copy { padding-right: 128px; }
   .ch-badge { width: 38px; height: 38px; padding: 6px; border-radius: 10px; }
   .ch-mono { font-size: 11.5px; }
 }
@@ -263,7 +249,8 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
 .live-btn:active { transform: scale(.97); }
 .live-btn i { width: 8px; height: 8px; border-radius: 50%; background: #ff375f; box-shadow: 0 0 0 0 rgba(255, 55, 95, .6); animation: livePulse 1.8s ease-out infinite; }
 @keyframes livePulse { 70% { box-shadow: 0 0 0 7px rgba(255, 55, 95, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 55, 95, 0); } }
-.pv-live:not(:empty) { margin-top: 14px; }
+.pv-live:not(:empty) { margin-top: 10px; }
+.pv .live-btn { height: 32px; font-size: 14px; }
 .sh-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; margin-top: 18px; }
 .sh-acts .sh-link { margin-top: 0; }
 .sh-note { margin: 10px 0 0; color: var(--label3); font-size: 12.5px; }

@@ -260,7 +260,7 @@
     const n = go(); if (n?.classList.contains('ch')) n.focus(); else focusBlock(n);
   });
 
-  // ---------- the preview: what you point at (or move to), its artwork melting in from the right ----------
+  // ---------- the preview: a compact card for what you point at (or move to), with a small still ----------
   // Pointing settles for a moment first, so sweeping the mouse across the grid doesn't flick through pictures
   let pvKey = null, pvT = 0;
   function preview(x, immediate) {
