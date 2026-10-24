@@ -101,20 +101,36 @@
       .catch(() => { state.failedAt = Date.now(); return false; }).finally(() => { state.loading = null; });
     return state.loading;
   }
-  // a day pill: every strip to that day (fetching up to it first); a day before the first one starts afresh
+  // a day pill: every strip glides to that day together (fetching up to it first, with the pill showing it's on its
+  // way); a day before the first one starts afresh. Only the last tap counts, however quickly they come
+  let goId = 0;
   async function goDay(d) {
+    const id = ++goId;
     if (!state.data || d < state.base) { state.base = d; return load(); }
-    while (!state.loaded.has(d)) { state.failedAt = 0; if (!(await loadNext())) return; }
-    kept.clear(); document.querySelectorAll('.strip').forEach((st) => jumpStrip(st, true, d)); setDay(d);
+    const pill = $(`#days [data-d="${d}"]`);
+    if (!state.loaded.has(d)) {
+      for (const b of document.querySelectorAll('#days [aria-busy]')) b.removeAttribute('aria-busy');
+      pill?.setAttribute('aria-busy', 'true');
+      while (!state.loaded.has(d)) { state.failedAt = 0; const ok = await loadNext(); if (id !== goId) return; if (!ok) break; }
+      pill?.removeAttribute('aria-busy');
+      if (!state.loaded.has(d)) return;
+    }
+    setDay(d); glide(d);
   }
   // the day in view: the pills, the headline, the address and the picks follow it
   function setDay(d) {
     if (!d || d === state.day) return; state.day = d;
     for (const b of document.querySelectorAll('#days button')) b.dataset.d === d ? b.setAttribute('aria-current', 'date') : b.removeAttribute('aria-current');
-    $(`#days [data-d="${d}"]`)?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
+    // the pill into view along its own row only (never scrolling the page away from the guide)
+    const row = $('#days'), pill = $(`#days [data-d="${d}"]`);
+    if (pill && row.scrollWidth > row.clientWidth) {
+      const l = pill.offsetLeft, pad = 24;
+      if (l < row.scrollLeft + pad || l + pill.offsetWidth > row.scrollLeft + row.clientWidth - pad) row.scrollTo({ left: Math.max(0, l - pad), behavior: reduce ? 'auto' : 'smooth' });
+    }
     const u = new URL(location.href); d === today ? u.searchParams.delete('d') : u.searchParams.set('d', d); history.replaceState(null, '', u);
+    if (!reduce && state.data) $(`#days [data-d="${d}"]`)?.animate([{ transform: 'scale(.9)' }, { transform: 'scale(1.06)', offset: .45 }, { transform: 'scale(.99)', offset: .75 }, { transform: 'none' }], { duration: 520, easing: 'ease-out' });
     $('#eye').textContent = dayName(d, { weekday: 'long', day: 'numeric', month: 'long' });
-    $('#h1').innerHTML = `What’s on <em class="grad">${esc(word(d))}</em>.`;
+    $('#h1').innerHTML = `What’s on <br class="ph-br"><em class="grad">${esc(word(d))}</em>.`;   // phones: the day on its own line, so the headline never changes height
     document.title = `What’s on UK TV ${word(d)} · Tenner TV`;
     $('#toNow').textContent = state.loaded.has(today) ? 'Now' : 'This evening';
     drawPicks(d);
@@ -141,7 +157,7 @@
     if (!live.some(([k]) => k === cat)) cat = 'all';
     $('#cats').innerHTML = live.length > 2 ? live.map(([k, l]) => `<button type="button" role="radio" data-cat="${k}" aria-checked="${k === cat}" tabindex="${k === cat ? 0 : -1}">${esc(l)}</button>`).join('') : '';
   }
-  $('#cats').addEventListener('click', (e) => { const b = e.target.closest('[data-cat]'); if (!b || b.dataset.cat === cat) return; cat = b.dataset.cat; drawCats(); drawGuide(true); $(`[data-cat="${cat}"]`)?.focus({ preventScroll: true }); });
+  $('#cats').addEventListener('click', (e) => { const b = e.target.closest('[data-cat]'); if (!b || b.dataset.cat === cat) return; cat = b.dataset.cat; drawCats(); drawGuide(true, true); $(`[data-cat="${cat}"]`)?.focus({ preventScroll: true }); });
   $('#cats').addEventListener('keydown', (e) => {   // a radio group: the arrows move between categories
     if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return; e.preventDefault();
     const l = [...$('#cats').children], i = l.findIndex((b) => b.dataset.cat === cat), n = l[(i + (e.key === 'ArrowRight' ? 1 : -1) + l.length) % l.length]; n?.click();
@@ -151,14 +167,15 @@
     const b = e.target.closest('.ch[data-ch]'); if (!b) return;
     const n = b.dataset.ch, l = favs.all(), on = !l.includes(n);
     favs.set(on ? [...l, n] : l.filter((x) => x !== n));
-    drawCats(); drawGuide(true);
+    const redraw = () => { drawCats(); drawGuide(true); };
+    if (!reduce && document.startViewTransition) document.startViewTransition(redraw); else redraw();
     $(`.ch[data-ch="${CSS.escape(n)}"]`)?.focus({ preventScroll: true });
   });
 
   // ---------- the guide ----------
   const px = () => parseFloat(getComputedStyle($('#epg')).getPropertyValue('--px')) || 5;   // a minute's width
   const kept = new Map();   // where each channel was scrolled to, kept when the guide is redrawn (a category, a pin)
-  function drawGuide(keep) {
+  function drawGuide(keep, rise) {
     if (!state.data) return;
     const mine = favs.all(), re = CATS.find(([k]) => k === cat)?.[2];
     const chans = state.data.channels.filter((c) => c.items.length && (cat === 'mine' ? mine.includes(c.name) : re.test(c.name)))
@@ -169,14 +186,20 @@
       preview(null); return;
     }
     const now = Date.now(), m = px(), loaded = [...state.loaded];
-    $('#epg').innerHTML = `<div class="rows">${chans.map((c) => `<div class="crow">
+    $('#epg').innerHTML = `<div class="rows">${chans.map((c) => `<div class="crow" style="view-transition-name:r${state.data.channels.indexOf(c)}">
       <button type="button" class="ch" data-ch="${esc(c.name)}" aria-pressed="${mine.includes(c.name)}"
         aria-label="${esc(`${c.name}: ${mine.includes(c.name) ? 'pinned to the top. Press to unpin' : 'press to pin to the top'}. Arrow right for its programmes`)}">${badge(c.name)}<span class="ch-name">${esc(c.name)}</span>${star(mine.includes(c.name))}</button>
       <div class="strip" data-strip="${esc(c.name)}" role="group" aria-label="${esc(`${c.name}, through the week`)}">${loaded.map(([d, day], i) => dayBlocks(c.name, d, day, i > 0, now, m)).join('')}</div></div>`).join('')}</div>`;
-    for (const st of $('#epg').querySelectorAll('.strip')) {
-      if (keep && kept.has(st.dataset.strip)) st.scrollLeft = kept.get(st.dataset.strip); else jumpStrip(st, false, state.base);
-      edges(st);
-    }
+    near.clear(); io.disconnect();
+    const vh = innerHeight;
+    $('#epg').querySelectorAll('.crow').forEach((row, i) => {
+      const st = row.lastElementChild, r = row.getBoundingClientRect(), close = r.bottom > -300 && r.top < vh + 300;
+      st._auto = true;
+      if (keep && kept.has(st.dataset.strip)) st.scrollLeft = kept.get(st.dataset.strip);
+      else if (close) jumpStrip(st, state.day || state.base); else st._want = state.day || state.base;
+      if (close) { edges(st); if (!reduce && (rise || !keep) && i < 14) row.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 420, delay: i * 22, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' }); }
+      io.observe(row);
+    });
     // the preview starts on what's on now on the first channel (or the first thing this evening)
     const first = chans[0].name, all = [...shown.values()];
     preview(all.find((x) => x.ch === first && isLive(x, now)) || all.find((x) => x.ch === first && hour(x.at) >= 19) || all[0], true);
@@ -193,10 +216,21 @@
           aria-label="${esc(`${name}, ${dn} ${t}: ${x.t}${x.isNew ? ', new' : ''}`)}"><span class="bi"><b>${x.isNew ? '<i class="new">New</i>' : ''}${esc(x.t)}</b><small>${live ? `Now · ${Math.max(1, Math.round((end - now) / 60e3))} min left` : t}</small></span></button>`;
       }).join('');
   }
-  // a newly fetched day, added to the end of every strip without moving anything
-  function appendDay(d, day) {
+  // a newly fetched day, added to the end of every strip without moving anything: at once in the strip being scrolled,
+  // the others a few at a time in quiet moments (or the moment one comes near, or a glide needs it), so a new day never
+  // stalls a frame
+  const idle = window.requestIdleCallback || ((f) => setTimeout(() => f({ timeRemaining: () => 8 }), 50));
+  function fill(st) {
+    if (!st._pend?.length) return;
     const now = Date.now(), m = px();
-    for (const st of $('#epg').querySelectorAll('.strip')) { st.insertAdjacentHTML('beforeend', dayBlocks(st.dataset.strip, d, day, true, now, m)); st._b = null; }
+    st.insertAdjacentHTML('beforeend', st._pend.map(([d, day]) => dayBlocks(st.dataset.strip, d, day, true, now, m)).join('')); st._pend = null; st._b = null;
+  }
+  function appendDay(d, day) {
+    const rest = [];
+    const t = performance.now();
+    for (const st of $('#epg').querySelectorAll('.strip')) { (st._pend ||= []).push([d, day]); t - (st._t || 0) < 1500 ? fill(st) : rest.push(st); }
+    const more = (dl) => { while (rest.length && dl.timeRemaining() > 2) fill(rest.shift()); if (rest.length) idle(more); };
+    if (rest.length) idle(more);
   }
 
   // ---------- scrolling a strip: keep its title readable at the edge, load the next day before the end, follow the day ----------
@@ -213,13 +247,14 @@
   }
   const dirty = new Set(); let frame = 0;
   $('#epg').addEventListener('scroll', (e) => {
-    const st = e.target; if (!st.classList?.contains('strip')) return;
-    kept.set(st.dataset.strip, st.scrollLeft); dirty.add(st);
+    const st = e.target; if (!st.classList?.contains('strip') || gliding) return;
+    kept.set(st.dataset.strip, st.scrollLeft); dirty.add(st); st._t = e.timeStamp;
     if (!frame) frame = requestAnimationFrame(() => {
       frame = 0;
       for (const s of dirty) {
         edges(s);
         if (s.scrollLeft + s.clientWidth > s.scrollWidth - 1600) loadNext();
+        if (s._auto) { s._auto = false; continue; }
         const k = blockAt(s, s.scrollLeft + 40); if (k) setDay(k.b.dataset.day);
       }
       dirty.clear();
@@ -229,13 +264,63 @@
   // (cheaply: they're only marked to be measured again, the next time each strip is used)
   let lastW = 0;
   new ResizeObserver(([e]) => { const w = Math.round(e.contentRect.width); if (w === lastW) return; lastW = w; for (const st of $('#epg').querySelectorAll('.strip')) st._b = null; }).observe($('#epg'));
-  // a strip to now (on today), or to the programme on at 7pm on day d
-  function jumpStrip(st, smooth, d = state.day) {
-    const at = d === today ? Date.now() : null, l = blocksOf(st); if (!l.length) return;
+  // where a strip goes for day d: what's on now (today), or the programme on at 7pm
+  function targetOf(st, d) {
+    const at = d === today ? Date.now() : null, l = blocksOf(st); if (!l.length) return null;
     const pick = l.find(({ b }) => { const x = shown.get(b.dataset.p); return x && (at ? isLive(x, at) : b.dataset.day === d && (hour(x.at) >= 19 || hour(x.end) > 19)); })
-      || (at ? l.find(({ b }) => (shown.get(b.dataset.p)?.at || 0) > at) : l.find(({ b }) => b.dataset.day === d));
-    st.scrollTo({ left: pick ? Math.max(0, pick.l - l[0].l) : 0, behavior: smooth && !reduce ? 'smooth' : 'auto' });
+      || (at ? l.find(({ b }) => (shown.get(b.dataset.p)?.at || 0) > at) : l.find(({ b }) => b.dataset.day === d)) || l[0];
+    return { x: Math.max(0, pick.l - l[0].l), b: pick.b };
   }
+  function jumpStrip(st, d = state.day) { const t = targetOf(st, d); if (t) { st._auto = true; st.scrollLeft = t.x; } }
+  // rows near the screen (the only ones worth moving smoothly); a row arriving that was waiting for a day goes straight there
+  const near = new Set();
+  const io = new IntersectionObserver((es) => {
+    for (const e of es) {
+      const st = e.target.lastElementChild; if (!st) continue;
+      if (!e.isIntersecting) { near.delete(st); continue; }
+      near.add(st); fill(st);
+      if (st._want) { jumpStrip(st, st._want); st._want = null; edges(st); }
+    }
+  }, { rootMargin: '300px 0px' });
+  // the glide: every strip near the screen moves together, on one clock and one curve (fast, then settling gently),
+  // the rest wait to be placed as they come near. The programmes it lands on give a small bounce. A touch, a wheel or
+  // a new tap takes over at once
+  let gliding = false, glideId = 0;
+  function glide(d) {
+    const id = ++glideId, list = [];
+    kept.clear();
+    for (const st of $('#epg').querySelectorAll('.strip')) {
+      if (!near.has(st)) { st._want = d; continue; }
+      st._want = null; fill(st); const t = targetOf(st, d); if (t) list.push({ st, from: st.scrollLeft, to: t.x, b: t.b });
+    }
+    if (!list.length) return;
+    const far = Math.max(...list.map((g) => Math.abs(g.to - g.from)));
+    const dur = reduce || far < 2 ? 0 : Math.min(950, 380 + Math.sqrt(far) * 2.4), t0 = performance.now();
+    gliding = true;
+    const land = () => {
+      // the last scroll events of the glide arrive in the next frame: they're the glide's, not a person's
+      requestAnimationFrame(() => { if (id === glideId) gliding = false; });
+      const top = innerHeight;
+      list.forEach((g, i) => {
+        kept.set(g.st.dataset.strip, g.to); edges(g.st);
+        const r = g.st.getBoundingClientRect();
+        if (!reduce && r.bottom > 0 && r.top < top) g.b.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.04)', offset: .35 }, { transform: 'scale(.985)', offset: .7 }, { transform: 'none' }], { duration: 560, delay: Math.min(i, 12) * 26, easing: 'ease-out' });
+      });
+      const first = list.find((g) => g.st.getBoundingClientRect().bottom > 0) || list[0];
+      preview(shown.get(first.b.dataset.p), true);
+      const s = list[0].st; if (s.scrollLeft + s.clientWidth > s.scrollWidth - 1600) loadNext();
+    };
+    const step = (now) => {
+      if (id !== glideId) return;
+      const k = dur ? Math.min(1, (now - t0) / dur) : 1, e = k >= 1 ? 1 : 1 - Math.pow(1 - k, 4);
+      for (const g of list) g.st.scrollLeft = g.from + (g.to - g.from) * e;
+      if (k < 1) requestAnimationFrame(step); else land();
+    };
+    dur ? requestAnimationFrame(step) : step(t0);
+  }
+  // a person taking hold stops the glide where it is
+  const takeOver = () => { if (!gliding) return; glideId++; gliding = false; };
+  for (const ev of ['wheel', 'touchstart', 'pointerdown']) $('#epg').addEventListener(ev, takeOver, { passive: true, capture: true });
   $('#toNow').addEventListener('click', () => goDay(state.loaded.has(today) ? today : state.base));
 
   // ---------- the keyboard: the channel buttons are the tab stops; the arrows move around the grid ----------
@@ -268,6 +353,7 @@
     if (!immediate) { pvT = setTimeout(() => preview(x, true), 110); return; }
     if (!x) { for (const id of ['pvLive', 'pvSum', 'pvMeta', 'pvT']) $(`#${id}`).textContent = ''; $('#pvCh').innerHTML = '&nbsp;'; $('#pvImg').hidden = true; pvKey = null; return; }
     if (pvKey === x.id) return; pvKey = x.id;
+    if (!reduce) $('.pv-copy').animate([{ opacity: .35, transform: 'translateY(3px)' }, { opacity: 1, transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.2,.8,.2,1)' });
     const t = Date.now(), started = isLive(x, t);
     $('#pvCh').innerHTML = logo(x.ch) ? `<img class="pv-logo" src="${esc(logo(x.ch))}" alt="${esc(x.ch)}">` : esc(x.ch);
     $('#pvT').textContent = x.t;
