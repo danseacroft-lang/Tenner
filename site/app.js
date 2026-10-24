@@ -16,14 +16,15 @@ const todayIso = () => { const d = new Date(); return `${d.getFullYear()}-${pad(
 // ---------- data ----------
 async function fetchData(bust) {
   const v = `?v=${bust ? Date.now() : Math.floor(Date.now() / 600000)}`;
-  const [trending, fresh, cat, week] = await Promise.all([
+  const [trending, fresh, cat, week, cinema] = await Promise.all([
     fetch('data/trending.json' + v, { cache: bust ? 'no-store' : 'default' })
       .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }),
     fetch('data/new.json' + v).then((r) => (r.ok ? r.json() : null)).catch(() => null),
     fetch('data/browse.json' + v).then((r) => (r.ok ? r.json() : null)).catch(() => null),   // for "Top rated at a glance"
     fetch('data/week.json' + v).then((r) => (r.ok ? r.json() : null)).catch(() => null),     // for "This Week"
+    fetch('data/cinema.json' + v).then((r) => (r.ok ? r.json() : null)).catch(() => null),   // New: at the cinema
   ]);
-  return { trending, fresh, cat, week };
+  return { trending, fresh, cat, week, cinema };
 }
 
 async function load() {
@@ -887,6 +888,14 @@ function pageNew() {
           <span class="mv up">▲${x.by}</span></a></li>`; }).join('')}</ol>` : '')
       + sec('wk-3', 'New Arrivals', `In the UK's top 10 now, nowhere in the charts ${w.days >= 6 ? 'a week ago' : 'before'}`, w.arrivals?.length ? `<ul class="nr">${w.arrivals.map((x) => weekCard(x, `New at No. ${x.to} ${chartName(x.c)}`)).join('')}</ul>` : '');
   }
+  // At the cinema: what's showing in UK cinemas, then what's coming (each with its UK date and certificate)
+  const c = state.cinema, inCinemas = (c?.now || []).filter((x) => x.date <= today), toCinemas = (c?.soon || []).filter((x) => x.date > today);
+  const out = (x) => fmtDate(new Date(x.date + 'T12:00:00'), { day: 'numeric', month: 'short' });
+  const filmCard = (x, sub, badge) => `<li><a href="${esc(tmdbUrl('movie', x.id))}" target="_blank" rel="noopener" ${reg(infoFor(x, 'movie', badge ? `In cinemas ${out(x)}` : 'In cinemas now'))}>
+    <span class="nr-art">${x.poster ? `<img src="${esc(x.poster)}" alt="" loading="lazy" decoding="async">` : placeholder(x)}${badge ? `<span class="cu-when">${esc(badge)}</span>` : ''}</span>
+    <b>${esc(x.title)}</b><small>${esc(sub)}</small></a></li>`;
+  const cinema = sec('cinema', 'At the Cinema', 'Showing in UK cinemas now', inCinemas.length ? `<ul class="nr">${inCinemas.map((x) => filmCard(x, [x.cert, `Out ${out(x)}`].filter(Boolean).join(' · '))).join('')}</ul>` : '')
+    + sec('cinema-soon', 'Coming to Cinemas', 'Out in the UK over the next three months', toCinemas.length ? `<ul class="nr">${toCinemas.map((x) => filmCard(x, [x.cert, out(x)].filter(Boolean).join(' · '), window.tn.whenText(x.date))).join('')}</ul>` : '');
   let releases = '', soon = [], leaving = [];
   if (f && !f.disabled && !f.error) {
     const past = f.items.filter((x) => x.date <= today).reverse();   // newest first
@@ -896,17 +905,17 @@ function pageNew() {
       + sec('soon', 'Coming Soon', 'The next month. Tap the calendar to be reminded on the day', soon.length ? dayGroups(soon, 'soon', today) : '')
       + sec('leaving', 'Leaving Soon', 'Catch them before they go', leaving.length ? dayGroups(leaving, 'leaving', today) : '');
   }
-  if (!charts && !releases) return `<h1 class="large-title page-title">New <em class="grad">This Week</em></h1>
+  if (!charts && !releases && !cinema) return `<h1 class="large-title page-title">New <em class="grad">This Week</em></h1>
     <div class="empty"><span class="empty-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.5 3.5l1.8 4.9 4.9 1.8-4.9 1.8-1.8 4.9-1.8-4.9-4.9-1.8 4.9-1.8z" fill="currentColor"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z" fill="currentColor"/></svg></span>
       <h2>${f?.error ? 'Back shortly' : 'Building up'}</h2><p>${f?.error ? "This week's round-up didn't load this time. It'll be back after the next hourly update." : 'The week fills in as Tenner keeps an eye on the charts and the services. Check back tomorrow.'}</p>
       <a class="btn btn-tinted" href="#top">See the top 10</a></div>`;
-  const jumps = [['released', 'New on the services', releases.includes('id="released"')], ['soon', 'Coming soon', soon.length], ['leaving', 'Leaving soon', leaving.length]]
+  const jumps = [['cinema', 'At the cinema', inCinemas.length || toCinemas.length], ['released', 'New on the services', releases.includes('id="released"')], ['soon', 'Coming soon', soon.length], ['leaving', 'Leaving soon', leaving.length]]
     .filter((j) => j[2] && charts).map(([id, label]) => `<a class="nw-jump" href="#${id}" data-jump="${id}">${label}<span class="chev" aria-hidden="true"></span></a>`).join('');
   return `<h1 class="large-title page-title">New <em class="grad">This Week</em></h1>
     <p class="lede">${w?.climbers?.length ? `What moved on the UK's charts ${esc(sinceText(w))}, and what's new on the services. Rebuilt every hour.` : 'What’s new on the services, rebuilt every hour.'} Release dates come from US listings, so a few UK dates may differ.</p>
     ${jumps ? `<div class="nw-jumps">${jumps}</div>` : ''}
     ${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up.</p>` : ''}
-    ${charts}${releases}`;
+    ${charts}${cinema}${releases}`;
 }
 // Add to Calendar: an all-day event on the day it arrives, as a calendar file (the iPhone and Mac open it in Calendar)
 function calendarFile(x) {

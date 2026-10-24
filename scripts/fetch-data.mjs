@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // Builds site/data/trending.json (TMDB, every run) and site/data/new.json (Watchmode, at most once a day).
+// Also site/data/cinema.json: films in UK cinemas now and coming soon (TMDB, twice a day).
 //
 // Env:
 //   TMDB_TOKEN          TMDB "API Read Access Token" (v4). Or TMDB_API_KEY (v3 key) instead.
@@ -723,6 +724,39 @@ function sampleCatalogue() {
   return { generatedAt: new Date().toISOString(), region: REGION, img: '', genres, items, sample: true };
 }
 
+// ---------- At the cinema (TMDB): what's showing in UK cinemas, and what's coming in the next three months ----------
+// UK release dates and certificates come from each film's own release list (theatrical first, then limited).
+const CINEMA_V = 1;
+export async function buildCinema() {
+  const prev = await liveCopy('cinema.json');
+  if (prev?.v === CINEMA_V && hoursOld(prev) < 12) { console.log('Reusing live cinema.json from', prev.generatedAt); return prev; }
+  const day = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10), today = day(0);
+  const list = async (gte, lte, sort) => {
+    const pages = await Promise.all([1, 2].map((page) => tmdb('/discover/movie', { region: REGION, language: 'en-GB', with_release_type: '2|3',
+      'release_date.gte': gte, 'release_date.lte': lte, sort_by: sort, include_adult: 'false', page: String(page) })));
+    return pages.flatMap((p) => p.results || []).filter((r) => r.poster_path && !r.adult);
+  };
+  const [now, soon] = await Promise.all([list(day(-42), today, 'popularity.desc'), list(day(1), day(90), 'popularity.desc')]);
+  const shape = async (r) => {
+    let date = null, cert = null;
+    try {
+      const gb = (await tmdb(`/movie/${r.id}/release_dates`)).results?.find((x) => x.iso_3166_1 === REGION)?.release_dates || [];
+      const pick = gb.filter((x) => x.type === 3).sort((a, b) => a.release_date.localeCompare(b.release_date))[0]
+        || gb.filter((x) => x.type === 2).sort((a, b) => a.release_date.localeCompare(b.release_date))[0];
+      date = pick?.release_date?.slice(0, 10) || null; cert = gb.map((x) => x.certification).find(Boolean) || null;
+    } catch {}
+    const it = toItem(r, 'movie');
+    return { id: it.id, title: it.title, year: it.year, date: date || r.release_date || null, cert, overview: it.overview, rating: it.rating,
+      popularity: it.popularity, poster: it.poster, backdrop: it.backdrop };
+  };
+  const seen = new Set(), uniq = (l) => l.filter((r) => !seen.has(r.id) && seen.add(r.id));
+  const nowItems = (await pool(uniq(now).slice(0, 24).map((r) => () => shape(r)), 6)).filter((x) => x.date && x.date <= today).slice(0, 20);
+  const soonItems = (await pool(uniq(soon).slice(0, 30).map((r) => () => shape(r)), 6)).filter((x) => x.date && x.date > today)
+    .sort((a, b) => a.date.localeCompare(b.date)).slice(0, 24);
+  if (nowItems.length < 4) throw new Error(`only ${nowItems.length} films in cinemas came back`);
+  return { v: CINEMA_V, generatedAt: new Date().toISOString(), now: nowItems, soon: soonItems };
+}
+
 // ---------- main ----------
 async function write(name, obj) {
   await mkdir(OUT, { recursive: true });
@@ -735,6 +769,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const { trending, fresh } = sample();
     await write('trending.json', trending);
     await write('new.json', fresh);
+    const sd = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10), sf = (i, n) => ({ id: 9000 + i, title: `Sample Film ${i + 1}`, year: Number(sd(n).slice(0, 4)),
+      date: sd(n), cert: ['PG', '12A', '15', 'U'][i % 4], overview: 'Fictional sample film.', rating: null, popularity: 100 - i, poster: null, backdrop: null });
+    await write('cinema.json', { v: 1, generatedAt: new Date().toISOString(), sample: true, now: Array.from({ length: 8 }, (_, i) => sf(i, -3 * i - 1)), soon: Array.from({ length: 8 }, (_, i) => sf(i + 8, 4 * i + 2)) });
     // sample title details: a few made-up services and runtimes, so the title sheet can be tried without keys
     const sp = { 8: ['Netflix', ''], 337: ['Disney Plus', ''], 9: ['Amazon Prime Video', ''], 2: ['Apple TV', ''], 130: ['Sky Store', ''], 1899: ['HBO Max', ''] };
     const sItems = {};
@@ -850,6 +887,14 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       warn('New this week', `Watchmode step failed (${err.message})${keep ? ', keeping the live list' : ''}`);
       await write('new.json', keep ? prev : { generatedAt: data.generatedAt, error: true, items: [] });
       if (keep) newList = prev;
+    }
+
+    // 3a. At the cinema; the live copy carries on for up to three days if TMDB has a bad moment.
+    try { await write('cinema.json', await buildCinema()); }
+    catch (err) {
+      const prev = await liveCopy('cinema.json');
+      warn('Cinema', `not rebuilt (${err.message})${prev && hoursOld(prev) < 72 ? ', keeping the live list' : ''}`);
+      if (prev && hoursOld(prev) < 72) await write('cinema.json', prev);
     }
 
     // 3b. Rent and buy prices for the buy-or-rent chart (Watchmode); the live copy carries on if it fails.
