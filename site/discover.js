@@ -1,4 +1,4 @@
-// Tenner Discover: a deck of shows and films on your services, one card at a time. Swipe right to add it to
+// Tenner Discover: a deck of shows and films from Tenner's whole catalogue (every service, and to buy or rent), one card at a time. Swipe right to add it to
 // your Watchlist, left to skip it, down (or tap) for the details sheet. The buttons and arrow keys do the same.
 // Skipped titles are remembered on this device so they don't come round again; Undo takes back the last swipe.
 (() => {
@@ -37,12 +37,11 @@
     fetch('data/browse-more.json').then((r) => (r.ok ? r.json() : null)).then((m) => { more = m; cards.forEach((el) => fillBlurb(el)); }).catch(() => {});
   }).catch(() => { stage.innerHTML = '<div class="d-end"><h2>The titles didn’t load</h2><p>They’re rebuilt every hour, so try again shortly.</p></div>'; });
 
-  // the deck: your services (all five if you haven't chosen), not already saved or skipped, popular first but shuffled a
+  // the deck: the whole catalogue (every service, and to buy or rent), not already saved or skipped, popular first but shuffled a
   // little in small batches so it feels fresh each time
   function build() {
-    const mine = window.tn.mine.get().filter((k) => labels[k]), on = new Set(mine.length ? mine : Object.keys(labels));
     const skip = skipped.all(), withArt = cat.items.some((x) => x.img);
-    const pool = cat.items.filter((x) => (kind === 'both' || x.t === kind) && x.s.some((s) => on.has(s)) && (!withArt || x.img)
+    const pool = cat.items.filter((x) => (kind === 'both' || x.t === kind) && (x.s.length || x.b) && (!withArt || x.img)
       && !skip[keyOf(x)] && !saved.has(keyOf(x)) && (!certs || certs.items?.[keyOf(x)]?.c !== '18'))
       .sort((a, b) => (b.p * (0.6 + (b.r || 6) / 20)) - (a.p * (0.6 + (a.r || 6) / 20)));
     deck = [];
@@ -60,7 +59,8 @@
     el.className = 'dc'; el.dataset.k = keyOf(x); el._x = x;
     const genres = [...new Set(x.g.map((g) => cat.genres[g]).filter(Boolean))].slice(0, 2);
     const meta = [x.t === 'movie' ? 'Film' : 'Series', year(x), ...genres].filter(Boolean).map(esc).join(' · ');
-    const svc = x.s.filter((s) => labels[s]).slice(0, 3).map((s) => (logos[s] ? `<img src="${esc(logos[s])}" alt="${esc(labels[s])}" title="${esc(labels[s])}">` : `<span>${esc(labels[s])}</span>`)).join('');
+    const svc = x.s.filter((s) => labels[s]).slice(0, 3).map((s) => (logos[s] ? `<img src="${esc(logos[s])}" alt="${esc(labels[s])}" title="${esc(labels[s])}">` : `<span>${esc(labels[s])}</span>`)).join('')
+      + (x.b && !x.s.length ? '<span>Buy or rent</span>' : '');
     el.innerHTML = `${src ? `<img class="dc-img" src="${esc(src)}" srcset="${esc(src)} 500w, ${esc(img(x, 'w780'))} 780w" sizes="380px" alt="" decoding="async" draggable="false">`
       : `<span class="dc-img dc-ph" style="background:linear-gradient(160deg,hsl(${h} 50% 42%),hsl(${(h + 40) % 360} 55% 16%))"></span>`}
       <span class="dc-tag dc-tag-yes" aria-hidden="true">${SAVE}Watchlist</span><span class="dc-tag dc-tag-no" aria-hidden="true">${X}Skip</span>
@@ -78,7 +78,7 @@
     $('#dActs').classList.toggle('off', empty);
     if (empty && !stage.querySelector('.d-end')) {
       stage.insertAdjacentHTML('beforeend', `<div class="d-end"><span class="d-end-ic" aria-hidden="true">${SAVE}</span><h2>You’ve seen them all</h2>
-        <p>That’s everything ${kind === 'tv' ? 'in shows' : kind === 'movie' ? 'in films' : ''} on your services for now. New titles arrive every hour.</p>
+        <p>That’s everything ${kind === 'tv' ? 'in shows' : kind === 'movie' ? 'in films' : ''} in the catalogue for now. New titles arrive every hour.</p>
         <div class="d-end-b"><button type="button" class="btn btn-tinted" id="dAgain">Show skipped again</button><a class="btn" href="./#watchlist">Your Watchlist</a></div></div>`);
       $('#dAgain').addEventListener('click', () => { const o = skipped.all(); for (const x of cat.items) if (kind === 'both' || x.t === kind) delete o[keyOf(x)]; skipped.set(o); build(); });
     }
@@ -210,6 +210,4 @@
     try { localStorage.setItem(KIND, kind); } catch {}
     if (cat) build();
   });
-  // your services changed (in another tab, or the menu): a fresh deck
-  addEventListener('tn:mine', () => cat && build());
 })();
