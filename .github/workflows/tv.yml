@@ -21,6 +21,12 @@ jobs:
         env: { T: '${{ secrets.CLOUDFLARE_API_TOKEN }}', A: '${{ secrets.CLOUDFLARE_ACCOUNT_ID }}' }
         run: |
           if [ -z "$T" ] || [ -z "$A" ]; then echo "::notice title=Tenner TV not deployed::Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID under Settings > Secrets and variables > Actions."; echo "go=no" >> "$GITHUB_OUTPUT"; else echo "go=yes" >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      # the Worker is tried against stand-in listings first; if anything's broken, nothing is deployed
+      - name: Check Tenner TV works
+        run: node tv/test.mjs
       # the shared copy of the listings lives in Workers KV: made the first time, found after that, bound for this deploy.
       # If the token can't make it, Tenner TV still works (from the edge cache alone).
       - name: Set up the listings store

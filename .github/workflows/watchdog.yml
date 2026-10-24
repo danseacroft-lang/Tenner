@@ -1,0 +1,55 @@
+# The watchdog: every three hours, checks every part of Tenner is up and fresh. Anything behind is put right
+# automatically (by re-running the job that makes it); only if that hasn't worked by the next check does this run fail,
+# and GitHub emails the owner. Nothing here needs a person while things are healthy.
+name: Watchdog
+on:
+  schedule:
+    - cron: '41 */3 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: write   # to re-run a job that's behind, and to keep this schedule alive
+concurrency: { group: watchdog, cancel-in-progress: true }
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check everything, and put right what can be
+        run: |
+          age() { node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(Math.round((Date.now()-Date.parse(JSON.parse(s).generatedAt))/60000))}catch{console.log(99999)}})'; }
+          # each check prints a problem and the job that fixes it (job|problem), or nothing when all is well
+          check() {
+            code=$(curl -s -o /dev/null -w '%{http_code}' -m 30 https://tenner.stream/)
+            [ "$code" = 200 ] || echo "update.yml|tenner.stream answered $code"
+            mins=$(curl -s -m 30 "https://tenner.stream/data/trending.json?v=$(date +%s)" | age)   # rebuilt hourly
+            [ "$mins" -le 150 ] || echo "update.yml|the charts are $((mins/60)) hours old"
+            code=$(curl -s -o /dev/null -w '%{http_code}' -m 30 https://tenner-api.danseacroft.workers.dev/title/t1413)
+            [ "$code" = 200 ] || echo "api.yml|the search service answered $code"
+            code=$(curl -s -o /dev/null -w '%{http_code}' -m 30 https://tv.tenner.stream/)
+            [ "$code" = 200 ] || echo "tv.yml|Tenner TV's page answered $code"
+            tv=$(curl -s -m 40 https://tv.tenner.stream/api/day | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const d=JSON.parse(s),c=d.channels||[],x=c[0]?.items?.[0];console.log(c.length>=5&&x&&Array.isArray(x.g)?"ok":"only "+c.length+" channels"+(d.error?" ("+d.error+")":""))}catch{console.log("unreadable")}})')
+            [ "$tv" = ok ] || echo "tv.yml|Tenner TV's listings: $tv"
+          }
+          # the Watch live links on Tenner TV: a link that stops opening is flagged (nothing to re-run; it needs a new address)
+          for u in $(grep -oE "https://www\.(bbc\.co\.uk/iplayer/live|itv\.com/watch\?channel=|channel4\.com/now/)[A-Za-z0-9]*" "$GITHUB_WORKSPACE/tv/public/tv.js" | sort -u); do
+            c=$(curl -s -L -o /dev/null -w '%{http_code}' -m 25 -A 'Mozilla/5.0 (Macintosh) TennerWatchdog' "$u"); [ "$c" -lt 400 ] 2>/dev/null || echo "::warning title=A Watch live link may be broken::$u answered $c"
+          done
+          found=$(check)
+          if [ -z "$found" ]; then echo "✓ Everything's up and fresh"; exit 0; fi
+          echo "$found" | while IFS='|' read -r job what; do echo "↻ $what: re-running $job"; done
+          echo "$found" | cut -d'|' -f1 | sort -u | while read -r job; do gh workflow run "$job" || true; done
+          sleep 420   # long enough for those jobs to finish
+          still=$(check)
+          if [ -z "$still" ]; then echo "✓ Put right: $(echo "$found" | cut -d'|' -f2 | paste -sd ';' -)"; exit 0; fi
+          echo "$still" | while IFS='|' read -r job what; do echo "::error title=Tenner needs a look::$what (still, after re-running $job)"; done
+          exit 1
+      # GitHub pauses scheduled workflows after 60 days without a commit; re-enabling every run keeps this one going
+      - name: Keep the watchdog's schedule alive
+        if: github.event_name == 'schedule'
+        continue-on-error: true
+        run: gh workflow enable watchdog.yml

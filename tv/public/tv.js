@@ -31,6 +31,18 @@
     : x.poster ? `<img class="bed" src="${esc(x.poster)}" alt="" loading="lazy" decoding="async"><img class="pst" src="${esc(x.poster)}" alt="" loading="lazy" decoding="async">`
     : `<span class="ph" style="background:linear-gradient(150deg,hsl(${hue(x.t)} 45% 40%),hsl(${(hue(x.t) + 50) % 360} 55% 18%))">${esc(x.t)}</span>`);
   const logo = (name) => state.data?.logos?.[name];
+  // watching live: each channel's own official player (a TV licence is needed to watch live TV in the UK). The watchdog
+  // checks these still open, every three hours.
+  const LIVE = {
+    'BBC One': ['BBC iPlayer', 'https://www.bbc.co.uk/iplayer/live/bbcone'], 'BBC Two': ['BBC iPlayer', 'https://www.bbc.co.uk/iplayer/live/bbctwo'],
+    'BBC Three': ['BBC iPlayer', 'https://www.bbc.co.uk/iplayer/live/bbcthree'], 'BBC Four': ['BBC iPlayer', 'https://www.bbc.co.uk/iplayer/live/bbcfour'],
+    'BBC News': ['BBC iPlayer', 'https://www.bbc.co.uk/iplayer/live/bbcnews'], CBBC: ['BBC iPlayer', 'https://www.bbc.co.uk/iplayer/live/cbbc'], CBeebies: ['BBC iPlayer', 'https://www.bbc.co.uk/iplayer/live/cbeebies'],
+    ITV1: ['ITVX', 'https://www.itv.com/watch?channel=itv'], ITV2: ['ITVX', 'https://www.itv.com/watch?channel=itv2'], ITV3: ['ITVX', 'https://www.itv.com/watch?channel=itv3'],
+    ITV4: ['ITVX', 'https://www.itv.com/watch?channel=itv4'], ITVBe: ['ITVX', 'https://www.itv.com/watch?channel=itvbe'],
+    'Channel 4': ['Channel 4', 'https://www.channel4.com/now/C4'], E4: ['Channel 4', 'https://www.channel4.com/now/E4'], More4: ['Channel 4', 'https://www.channel4.com/now/M4'], Film4: ['Channel 4', 'https://www.channel4.com/now/F4'],
+  };
+  const liveBtn = (x) => { const l = LIVE[x.ch]; if (!l || !(x.at <= Date.now() && Date.now() < x.end)) return '';
+    return `<a class="live-btn" href="${esc(l[1])}" target="_blank" rel="noopener"><i aria-hidden="true"></i>Watch live on ${esc(l[0])}</a>`; };
 
   // ---------- loading ----------
   let ctl = null;
@@ -137,12 +149,13 @@
   // the preview: what you point at (or tab to), its artwork melting in from the right
   let pvKey = null;
   function preview(x) {
-    if (!x) { $('#pvCh').innerHTML = '&nbsp;'; $('#pvT').textContent = ''; $('#pvSum').textContent = ''; $('#pvMeta').textContent = ''; $('#pvImg').hidden = true; return; }
+    if (!x) { $('#pvLive').innerHTML = ''; $('#pvCh').innerHTML = '&nbsp;'; $('#pvT').textContent = ''; $('#pvSum').textContent = ''; $('#pvMeta').textContent = ''; $('#pvImg').hidden = true; return; }
     if (pvKey === x.id) return; pvKey = x.id;
     const now = Date.now(), started = x.at <= now && now < x.end;
     $('#pvCh').innerHTML = logo(x.ch) ? `<img class="pv-logo" src="${esc(logo(x.ch))}" alt="${esc(x.ch)}">` : esc(x.ch);
     $('#pvT').textContent = x.t;
     $('#pvSum').textContent = x.sum || epLine(x) || (x.g || []).join(', ');
+    $('#pvLive').innerHTML = liveBtn(x);
     $('#pvMeta').textContent = [started ? `Started at ${hm(x.at)}` : `${x.end <= now ? 'Was on' : 'On'} at ${hm(x.at)}`, x.s && x.n ? `S${x.s} E${x.n}` : '', length(x.end - x.at), started ? `${Math.max(1, Math.round((x.end - now) / 60e3))} min left` : ''].filter(Boolean).join('  ·  ');
     const img = $('#pvImg'), src = x.wide || x.poster;
     $('#pv').classList.toggle('poster', !x.wide && !!x.poster);
@@ -183,7 +196,8 @@
         <h2 id="shT">${esc(x.t)}</h2>${epLine(x) ? `<p class="sh-ep">${esc(epLine(x))}</p>` : ''}
         ${x.sum ? `<p class="sh-sum">${esc(x.sum)}</p>` : '<p class="sh-sum" style="color:var(--label2)">No description yet.</p>'}
         ${x.g?.length ? `<ul class="sh-tags">${(x.g || []).map((g) => `<li>${esc(g)}</li>`).join('')}${x.r ? `<li>★ ${x.r.toFixed(1)}</li>` : ''}</ul>` : ''}
-        ${x.url ? `<a class="sh-link" href="${esc(x.url)}" target="_blank" rel="noopener">More on TVmaze</a>` : ''}</div>`;
+        <div class="sh-acts">${liveBtn(x)}${x.url ? `<a class="sh-link" href="${esc(x.url)}" target="_blank" rel="noopener">More on TVmaze</a>` : ''}</div>
+        ${LIVE[x.ch] && liveBtn(x) ? '<p class="sh-note">Opens the channel’s own player. You need a TV licence to watch live TV in the UK.</p>' : ''}</div>`;
     sheet.showModal(); $('#shX').focus();
   });
   sheet.addEventListener('click', (e) => { if (e.target === sheet || e.target.closest('#shX')) sheet.close(); });   // tap outside, or ×
