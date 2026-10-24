@@ -91,7 +91,7 @@
     document.body.insertAdjacentHTML('beforeend', `<dialog class="mine-dlg bn-dlg" id="bnDlg" aria-labelledby="bnH" aria-describedby="bnP"><form method="dialog">
       <span class="bn-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.5 3.5l1.8 4.9 4.9 1.8-4.9 1.8-1.8 4.9-1.8-4.9-4.9-1.8 4.9-1.8z" fill="currentColor"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z" fill="currentColor"/></svg></span>
       <h2 id="bnH">Hey you!</h2>
-      <p id="bnP">We’re constantly improving Browse, adding new features every day. You might see some come and go as we test them out.</p>
+      <p id="bnP">We’re constantly improving Browse, adding new features every day. You might see some features come and go as we test them out.</p>
       <div class="bn-acts"><button class="btn bn-ok" value="ok" autofocus>Got it</button><a class="bn-fb" href="contact.html?about=Feedback">Send us feedback</a></div>
     </form></dialog>`);
     const d = $('#bnDlg');
