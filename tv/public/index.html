@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>What’s on UK TV tonight · Tenner TV</title>
-  <meta name="description" content="What’s on UK TV tonight: every channel, now and next, and the whole evening, beautifully laid out.">
+  <meta name="description" content="What’s on UK TV tonight and all week: the main Freeview channels, beautifully laid out.">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
   <meta name="color-scheme" content="dark light">
@@ -15,8 +15,8 @@
   <meta property="og:title" content="What’s on UK TV tonight · Tenner TV">
   <meta property="og:description" content="Every UK channel, now and next, and the whole evening.">
   <meta property="og:image" content="https://tenner.stream/og.jpg">
-  <link rel="preconnect" href="https://static.tvmaze.com">
-  <link rel="stylesheet" href="tv.css?v=2.0.0">
+  <link rel="preconnect" href="https://images.metadata.sky.com">
+  <link rel="stylesheet" href="tv.css?v=2.1.0">
 </head>
 <body>
   <header class="bar">
@@ -28,7 +28,7 @@
     <section class="hero">
       <p class="eye" id="eye">&nbsp;</p>
       <h1 id="h1">What’s on <em class="grad">tonight</em>.</h1>
-      <p class="lede">Every UK channel against the clock, from now until late. Tap anything to see what it’s about.</p>
+      <p class="lede">The main Freeview channels, for the week ahead. Swipe any channel to move through its week, and tap a programme to see what it’s about.</p>
       <nav class="days" id="days" aria-label="Choose a day"></nav>
     </section>
 
@@ -47,7 +47,7 @@
       </div>
       <div class="epg-bar">
         <button type="button" class="now-btn" id="toNow">Now</button>
-        <p class="epg-hint" id="epgHint">Swipe a channel to move through its day · tap a channel’s name to pin it to the top</p>
+        <p class="epg-hint" id="epgHint">Scroll a channel to move through its week · tap a channel to pin it to the top · arrow keys move around the guide</p>
       </div>
       <div class="cats" id="cats" role="radiogroup" aria-label="Channels to show"></div>
       <div class="epg" id="epg"><div class="skel" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
@@ -60,7 +60,7 @@
   </main>
 
   <footer class="foot">
-    <p>Listings from <a href="https://www.tvmaze.com/" rel="noopener">TVmaze</a>, shared under <a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="noopener license">CC BY-SA 4.0</a>. Times are UK time.</p>
+    <p>Listings from the open <a href="https://github.com/dp247/Freeview-EPG" rel="noopener">Freeview EPG</a> project, with <a href="https://www.tvmaze.com/" rel="noopener">TVmaze</a> (<a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="noopener license">CC BY-SA 4.0</a>) filling any gaps. Channel logos are their owners’ trademarks. Times are UK time.</p>
     <p>Part of <a href="https://tenner.stream/">Tenner</a>, the UK’s streaming top 10, every hour.</p>
   </footer>
 
@@ -68,6 +68,6 @@
     <div class="sh-in" id="shIn"></div>
   </dialog>
 
-  <script src="tv.js?v=2.0.0" defer></script>
+  <script src="tv.js?v=2.1.0" defer></script>
 </body>
 </html>

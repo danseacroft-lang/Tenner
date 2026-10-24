@@ -1,24 +1,35 @@
-// Tenner TV: a day of UK TV from /api/day (TVmaze, trimmed by the Worker), as a TV guide: a preview of whatever you
-// point at, then every channel against the clock (the day scrolls sideways, a line marks now), then tonight's picks.
-// Any programme opens a sheet with what it's about.
+// Tenner TV: the week on the main Freeview channels, as a TV guide. A preview of whatever you point at; then every
+// channel as its own strip of programmes, sized by length, that runs on through the week (each scrolls on its own, as
+// Pluto TV's do); then the evening's picks. Any programme opens a sheet with what it's about. Listings: /api/day (the
+// Freeview files built every three hours, TVmaze only for a day they don't cover).
 (() => {
+  'use strict';
   const $ = (s) => document.querySelector(s);
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const hue = (s) => [...String(s)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const mouse = matchMedia('(hover: hover) and (pointer: fine)');
+
+  // ---------- time, in UK time. Formatters are made once: a week's guide formats tens of thousands of times ----------
   const TZ = 'Europe/London';
-  const ukDay = (t = Date.now()) => new Date(t).toLocaleDateString('en-CA', { timeZone: TZ });
-  const hm = (t) => new Date(t).toLocaleTimeString('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
-  const hour = (t) => { const [h, m] = hm(t).split(':').map(Number); return h + m / 60; };
-  const dayName = (d, o) => new Date(d + 'T12:00:00').toLocaleDateString('en-GB', o);
+  const F = {
+    day: new Intl.DateTimeFormat('en-CA', { timeZone: TZ }),
+    hm: new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit' }),
+  };
+  const named = new Map();   // day names, per day and style
+  const ukDay = (t = Date.now()) => F.day.format(t);
+  const hm = (t) => F.hm.format(t);
+  const hour = (t) => { const s = hm(t); return +s.slice(0, 2) + +s.slice(3, 5) / 60; };
+  const dayName = (d, o) => { const k = d + JSON.stringify(o); if (!named.has(k)) named.set(k, new Date(d + 'T12:00:00').toLocaleDateString('en-GB', o)); return named.get(k); };
   const ends = (x, next) => x.at + (x.rt ? x.rt * 60e3 : next ? next.at - x.at : 30 * 60e3);
   const length = (ms) => { const m = Math.round(ms / 60e3); return m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m} min`; };
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const minsLeft = (x, now) => Math.max(1, Math.round((x.end - now) / 60e3));
 
   const today = ukDay();
-  let days = Array.from({ length: 8 }, (_, i) => ukDay(Date.now() + i * 864e5));   // tonight and a week ahead, until the listings say otherwise
+  let days = Array.from({ length: 8 }, (_, i) => ukDay(Date.now() + i * 864e5));   // until the listings say which days they cover
   const q = new URLSearchParams(location.search).get('d');
-  // base: the first day shown; loaded: every day fetched so far, in order (the strips run on through them); day: the one in view
-  const state = { base: days.includes(q) ? q : today, day: null, data: null, loaded: new Map(), loading: null };
+  // base: the first day in the strips; loaded: every day fetched, in order; day: the one in view
+  const state = { base: days.includes(q) ? q : today, day: null, data: null, loaded: new Map(), loading: null, failedAt: 0 };
   const label = (d) => (d === today ? 'Tonight' : d === days[1] ? 'Tomorrow' : dayName(d, { weekday: 'short', day: 'numeric' }));
   const word = (d) => (d === today ? 'tonight' : d === days[1] ? 'tomorrow' : dayName(d, { weekday: 'long' }));
 
@@ -27,19 +38,21 @@
   drawDays();
   $('#days').addEventListener('click', (e) => { const b = e.target.closest('[data-d]'); if (b) goDay(b.dataset.d); });
 
+  // ---------- programmes ----------
   const shown = new Map();   // every drawn programme, by id: for the preview and the sheet
-  const reg = (x, ch, next) => { shown.set(String(x.id), { ...x, ch, end: ends(x, next) }); return `data-p="${x.id}"`; };
+  const reg = (x, ch, next) => { shown.set(String(x.id), { ...x, ch, end: ends(x, next) }); return `data-p="${esc(x.id)}"`; };
   const epLine = (x) => [x.s && x.n ? `Series ${x.s}, episode ${x.n}` : x.n ? `Episode ${x.n}` : '', x.ep].filter(Boolean).join(' · ');
   const art = (x) => (x.wide ? `<img src="${esc(x.wide)}" alt="" loading="lazy" decoding="async">`
     : x.poster ? `<img class="bed" src="${esc(x.poster)}" alt="" loading="lazy" decoding="async"><img class="pst" src="${esc(x.poster)}" alt="" loading="lazy" decoding="async">`
     : `<span class="ph" style="background:linear-gradient(150deg,hsl(${hue(x.t)} 45% 40%),hsl(${(hue(x.t) + 50) % 360} 55% 18%))">${esc(x.t)}</span>`);
+
+  // ---------- channels: logo tiles (our own, made for dark), or initials if a channel has none ----------
   const logo = (name) => state.data?.logos?.[name];
-  // a channel's badge: its logo in a small tile, or its initials (BBC One → B1, Channel 4 → C4) when there's no logo yet
   const initials = (n) => {
     if (/^\S{1,4}$/.test(n)) return n.toUpperCase();          // ITV1, E4, W, Dave
     if (/^\d/.test(n)) return n.slice(0, 2).toUpperCase();    // 5Star → 5S
     const w = n.replace(/\b(One|Two|Three|Four)\b/, (x) => ({ One: '1', Two: '2', Three: '3', Four: '4' }[x])).split(/\s+/), d = w.join(' ').match(/\d+$/);
-    return (d ? w[0][0] + d[0] : w.map((x) => x[0]).join('').slice(0, 3)).toUpperCase();   // BBC One → B1, More4 → M4, Sky Atlantic → SA
+    return (d ? w[0][0] + d[0] : w.map((x) => x[0]).join('').slice(0, 3)).toUpperCase();   // BBC One → B1, Sky Atlantic → SA
   };
   const badge = (n) => (logo(n) ? `<span class="ch-badge"><img src="${esc(logo(n))}" alt="" decoding="async" width="40" height="40"></span>`
     : `<span class="ch-badge ch-mono" style="--h:${hue(n)}" aria-hidden="true">${esc(initials(n))}</span>`);
@@ -53,15 +66,17 @@
     ITV4: ['ITVX', 'https://www.itv.com/watch?channel=itv4'], ITVBe: ['ITVX', 'https://www.itv.com/watch?channel=itvbe'],
     'Channel 4': ['Channel 4', 'https://www.channel4.com/now/C4'], E4: ['Channel 4', 'https://www.channel4.com/now/E4'], More4: ['Channel 4', 'https://www.channel4.com/now/M4'], Film4: ['Channel 4', 'https://www.channel4.com/now/F4'],
   };
-  const liveBtn = (x) => { const l = LIVE[x.ch]; if (!l || !(x.at <= Date.now() && Date.now() < x.end)) return '';
-    return `<a class="live-btn" href="${esc(l[1])}" target="_blank" rel="noopener"><i aria-hidden="true"></i>Watch live on ${esc(l[0])}</a>`; };
+  const isLive = (x, now = Date.now()) => x.at <= now && now < x.end;
+  const liveBtn = (x) => (LIVE[x.ch] && isLive(x) ? `<a class="live-btn" href="${esc(LIVE[x.ch][1])}" target="_blank" rel="noopener"><i aria-hidden="true"></i>Watch live on ${esc(LIVE[x.ch][0])}</a>` : '');
 
-  // ---------- loading: the first day, then each next one as the strips get near their end ----------
+  // ---------- loading: the first day, then each next one as the strips near their end ----------
   let ctl = null;
-  const fetchDay = (d, signal) => fetch(`/api/day?d=${d}`, { signal }).then(async (r) => { const j = await r.json(); if (!r.ok) throw new Error(j.error || r.status); return j; });
+  const fetchDay = (d, signal) => fetch(`/api/day?d=${d}`, { signal }).then(async (r) => {
+    const j = await r.json().catch(() => ({})); if (!r.ok || !Array.isArray(j.channels)) throw new Error(j.error || `HTTP ${r.status}`); return j;
+  });
   async function load() {
     $('#epg').innerHTML = '<div class="skel" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>';
-    ctl?.abort(); ctl = new AbortController(); state.day = null;
+    ctl?.abort(); ctl = new AbortController(); state.day = null; state.loading = null; state.failedAt = 0;
     try {
       const d = await fetchDay(state.base, ctl.signal);
       state.data = d; state.loaded = new Map([[state.base, d]]); shown.clear(); kept.clear();
@@ -70,29 +85,33 @@
     } catch (err) {
       if (err.name === 'AbortError') return;
       $('#picksSec').hidden = true;
-      $('#epg').innerHTML = '<div class="empty"><h3>The listings didn’t load</h3><p>Check your connection, then try again in a moment.</p></div>';
+      $('#epg').innerHTML = '<div class="empty"><h3>The listings didn’t load</h3><p>Check your connection, then <button type="button" class="retry" id="retry">try again</button>.</p></div>';
+      $('#retry').addEventListener('click', load);
       preview(null);
     }
   }
-  // the next day, added to the end of every strip (once at a time; nothing past a week ahead)
+  // the next day, added to the end of every strip: one at a time, nothing past the last day, and after a failure a
+  // calm wait of 20 seconds before trying again (never a fetch per scroll event)
   function loadNext() {
     if (state.loading) return state.loading;
+    if (Date.now() - state.failedAt < 20e3) return Promise.resolve(false);
     const last = [...state.loaded.keys()].at(-1), next = days[days.indexOf(last) + 1];
-    if (!next) return Promise.resolve(false);
-    state.loading = fetchDay(next).then((d) => { state.loaded.set(next, d); appendDay(next, d); return true; })
-      .catch(() => false).finally(() => { state.loading = null; });
+    if (!next || !state.data) return Promise.resolve(false);
+    state.loading = fetchDay(next).then((d) => { if (!state.loaded.has(next)) { state.loaded.set(next, d); appendDay(next, d); } return true; })
+      .catch(() => { state.failedAt = Date.now(); return false; }).finally(() => { state.loading = null; });
     return state.loading;
   }
-  // a day pill: scroll every strip to that day (fetching up to it first); a day before the first one starts afresh
+  // a day pill: every strip to that day (fetching up to it first); a day before the first one starts afresh
   async function goDay(d) {
-    if (!state.loaded.size || d < state.base) { state.base = d; return load(); }
-    while (!state.loaded.has(d)) if (!(await loadNext())) return;
+    if (!state.data || d < state.base) { state.base = d; return load(); }
+    while (!state.loaded.has(d)) { state.failedAt = 0; if (!(await loadNext())) return; }
     kept.clear(); document.querySelectorAll('.strip').forEach((st) => jumpStrip(st, true, d)); setDay(d);
   }
   // the day in view: the pills, the headline, the address and the picks follow it
   function setDay(d) {
     if (!d || d === state.day) return; state.day = d;
-    document.querySelectorAll('#days button').forEach((b) => (b.dataset.d === d ? b.setAttribute('aria-current', 'date') : b.removeAttribute('aria-current')));
+    for (const b of document.querySelectorAll('#days button')) b.dataset.d === d ? b.setAttribute('aria-current', 'date') : b.removeAttribute('aria-current');
+    $(`#days [data-d="${d}"]`)?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
     const u = new URL(location.href); d === today ? u.searchParams.delete('d') : u.searchParams.set('d', d); history.replaceState(null, '', u);
     $('#eye').textContent = dayName(d, { weekday: 'long', day: 'numeric', month: 'long' });
     $('#h1').innerHTML = `What’s on <em class="grad">${esc(word(d))}</em>.`;
@@ -111,17 +130,24 @@
     ['kids', 'Kids', /^(CBBC|CBeebies|CITV|POP|Tiny Pop)$/],
     ['news', 'News', /^(BBC News|Sky News|GB News|BBC Parliament)$/]];
   const FAV = 'tenner-tv-fav';
-  const favs = { all() { try { return JSON.parse(localStorage.getItem(FAV) || '[]'); } catch { return []; } }, set(l) { try { localStorage.setItem(FAV, JSON.stringify(l)); } catch {} } };
+  const favs = {
+    all() { try { const l = JSON.parse(localStorage.getItem(FAV) || '[]'); return Array.isArray(l) ? l.filter((x) => typeof x === 'string') : []; } catch { return []; } },
+    set(l) { try { localStorage.setItem(FAV, JSON.stringify(l)); } catch {} },
+  };
   let cat = 'all';
   function drawCats() {
     const names = state.data.channels.map((c) => c.name), mine = favs.all();
     const live = CATS.filter(([k, , re]) => k === 'all' || (k === 'mine' ? mine.some((n) => names.includes(n)) : names.some((n) => re.test(n))));
     if (!live.some(([k]) => k === cat)) cat = 'all';
-    $('#cats').innerHTML = live.length > 2 ? live.map(([k, l]) => `<button type="button" role="radio" data-cat="${k}" aria-checked="${k === cat}">${esc(l)}</button>`).join('') : '';
+    $('#cats').innerHTML = live.length > 2 ? live.map(([k, l]) => `<button type="button" role="radio" data-cat="${k}" aria-checked="${k === cat}" tabindex="${k === cat ? 0 : -1}">${esc(l)}</button>`).join('') : '';
   }
-  $('#cats').addEventListener('click', (e) => { const b = e.target.closest('[data-cat]'); if (!b) return; cat = b.dataset.cat; drawCats(); drawGuide(true); });
+  $('#cats').addEventListener('click', (e) => { const b = e.target.closest('[data-cat]'); if (!b || b.dataset.cat === cat) return; cat = b.dataset.cat; drawCats(); drawGuide(true); $(`[data-cat="${cat}"]`)?.focus({ preventScroll: true }); });
+  $('#cats').addEventListener('keydown', (e) => {   // a radio group: the arrows move between categories
+    if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return; e.preventDefault();
+    const l = [...$('#cats').children], i = l.findIndex((b) => b.dataset.cat === cat), n = l[(i + (e.key === 'ArrowRight' ? 1 : -1) + l.length) % l.length]; n?.click();
+  });
   const star = (on) => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.5l-5.1 2.7 1-5.6-4.1-4 5.7-.8z" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>`;
-  document.addEventListener('click', (e) => {
+  $('#epg').addEventListener('click', (e) => {
     const b = e.target.closest('.ch[data-ch]'); if (!b) return;
     const n = b.dataset.ch, l = favs.all(), on = !l.includes(n);
     favs.set(on ? [...l, n] : l.filter((x) => x !== n));
@@ -130,62 +156,54 @@
   });
 
   // ---------- the guide ----------
-  // each channel is its own strip of programmes, sized by length (a minute is --px pixels), scrolled on its own;
-  // each starts at what's on now (today) or around 7pm (another day)
-  const px = () => parseFloat(getComputedStyle($('#epg')).getPropertyValue('--px')) || 5;
-  const kept = new Map();   // where you'd scrolled each channel to, kept when the guide is redrawn (a category, a pin)
+  const px = () => parseFloat(getComputedStyle($('#epg')).getPropertyValue('--px')) || 5;   // a minute's width
+  const kept = new Map();   // where each channel was scrolled to, kept when the guide is redrawn (a category, a pin)
   function drawGuide(keep) {
+    if (!state.data) return;
     const mine = favs.all(), re = CATS.find(([k]) => k === cat)?.[2];
     const chans = state.data.channels.filter((c) => c.items.length && (cat === 'mine' ? mine.includes(c.name) : re.test(c.name)))
       .sort((a, b) => (mine.includes(b.name) ? 1 : 0) - (mine.includes(a.name) ? 1 : 0));   // pinned first, otherwise as they come
-    if (!chans.length) { $('#epg').innerHTML = cat !== 'all' ? '<div class="empty"><h3>None of these channels today</h3><p>Try another category, or All channels.</p></div>'
-      : '<div class="empty"><h3>Nothing listed yet</h3><p>Listings for this day haven’t been published. Try a nearer day.</p></div>'; preview(null); return; }
-    const now = Date.now();
-    $('#epg').innerHTML = `<div class="rows" role="list">${chans.map((c) => `<div class="crow" role="listitem">
+    if (!chans.length) {
+      $('#epg').innerHTML = cat !== 'all' ? '<div class="empty"><h3>None of these channels today</h3><p>Try another category, or All channels.</p></div>'
+        : '<div class="empty"><h3>Nothing listed yet</h3><p>Listings for this day haven’t been published. Try a nearer day.</p></div>';
+      preview(null); return;
+    }
+    const now = Date.now(), m = px(), loaded = [...state.loaded];
+    $('#epg').innerHTML = `<div class="rows">${chans.map((c) => `<div class="crow">
       <button type="button" class="ch" data-ch="${esc(c.name)}" aria-pressed="${mine.includes(c.name)}"
-          aria-label="${esc(`${c.name}: ${mine.includes(c.name) ? 'pinned to the top, tap to unpin' : 'tap to pin to the top'}`)}">${badge(c.name)}<span class="ch-name">${esc(c.name)}</span>${star(mine.includes(c.name))}</button>
-      <div class="strip" data-strip="${esc(c.name)}" aria-label="${esc(`${c.name}, day by day`)}">${[...state.loaded].map(([d, day], i) => dayBlocks(c.name, d, day, i > 0, now)).join('')}</div></div>`).join('')}</div>`;
-    for (const st of document.querySelectorAll('.strip')) {
-      st.addEventListener('scroll', () => { kept.set(st.dataset.strip, st.scrollLeft); queueEdge(st); }, { passive: true });
+        aria-label="${esc(`${c.name}: ${mine.includes(c.name) ? 'pinned to the top. Press to unpin' : 'press to pin to the top'}. Arrow right for its programmes`)}">${badge(c.name)}<span class="ch-name">${esc(c.name)}</span>${star(mine.includes(c.name))}</button>
+      <div class="strip" data-strip="${esc(c.name)}" role="group" aria-label="${esc(`${c.name}, through the week`)}">${loaded.map(([d, day], i) => dayBlocks(c.name, d, day, i > 0, now, m)).join('')}</div></div>`).join('')}</div>`;
+    for (const st of $('#epg').querySelectorAll('.strip')) {
       if (keep && kept.has(st.dataset.strip)) st.scrollLeft = kept.get(st.dataset.strip); else jumpStrip(st, false, state.base);
       edges(st);
     }
     // the preview starts on what's on now on the first channel (or the first thing this evening)
-    const start = [...shown.values()].find((x) => x.ch === chans[0].name && x.at <= now && now < x.end)
-      || [...shown.values()].find((x) => x.ch === chans[0].name && hour(x.at) >= 19) || [...shown.values()][0];
-    preview(start);
+    const first = chans[0].name, all = [...shown.values()];
+    preview(all.find((x) => x.ch === first && isLive(x, now)) || all.find((x) => x.ch === first && hour(x.at) >= 19) || all[0], true);
   }
-  // one channel's programmes for one day (with a marker first, from the second day on)
-  function dayBlocks(name, d, day, mark, now) {
-    const items = day.channels.find((c) => c.name === name)?.items || [], m = px();
-    return (mark ? `<span class="daymark" data-day="${d}" aria-hidden="true"><b>${esc(dayName(d, { weekday: 'short' }))}</b>${esc(dayName(d, { day: 'numeric', month: 'short' }))}</span>` : '')
+  // one channel's programmes for one day (with a marker first, from the second day on). Blocks aren't tab stops: the
+  // channel buttons are, and the arrow keys move around the grid from there (see "keys" below)
+  function dayBlocks(name, d, day, mark, now, m) {
+    const items = day.channels.find((c) => c.name === name)?.items || [], dn = dayName(d, { weekday: 'long' });
+    return (mark ? `<span class="daymark" aria-hidden="true"><b>${esc(dayName(d, { weekday: 'short' }))}</b>${esc(dayName(d, { day: 'numeric', month: 'short' }))}</span>` : '')
       + items.map((x, j) => {
-        const end = ends(x, items[j + 1]), live = x.at <= now && now < end, past = end <= now;
+        const end = ends(x, items[j + 1]), live = x.at <= now && now < end, past = end <= now, t = hm(x.at);
         const p = live ? Math.round(((now - x.at) / (end - x.at)) * 100) : 0;
-        return `<button type="button" class="blk${live ? ' live' : past ? ' past' : ''}" style="width:${Math.max(150, ((end - x.at) / 60e3) * m)}px${live ? `;--p:${p}%` : ''}" ${reg(x, name, items[j + 1])} data-day="${d}"
-          aria-label="${esc(`${name}, ${dayName(d, { weekday: 'long' })} ${hm(x.at)}: ${x.t}`)}"><span class="bi"><b>${x.isNew ? '<i class="new">New</i>' : ''}${esc(x.t)}</b><small>${live ? `Now · ${Math.max(1, Math.round((end - now) / 60e3))} min left` : hm(x.at)}</small></span></button>`;
+        return `<button type="button" tabindex="-1" class="blk${live ? ' live' : past ? ' past' : ''}" style="width:${Math.max(150, Math.round(((end - x.at) / 60e3) * m))}px${live ? `;--p:${p}%` : ''}" ${reg(x, name, items[j + 1])} data-day="${d}"
+          aria-label="${esc(`${name}, ${dn} ${t}: ${x.t}${x.isNew ? ', new' : ''}`)}"><span class="bi"><b>${x.isNew ? '<i class="new">New</i>' : ''}${esc(x.t)}</b><small>${live ? `Now · ${Math.max(1, Math.round((end - now) / 60e3))} min left` : t}</small></span></button>`;
       }).join('');
   }
   // a newly fetched day, added to the end of every strip without moving anything
   function appendDay(d, day) {
-    const now = Date.now();
-    for (const st of document.querySelectorAll('.strip')) { st.insertAdjacentHTML('beforeend', dayBlocks(st.dataset.strip, d, day, true, now)); st._b = null; }
+    const now = Date.now(), m = px();
+    for (const st of $('#epg').querySelectorAll('.strip')) { st.insertAdjacentHTML('beforeend', dayBlocks(st.dataset.strip, d, day, true, now, m)); st._b = null; }
   }
-  // as a strip scrolls: the next day loads before you reach the end, and the day in view becomes the page's day
-  const nearEnd = (st) => st.scrollLeft + st.clientWidth > st.scrollWidth - 1500;
-  let dayQ = 0;
-  document.addEventListener('scroll', (e) => {
-    const st = e.target; if (!(st instanceof Element) || !st.classList.contains('strip')) return;
-    if (nearEnd(st)) loadNext();
-    if (!dayQ) dayQ = requestAnimationFrame(() => { dayQ = 0; const k = blocksOf(st).length && blockAt(st, st.scrollLeft + 40); if (k) setDay(k.b.dataset.day); });
-  }, { capture: true, passive: true });
 
-  // the words of a programme that runs off a strip's left edge start at the edge, so you can always read it. Only the
-  // block at the edge changes (found by binary search over the strip's blocks), so scrolling stays smooth all week.
-  const queued = new Set(), atEdge = new WeakMap();
-  const queueEdge = (st) => { if (queued.has(st)) return; queued.add(st); requestAnimationFrame(() => { queued.delete(st); edges(st); }); };
+  // ---------- scrolling a strip: keep its title readable at the edge, load the next day before the end, follow the day ----------
+  // Only the block at the edge is touched (found by binary search), and the work is done once a frame
   const blocksOf = (st) => st._b || (st._b = [...st.querySelectorAll('.blk')].map((b) => ({ b, l: b.offsetLeft, w: b.offsetWidth })));
-  const blockAt = (st, x) => { const l = blocksOf(st); let lo = 0, hi = l.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (l[m].l - l[0].l <= x) lo = m; else hi = m - 1; } return l[lo]; };
+  const blockAt = (st, x) => { const l = blocksOf(st); if (!l.length) return null; let lo = 0, hi = l.length - 1; while (lo < hi) { const k = (lo + hi + 1) >> 1; if (l[k].l - l[0].l <= x) lo = k; else hi = k - 1; } return l[lo]; };
+  const atEdge = new WeakMap();
   function edges(st) {
     const l = blocksOf(st); if (!l.length) return;
     const x = st.scrollLeft, k = blockAt(st, x), prev = atEdge.get(st), rel = k.l - l[0].l;
@@ -193,48 +211,95 @@
     if (prev && prev !== k.b) prev.style.removeProperty('--off');
     if (off > 0) { k.b.style.setProperty('--off', `${off}px`); atEdge.set(st, k.b); } else { k.b.style.removeProperty('--off'); atEdge.delete(st); }
   }
+  const dirty = new Set(); let frame = 0;
+  $('#epg').addEventListener('scroll', (e) => {
+    const st = e.target; if (!st.classList?.contains('strip')) return;
+    kept.set(st.dataset.strip, st.scrollLeft); dirty.add(st);
+    if (!frame) frame = requestAnimationFrame(() => {
+      frame = 0;
+      for (const s of dirty) {
+        edges(s);
+        if (s.scrollLeft + s.clientWidth > s.scrollWidth - 1600) loadNext();
+        const k = blockAt(s, s.scrollLeft + 40); if (k) setDay(k.b.dataset.day);
+      }
+      dirty.clear();
+    });
+  }, { capture: true, passive: true });
+  // the offsets are measured once and kept; a change of size (rotating a phone) measures again
+  // (cheaply: they're only marked to be measured again, the next time each strip is used)
+  let lastW = 0;
+  new ResizeObserver(([e]) => { const w = Math.round(e.contentRect.width); if (w === lastW) return; lastW = w; for (const st of $('#epg').querySelectorAll('.strip')) st._b = null; }).observe($('#epg'));
   // a strip to now (on today), or to the programme on at 7pm on day d
   function jumpStrip(st, smooth, d = state.day) {
-    const at = d === today ? Date.now() : null, blocks = [...st.querySelectorAll('.blk')];
-    const b = blocks.find((n) => { const x = shown.get(n.dataset.p); return at ? x.at <= at && at < x.end : n.dataset.day === d && (hour(x.at) >= 19 || hour(x.end) > 19); })
-      || (at ? blocks.find((n) => shown.get(n.dataset.p).at > at) : blocks.find((n) => n.dataset.day === d));
-    st.scrollTo({ left: b ? Math.max(0, b.offsetLeft - st.firstElementChild.offsetLeft) : 0, behavior: smooth && !reduce ? 'smooth' : 'auto' });
+    const at = d === today ? Date.now() : null, l = blocksOf(st); if (!l.length) return;
+    const pick = l.find(({ b }) => { const x = shown.get(b.dataset.p); return x && (at ? isLive(x, at) : b.dataset.day === d && (hour(x.at) >= 19 || hour(x.end) > 19)); })
+      || (at ? l.find(({ b }) => (shown.get(b.dataset.p)?.at || 0) > at) : l.find(({ b }) => b.dataset.day === d));
+    st.scrollTo({ left: pick ? Math.max(0, pick.l - l[0].l) : 0, behavior: smooth && !reduce ? 'smooth' : 'auto' });
   }
   $('#toNow').addEventListener('click', () => goDay(state.loaded.has(today) ? today : state.base));
 
-  // the preview: what you point at (or tab to), its artwork melting in from the right
-  let pvKey = null;
-  function preview(x) {
-    if (!x) { $('#pvLive').innerHTML = ''; $('#pvCh').innerHTML = '&nbsp;'; $('#pvT').textContent = ''; $('#pvSum').textContent = ''; $('#pvMeta').textContent = ''; $('#pvImg').hidden = true; return; }
+  // ---------- the keyboard: the channel buttons are the tab stops; the arrows move around the grid ----------
+  // → from a channel: into its strip, at what's in view. ←/→ in a strip: the programme before or after. ↑/↓: the
+  // channel above or below, at the programme on at the same time. Home/End: the strip's start or end.
+  function focusBlock(b) {
+    if (!b) return; const st = b.parentElement, l = blocksOf(st), first = l[0]?.l || 0, rel = b.offsetLeft - first;
+    b.focus({ preventScroll: true });
+    if (rel < st.scrollLeft || rel + b.offsetWidth > st.scrollLeft + st.clientWidth) st.scrollTo({ left: Math.max(0, rel - 12), behavior: reduce ? 'auto' : 'smooth' });
+  }
+  $('#epg').addEventListener('keydown', (e) => {
+    const b = e.target.closest('.blk'), ch = e.target.closest('.ch');
+    if (ch && e.key === 'ArrowRight') { e.preventDefault(); const st = ch.nextElementSibling; focusBlock(blockAt(st, st.scrollLeft + 8)?.b); return; }
+    if (!b) return;
+    const st = b.parentElement, row = st.closest('.crow');
+    const sib = (dir) => { let n = b; do n = dir > 0 ? n.nextElementSibling : n.previousElementSibling; while (n && !n.classList.contains('blk')); return n; };
+    const near = (r) => { const s = r?.querySelector('.strip'), x = shown.get(b.dataset.p); if (!s || !x) return null;
+      const l = blocksOf(s); return (l.find(({ b: n }) => { const y = shown.get(n.dataset.p); return y && y.at <= x.at && x.at < y.end; }) || l.find(({ b: n }) => (shown.get(n.dataset.p)?.at || 0) >= x.at) || l.at(-1))?.b; };
+    const go = { ArrowRight: () => sib(1), ArrowLeft: () => sib(-1) || row.querySelector('.ch'), ArrowDown: () => near(row.nextElementSibling), ArrowUp: () => near(row.previousElementSibling),
+      Home: () => blocksOf(st)[0]?.b, End: () => blocksOf(st).at(-1)?.b }[e.key];
+    if (!go) return; e.preventDefault();
+    const n = go(); if (n?.classList.contains('ch')) n.focus(); else focusBlock(n);
+  });
+
+  // ---------- the preview: what you point at (or move to), its artwork melting in from the right ----------
+  // Pointing settles for a moment first, so sweeping the mouse across the grid doesn't flick through pictures
+  let pvKey = null, pvT = 0;
+  function preview(x, immediate) {
+    clearTimeout(pvT);
+    if (!immediate) { pvT = setTimeout(() => preview(x, true), 110); return; }
+    if (!x) { for (const id of ['pvLive', 'pvSum', 'pvMeta', 'pvT']) $(`#${id}`).textContent = ''; $('#pvCh').innerHTML = '&nbsp;'; $('#pvImg').hidden = true; pvKey = null; return; }
     if (pvKey === x.id) return; pvKey = x.id;
-    const now = Date.now(), started = x.at <= now && now < x.end;
+    const t = Date.now(), started = isLive(x, t);
     $('#pvCh').innerHTML = logo(x.ch) ? `<img class="pv-logo" src="${esc(logo(x.ch))}" alt="${esc(x.ch)}">` : esc(x.ch);
     $('#pvT').textContent = x.t;
     $('#pvSum').textContent = x.sum || epLine(x) || (x.g || []).join(', ');
     $('#pvLive').innerHTML = liveBtn(x);
-    $('#pvMeta').textContent = [started ? `Started at ${hm(x.at)}` : `${x.end <= now ? 'Was on' : 'On'} at ${hm(x.at)}`, x.s && x.n ? `S${x.s} E${x.n}` : '', length(x.end - x.at), started ? `${Math.max(1, Math.round((x.end - now) / 60e3))} min left` : ''].filter(Boolean).join('  ·  ');
-    const img = $('#pvImg'), src = x.wide || x.poster;
+    $('#pvMeta').textContent = [started ? `Started at ${hm(x.at)}` : `${x.end <= t ? 'Was on' : `${x.at - t < 864e5 && ukDay(x.at) === today ? 'On' : dayName(ukDay(x.at), { weekday: 'long' })}`} at ${hm(x.at)}`,
+      x.s && x.n ? `S${x.s} E${x.n}` : '', length(x.end - x.at), started ? `${minsLeft(x, t)} min left` : ''].filter(Boolean).join('  ·  ');
+    const img = $('#pvImg'), src = x.wide || x.poster, guide = $('.guide');
     $('#pv').classList.toggle('poster', !x.wide && !!x.poster);
-    if (!src) { img.hidden = true; document.querySelector('.guide').style.removeProperty('--pv-img'); return; }
-    img.classList.remove('on'); img.onload = () => img.classList.add('on'); img.hidden = false; img.src = src;
-    document.querySelector('.guide').style.setProperty('--pv-img', `url("${src.replace(/["\\]/g, '')}")`);   // the wash behind the guide
+    if (!src) { img.hidden = true; img.removeAttribute('src'); guide.style.removeProperty('--pv-img'); return; }
+    if (img.getAttribute('src') === src) return;
+    img.classList.remove('on'); img.hidden = false;
+    img.onload = () => { if (img.getAttribute('src') !== src) return; img.classList.add('on'); guide.style.setProperty('--pv-img', `url("${src.replace(/["\\\n]/g, '')}")`); };   // the wash follows once it's here
+    img.onerror = () => { img.hidden = true; };
+    img.src = src;
   }
-  const over = (e) => { const b = e.target.closest('.blk, .pick'); if (b) preview(shown.get(b.dataset.p)); };
+  const over = (e) => { const b = e.target.closest?.('.blk, .pick'); if (b) preview(shown.get(b.dataset.p)); };
   document.addEventListener('pointerover', (e) => { if (e.pointerType === 'mouse') over(e); });
   document.addEventListener('focusin', over);
 
-  // tonight's picks: the evening's best on the main channels (not news or chat), one per show, in time order
+  // ---------- the evening's picks: the best on the main channels (never news, weather or the like), one per show ----------
   function drawPicks(d = state.day) {
     const data = state.loaded.get(d); if (!data) return;
-    const main = data.channels.slice(0, 10), seen = new Set(), list = [];
-    for (const c of main) c.items.forEach((x, j) => {
+    const seen = new Set(), list = [];
+    for (const c of data.channels.slice(0, 10)) c.items.forEach((x, j) => {
       const h = hour(x.at); if (h < 19 || h > 22.5) return;
       const g = (x.g || []).join(' ') + ' ' + (x.type || '');
       const score = (x.r || 6.2) + (x.wide ? 1.4 : x.poster ? .8 : 0) + (x.sum ? .3 : 0) + (x.isNew ? .8 : 0) + (x.rt >= 45 ? .5 : 0) + (/Scripted|Documentary|Drama|Comedy/.test(g) ? .6 : 0)
         - (/News|Talk Show|Weather/.test(g) || /\b(News|Weather|Lottery|Teleshopping|Party Political|Regional)\b/i.test(x.t) ? 6 : 0);
       list.push({ x, c: c.name, next: c.items[j + 1], score });
     });
-    const picks = list.sort((a, b) => b.score - a.score).filter(({ x }) => !seen.has(x.show) && seen.add(x.show)).slice(0, 10).sort((a, b) => a.x.at - b.x.at);
+    const picks = list.sort((a, b) => b.score - a.score).filter(({ x }) => !seen.has(x.show || x.t) && seen.add(x.show || x.t)).slice(0, 10).sort((a, b) => a.x.at - b.x.at);
     $('#picksSec').hidden = picks.length < 3;
     $('#picksH').textContent = d === today ? 'Tonight’s picks' : d === days[1] ? 'Tomorrow’s picks' : `${dayName(d, { weekday: 'long' })}’s picks`;
     $('#picks').innerHTML = picks.map(({ x, c, next }) => `<li><button type="button" class="pick" ${reg(x, c, next)}>
@@ -242,39 +307,80 @@
       <b>${esc(x.t)}</b><small>${esc(epLine(x) || (x.g || []).join(', ') || c)}</small></button></li>`).join('');
   }
 
-  // ---------- the sheet ----------
-  const sheet = $('#sheet');
+  // ---------- the sheet: what a programme's about. Esc, ×, a tap outside or (on phones) a swipe down closes it ----------
+  const sheet = $('#sheet'), shIn = $('#shIn');
   document.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-p]'); if (!b) return;
+    const b = e.target.closest('[data-p]'); if (!b || sheet.contains(b)) return;
     const x = shown.get(b.dataset.p); if (!x) return;
-    preview(x);
-    $('#shIn').innerHTML = `<div class="sh-art${!x.wide && x.poster ? ' sh-poster' : ''}">${x.wide || x.poster ? art(x) : ''}
+    preview(x, true);
+    const when = `${esc(x.ch)} · ${esc(dayName(ukDay(x.at), { weekday: 'long', day: 'numeric', month: 'long' }))} · ${hm(x.at)}–${hm(x.end)} · ${length(x.end - x.at)}`;
+    shIn.innerHTML = `<div class="sh-grab" aria-hidden="true"></div><div class="sh-art${!x.wide && x.poster ? ' sh-poster' : ''}">${x.wide || x.poster ? art(x) : ''}
         <button type="button" class="sh-x" id="shX" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></div>
-      <div class="sh-body"><p class="sh-when">${esc(x.ch)} · ${esc(dayName(ukDay(x.at), { weekday: 'long', day: 'numeric', month: 'long' }))} · ${hm(x.at)}–${hm(x.end)} · ${length(x.end - x.at)}</p>
-        <h2 id="shT">${esc(x.t)}</h2>${epLine(x) ? `<p class="sh-ep">${esc(epLine(x))}</p>` : ''}
-        ${x.sum ? `<p class="sh-sum">${esc(x.sum)}</p>` : '<p class="sh-sum" style="color:var(--label2)">No description yet.</p>'}
-        ${x.g?.length ? `<ul class="sh-tags">${(x.g || []).map((g) => `<li>${esc(g)}</li>`).join('')}${x.r ? `<li>★ ${x.r.toFixed(1)}</li>` : ''}</ul>` : ''}
+      <div class="sh-body"><p class="sh-when">${when}</p>
+        <h2 id="shT">${x.isNew ? '<i class="new">New</i>' : ''}${esc(x.t)}</h2>${epLine(x) ? `<p class="sh-ep">${esc(epLine(x))}</p>` : ''}
+        ${x.sum ? `<p class="sh-sum">${esc(x.sum)}</p>` : '<p class="sh-sum sh-none">No description yet.</p>'}
+        ${x.g?.length ? `<ul class="sh-tags">${x.g.map((g) => `<li>${esc(g)}</li>`).join('')}${x.r ? `<li>★ ${x.r.toFixed(1)}</li>` : ''}</ul>` : ''}
         <div class="sh-acts">${liveBtn(x)}${x.url ? `<a class="sh-link" href="${esc(x.url)}" target="_blank" rel="noopener">More on TVmaze</a>` : ''}</div>
-        ${LIVE[x.ch] && liveBtn(x) ? '<p class="sh-note">Opens the channel’s own player. You need a TV licence to watch live TV in the UK.</p>' : ''}</div>`;
-    sheet.showModal(); $('#shX').focus();
+        ${liveBtn(x) ? '<p class="sh-note">Opens the channel’s own player. You need a TV licence to watch live TV in the UK.</p>' : ''}</div>`;
+    shIn.scrollTop = 0; sheet.style.removeProperty('transform');
+    if (!sheet.open) sheet.showModal();
+    $('#shX').focus({ preventScroll: true });
   });
-  sheet.addEventListener('click', (e) => { if (e.target === sheet || e.target.closest('#shX')) sheet.close(); });   // tap outside, or ×
+  sheet.addEventListener('click', (e) => { if (e.target === sheet || e.target.closest('#shX')) closeSheet(); });
+  sheet.addEventListener('cancel', (e) => { e.preventDefault(); closeSheet(); });   // Esc: the same gentle close
+  function closeSheet() {
+    if (!sheet.open || sheet.classList.contains('closing')) return;
+    if (reduce) { sheet.close(); return; }
+    let finished = false;
+    const done = () => { if (finished) return; finished = true; sheet.classList.remove('closing', 'pulled'); sheet.style.removeProperty('transform'); sheet.style.removeProperty('transition'); sheet.close(); };
+    if (sheet.style.transform) {   // pulled down by a finger: carry on from there, off the bottom
+      sheet.style.transition = 'transform .28s cubic-bezier(.4, 0, 1, 1)'; sheet.style.transform = 'translateY(110%)';
+      sheet.classList.add('closing', 'pulled');
+    } else sheet.classList.add('closing');
+    setTimeout(done, 320);
+  }
+  // swipe down to close (phones), as an iOS sheet does: when its content is at the top, a downward drag moves the
+  // sheet with the finger (and stops the page scrolling); let go far enough, or with a flick, and it goes
+  let pull = null;
+  sheet.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1 || e.target.closest('a')) { pull = null; return; }
+    pull = { y: e.touches[0].clientY, t: performance.now(), dy: 0, on: false };
+  }, { passive: true });
+  sheet.addEventListener('touchmove', (e) => {
+    if (!pull) return;
+    const dy = e.touches[0].clientY - pull.y;
+    if (!pull.on) { if (dy > 6 && shIn.scrollTop <= 0) { pull.on = true; pull.y += 6; } else { if (Math.abs(dy) > 6) pull = null; return; } }
+    e.preventDefault();
+    pull.dy = Math.max(0, e.touches[0].clientY - pull.y);
+    sheet.style.transition = 'none'; sheet.style.transform = `translateY(${pull.dy}px)`;
+  }, { passive: false });
+  const letGo = () => {
+    if (!pull?.on) { pull = null; return; }
+    const fast = pull.dy / Math.max(1, performance.now() - pull.t) > .5, far = pull.dy > Math.min(150, sheet.offsetHeight * .28);
+    sheet.style.removeProperty('transition');
+    if (far || fast) closeSheet(); else sheet.style.removeProperty('transform');
+    pull = null;
+  };
+  sheet.addEventListener('touchend', letGo); sheet.addEventListener('touchcancel', letGo);
 
   // ---------- start, and keep "now" moving ----------
-  // the days the Freeview listings cover (a week or so); the guide runs through all of them
+  // the days the Freeview listings cover (a week or so); the strips run through all of them
   fetch('/data/meta.json').then((r) => (r.ok ? r.json() : null)).then((m) => {
-    const have = (m?.days || []).filter((d) => d >= today);
-    if (have.length >= 5) { days = have; drawDays(); }
+    const have = (m?.days || []).filter((d) => /^\d{4}-\d\d-\d\d$/.test(d) && d >= today);
+    if (have.length >= 5) { days = have; if (!days.includes(state.base)) state.base = today; drawDays(); }
   }).catch(() => {}).finally(load);
+  // every minute: today's programmes move on (live, past, minutes left); past midnight, a new day
   setInterval(() => {
-    if (!state.loaded.has(today)) return;
+    if (ukDay() !== today) { location.reload(); return; }
+    if (!state.loaded.has(today) || document.hidden) return;
     const now = Date.now();
-    document.querySelectorAll(`.blk[data-day="${today}"]`).forEach((b) => {   // only today's can be live
-      const x = shown.get(b.dataset.p); if (!x) return;
-      const live = x.at <= now && now < x.end; b.classList.toggle('live', live); b.classList.toggle('past', x.end <= now);
-      if (live) { b.style.setProperty('--p', `${Math.round(((now - x.at) / (x.end - x.at)) * 100)}%`); b.querySelector('small').textContent = `Now · ${Math.max(1, Math.round((x.end - now) / 60e3))} min left`; }
-      else b.querySelector('small').textContent = hm(x.at);
-    });
+    for (const b of $('#epg').querySelectorAll(`.blk[data-day="${today}"]`)) {
+      const x = shown.get(b.dataset.p); if (!x) continue;
+      const live = isLive(x, now), small = b.querySelector('small');
+      b.classList.toggle('live', live); b.classList.toggle('past', x.end <= now);
+      if (live) { b.style.setProperty('--p', `${Math.round(((now - x.at) / (x.end - x.at)) * 100)}%`); small.textContent = `Now · ${minsLeft(x, now)} min left`; }
+      else if (small.textContent.startsWith('Now')) small.textContent = hm(x.at);
+    }
   }, 60e3);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden && ukDay() !== today) location.reload(); });   // past midnight: a new day
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && ukDay() !== today) location.reload(); });
 })();

@@ -25,7 +25,7 @@ const when = (s) => { const m = s.match(/^(\d{4})(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)\
   const [, y, mo, d, h, mi, se, sg, oh, om] = m; return Date.UTC(+y, mo - 1, +d, +h, +mi, +se) - (sg === '+' ? 1 : -1) * (oh * 3600e3 + om * 60e3); };
 
 export function build(xml, channels, now = Date.now()) {
-  const byId = new Map(channels.map((c) => [c.id, c])), days = new Map();
+  const byId = new Map(channels.map((c) => [c.id, c])), days = new Map(), seen = new Set();
   const re = /<programme channel="([^"]+)" start="([^"]+)" stop="([^"]+)"[^>]*>([\s\S]*?)<\/programme>/g;
   const from = now - 864e5, to = now + 8 * 864e5;
   for (const m of xml.matchAll(re)) {
@@ -40,6 +40,7 @@ export function build(xml, channels, now = Date.now()) {
       s: ep?.[1] ? +ep[1] : null, n: ep?.[2] ? +ep[2] : null, sum: desc || null,
       wide: body.match(/<icon src="(https:\/\/[^"]+)"/)?.[1] || null, g: [], isNew: /<premiere/.test(body) || /^New:/i.test(raw) || undefined };
     if (item.sum && item.sum.length > 420) item.sum = item.sum.slice(0, 400).replace(/\s+\S*$/, '') + '…';
+    if (seen.has(item.id)) continue; seen.add(item.id);   // the feed sometimes lists a programme twice
     const d = ukDay(at);
     if (!days.has(d)) days.set(d, new Map());
     const day = days.get(d); if (!day.has(c.name)) day.set(c.name, []); day.get(c.name).push(item);
