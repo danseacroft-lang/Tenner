@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>What’s on UK TV tonight · Tenner TV</title>
+  <meta name="description" content="What’s on UK TV tonight: every channel, now and next, and the whole evening, beautifully laid out.">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="dark light">
+  <link rel="icon" href="favicon.ico" sizes="48x48">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="Tenner TV">
+  <meta property="og:title" content="What’s on UK TV tonight · Tenner TV">
+  <meta property="og:description" content="Every UK channel, now and next, and the whole evening.">
+  <meta property="og:image" content="https://tenner.stream/og.jpg">
+  <link rel="preconnect" href="https://static.tvmaze.com">
+  <link rel="stylesheet" href="tv.css?v=1.0.0">
+</head>
+<body>
+  <header class="bar">
+    <a class="brand" href="/" aria-label="Tenner TV, tonight"><img src="logo.svg" alt="" width="32" height="32"><span>Tenner <b>TV</b></span></a>
+    <a class="bar-link" href="https://tenner.stream/">Streaming top 10<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <p class="eye" id="eye">&nbsp;</p>
+      <h1 id="h1">What’s on <em class="grad">tonight</em>.</h1>
+      <p class="lede">Every UK channel, what’s on now and next, and the whole evening. Tap anything to see what it’s about.</p>
+      <nav class="days" id="days" aria-label="Choose a day"></nav>
+    </section>
+
+    <section class="sec" id="picksSec" aria-labelledby="picksH" hidden>
+      <div class="sec-hd"><h2 id="picksH">Tonight’s picks</h2><p id="picksP">The best of the evening on the main channels</p></div>
+      <ul class="picks" id="picks"></ul>
+    </section>
+
+    <section class="sec" id="nowSec" aria-labelledby="nowH" hidden>
+      <div class="sec-hd"><h2 id="nowH">On now</h2><p>And what’s next, channel by channel</p></div>
+      <ul class="now" id="now"></ul>
+    </section>
+
+    <section class="sec" id="gridSec" aria-labelledby="gridH">
+      <div class="sec-hd sec-hd-row"><div><h2 id="gridH">The evening, channel by channel</h2><p id="gridP">From 6pm</p></div>
+        <div class="seg" role="radiogroup" aria-label="How much of the day">
+          <button type="button" role="radio" data-span="eve" aria-checked="true">Evening</button>
+          <button type="button" role="radio" data-span="all" aria-checked="false">All day</button>
+        </div></div>
+      <div class="chans" id="chans"><div class="skel" aria-hidden="true"><i></i><i></i><i></i><i></i></div></div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>Listings from <a href="https://www.tvmaze.com/" rel="noopener">TVmaze</a>, shared under <a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="noopener license">CC BY-SA 4.0</a>. Times are UK time.</p>
+    <p>Part of <a href="https://tenner.stream/">Tenner</a>, the UK’s streaming top 10, every hour.</p>
+  </footer>
+
+  <dialog class="sheet" id="sheet" aria-labelledby="shT">
+    <div class="sh-in" id="shIn"></div>
+  </dialog>
+
+  <script src="tv.js?v=1.0.0" defer></script>
+</body>
+</html>

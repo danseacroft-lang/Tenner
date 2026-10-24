@@ -1,0 +1,17 @@
+# Tenner TV (tv.tenner.stream): what's on UK TV tonight. One Worker: the page (public/) and a small endpoint (src/index.js)
+# that fetches a day's UK listings from TVmaze, trims them and keeps them at the edge for half an hour. No keys needed.
+# Deployed by .github/workflows/tv.yml whenever tv/ changes.
+name = "tenner-tv"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+[assets]
+directory = "public"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+# tv.tenner.stream, made by Cloudflare when this deploys (the deploy workflow drops this if the token can't, and says so)
+[[routes]]
+pattern = "tv.tenner.stream"
+custom_domain = true

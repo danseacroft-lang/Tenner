@@ -1,0 +1,43 @@
+# Deploys Tenner TV (tv/) to Cloudflare Workers, at tv.tenner.stream, whenever it changes (or when run by hand).
+# Uses the same two GitHub secrets as the search API: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
+name: Deploy Tenner TV
+on:
+  push:
+    branches: [main]
+    paths: ['tv/**', '.github/workflows/tv.yml']
+  workflow_dispatch:
+concurrency: { group: tv, cancel-in-progress: true }
+permissions:
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check the Cloudflare secrets are there
+        id: ready
+        env: { T: '${{ secrets.CLOUDFLARE_API_TOKEN }}', A: '${{ secrets.CLOUDFLARE_ACCOUNT_ID }}' }
+        run: |
+          if [ -z "$T" ] || [ -z "$A" ]; then echo "::notice title=Tenner TV not deployed::Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID under Settings > Secrets and variables > Actions."; echo "go=no" >> "$GITHUB_OUTPUT"; else echo "go=yes" >> "$GITHUB_OUTPUT"; fi
+      # first with tv.tenner.stream; if the token isn't allowed to set up the domain, the Worker still goes up (on its
+      # workers.dev address) and the run says how to connect the domain by hand
+      - name: Deploy to Cloudflare, at tv.tenner.stream
+        id: full
+        if: steps.ready.outputs.go == 'yes'
+        continue-on-error: true
+        uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd   # v3.15.0, pinned to the exact release
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: tv
+      - name: Deploy without the domain
+        if: steps.ready.outputs.go == 'yes' && steps.full.outcome == 'failure'
+        working-directory: tv
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          sed -i '/^\[\[routes\]\]/,$d' wrangler.toml
+          npx --yes wrangler@4 deploy
+          echo "::warning title=Connect tv.tenner.stream::Tenner TV is live on its workers.dev address. To put it on tv.tenner.stream: Cloudflare dashboard > Workers & Pages > tenner-tv > Settings > Domains & Routes > Add > Custom domain > tv.tenner.stream. (Or give the API token 'Zone: Workers Routes: Edit' and 'Zone: DNS: Edit' for tenner.stream and run this again.)"
