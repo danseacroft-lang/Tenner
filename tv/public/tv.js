@@ -142,7 +142,7 @@
     const now = Date.now(), started = x.at <= now && now < x.end;
     $('#pvCh').innerHTML = logo(x.ch) ? `<img class="pv-logo" src="${esc(logo(x.ch))}" alt="${esc(x.ch)}">` : esc(x.ch);
     $('#pvT').textContent = x.t;
-    $('#pvSum').textContent = x.sum || epLine(x) || x.g.join(', ');
+    $('#pvSum').textContent = x.sum || epLine(x) || (x.g || []).join(', ');
     $('#pvMeta').textContent = [started ? `Started at ${hm(x.at)}` : `${x.end <= now ? 'Was on' : 'On'} at ${hm(x.at)}`, x.s && x.n ? `S${x.s} E${x.n}` : '', length(x.end - x.at), started ? `${Math.max(1, Math.round((x.end - now) / 60e3))} min left` : ''].filter(Boolean).join('  ·  ');
     const img = $('#pvImg'), src = x.wide || x.poster;
     $('#pv').classList.toggle('poster', !x.wide && !!x.poster);
@@ -159,7 +159,7 @@
     const main = state.data.channels.slice(0, 10), seen = new Set(), list = [];
     for (const c of main) c.items.forEach((x, j) => {
       const h = hour(x.at); if (h < 19 || h > 22.5) return;
-      const g = x.g.join(' ') + ' ' + (x.type || '');
+      const g = (x.g || []).join(' ') + ' ' + (x.type || '');
       const score = (x.r || 6.2) + (x.wide ? 1.4 : x.poster ? .8 : 0) + (x.sum ? .3 : 0) + (/Scripted|Documentary|Drama|Comedy/.test(g) ? .6 : 0) - (/News|Talk Show|Weather/.test(g) ? 4 : 0);
       list.push({ x, c: c.name, next: c.items[j + 1], score });
     });
@@ -168,7 +168,7 @@
     $('#picksH').textContent = state.day === today ? 'Tonight’s picks' : state.day === days[1] ? 'Tomorrow’s picks' : `${dayName(state.day, { weekday: 'long' })}’s picks`;
     $('#picks').innerHTML = picks.map(({ x, c, next }) => `<li><button type="button" class="pick" ${reg(x, c, next)}>
       <span class="pick-art">${art(x)}<span class="chip">${hm(x.at)} · ${esc(c)}</span></span>
-      <b>${esc(x.t)}</b><small>${esc(epLine(x) || x.g.join(', ') || c)}</small></button></li>`).join('');
+      <b>${esc(x.t)}</b><small>${esc(epLine(x) || (x.g || []).join(', ') || c)}</small></button></li>`).join('');
   }
 
   // ---------- the sheet ----------
@@ -182,7 +182,7 @@
       <div class="sh-body"><p class="sh-when">${esc(x.ch)} · ${esc(dayName(ukDay(x.at), { weekday: 'long', day: 'numeric', month: 'long' }))} · ${hm(x.at)}–${hm(x.end)} · ${length(x.end - x.at)}</p>
         <h2 id="shT">${esc(x.t)}</h2>${epLine(x) ? `<p class="sh-ep">${esc(epLine(x))}</p>` : ''}
         ${x.sum ? `<p class="sh-sum">${esc(x.sum)}</p>` : '<p class="sh-sum" style="color:var(--label2)">No description yet.</p>'}
-        ${x.g.length ? `<ul class="sh-tags">${x.g.map((g) => `<li>${esc(g)}</li>`).join('')}${x.r ? `<li>★ ${x.r.toFixed(1)}</li>` : ''}</ul>` : ''}
+        ${x.g?.length ? `<ul class="sh-tags">${(x.g || []).map((g) => `<li>${esc(g)}</li>`).join('')}${x.r ? `<li>★ ${x.r.toFixed(1)}</li>` : ''}</ul>` : ''}
         ${x.url ? `<a class="sh-link" href="${esc(x.url)}" target="_blank" rel="noopener">More on TVmaze</a>` : ''}</div>`;
     sheet.showModal(); $('#shX').focus();
   });

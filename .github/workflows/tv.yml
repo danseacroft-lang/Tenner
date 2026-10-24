@@ -21,6 +21,21 @@ jobs:
         env: { T: '${{ secrets.CLOUDFLARE_API_TOKEN }}', A: '${{ secrets.CLOUDFLARE_ACCOUNT_ID }}' }
         run: |
           if [ -z "$T" ] || [ -z "$A" ]; then echo "::notice title=Tenner TV not deployed::Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID under Settings > Secrets and variables > Actions."; echo "go=no" >> "$GITHUB_OUTPUT"; else echo "go=yes" >> "$GITHUB_OUTPUT"; fi
+      # the shared copy of the listings lives in Workers KV: made the first time, found after that, bound for this deploy.
+      # If the token can't make it, Tenner TV still works (from the edge cache alone).
+      - name: Set up the listings store
+        if: steps.ready.outputs.go == 'yes'
+        continue-on-error: true
+        working-directory: tv
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          LIST=$(npx --yes wrangler@4 kv namespace list 2>/dev/null || true)
+          ID=$(printf '%s' "$LIST" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const a=JSON.parse(s.slice(s.indexOf("[")));const n=a.find(x=>/tenner-tv$/.test(x.title));console.log(n?n.id:"")}catch{console.log("")}})')
+          if [ -z "$ID" ]; then OUT=$(npx --yes wrangler@4 kv namespace create tenner-tv 2>&1 || true); ID=$(printf '%s' "$OUT" | grep -oE '[0-9a-f]{32}' | head -1); fi
+          if [ -n "$ID" ]; then printf '\n[[kv_namespaces]]\nbinding = "TV"\nid = "%s"\n' "$ID" >> wrangler.toml; echo "Listings store ready"
+          else echo "::warning title=Tenner TV's shared store is off::Couldn't make it. Give the Cloudflare API token 'Workers KV Storage: Edit'. Tenner TV still works without it."; fi
       # first with tv.tenner.stream; if the token isn't allowed to set up the domain, the Worker still goes up (on its
       # workers.dev address) and the run says how to connect the domain by hand
       - name: Deploy to Cloudflare, at tv.tenner.stream
@@ -43,7 +58,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
         run: |
-          sed -i '/^\[\[routes\]\]/,$d' wrangler.toml
+          sed -i '/^\[\[routes\]\]/,+2d' wrangler.toml
           npx --yes wrangler@4 deploy
           if [ -n "$TMDB_TOKEN" ]; then printf '%s' "$TMDB_TOKEN" | npx --yes wrangler@4 secret put TMDB_TOKEN; fi
           echo "::warning title=Connect tv.tenner.stream::Tenner TV is live on its workers.dev address. To put it on tv.tenner.stream: Cloudflare dashboard > Workers & Pages > tenner-tv > Settings > Domains & Routes > Add > Custom domain > tv.tenner.stream. (Or give the API token 'Zone: Workers Routes: Edit' and 'Zone: DNS: Edit' for tenner.stream and run this again.)"

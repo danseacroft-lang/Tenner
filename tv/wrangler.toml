@@ -11,6 +11,11 @@ directory = "public"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
 
+# every half hour: fetch today's and tomorrow's listings ahead of time (src/index.js, scheduled). The shared copy lives
+# in Workers KV (binding TV), made by the deploy workflow, which adds the binding here before deploying.
+[triggers]
+crons = ["*/30 * * * *"]
+
 # tv.tenner.stream, made by Cloudflare when this deploys (the deploy workflow drops this if the token can't, and says so)
 [[routes]]
 pattern = "tv.tenner.stream"
