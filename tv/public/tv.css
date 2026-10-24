@@ -6,6 +6,7 @@
   --fill: rgba(120, 120, 128, .12); --fill-strong: rgba(120, 120, 128, .2); --accent: #007aff;
   --gl-fill: rgba(255, 255, 255, .62); --gl-hover: rgba(255, 255, 255, .85); --gl-rim: rgba(60, 60, 67, .16);
   --sheet-bg: rgba(255, 255, 255, .78);
+  --wp-base: #f7f6fa; --wp-1: rgba(255, 55, 95, .16); --wp-2: rgba(191, 90, 242, .15); --wp-3: rgba(10, 132, 255, .16); --wp-4: rgba(48, 209, 190, .10); --wp-grain: .05;
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter Tight", "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --ease-spring: cubic-bezier(.3, 1.25, .4, 1); --ease-out: cubic-bezier(.2, .8, .2, 1);
@@ -18,15 +19,24 @@
     --fill: rgba(118, 118, 128, .24); --fill-strong: rgba(118, 118, 128, .36); --accent: #0a84ff;
     --gl-fill: rgba(255, 255, 255, .13); --gl-hover: rgba(255, 255, 255, .2); --gl-rim: rgba(255, 255, 255, .2);
     --sheet-bg: rgba(30, 30, 32, .74);
+    --wp-base: #050508; --wp-1: rgba(255, 55, 95, .17); --wp-2: rgba(191, 90, 242, .16); --wp-3: rgba(10, 132, 255, .17); --wp-4: rgba(48, 209, 190, .07); --wp-grain: .07;
   }
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
-body { margin: 0; min-height: 100svh; overflow-x: clip; background: var(--bg); color: var(--label); font: 400 17px/1.4 var(--font); letter-spacing: -.016em;
+body { margin: 0; min-height: 100svh; overflow-x: clip; background: var(--wp-base); color: var(--label); font: 400 17px/1.4 var(--font); letter-spacing: -.016em;
   -webkit-font-smoothing: antialiased; }
-/* the page's own glow: soft colour behind the top, fading into the page */
-body::before { content: ""; position: fixed; inset: 0 0 auto; height: 70vh; z-index: -1; pointer-events: none;
-  background: radial-gradient(55% 60% at 15% 0%, rgba(255, 55, 95, .16), transparent 70%), radial-gradient(50% 60% at 85% 5%, rgba(10, 132, 255, .16), transparent 70%); }
+/* Tenner TV's wallpaper: still, fixed to the screen (it never moves or changes), soft blooms of Tenner's pink, purple
+   and blue with a touch of teal, on near-black (dark) or pearl (light), and a fine grain so the gradients never band */
+body::before, body::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+body::before { background:
+  radial-gradient(60% 50% at 8% 4%, var(--wp-1), transparent 70%),
+  radial-gradient(55% 55% at 92% 18%, var(--wp-2), transparent 70%),
+  radial-gradient(60% 55% at 78% 92%, var(--wp-3), transparent 72%),
+  radial-gradient(50% 45% at 6% 82%, var(--wp-4), transparent 70%),
+  var(--wp-base); }
+body::after { opacity: var(--wp-grain); mix-blend-mode: overlay; background-size: 200px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 button { font: inherit; color: inherit; }
@@ -38,7 +48,7 @@ button { font: inherit; color: inherit; }
 .bar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: var(--max); margin: 0 auto;
   padding: calc(env(safe-area-inset-top, 0px) + 12px) var(--gutter-r) 12px var(--gutter); }
 .bar::before { content: ""; position: absolute; inset: 0 calc(50% - 50vw) -24px; z-index: -1; pointer-events: none;
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 88%, transparent) 45%, transparent);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--wp-base) 82%, transparent) 45%, transparent);
   -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
   -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--label); font: 600 19px/1 var(--font); letter-spacing: -.02em; }
@@ -78,13 +88,21 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
 .guide { margin-top: 26px; }
 /* the preview: the programme you point at, its artwork filling the right and melting into the page (no edge anywhere) */
 .pv { position: relative; isolation: isolate; display: flex; align-items: flex-end; min-height: 250px; padding: 22px 0 26px; }
-.pv-art { position: absolute; z-index: -1; top: -40px; bottom: -10px; right: calc(-1 * var(--gutter-r)); width: 66%; pointer-events: none;
-  -webkit-mask-image: radial-gradient(closest-side at 60% 50%, #000 45%, rgba(0, 0, 0, .45) 72%, transparent); mask-image: radial-gradient(closest-side at 60% 50%, #000 45%, rgba(0, 0, 0, .45) 72%, transparent); }
-.pv-art img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; opacity: 0; transition: opacity .5s ease; }
+/* blended the way Tenner's homepage hero is: the still runs the full width of the screen and melts into the page to the
+   left (under the words), at the top and at the bottom, so there's no edge anywhere */
+.pv-art { position: absolute; z-index: -1; top: -90px; bottom: -70px; left: calc(50% - 50vw); width: 100vw; pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent 8%, rgba(0, 0, 0, .35) 34%, #000 62%), linear-gradient(180deg, transparent, #000 22%, #000 58%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent 8%, rgba(0, 0, 0, .35) 34%, #000 62%), linear-gradient(180deg, transparent, #000 22%, #000 58%, transparent);
+  mask-composite: intersect; }
+.pv-art img { width: 100%; height: 100%; object-fit: cover; object-position: 75% 28%; opacity: 0; transition: opacity .6s ease; }
 .pv-art img.on { opacity: 1; }
 .pv-copy { position: relative; max-width: min(560px, 52%); }
+/* a shade inside the still, darkest under the words (as on the homepage hero), so they read over any picture */
+.pv-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, var(--wp-base) 18%, color-mix(in srgb, var(--wp-base) 55%, transparent) 42%, transparent 66%); }
+@media (max-width: 760px) { .pv-art::after { background: linear-gradient(180deg, transparent 30%, color-mix(in srgb, var(--wp-base) 70%, transparent)); } }
 .pv-ch { margin: 0 0 6px; color: var(--label2); font: 600 14px/1.2 var(--font); }
-.pv-t { margin: 0; font: 700 clamp(26px, 3vw, 36px)/1.08 var(--font); letter-spacing: -.025em; text-wrap: balance; text-shadow: 0 2px 24px color-mix(in srgb, var(--bg) 70%, transparent); }
+.pv-t { margin: 0; font: 700 clamp(26px, 3vw, 36px)/1.08 var(--font); letter-spacing: -.025em; text-wrap: balance; }
 .pv-sum { margin: 10px 0 0; font-size: 16px; line-height: 1.45; color: color-mix(in srgb, var(--label) 82%, transparent); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 .pv-meta { margin: 12px 0 0; color: var(--label2); font: 500 14px/1.2 var(--font); font-variant-numeric: tabular-nums; white-space: pre-wrap; }
 .epg-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
@@ -94,14 +112,6 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
 .epg-hint { margin: 0; color: var(--label3); font-size: 13px; }
 /* the guide: each channel a row, its programmes a strip you scroll on its own (as Pluto TV does), fading at the edge */
 .guide { position: relative; isolation: isolate; }
-/* behind the guide: the previewed programme's artwork, blurred into a wash of colour (Apple's background extension), so
-   the glass above it has something to show */
-.guide::before { content: ""; position: absolute; z-index: -1; inset: 140px calc(-1 * var(--gutter-r)) -60px calc(-1 * var(--gutter)); pointer-events: none;
-  background: var(--pv-img, none) center / cover no-repeat, radial-gradient(50% 50% at 25% 60%, rgba(255, 55, 95, .35), transparent 70%), radial-gradient(50% 50% at 80% 40%, rgba(10, 132, 255, .35), transparent 70%);
-  filter: blur(70px) saturate(1.5); opacity: .4; transition: background-image .6s ease;
-  -webkit-mask-image: radial-gradient(closest-side, #000 55%, transparent); mask-image: radial-gradient(closest-side, #000 55%, transparent); }
-/* no card: the guide sits on the page itself, over the wash of colour behind it. Each row's hairline fades out at both
-   ends and each strip melts into the page at its edges, so nothing has a hard border */
 .epg { --px: 5px; --chw: 200px; --rowh: 68px; position: relative; }
 .rows { display: grid; }
 /* rows off screen aren't drawn until they're near (smooth with 35 channels and a week of programmes) */
@@ -195,8 +205,10 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
 @media (max-width: 760px) {
   .hero { padding-top: 14px; }
   .pv { min-height: 240px; padding-top: 70px; }
-  .pv-art { width: calc(100% + var(--gutter) + var(--gutter-r)); right: calc(-1 * var(--gutter-r)); top: 0; bottom: 30%; opacity: .6;
-    -webkit-mask-image: radial-gradient(closest-side at 55% 50%, #000 40%, transparent); mask-image: radial-gradient(closest-side at 55% 50%, #000 40%, transparent); }
+  /* phones: the still fills the top of the preview behind the words, fading out downwards and at the sides */
+  .pv-art { top: -20px; bottom: 25%; opacity: .75;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent), linear-gradient(180deg, transparent, #000 20%, #000 45%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent), linear-gradient(180deg, transparent, #000 20%, #000 45%, transparent); }
   .pv-copy { max-width: none; }
   .pv-sum { font-size: 15px; -webkit-line-clamp: 2; }
   .epg { --px: 3.6px; --chw: 132px; --rowh: 62px; }
@@ -216,7 +228,7 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
 /* light: the blocks are frosted white rather than see-through grey */
 @media (prefers-color-scheme: light) { .blk { background: rgba(255, 255, 255, .55); box-shadow: inset 0 0 0 .5px rgba(60, 60, 67, .14), 0 1px 2px rgba(0, 0, 0, .04); }
   @media (hover: hover) { .blk:hover { background: rgba(255, 255, 255, .85); } } }
-@media (prefers-reduced-transparency: reduce) { .guide::before { display: none; } .blk { background: var(--bg2); } }
+@media (prefers-reduced-transparency: reduce) { .blk { background: var(--bg2); } }
 
 /* ---------- channel logos, beside the name: our own copies, on a dark tile (they're made for dark, so the tile stays dark
    in light mode too, as Apple TV's channel badges do), or the channel's initials on a colour of its own ---------- */
@@ -234,7 +246,8 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
 .sh-poster .bed { inset: 0 -10%; height: 100%; -webkit-mask-image: linear-gradient(#000 40%, transparent); mask-image: linear-gradient(#000 40%, transparent); }
 .sh-poster + .sh-body { margin-top: 0; padding-top: 14px; }
 .sh-poster .pst { position: relative; height: 82%; width: auto; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 12px; box-shadow: 0 16px 40px rgba(0, 0, 0, .5); -webkit-mask-image: none; mask-image: none; }
-.pv.poster .pv-art { top: 10px; bottom: 18px; width: auto; right: 0; -webkit-mask-image: none; mask-image: none; }
+.pv.poster .pv-art::after { display: none; }
+.pv.poster .pv-art { top: 10px; bottom: 18px; left: auto; width: auto; right: 0; -webkit-mask-image: none; mask-image: none; }
 .pv.poster .pv-art img { width: auto; height: 100%; aspect-ratio: 2 / 3; border-radius: 14px; box-shadow: 0 22px 50px -10px rgba(0, 0, 0, .55), 0 0 0 .5px rgba(255, 255, 255, .18); }
 @media (max-width: 760px) {
   .pv.poster .pv-art { top: 64px; bottom: auto; height: 170px; left: auto; right: 0; opacity: 1; }
@@ -262,7 +275,7 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
 
 /* the beta badge, beside the name */
 .beta { margin-left: 2px; padding: 4px 8px 4px; border-radius: 999px; font: 600 11.5px/1 var(--font); letter-spacing: .01em; color: var(--label);
-  background: linear-gradient(var(--bg), var(--bg)) padding-box, linear-gradient(100deg, #ff375f, #bf5af2 55%, #0a84ff) border-box; border: 1.5px solid transparent; }
+  background: linear-gradient(var(--wp-base), var(--wp-base)) padding-box, linear-gradient(100deg, #ff375f, #bf5af2 55%, #0a84ff) border-box; border: 1.5px solid transparent; }
 .blk .new { margin-right: 6px; padding: 2px 5px; border-radius: 5px; vertical-align: 1px; font: 700 9.5px/1 var(--font); font-style: normal; letter-spacing: .04em; text-transform: uppercase; color: #fff;
   background: linear-gradient(100deg, #ff375f, #bf5af2); }
 

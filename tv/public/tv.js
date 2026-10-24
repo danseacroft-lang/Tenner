@@ -275,12 +275,12 @@
     $('#pvLive').innerHTML = liveBtn(x);
     $('#pvMeta').textContent = [started ? `Started at ${hm(x.at)}` : `${x.end <= t ? 'Was on' : `${x.at - t < 864e5 && ukDay(x.at) === today ? 'On' : dayName(ukDay(x.at), { weekday: 'long' })}`} at ${hm(x.at)}`,
       x.s && x.n ? `S${x.s} E${x.n}` : '', length(x.end - x.at), started ? `${minsLeft(x, t)} min left` : ''].filter(Boolean).join('  ·  ');
-    const img = $('#pvImg'), src = x.wide || x.poster, guide = $('.guide');
+    const img = $('#pvImg'), src = x.wide || x.poster;
     $('#pv').classList.toggle('poster', !x.wide && !!x.poster);
-    if (!src) { img.hidden = true; img.removeAttribute('src'); guide.style.removeProperty('--pv-img'); return; }
+    if (!src) { img.hidden = true; img.removeAttribute('src'); return; }
     if (img.getAttribute('src') === src) return;
     img.classList.remove('on'); img.hidden = false;
-    img.onload = () => { if (img.getAttribute('src') !== src) return; img.classList.add('on'); guide.style.setProperty('--pv-img', `url("${src.replace(/["\\\n]/g, '')}")`); };   // the wash follows once it's here
+    img.onload = () => { if (img.getAttribute('src') === src) img.classList.add('on'); };
     img.onerror = () => { img.hidden = true; };
     img.src = src;
   }
