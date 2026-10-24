@@ -93,6 +93,18 @@ Mac. When in doubt, ask "would this look at home in Apple TV, Apple Music or the
 - After each update: a quick code check, and remove any code that's no longer used.
 - Test what you change (Playwright on phone and computer sizes, both themes); run the worker's auth tests after touching accounts.
 
+## Runs by itself (keep it that way)
+- **Hourly** (`update.yml`): charts, Browse, New, cinema and title details rebuilt and deployed; keeps its own schedule alive.
+- **On every push**: the site (`update.yml`), the search/accounts Worker (`api.yml`) and Tenner TV (`tv.yml`) deploy themselves.
+  Tenner TV runs `node tv/test.mjs` first; a failing test stops the deploy, so what's live keeps working.
+- **Tenner TV** (`tv/`, tv.tenner.stream): listings from TVmaze, logos from TMDB (kept a week), a shared copy in Workers KV
+  refreshed every half hour by the Worker's own schedule, and the last good copy served if TVmaze is down.
+- **Watchdog** (`watchdog.yml`, every 3 hours): checks the site, the charts' age, the search service and Tenner TV; re-runs
+  whatever's behind, re-checks after 7 minutes, and only then fails (GitHub emails the owner). It also checks the Watch live
+  links still open. tv.tenner.stream is behind Cloudflare's bot check, so it checks Tenner TV at its workers.dev address.
+- Anything new should follow the same pattern: no step that needs a person, a fallback when a source is down, and a check
+  in the watchdog.
+
 ## Security
 - Never post API keys or tokens in chat.
 - The owner's personal email address must never appear on the site or in the code.
