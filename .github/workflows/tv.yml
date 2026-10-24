@@ -1,5 +1,6 @@
 # Deploys Tenner TV (tv/) to Cloudflare Workers, at tv.tenner.stream, whenever it changes (or when run by hand).
-# Uses the same two GitHub secrets as the search API: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
+# Uses the same GitHub secrets as the search API: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, plus TMDB_TOKEN (copied in as a
+# Worker secret, only to find the channels' logos).
 name: Deploy Tenner TV
 on:
   push:
@@ -31,13 +32,18 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: tv
+          secrets: TMDB_TOKEN
+        env:
+          TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
       - name: Deploy without the domain
         if: steps.ready.outputs.go == 'yes' && steps.full.outcome == 'failure'
         working-directory: tv
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
         run: |
           sed -i '/^\[\[routes\]\]/,$d' wrangler.toml
           npx --yes wrangler@4 deploy
+          if [ -n "$TMDB_TOKEN" ]; then printf '%s' "$TMDB_TOKEN" | npx --yes wrangler@4 secret put TMDB_TOKEN; fi
           echo "::warning title=Connect tv.tenner.stream::Tenner TV is live on its workers.dev address. To put it on tv.tenner.stream: Cloudflare dashboard > Workers & Pages > tenner-tv > Settings > Domains & Routes > Add > Custom domain > tv.tenner.stream. (Or give the API token 'Zone: Workers Routes: Edit' and 'Zone: DNS: Edit' for tenner.stream and run this again.)"

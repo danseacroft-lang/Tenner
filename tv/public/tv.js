@@ -27,8 +27,10 @@
   const shown = new Map();   // every drawn programme, by id: for the preview and the sheet
   const reg = (x, ch, next) => { shown.set(String(x.id), { ...x, ch, end: ends(x, next) }); return `data-p="${x.id}"`; };
   const epLine = (x) => [x.s && x.n ? `Series ${x.s}, episode ${x.n}` : x.n ? `Episode ${x.n}` : '', x.ep].filter(Boolean).join(' · ');
-  const art = (x) => (x.wide || x.img ? `<img src="${esc(x.wide || x.img)}" alt="" loading="lazy" decoding="async">`
+  const art = (x) => (x.wide ? `<img src="${esc(x.wide)}" alt="" loading="lazy" decoding="async">`
+    : x.poster ? `<img class="bed" src="${esc(x.poster)}" alt="" loading="lazy" decoding="async"><img class="pst" src="${esc(x.poster)}" alt="" loading="lazy" decoding="async">`
     : `<span class="ph" style="background:linear-gradient(150deg,hsl(${hue(x.t)} 45% 40%),hsl(${(hue(x.t) + 50) % 360} 55% 18%))">${esc(x.t)}</span>`);
+  const logo = (name) => state.data?.logos?.[name];
 
   // ---------- loading ----------
   let ctl = null;
@@ -96,7 +98,7 @@
     const now = Date.now(), m = px();
     $('#epg').innerHTML = `<div class="rows" role="list">${chans.map((c) => `<div class="crow" role="listitem">
       <button type="button" class="ch" data-ch="${esc(c.name)}" aria-pressed="${mine.includes(c.name)}"
-        aria-label="${esc(`${c.name}: ${mine.includes(c.name) ? 'pinned to the top, tap to unpin' : 'tap to pin to the top'}`)}">${esc(c.name)}${star(mine.includes(c.name))}</button>
+          aria-label="${esc(`${c.name}: ${mine.includes(c.name) ? 'pinned to the top, tap to unpin' : 'tap to pin to the top'}`)}">${logo(c.name) ? `<img class="ch-logo" src="${esc(logo(c.name))}" alt="" decoding="async">` : `<span class="ch-name">${esc(c.name)}</span>`}${star(mine.includes(c.name))}</button>
       <div class="strip" data-strip="${esc(c.name)}" aria-label="${esc(`${c.name} through the day`)}">${c.items.map((x, j) => {
         const end = ends(x, c.items[j + 1]), live = x.at <= now && now < end, past = end <= now;
         const p = live ? Math.round(((now - x.at) / (end - x.at)) * 100) : 0;
@@ -138,13 +140,15 @@
     if (!x) { $('#pvCh').innerHTML = '&nbsp;'; $('#pvT').textContent = ''; $('#pvSum').textContent = ''; $('#pvMeta').textContent = ''; $('#pvImg').hidden = true; return; }
     if (pvKey === x.id) return; pvKey = x.id;
     const now = Date.now(), started = x.at <= now && now < x.end;
-    $('#pvCh').textContent = x.ch;
+    $('#pvCh').innerHTML = logo(x.ch) ? `<img class="pv-logo" src="${esc(logo(x.ch))}" alt="${esc(x.ch)}">` : esc(x.ch);
     $('#pvT').textContent = x.t;
     $('#pvSum').textContent = x.sum || epLine(x) || x.g.join(', ');
     $('#pvMeta').textContent = [started ? `Started at ${hm(x.at)}` : `${x.end <= now ? 'Was on' : 'On'} at ${hm(x.at)}`, x.s && x.n ? `S${x.s} E${x.n}` : '', length(x.end - x.at), started ? `${Math.max(1, Math.round((x.end - now) / 60e3))} min left` : ''].filter(Boolean).join('  ·  ');
-    const img = $('#pvImg'), src = x.wide || x.img;
-    if (!src) { img.hidden = true; return; }
+    const img = $('#pvImg'), src = x.wide || x.poster;
+    $('#pv').classList.toggle('poster', !x.wide && !!x.poster);
+    if (!src) { img.hidden = true; document.querySelector('.guide').style.removeProperty('--pv-img'); return; }
     img.classList.remove('on'); img.onload = () => img.classList.add('on'); img.hidden = false; img.src = src;
+    document.querySelector('.guide').style.setProperty('--pv-img', `url("${src.replace(/["\\]/g, '')}")`);   // the wash behind the guide
   }
   const over = (e) => { const b = e.target.closest('.blk, .pick'); if (b) preview(shown.get(b.dataset.p)); };
   document.addEventListener('pointerover', (e) => { if (e.pointerType === 'mouse') over(e); });
@@ -156,7 +160,7 @@
     for (const c of main) c.items.forEach((x, j) => {
       const h = hour(x.at); if (h < 19 || h > 22.5) return;
       const g = x.g.join(' ') + ' ' + (x.type || '');
-      const score = (x.r || 6.2) + (x.img ? 1.2 : 0) + (x.sum ? .3 : 0) + (/Scripted|Documentary|Drama|Comedy/.test(g) ? .6 : 0) - (/News|Talk Show|Weather/.test(g) ? 4 : 0);
+      const score = (x.r || 6.2) + (x.wide ? 1.4 : x.poster ? .8 : 0) + (x.sum ? .3 : 0) + (/Scripted|Documentary|Drama|Comedy/.test(g) ? .6 : 0) - (/News|Talk Show|Weather/.test(g) ? 4 : 0);
       list.push({ x, c: c.name, next: c.items[j + 1], score });
     });
     const picks = list.sort((a, b) => b.score - a.score).filter(({ x }) => !seen.has(x.show) && seen.add(x.show)).slice(0, 10).sort((a, b) => a.x.at - b.x.at);
@@ -173,7 +177,7 @@
     const b = e.target.closest('[data-p]'); if (!b) return;
     const x = shown.get(b.dataset.p); if (!x) return;
     preview(x);
-    $('#shIn').innerHTML = `<div class="sh-art">${x.wide || x.img ? `<img src="${esc(x.wide || x.img)}" alt="">` : ''}
+    $('#shIn').innerHTML = `<div class="sh-art${!x.wide && x.poster ? ' sh-poster' : ''}">${x.wide || x.poster ? art(x) : ''}
         <button type="button" class="sh-x" id="shX" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></div>
       <div class="sh-body"><p class="sh-when">${esc(x.ch)} · ${esc(dayName(ukDay(x.at), { weekday: 'long', day: 'numeric', month: 'long' }))} · ${hm(x.at)}–${hm(x.end)} · ${length(x.end - x.at)}</p>
         <h2 id="shT">${esc(x.t)}</h2>${epLine(x) ? `<p class="sh-ep">${esc(epLine(x))}</p>` : ''}

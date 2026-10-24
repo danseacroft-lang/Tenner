@@ -93,7 +93,16 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
 .now-btn:active { transform: scale(.96); }
 .epg-hint { margin: 0; color: var(--label3); font-size: 13px; }
 /* the guide: each channel a row, its programmes a strip you scroll on its own (as Pluto TV does), fading at the edge */
-.epg { --px: 5px; --chw: 150px; --rowh: 64px; position: relative; border-radius: 20px; background: var(--bg2); overflow: hidden; box-shadow: inset 0 0 0 .5px var(--sep); }
+.guide { position: relative; isolation: isolate; }
+/* behind the guide: the previewed programme's artwork, blurred into a wash of colour (Apple's background extension), so
+   the glass above it has something to show */
+.guide::before { content: ""; position: absolute; z-index: -1; inset: 140px calc(-1 * var(--gutter-r)) -60px calc(-1 * var(--gutter)); pointer-events: none;
+  background: var(--pv-img, none) center / cover no-repeat, radial-gradient(50% 50% at 25% 60%, rgba(255, 55, 95, .35), transparent 70%), radial-gradient(50% 50% at 80% 40%, rgba(10, 132, 255, .35), transparent 70%);
+  filter: blur(70px) saturate(1.5); opacity: .4; transition: background-image .6s ease;
+  -webkit-mask-image: radial-gradient(closest-side, #000 55%, transparent); mask-image: radial-gradient(closest-side, #000 55%, transparent); }
+.epg { --px: 5px; --chw: 150px; --rowh: 64px; position: relative; border-radius: 22px; overflow: hidden;
+  background: var(--gl-fill); box-shadow: inset 0 0 0 1px var(--gl-rim), 0 24px 60px -24px rgba(0, 0, 0, .45);
+  -webkit-backdrop-filter: blur(30px) saturate(1.8); backdrop-filter: blur(30px) saturate(1.8); }
 .rows { display: grid; }
 .crow { display: grid; grid-template-columns: var(--chw) minmax(0, 1fr); height: var(--rowh); border-bottom: .5px solid var(--sep); }
 .crow:last-child { border-bottom: 0; }
@@ -101,7 +110,7 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
   -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 44px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 44px), transparent); }
 .strip::-webkit-scrollbar { display: none; }
 .ch { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 0 10px 0 16px; border: 0; border-radius: 0; cursor: pointer; text-align: left; color: var(--label); font: 600 15px/1.15 var(--font); letter-spacing: -.016em;
-  background: var(--bg2); box-shadow: 12px 0 16px -12px rgba(0, 0, 0, .35); }
+  background: transparent; box-shadow: inset -.5px 0 0 var(--sep); }
 .ch svg { flex: none; width: 16px; height: 16px; color: var(--label3); opacity: 0; transition: opacity .2s ease, color .2s ease, transform .3s var(--ease-spring); }
 @media (hover: hover) { .ch:hover svg { opacity: 1; } }
 .ch[aria-pressed="true"] svg { opacity: 1; color: #ffcc00; }
@@ -114,12 +123,12 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
 .cats button[aria-checked="true"] { color: var(--label); background: var(--fill-strong); box-shadow: none; font-weight: 600; }
 @media (hover: hover) { .cats button[aria-checked="false"]:hover { color: var(--label); } }
 .blk { position: relative; flex: none; scroll-snap-align: start; display: block; min-width: 0; padding: 0; border: 0; border-radius: 10px; cursor: pointer;
-  text-align: left; color: var(--label); background: var(--fill); overflow: clip; transition: background-color .15s ease, box-shadow .2s ease, transform .2s ease; }
+  text-align: left; color: var(--label); background: rgba(255, 255, 255, .07); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .14); overflow: clip; transition: background-color .15s ease, box-shadow .2s ease, transform .2s ease; }
 /* a programme that started before the visible part of the guide keeps its words at the visible edge (--off, set as you scroll) */
 .blk .bi { display: grid; align-content: center; gap: 2px; height: 100%; padding: 0 10px 0 calc(10px + var(--off, 0px)); }
 .blk b { font: 500 14px/1.2 var(--font); letter-spacing: -.012em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .blk small { color: var(--label2); font: 400 12px/1 var(--font); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; }
-@media (hover: hover) { .blk:hover { background: var(--fill-strong); box-shadow: inset 0 0 0 1px var(--gl-rim); } }
+@media (hover: hover) { .blk:hover { background: rgba(255, 255, 255, .16); box-shadow: inset 0 0 0 1px var(--gl-rim); } }
 .blk:active { transform: scale(.98); }
 .blk:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 /* on now: tinted, filled as far as it's got */
@@ -201,3 +210,29 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
 }
 @media (prefers-reduced-motion: reduce) { *, ::before, ::after { animation: none !important; transition: none !important; } }
 @media (prefers-reduced-transparency: reduce) { .bar-link, .sheet, .chip, .sh-x { -webkit-backdrop-filter: none; backdrop-filter: none; } .sheet { background: var(--bg2); } }
+/* light: the blocks are frosted white rather than see-through grey */
+@media (prefers-color-scheme: light) { .blk { background: rgba(255, 255, 255, .55); box-shadow: inset 0 0 0 .5px rgba(60, 60, 67, .14), 0 1px 2px rgba(0, 0, 0, .04); }
+  @media (hover: hover) { .blk:hover { background: rgba(255, 255, 255, .85); } } }
+@media (prefers-reduced-transparency: reduce) { .epg { background: var(--bg2); -webkit-backdrop-filter: none; backdrop-filter: none; } .guide::before { display: none; } }
+
+/* ---------- channel logos (TMDB): one tint, white on dark and black on light, crisp at any size ---------- */
+.ch-logo, .pv-logo { display: block; object-fit: contain; object-position: left center; filter: brightness(0) invert(1); opacity: .94; }
+.ch-logo { max-height: 26px; max-width: calc(var(--chw) - 46px); min-width: 0; }
+.pv-logo { height: 24px; max-width: 140px; margin-bottom: 2px; }
+@media (prefers-color-scheme: light) { .ch-logo, .pv-logo { filter: brightness(0); opacity: .86; } }
+.ch-name { min-width: 0; }
+
+/* ---------- pictures: a landscape still fills its frame; a portrait poster stands whole on a blur of itself ---------- */
+.pick-art { display: grid; place-items: center; }
+.pick-art .bed, .sh-poster .bed { position: absolute; inset: -10%; width: 120%; height: 120%; object-fit: cover; filter: blur(24px) saturate(1.5); opacity: .85; }
+.pick-art .pst { position: relative; height: 88%; width: auto; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 8px; box-shadow: 0 10px 24px rgba(0, 0, 0, .45), 0 0 0 .5px rgba(255, 255, 255, .2); }
+.sh-poster { display: grid; place-items: center; overflow: hidden; }
+.sh-poster .bed { -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); }
+.sh-poster .pst { position: relative; height: 82%; width: auto; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 12px; box-shadow: 0 16px 40px rgba(0, 0, 0, .5); -webkit-mask-image: none; mask-image: none; }
+.pv.poster .pv-art { top: 10px; bottom: 18px; width: auto; right: 0; -webkit-mask-image: none; mask-image: none; }
+.pv.poster .pv-art img { width: auto; height: 100%; aspect-ratio: 2 / 3; border-radius: 14px; box-shadow: 0 22px 50px -10px rgba(0, 0, 0, .55), 0 0 0 .5px rgba(255, 255, 255, .18); }
+@media (max-width: 760px) {
+  .pv.poster .pv-art { top: 64px; bottom: auto; height: 170px; left: auto; right: 0; opacity: 1; }
+  .pv.poster .pv-copy { padding-right: 128px; }
+  .ch-logo { max-height: 22px; max-width: calc(var(--chw) - 34px); }
+}
