@@ -21,6 +21,7 @@ jobs:
       - uses: actions/checkout@v5
       - name: Check everything, and put right what can be
         run: |
+          set +e   # a website that hiccups is a finding, not a reason to stop checking
           age() { node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(Math.round((Date.now()-Date.parse(JSON.parse(s).generatedAt))/60000))}catch{console.log(99999)}})'; }
           # each check prints a problem and the job that fixes it (job|problem), or nothing when all is well
           check() {
@@ -36,7 +37,7 @@ jobs:
             [ "$tv" = ok ] || echo "tv.yml|Tenner TV's listings: $tv"
           }
           # the Watch live links on Tenner TV: a link that stops opening is flagged (nothing to re-run; it needs a new address)
-          for u in $(grep -oE "https://www\.(bbc\.co\.uk/iplayer/live|itv\.com/watch\?channel=|channel4\.com/now/)[A-Za-z0-9]*" "$GITHUB_WORKSPACE/tv/public/tv.js" | sort -u); do
+          for u in $(grep -oE "https://www\.(bbc\.co\.uk/iplayer/live/|itv\.com/watch\?channel=|channel4\.com/now/)[A-Za-z0-9]+" "$GITHUB_WORKSPACE/tv/public/tv.js" | sort -u); do
             c=$(curl -s -L -o /dev/null -w '%{http_code}' -m 25 -A 'Mozilla/5.0 (Macintosh) TennerWatchdog' "$u"); [ "$c" -lt 400 ] 2>/dev/null || echo "::warning title=A Watch live link may be broken::$u answered $c"
           done
           found=$(check)
