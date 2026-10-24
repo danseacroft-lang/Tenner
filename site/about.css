@@ -58,6 +58,32 @@
 .sp-logo { width: 72px; height: 72px; border-radius: 17px; display: block; margin-bottom: 22px; box-shadow: 0 0 0 .5px rgba(127,127,127,.3), 0 18px 50px rgba(0,0,0,.35); }
 .sp-eye { margin: 0 0 12px; font: 600 14px/1 var(--font); letter-spacing: .14em; text-transform: uppercase; color: var(--label2); }
 .splash h1 { margin: 0; max-width: 11ch; font: 800 clamp(52px, 7.6vw, 116px)/.95 var(--font-display); letter-spacing: -.035em; }
+/* the note: handwriting (Apple's Bradley Hand on iPhone and Mac, or Noteworthy; Windows' own pens otherwise), tilted a
+   little, written on left to right with its arrow drawn after. Beside "every hour." on wide screens, below it otherwise */
+.sp-hd { position: relative; width: fit-content; max-width: 100%; }
+.sp-note { --ink: color-mix(in srgb, var(--label) 88%, transparent); display: flex; align-items: flex-start; gap: 6px; max-width: 320px; margin: 6px 8px -10px clamp(36px, 12vw, 200px);
+  color: var(--ink); font: 700 21px/1.25 "Bradley Hand", "Noteworthy", "Segoe Print", "Ink Free", "Comic Neue", cursive; letter-spacing: 0; rotate: -3deg; text-wrap: pretty; }
+.sp-note span { padding-top: 34px; }
+.sp-arw { flex: none; fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
+.sp-note .sp-arw-side { display: none; width: 96px; }
+.sp-arw-up { width: 48px; height: 58px; }
+/* wide screens: pinned just past the full stop of "every hour.", the arrow's tip on it */
+.splash h1 em { anchor-name: --sp-hour; }
+@supports (anchor-name: --a) {
+  @media (min-width: 1380px) {
+    .sp-note { position: absolute; position-anchor: --sp-hour; left: calc(anchor(right) + 4px); top: calc(anchor(center) - 50px); width: 270px; margin: 0;
+      flex-direction: column; gap: 0; rotate: -4deg; font-size: 23px; }
+    .sp-note span { padding: 0 0 0 66px; }
+    .sp-note .sp-arw-side { display: block; margin-left: -6px; }
+    .sp-note .sp-arw-up { display: none; }
+  }
+}
+/* written on: the words appear left to right, then the arrow draws itself */
+:root:not(.still) .sp-note span { animation: spWrite 1.5s steps(28, end) .9s both; }
+:root:not(.still) .sp-arw path { stroke-dasharray: 1; animation: spDraw .55s cubic-bezier(.4, 0, .2, 1) 2.3s both; }
+:root:not(.still) .sp-arw path.hd { animation-delay: 2.8s; animation-duration: .25s; }
+@keyframes spWrite { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes spDraw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 .sp-lead { margin: 22px 0 0; max-width: 560px; font: 400 clamp(17px, 1.5vw, 20px)/1.45 var(--font); letter-spacing: -.015em; color: var(--label2); }
 .sp-ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 30px; }
 .sp-cta { display: inline-flex; align-items: center; height: 48px; padding: 0 24px; border-radius: 14px; font: 600 17px/1 var(--font); letter-spacing: -.02em; color: var(--label); text-decoration: none;
