@@ -16,7 +16,6 @@
     { key: 'top', label: 'Top rated', sort: 'rating', test: (x) => x.s.length && x.r >= 7.6 && x.v >= 300 },
     { key: 'gems', label: 'Hidden gems', sort: 'rating', test: (x) => x.s.length && x.r >= 7.2 && x.v >= 30 && x.v < 600 },
     { key: 'acclaimed', label: 'Acclaimed', sort: 'rating', test: (x) => x.s.length && x.r >= 8 && x.v >= 1500 },
-    { key: 'only', label: 'Only on…', sort: 'pop', test: (x) => x.s.filter((k) => !shops.has(k)).length === 1 },   // on just one of the five
     { key: 'leaving', label: 'Leaving soon', extra: true, order: (a, b) => a._gone.localeCompare(b._gone) || b.p - a.p, test: (x) => x._gone },
     { key: 'store', label: 'Buy or rent', sort: 'pop', test: (x) => x.b, films: true },
   ];
@@ -356,8 +355,7 @@
   const kindWord = () => (state.k === 'movie' ? 'Films' : state.k === 'both' ? 'Shows and films' : 'Shows');
   async function spotlight() {
     const col = collection();
-    $('#spotEye').textContent = col.key === 'only' && state.s.length === 1 ? `Only on ${labels[state.s[0]]} · ${kindWord()}`
-      : `${col.label} · ${col.films ? 'Films' : kindWord()}${state.s.length && col.key !== 'store' ? ` · ${state.s.length === 1 ? labels[state.s[0]] : `${state.s.length} services`}` : ''}`;
+    $('#spotEye').textContent = `${col.label} · ${col.films ? 'Films' : kindWord()}${state.s.length && col.key !== 'store' ? ` · ${state.s.length === 1 ? labels[state.s[0]] : `${state.s.length} services`}` : ''}`;
     const m = await moreData(); if (!m?.items) return;
     const picks = list.slice(0, 24).filter((x) => m.items[`${x.t[0]}${x.i}`]?.[1]).slice(0, 5);
     const key = picks.map((x) => x.i).join(',');
