@@ -7,6 +7,31 @@ Read this before changing anything. Every new page, feature and fix follows it.
 Tenner should look and feel like software Apple would ship: calm, premium, fluid and native to Safari, iPhone and
 Mac. When in doubt, ask "would this look at home in Apple TV, Apple Music or the App Store?" If not, it isn't done.
 
+### The owner's references (start here)
+- https://developer.apple.com/design/human-interface-guidelines
+- https://developer.apple.com/design/resources/#macos-apps
+
+**The three principles behind every decision:**
+- **Clarity:** legible, precise and easy to understand. Text is readable at every size, icons are unmistakable,
+  nothing is decoration for its own sake.
+- **Deference:** the interface steps back so the content (the shows and films) is the star. Minimise clutter;
+  if a page feels busy, take something away rather than add.
+- **Depth:** visual layers and realistic motion show hierarchy (glass above content, sheets above the page,
+  things moving the way physical objects would).
+
+**The areas to check a design against:**
+- **Navigation:** familiar, standard patterns (sidebar on computers, tab bar / menu on phones); people always know
+  where they are and how to get back.
+- **User interaction:** comfortable touch targets (44pt minimum), natural gestures (swipe, drag, pull), clear feedback
+  for every tap (a press state, a change, a toast), and haptics where the device offers them.
+- **System capabilities:** keyboard shortcuts (/ and ⌘K for search, arrow keys), drag and drop where it makes sense,
+  the share sheet, Add to Home Screen, works across iPhone, iPad and Mac.
+- **Visual design:** layout, colour, typography, iconography and imagery that are beautiful *and* accessible.
+- **Modality:** use sheets and popups only to focus on one task, never to interrupt; always easy to dismiss.
+- **Loading states:** never a blank or jumpy page; placeholders (skeletons) and gentle transitions while things load.
+- **Haptics and feedback:** reinforce actions consistently (a save gets a visible confirmation, a swipe a small buzz).
+- **Augmented reality:** not used by Tenner.
+
 ### Apple's Human Interface Guidelines (the source)
 - Human Interface Guidelines: https://developer.apple.com/design/human-interface-guidelines
 - Adopting Liquid Glass: https://developer.apple.com/documentation/technologyoverviews/adopting-liquid-glass
