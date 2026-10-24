@@ -101,13 +101,13 @@
   const onLogos = (k, cls = 'pp-on') => { const s = cat?.on.get(k); if (!s) return ''; const l = s.map((x) => cat.svc[x]).filter((x) => x?.logo).slice(0, 3);
     return l.length ? `<span class="${cls}" title="On ${esc(l.map((x) => x.label).join(', '))}">${l.map((x) => `<img src="${esc(x.logo)}" alt="${esc(x.label)}">`).join('')}</span>` : ''; };
   const credit = (x) => `<li><a href="./?t=${x.k}" data-k="${x.k}">${poster(x)}
-    <span class="pp-t"><b>${esc(x.title)}</b><small>${esc([x.role, x.eps > 1 ? `${x.eps} episodes` : '', x.type === 'tv' ? 'Show' : 'Film'].filter(Boolean).join(' · '))}</small></span>
-    ${onLogos(x.k)}<span class="pp-y">${esc(x.year || 'Coming')}</span></a></li>`;
+    <span class="cl-t"><b>${esc(x.title)}</b><small>${esc([x.role, x.eps > 1 ? `${x.eps} episodes` : '', x.type === 'tv' ? 'Show' : 'Film'].filter(Boolean).join(' · '))}</small></span>
+    ${onLogos(x.k)}<span class="cl-r">${esc(x.year || 'Soon')}</span></a></li>`;
   // the career, newest first, in decades
   function career(list) {
     const by = new Map();
     for (const x of list) { const d = x.year ? `${x.year.slice(0, 3)}0s` : 'Coming soon'; by.set(d, [...(by.get(d) || []), x]); }
-    return [...by].map(([d, l]) => `<li class="pp-dec"><h3><span>${esc(d)}</span><small>${l.length}</small></h3><ol class="pp-list">${l.map(credit).join('')}</ol></li>`).join('');
+    return [...by].map(([d, l]) => `<li class="pp-dec"><h3><span>${esc(d)}</span><small>${l.length}</small></h3><ol class="cl nw-cl pp-cl">${l.map(credit).join('')}</ol></li>`).join('');
   }
   const back = `<a class="pp-back" href="people.html" data-back><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Cast &amp; Crew</a>`;
   async function showPerson(id, push) {
@@ -141,7 +141,7 @@
           ${figs.length ? `<dl class="pp-figs">${figs.map(([n, l]) => `<div><dt>${n}</dt><dd>${esc(l)}</dd></div>`).join('')}</dl>` : ''}
           <div class="pp-acts"><button type="button" class="btn btn-tinted" id="ppShare"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M6 11v8.5h12V11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Share</button>${cap}</div>
         </div></div></div>
-      ${pd.bio ? `<section class="pp-bio"><p id="ppBio">${esc(pd.bio).replace(/\n\n+/g, '</p><p>')}</p><button type="button" class="pp-more" id="ppMore" hidden>More</button></section>` : ''}
+      ${pd.bio ? `<section class="pp-bio"><div class="pp-bio-t" id="ppBio"><p>${esc(pd.bio).replace(/\n\n+/g, '</p><p>')}</p></div><button type="button" class="pp-more" id="ppMore" hidden>More</button></section>` : ''}
       ${nowOn.length ? `<section class="p-sec"><div class="p-sh"><h2>Watch ${esc(pd.name.split(' ')[0])} Now</h2><p>On the five services right now.</p></div><ul class="pp-known p-shelf">${nowOn.slice(0, 20).map((x) =>
         `<li><a href="./?t=${x.k}" data-k="${x.k}">${poster(x)}${onLogos(x.k, 'pp-on pp-on-art')}<b>${esc(x.title)}</b><small>${esc([x.year, x.role].filter(Boolean).join(' · '))}</small></a></li>`).join('')}</ul></section>` : ''}
       ${pd.known.length ? `<section class="p-sec"><div class="p-sh"><h2>Known For</h2></div><ul class="pp-known pp-big p-shelf">${pd.known.map((x) =>
@@ -159,8 +159,8 @@
     };
     if (tabs.length) draw();
     const bio = $('#ppBio'), more = $('#ppMore');
-    if (bio && bio.closest('.pp-bio').scrollHeight > bio.closest('.pp-bio').clientHeight + 4) { more.hidden = false; }
-    more?.addEventListener('click', () => { bio.closest('.pp-bio').classList.add('open'); more.remove(); });
+    if (bio && bio.scrollHeight > bio.clientHeight + 4) { more.hidden = false; bio.classList.add('folded'); }
+    more?.addEventListener('click', () => { bio.classList.remove('folded'); bio.classList.add('open'); more.remove(); });
     const seg = person.querySelector('.segmented'), pick = (b) => { seg.querySelectorAll('button').forEach((n) => n.setAttribute('aria-checked', n === b)); tab = tabs.find((t) => t[0] === b.dataset.f); draw(); };
     if (seg) { segment(seg, pick); seg.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) pick(b); }); }
     person.querySelector('.pp-kinds')?.addEventListener('click', (e) => {
