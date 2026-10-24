@@ -79,9 +79,26 @@
       else window.tnSheet?.openKey?.(shared);
     };
     openShared(); addEventListener('popstate', openShared);
+    if (!wantSearch && !new URL(location.href).searchParams.has('t')) setTimeout(welcome, 900);
   }).catch((err) => {
     $('#count').textContent = `The catalogue didn't load (${err.message}). It's rebuilt every hour, so try again shortly.`;
   });
+
+  // ---------- a one-time note: Browse is a work in progress, and feedback is welcome ----------
+  function welcome() {
+    try { if (localStorage.getItem('tenner-browse-note')) return; localStorage.setItem('tenner-browse-note', '1'); } catch { return; }
+    if (window.tnSheet?.isOpen() || document.querySelector('dialog[open]')) return;
+    document.body.insertAdjacentHTML('beforeend', `<dialog class="mine-dlg bn-dlg" id="bnDlg" aria-labelledby="bnH" aria-describedby="bnP"><form method="dialog">
+      <span class="bn-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.5 3.5l1.8 4.9 4.9 1.8-4.9 1.8-1.8 4.9-1.8-4.9-4.9-1.8 4.9-1.8z" fill="currentColor"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z" fill="currentColor"/></svg></span>
+      <h2 id="bnH">Hey you!</h2>
+      <p id="bnP">We’re constantly improving Browse, adding new features every day. You might see some come and go as we test them out.</p>
+      <div class="bn-acts"><button class="btn bn-ok" value="ok" autofocus>Got it</button><a class="bn-fb" href="contact.html?about=Feedback">Send us feedback</a></div>
+    </form></dialog>`);
+    const d = $('#bnDlg');
+    d.addEventListener('click', (e) => { if (e.target === d) d.close(); });   // a tap outside closes it, as on iPhone
+    d.addEventListener('close', () => d.remove());
+    d.showModal();
+  }
 
   // New catalogue while the page is open: take it in quietly. Near the top of the page the grid redraws straight
   // away; further down it waits for your next filter or search, so the posters never shift under you.

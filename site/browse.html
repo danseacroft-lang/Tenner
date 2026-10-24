@@ -38,8 +38,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.36.0">
-  <link rel="stylesheet" href="browse.css?v=1.36.0">
+  <link rel="stylesheet" href="styles.css?v=1.37.0">
+  <link rel="stylesheet" href="browse.css?v=1.37.0">
 </head>
 <body class="browse">
   <a class="skip" href="#grid">Skip to the titles</a>
@@ -89,7 +89,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.36.0</span>
+      <span class="side-ver">Tenner 1.37.0</span>
     </div>
   </div>
 
@@ -179,9 +179,9 @@
   <div class="scrim" id="scrim" hidden></div>
 
 
-  <script src="shell.js?v=1.36.0" defer></script>
-  <script src="links.js?v=1.36.0" defer></script>
-  <script src="sheet.js?v=1.36.0" defer></script>
-  <script src="browse.js?v=1.36.0" defer></script>
+  <script src="shell.js?v=1.37.0" defer></script>
+  <script src="links.js?v=1.37.0" defer></script>
+  <script src="sheet.js?v=1.37.0" defer></script>
+  <script src="browse.js?v=1.37.0" defer></script>
 </body>
 </html>

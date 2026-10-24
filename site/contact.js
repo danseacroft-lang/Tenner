@@ -7,6 +7,9 @@
   const say = (t, bad) => { note.textContent = t; note.classList.toggle('bad', !!bad); };
   const type = $('#cType');
   type.addEventListener('change', () => type.classList.toggle('chosen', !!type.value));
+  // ?about=Feedback (from Browse's note): the type of enquiry chosen already
+  const about = new URL(location.href).searchParams.get('about');
+  if (about && [...type.options].some((o) => o.value === about)) { type.value = about; type.classList.add('chosen'); }
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = $('#cEmail').value.trim(), msg = $('#cMsg').value.trim();

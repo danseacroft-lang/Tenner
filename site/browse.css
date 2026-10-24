@@ -362,3 +362,21 @@ body.browse { overflow-x: clip; }
 .cmd .f-btn { padding: 0 16px; gap: 8px; }
 .cmd .segmented button { min-width: 64px; }
 
+
+/* the one-time note on Browse: an iOS alert, glass, centred, a sparkle tile, one button and a link */
+.bn-dlg { width: min(340px, calc(100vw - 48px)); border-radius: 22px; text-align: center; }
+.bn-dlg form { padding: 26px 22px 20px; }
+.bn-ic { display: inline-grid; place-items: center; width: 52px; height: 52px; margin-bottom: 12px; border-radius: 15px; color: #fff;
+  background: linear-gradient(135deg, #ff375f, #bf5af2 55%, #0a84ff); box-shadow: 0 8px 22px rgba(191, 90, 242, .35); }
+.bn-ic svg { width: 26px; height: 26px; }
+.bn-dlg h2 { margin: 0 0 6px; font: 700 21px/1.2 var(--font-display); letter-spacing: -.02em; }
+.bn-dlg p { margin: 0 auto 18px; max-width: 30ch; font-size: 15px; line-height: 1.45; text-wrap: balance; }
+.bn-acts { display: grid; gap: 10px; }
+.bn-ok { width: 100%; height: 46px; border-radius: 14px; font-size: 16px; color: #fff; background: var(--accent); }
+@media (hover: hover) { .bn-ok:hover { filter: brightness(1.08); } }
+.bn-fb { padding: 6px; font-size: 15px; font-weight: 500; color: var(--accent); }
+.bn-fb::after { content: " ›"; }
+:root:not(.still) .bn-dlg[open] { animation: bnIn .42s cubic-bezier(.2, 1.2, .3, 1); }
+:root:not(.still) .bn-dlg[open]::backdrop { animation: bnFade .3s ease; }
+@keyframes bnIn { from { opacity: 0; scale: .9; } }
+@keyframes bnFade { from { opacity: 0; } }
