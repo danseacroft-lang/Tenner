@@ -50,6 +50,8 @@ body.discover { overflow-x: clip; }
 .dc-tag svg { width: 18px; height: 18px; }
 .dc-tag-yes { left: 20px; rotate: -8deg; background: rgba(48, 209, 88, .72); opacity: var(--yes, 0); scale: calc(.85 + var(--yes, 0) * .15); }
 .dc-tag-no { right: 20px; rotate: 8deg; background: rgba(255, 55, 95, .72); opacity: var(--no, 0); scale: calc(.85 + var(--no, 0) * .15); }
+.dc.armed .dc-tag { transition: scale .25s cubic-bezier(.2, 1.6, .4, 1); }
+.dc.armed .dc-tag-yes, .dc.armed .dc-tag-no { scale: 1.08; }
 .dc.yes .dc-tag-yes, .dc.no .dc-tag-no { opacity: 1; scale: 1; }
 
 /* the end of the deck */

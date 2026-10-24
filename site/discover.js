@@ -37,15 +37,19 @@
     fetch('data/browse-more.json').then((r) => (r.ok ? r.json() : null)).then((m) => { more = m; cards.forEach((el) => fillBlurb(el)); }).catch(() => {});
   }).catch(() => { stage.innerHTML = '<div class="d-end"><h2>The titles didn’t load</h2><p>They’re rebuilt every hour, so try again shortly.</p></div>'; });
 
-  // the deck: the whole catalogue (every service, and to buy or rent), not already saved or skipped, popular first but shuffled a
-  // little in small batches so it feels fresh each time
+  // the deck: mostly the five big services, with the rest of the catalogue (other services, and to buy or rent) mixed in about
+  // one card in five; not already saved or skipped, popular first but shuffled a little in small batches so it feels fresh
+  const FIVE = new Set(['netflix', 'disney', 'prime', 'hbomax', 'paramount']);
   function build() {
     const skip = skipped.all(), withArt = cat.items.some((x) => x.img);
     const pool = cat.items.filter((x) => (kind === 'both' || x.t === kind) && (x.s.length || x.b) && (!withArt || x.img)
       && !skip[keyOf(x)] && !saved.has(keyOf(x)) && (!certs || certs.items?.[keyOf(x)]?.c !== '18'))
       .sort((a, b) => (b.p * (0.6 + (b.r || 6) / 20)) - (a.p * (0.6 + (a.r || 6) / 20)));
+    const five = pool.filter((x) => x.s.some((k) => FIVE.has(k))), rest = pool.filter((x) => !x.s.some((k) => FIVE.has(k)));
+    const mixed = [];
+    while (five.length || rest.length) { mixed.push(...five.splice(0, 4)); if (rest.length) mixed.push(rest.shift()); }
     deck = [];
-    for (let i = 0; i < pool.length; i += 10) deck.push(...pool.slice(i, i + 10).sort(() => Math.random() - 0.5));
+    for (let i = 0; i < mixed.length; i += 10) deck.push(...mixed.slice(i, i + 10).sort(() => Math.random() - 0.5));
     hist = []; $('#dUndo').disabled = true;
     stage.replaceChildren(); cards = [];
     fill(); hint();
@@ -145,8 +149,23 @@
     const el = cards[0]; if (el && saved.has(el.dataset.k)) decide(true);
   });
 
-  // the finger: the card follows it and tilts from the bottom; past a point (or flicked) it goes, otherwise it springs back
+  // the finger (or mouse): the card follows it and tilts from the bottom; past a point (or flicked) it goes, otherwise it
+  // springs back. The point is a fifth of the card's width, and a quick flick is enough, so a mouse needn't drag far.
   let drag = null;
+  const reach = () => (cards[0]?.offsetWidth || 340) * 0.2;
+  const lean = (el, x, y = 0) => {
+    const r = reach(), down = y > 0 && y > Math.abs(x) * 1.2;
+    el.style.transform = `translate(${x}px,${down ? y * 0.55 : y * 0.35}px) rotate(${down ? 0 : x / 18}deg)`;
+    el.style.setProperty('--yes', Math.max(0, Math.min(1, x / r)));
+    el.style.setProperty('--no', Math.max(0, Math.min(1, -x / r)));
+    el.classList.toggle('armed', Math.abs(x) >= r);   // past the point: the label settles, so you know letting go will send it
+    stage.style.setProperty('--p', Math.min(1, Math.abs(x) / (r * 1.5)));
+  };
+  const springBack = (el) => {
+    el.style.removeProperty('--yes'); el.style.removeProperty('--no'); el.classList.remove('armed'); stage.style.removeProperty('--p');
+    const from = el.style.transform; el.style.transform = '';
+    if (!reduce && el.animate && from) el.animate([{ transform: from }, { transform: 'none' }], { duration: 520, easing: 'cubic-bezier(.2,1.4,.4,1)' });
+  };
   stage.addEventListener('pointerdown', (e) => {
     const el = e.target.closest('.dc.top'); if (!el || e.button || el.leaving) return;
     drag = { el, id: e.pointerId, x0: e.clientX, y0: e.clientY, x: 0, y: 0, t: performance.now(), vx: 0, vy: 0, moved: false };
@@ -157,27 +176,37 @@
     if (!drag || e.pointerId !== drag.id) return;
     const x = e.clientX - drag.x0, y = e.clientY - drag.y0, now = performance.now(), dt = Math.max(1, now - drag.t);
     drag.vx = 0.7 * ((x - drag.x) / dt) + 0.3 * drag.vx; drag.vy = 0.7 * ((y - drag.y) / dt) + 0.3 * drag.vy;
-    drag.x = x; drag.y = y; drag.t = now; if (Math.hypot(x, y) > 6) drag.moved = true;
-    const down = y > 0 && y > Math.abs(x) * 1.2;
-    drag.el.style.transform = `translate(${x}px,${down ? y * 0.55 : y * 0.35}px) rotate(${down ? 0 : x / 18}deg)`;
-    drag.el.style.setProperty('--yes', Math.max(0, Math.min(1, x / 110)));
-    drag.el.style.setProperty('--no', Math.max(0, Math.min(1, -x / 110)));
-    stage.style.setProperty('--p', Math.min(1, Math.abs(x) / 160));
+    drag.x = x; drag.y = y; drag.t = now; if (Math.hypot(x, y) > 8) drag.moved = true;   // a little wobble is still a tap
+    lean(drag.el, x, y);
   });
   const release = (e) => {
     if (!drag || e.pointerId !== drag.id) return;
     const { el, x, y, vx, vy, moved } = drag; drag = null;
-    el.classList.remove('held'); stage.classList.remove('dragging'); stage.style.removeProperty('--p');
-    const back = () => {
-      el.style.removeProperty('--yes'); el.style.removeProperty('--no');
-      const from = el.style.transform; el.style.transform = '';
-      if (!reduce && el.animate && from) el.animate([{ transform: from }, { transform: 'none' }], { duration: 520, easing: 'cubic-bezier(.2,1.4,.4,1)' });
-    };
+    el.classList.remove('held'); stage.classList.remove('dragging');
+    const back = () => springBack(el);
     if (!moved) { back(); details(); return; }   // a tap: the details
-    if (Math.abs(x) > 110 || (Math.abs(vx) > 0.6 && Math.abs(x) > 30)) { el.style.transform = ''; decide(x > 0, { x, y: y * 0.35, vy }); return; }
+    if (Math.abs(x) >= reach() || (Math.abs(vx) > 0.35 && Math.abs(x) > 24)) { el.classList.remove('armed'); stage.style.removeProperty('--p'); el.style.transform = ''; decide(x > 0, { x, y: y * 0.35, vy }); return; }
     if (y > 100 && y > Math.abs(x) * 1.2) { back(); details(); return; }
     back();
   };
+
+  // a trackpad: swipe sideways with two fingers, as through photos. The card follows; past the point it goes straight away
+  // (the trackpad's own glide afterwards is ignored), short of it the card springs back once the fingers stop
+  const wheel = { x: 0, t: 0, rest: 0 };
+  stage.addEventListener('wheel', (e) => {
+    if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;   // up and down: the page scrolls as usual
+    e.preventDefault();                                      // sideways: ours (not the browser's back and forward)
+    const el = cards[0]; if (!el || el.leaving || drag) return;
+    if (performance.now() < wheel.rest) return;              // the glide after a card went
+    wheel.x -= e.deltaX; lean(el, wheel.x);
+    clearTimeout(wheel.t);
+    if (Math.abs(wheel.x) >= reach() * 1.4) {
+      const x = wheel.x; wheel.x = 0; wheel.rest = performance.now() + 450;
+      el.classList.remove('armed'); stage.style.removeProperty('--p'); el.style.transform = '';
+      decide(x > 0, { x, y: 0, vy: 0 }); return;
+    }
+    wheel.t = setTimeout(() => { wheel.x = 0; springBack(el); }, 140);
+  }, { passive: false });
   stage.addEventListener('pointerup', release); stage.addEventListener('pointercancel', release);
 
   $('#dYes').addEventListener('click', () => decide(true));
@@ -200,7 +229,7 @@
   }
 
   // with a mouse and keyboard, the hint says how
-  if (mouse.matches) $('#dHint').textContent = 'Drag right to save, left to skip · or use ← → and ↓ for details';
+  if (mouse.matches) $('#dHint').textContent = 'Drag or swipe with two fingers: right to save, left to skip · or use ← →, and ↓ for details';
 
   // ---------- Shows, Films or Both: a native menu, as on the Top 10 ----------
   const NAMES = { tv: 'Shows', movie: 'Films', both: 'Shows and films' };
