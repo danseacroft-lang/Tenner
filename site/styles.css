@@ -1347,3 +1347,36 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .
   -webkit-backdrop-filter: blur(24px) saturate(1.7); backdrop-filter: blur(24px) saturate(1.7); }
 .segmented button { border-radius: 9px; font-weight: 500; }
 .seg-thumb { border-radius: 9px; background: var(--gl-hover); box-shadow: inset 0 0 0 1px var(--gl-rim), 0 2px 6px rgba(0, 0, 0, .12); }
+
+/* ============================================================ parallax (a trial): the homepage in layers, each moving
+   at its own speed as you scroll. Scroll-driven animations only (no script): they run off the main thread, tied to the
+   scroll, so they stay smooth. Only with Animations on, and never when the device asks for reduced motion. */
+@supports (animation-timeline: view()) {
+  /* computers: the backdrop sinks slowly and swells a little, while the hero's words lift away faster, so the picture
+     feels far behind them */
+  @media (min-width: 1000px) {
+    :root:not(.still) .backdrop { animation: bdDim linear both, pxSink linear both; animation-timeline: scroll(root), scroll(root); animation-range: 0 80vh, 0 120vh; }
+    :root:not(.still) .hero { animation: pxLift linear both; animation-timeline: scroll(root); animation-range: 0 70vh; }
+  }
+  /* the neon numbers float upwards a touch faster than their posters, so they sit in front of them */
+  :root:not(.still) .pcard .num { animation: pxFloat linear both; animation-timeline: view(); animation-range: cover; }
+  @media (hover: hover) {
+    :root:not(.still) .pcard:hover .num, :root:not(.still) .pcard:focus-within .num { animation: rbTurn 1.4s var(--ease-out), pxFloat linear both; animation-timeline: auto, view(); animation-range: normal, cover; }
+  }
+  /* the feature cards' artwork pans inside its frame, like a window onto it */
+  :root:not(.still) .f-img > img:first-child:not(.blur) { scale: 1.14; animation: pxPan linear both; animation-timeline: view(); animation-range: cover; }
+  /* each section rises gently into place as it comes on screen */
+  :root:not(.still) .chart > :is(.feats, .tn-card, .clist, .nrow) { animation: pxRise linear both; animation-timeline: view(); animation-range: entry 0% entry 45%; }
+  /* phones: the banners' pictures drift the other way as you swipe them, and the banners sink back as you scroll on */
+  @media (max-width: 560px) {
+    :root:not(.still) .mb-card > img:not(.mb-poster):not(.mb-glow):not(.soft) { scale: 1.16; animation: pxSwipe linear both; animation-timeline: view(inline); }
+    :root:not(.still) .mban:not([hidden]) { animation: pxRecede linear both; animation-timeline: scroll(root); animation-range: 0 45vh; transform-origin: 50% 0; }
+  }
+}
+@keyframes pxSink { to { translate: 0 14vh; scale: 1.06; } }
+@keyframes pxLift { to { translate: 0 -90px; opacity: 0; } }
+@keyframes pxFloat { from { translate: 0 14px; } to { translate: 0 -14px; } }
+@keyframes pxPan { from { translate: 0 -6%; } to { translate: 0 6%; } }
+@keyframes pxRise { from { opacity: 0; translate: 0 34px; } }
+@keyframes pxSwipe { from { translate: 9% 0; } to { translate: -9% 0; } }
+@keyframes pxRecede { to { scale: .94; opacity: .35; } }
