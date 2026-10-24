@@ -161,7 +161,7 @@
       `<button type="button" role="radio" class="coll-b" data-c="${c.key}" aria-checked="false">${esc(c.label)}</button>`).join(''));
     $('#coll').addEventListener('click', (e) => { const b = e.target.closest('.coll-b'); if (!b) return;
       state.c = b.dataset.c; state.sort = null; if (collection().films) state.k = 'movie'; apply(true); });
-    // the words as big as they can be with every collection on one line (22px down to 14px); smaller screens wrap
+    // the words as big as they can be with every collection on one line (22px down to 14px); on phones they scroll sideways
     const track = $('#coll'), fitColl = () => {
       const bs = [...track.querySelectorAll('.coll-b')]; if (!bs.length || !track.clientWidth) return;
       track.style.setProperty('--cfs', '22px');
@@ -312,6 +312,8 @@
 
     // controls reflect state
     document.querySelectorAll('.coll-b').forEach((b) => b.setAttribute('aria-checked', b.dataset.c === state.c));
+    { const tr = $('#coll'), on = tr.querySelector('[aria-checked="true"]');   // phones: the chosen one slides into view
+      if (on && tr.scrollWidth > tr.clientWidth + 1) tr.scrollTo({ left: Math.max(0, on.offsetLeft - tr.clientWidth / 2 + on.offsetWidth / 2), behavior: reduce ? 'auto' : 'smooth' }); }
     document.querySelectorAll('[data-kind]').forEach((b) => b.setAttribute('aria-checked', b.dataset.kind === state.k));
     document.querySelectorAll('.w-b').forEach((b) => b.setAttribute('aria-pressed', state.s.includes(b.dataset.s)));
     $('#pWhere').hidden = col.key === 'store';

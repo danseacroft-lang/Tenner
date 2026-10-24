@@ -446,3 +446,36 @@ body.browse { overflow-x: clip; }
 .b-row-hd p { margin: 0; font-size: 14px; color: var(--label2); }
 .searching .b-rows { display: none; }
 
+
+/* ---------- the command bar, tidied: one glass layer (the bar), everything inside it plain iOS fills ----------
+   (no glass on glass, no rims inside the rim). On phones every control is 36px tall, and the corners are concentric:
+   the bar 20px, its padding 8px, the controls 12px. */
+.cmd .segmented, .cmd .b-dice, .cmd .f-btn { background: var(--fill) !important; box-shadow: none !important; -webkit-backdrop-filter: none; backdrop-filter: none; }   /* beats the site-wide glass buttons */
+.cmd .seg-thumb { background: var(--frost-on); box-shadow: 0 3px 8px rgba(0, 0, 0, .12), 0 0 0 .5px rgba(0, 0, 0, .04); }
+.cmd .segmented button { font-weight: 500; }
+.cmd .segmented button[aria-checked="true"] { font-weight: 600; }
+@media (max-width: 820px) {
+  .cmd { gap: 8px; padding: 8px; border-radius: 20px; }
+  .cmd .search input { height: 36px; border-radius: 12px; background: var(--fill); font-size: 17px; }
+  .cmd .search input:focus { background: var(--fill-strong); }
+  .cmd .s-key { display: none; }
+  .b-ctl { gap: 8px; }
+  .cmd .segmented, .cmd .b-dice, .cmd .f-btn { height: 36px; border-radius: 12px; }
+  .cmd .seg-thumb { top: 2px; bottom: 2px; border-radius: 10px; }
+  .cmd .segmented { padding: 2px; }
+  .cmd .segmented button { border-radius: 10px; font-size: 14px; }
+  .cmd .b-dice, .cmd .f-btn { width: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0; line-height: 0; gap: 0; position: relative; }
+  .cmd .b-dice svg, .cmd .f-btn svg { width: 19px; height: 19px; }
+  .cmd .f-btn .badge { position: absolute; top: -4px; right: -4px; font-size: 11px; }
+
+  /* the collections: one line that scrolls sideways, like Apple TV's categories, fading out at the edges */
+  .coll { margin: 18px calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); }
+  .coll-track { --cfs: 17px !important; flex-wrap: nowrap; gap: 22px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity; scroll-padding-inline: var(--gutter); padding: 4px var(--gutter-r) 14px var(--gutter);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--gutter), #000 calc(100% - 36px), transparent);
+    mask-image: linear-gradient(90deg, transparent 0, #000 var(--gutter), #000 calc(100% - 36px), transparent); }
+  .coll-track::-webkit-scrollbar { display: none; }
+  .coll-b { scroll-snap-align: start; font-weight: 600; letter-spacing: -.02em; }
+  .coll-b::after { bottom: -7px; height: 3px; }
+}
+@media (max-width: 360px) { .cmd .search input { font-size: 16px; } }
