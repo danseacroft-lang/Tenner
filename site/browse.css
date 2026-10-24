@@ -479,3 +479,58 @@ body.browse { overflow-x: clip; }
   .coll-b::after { bottom: -7px; height: 3px; }
 }
 @media (max-width: 360px) { .cmd .search input { font-size: 16px; } }
+
+/* ---------- suggestion cards (cards.js): one hand-made card now and then, themed to the show it suggests ---------- */
+.dyn { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; min-height: 340px; padding: 18px;
+  border-radius: 20px; transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .6s var(--ease-spring); }
+.dyn-art { position: absolute; inset: 0; z-index: -1; }
+.dyn-art > * { position: absolute; inset: 0; }
+.dyn-copy { position: relative; display: grid; gap: 6px; }
+.dyn-acts { display: flex; gap: 8px; margin-top: 8px; }
+.dyn-x { position: absolute; top: 10px; left: 10px; z-index: 2; width: 28px; height: 28px; padding: 6px; border: 0; border-radius: 50%; cursor: pointer; opacity: .75;
+  transition: opacity .2s ease; }
+.dyn-x:hover, .dyn-x:focus-visible { opacity: 1; }
+.dyn-x svg { width: 100%; height: 100%; display: block; }
+@media (max-width: 820px) { .dyn { min-height: 320px; margin-top: 26px; } }
+
+/* American Horror Story: blood red and bone white, an old reel's grain and scratches, a dying bulb over the 13. Its own
+   palette in light and dark alike (it's the show's mood, not the page's). The type is the system's Didot, not the show's. */
+.dyn-ahs { --bone: #efe6d8; --blood: #e5383b; color: var(--bone); background: #0b0505;
+  box-shadow: 0 0 0 1px rgba(229, 56, 59, .22), 0 22px 50px -22px rgba(140, 0, 0, .75); }
+.dyn-ahs .dyn-art { background: radial-gradient(120% 80% at 70% 15%, #7a0d0d, #2a0606 60%, #0b0505); }
+.dyn-ahs .dyn-art img { width: 100%; height: 100%; object-fit: cover; object-position: 60% 25%; filter: grayscale(1) contrast(1.35) brightness(.95); mix-blend-mode: multiply; opacity: .95; }
+.dyn-ahs .dyn-blood { background: radial-gradient(140% 90% at 50% 0%, transparent 35%, rgba(5, 1, 1, .7) 80%),
+  linear-gradient(180deg, transparent 18%, rgba(11, 5, 5, .7) 50%, #0b0505 86%); }
+.dyn-ahs .dyn-grain { opacity: .2; mix-blend-mode: overlay; background-size: 160px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+.dyn-ahs .dyn-scratch { opacity: .16; background: linear-gradient(90deg, transparent 22%, rgba(239, 230, 216, .7) 22.2%, transparent 22.5%, transparent 71%, rgba(239, 230, 216, .5) 71.15%, transparent 71.4%); }
+.dyn-ahs .dyn-glow { mix-blend-mode: screen; background: radial-gradient(38% 30% at var(--mx, 76%) var(--my, 18%), rgba(255, 70, 50, .32), transparent 70%); transition: background-position .3s ease; }
+.ahs-13 { position: absolute; top: 4px; right: 14px; font: 400 148px/1 Didot, "Bodoni 72", "Bodoni MT", "Playfair Display", Georgia, serif; letter-spacing: -.05em;
+  color: transparent; -webkit-text-stroke: 1.4px rgba(239, 230, 216, .9); text-shadow: 0 0 26px rgba(229, 56, 59, .6), 0 0 2px rgba(229, 56, 59, .8); pointer-events: none; }
+.dyn-ahs .dyn-eye { margin: 0; font: 600 11px/1 var(--font); letter-spacing: .24em; text-transform: uppercase; color: var(--blood); }
+.dyn-ahs .dyn-h { margin: 0; font: 400 25px/1.02 Didot, "Bodoni 72", "Bodoni MT", Georgia, serif; letter-spacing: .03em; text-transform: uppercase; text-wrap: balance;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, .8); }
+.dyn-ahs .dyn-p { margin: 0; font-size: 13.5px; line-height: 1.4; color: rgba(239, 230, 216, .78); text-wrap: pretty; }
+.dyn-ahs .dyn-go { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 4px; height: 40px; padding: 0 14px; border: 0; border-radius: 12px; cursor: pointer;
+  background: var(--bone); color: #140606; font: 600 15px/1 var(--font); letter-spacing: -.012em; transition: box-shadow .25s ease, transform .2s ease; }
+.dyn-ahs .dyn-go svg { width: 15px; height: 15px; }
+@media (hover: hover) { .dyn-ahs .dyn-go:hover { box-shadow: 0 0 0 1px rgba(229, 56, 59, .6), 0 0 24px rgba(229, 56, 59, .55); } }
+.dyn-ahs .dyn-go:active { transform: scale(.97); }
+.dyn-ahs .dyn-snd { flex: none; width: 40px; height: 40px; padding: 9px; border: 0; border-radius: 12px; cursor: pointer; color: var(--bone);
+  background: rgba(239, 230, 216, .1); box-shadow: inset 0 0 0 1px rgba(239, 230, 216, .18); }
+.dyn-ahs .dyn-snd svg { width: 100%; height: 100%; display: block; }
+.dyn-ahs .dyn-snd.hit { animation: dynRing .9s ease-out; }
+.dyn-ahs .dyn-x { color: var(--bone); background: rgba(0, 0, 0, .45); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.dyn-ahs :focus-visible { outline: 2px solid var(--blood); outline-offset: 2px; }
+@keyframes dynRing { 0% { box-shadow: inset 0 0 0 1px rgba(239, 230, 216, .18), 0 0 0 0 rgba(229, 56, 59, .7); } 100% { box-shadow: inset 0 0 0 1px rgba(239, 230, 216, .18), 0 0 0 14px rgba(229, 56, 59, 0); } }
+/* the motion, only when animations are on: a bulb that can't decide, a reel that won't sit still, a jolt when the sound plays */
+:root:not(.still) .ahs-13 { animation: ahsBulb 7s steps(1, end) infinite; }
+:root:not(.still) .dyn-ahs .dyn-grain { animation: ahsGrain .5s steps(4) infinite; }
+:root:not(.still) .dyn-ahs .dyn-scratch { animation: ahsReel 3.2s steps(6) infinite; }
+:root:not(.still) .dyn-ahs .dyn-glow { animation: ahsFlick 4.3s infinite; }
+:root:not(.still) .dyn-ahs.jolt { animation: ahsJolt .38s cubic-bezier(.3, 0, .2, 1); }
+@keyframes ahsBulb { 0%, 61%, 64%, 66%, 100% { opacity: 1; } 62%, 65% { opacity: .15; } 63% { opacity: .7; } 88% { opacity: .55; } 89% { opacity: 1; } }
+@keyframes ahsGrain { 0% { background-position: 0 0; } 25% { background-position: -40px 30px; } 50% { background-position: 25px -55px; } 75% { background-position: -60px -20px; } }
+@keyframes ahsReel { 0% { transform: translateX(0); opacity: .16; } 33% { transform: translateX(-18px); opacity: .08; } 66% { transform: translateX(34px); opacity: .2; } }
+@keyframes ahsFlick { 0%, 100% { opacity: 1; } 47% { opacity: 1; } 48% { opacity: .4; } 49% { opacity: .9; } 51% { opacity: .3; } 53% { opacity: 1; } }
+@keyframes ahsJolt { 20% { translate: -3px 1px; filter: brightness(1.5) saturate(1.4); } 45% { translate: 3px -1px; } 70% { translate: -1px 0; filter: none; } 100% { translate: 0; } }

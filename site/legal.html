@@ -36,8 +36,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.45.0">
-  <link rel="stylesheet" href="legal.css?v=1.45.0">
+  <link rel="stylesheet" href="styles.css?v=1.46.0">
+  <link rel="stylesheet" href="legal.css?v=1.46.0">
 </head>
 <body class="legal">
   <a class="skip" href="#main">Skip to the page</a>
@@ -87,7 +87,7 @@
       <a class="side-link" href="legal.html#privacy" aria-current="page">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies" aria-current="page">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.45.0</span>
+      <span class="side-ver">Tenner 1.46.0</span>
     </div>
   </div>
 
@@ -142,6 +142,7 @@
         <li><strong>Your progress:</strong> the season and episode you’re up to in shows you’re watching, if you set it. Like your Watchlist, it stays on this device.</li>
         <li><strong>Discover:</strong> the titles you’ve swiped past, so they don’t come round again (up to the 3,000 most recent), and whether you last chose shows, films or both.</li>
         <li><strong>Browse:</strong> whether you like posters or a list, and that you’ve seen the note about Browse changing.</li>
+        <li><strong>Suggestions:</strong> which of Tenner’s suggestion cards you’ve closed, so they stay closed, and, for the length of a visit, whether you’re seeing one.</li>
         <li><strong>Stars:</strong> the shows and films you’ve starred, used only to suggest things you might like in For You.</li>
         <li><strong>The privacy note:</strong> that you’ve pressed Got it, so the note about cookies isn’t shown again.</li>
       </ul>
@@ -222,6 +223,6 @@
   </main>
 
 
-  <script src="shell.js?v=1.45.0" defer></script>
+  <script src="shell.js?v=1.46.0" defer></script>
 </body>
 </html>
