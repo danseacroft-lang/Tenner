@@ -31,7 +31,7 @@
     <span class="pc-name"><b>${esc(p.name)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span></a></li>`;
   const shelf = (title, lede, items) => items ? `<section class="p-sec"><div class="p-sh"><h2>${esc(title)}</h2>${lede ? `<p>${esc(lede)}</p>` : ''}</div>
     <ul class="p-shelf">${items}</ul></section>` : '';
-  let homeHtml = null, wallFaces = [];
+  let homeHtml = null;
   async function home() {
     if (homeHtml) { out.innerHTML = homeHtml; return; }
     out.innerHTML = '<div class="p-load" aria-hidden="true">' + '<span></span>'.repeat(8) + '</div>';
@@ -54,17 +54,26 @@
         <ol class="cl">${top10.map((p, i) => `<li><a href="?p=${p.id}" data-p="${p.id}"><span class="cl-n">${i + 1}</span>${photo(p, 'pf cl-pf')}
           <span class="cl-t"><b>${esc(p.name)}</b><small>${esc([DEPT[p.dept] || p.dept, p.known.slice(0, 2).join(', ')].filter(Boolean).join(' · '))}</small></span></a></li>`).join('')}</ol></section>` : '');
     if (!homeHtml) homeHtml = `<div class="p-empty"><h2>Search for anyone</h2><p>Type a name to find an actor, director or writer.</p></div>`;
-    wallFaces = [...stars, ...top10, ...makers].filter((p) => p.photo);
-    wall();
+    wall([...stars, ...top10, ...makers]);   // only if the whole-catalogue faces didn't come
     if (!q.value.trim() && !person.dataset.id) out.innerHTML = homeHtml;
   }
-  // the wall: three rows of faces, the middle one drifting the other way (paused when animations are off)
-  function wall() {
-    const box = $('#pcWall'); if (!wallFaces.length || box.dataset.done) return;
-    const f = wallFaces, row = (n) => { const l = [...f.slice(n * 5), ...f.slice(0, n * 5)]; const cells = l.map((p) => `<span class="pw-f"><img src="${esc(p.photo)}" alt="" loading="lazy" decoding="async"></span>`).join(''); return `<div class="pw-row${n % 2 ? ' rev' : ''}"><div class="pw-track">${cells}${cells}</div></div>`; };
+  // the wall: three rows of faces from all of TMDB's popular people (three random pages, so different people every
+  // visit), each row its own set, the middle one drifting the other way (paused when animations are off)
+  const shuffle = (l) => { for (let i = l.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [l[i], l[j]] = [l[j], l[i]]; } return l; };
+  function wall(people) {
+    const box = $('#pcWall'); if (box.dataset.done) return;
+    const seen = new Set(), f = shuffle(people.filter((p) => p.photo && !seen.has(p.id) && seen.add(p.id)));
+    if (f.length < 9) return;
+    const per = Math.ceil(f.length / 3), row = (n) => {
+      const cells = f.slice(n * per, n * per + per).map((p) => `<span class="pw-f"><img src="${esc(p.photo)}" alt="" loading="lazy" decoding="async"></span>`).join('');
+      return `<div class="pw-row${n % 2 ? ' rev' : ''}"><div class="pw-track">${cells}${cells}</div></div>`;
+    };
     box.innerHTML = row(0) + row(1) + row(2); box.dataset.done = '1';
     requestAnimationFrame(() => box.classList.add('in'));
   }
+  const pages = shuffle(Array.from({ length: 25 }, (_, i) => i + 1)).slice(0, 3);
+  Promise.all(pages.map((n) => get(`/people?page=${n}`).catch(() => null)))
+    .then((r) => wall(r.flatMap((x) => x?.results || []))).catch(() => {});
 
   // ---------- search ----------
   let ctl = null, timer = 0;

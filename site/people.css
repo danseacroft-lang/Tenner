@@ -21,7 +21,6 @@ body.people { overflow-x: clip; }
 .pc-copy { position: relative; max-width: 640px; }
 .pc-eye { margin: 0 0 8px; font: 600 15px/1.2 var(--font); letter-spacing: -.01em; color: var(--label2); }
 .pc-h { margin: 0; max-width: 13ch; font: 800 clamp(40px, 5.2vw, 72px)/.98 var(--font-display); letter-spacing: -.04em; text-wrap: balance; padding-bottom: .06em; }
-.pc-h em { font-style: normal; background: linear-gradient(100deg, #ff375f 0%, #bf5af2 55%, #0a84ff 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .pc-lede { margin: 12px 0 0; max-width: 44ch; font-size: 17px; line-height: 1.4; letter-spacing: -.016em; color: var(--label2); }
 .searching .pc-hero { min-height: 0; padding-bottom: 12px; }
 .searching .pc-wall, .searching .pc-lede, .searching .pc-eye { display: none; }

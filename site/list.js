@@ -10,7 +10,7 @@
     const who = d.name || 'Someone';
     document.title = `${who}’s Watchlist · Tenner`;
     $('#lsAv').innerHTML = avatar(d, 'av-xl');
-    $('#lsH').textContent = `${who}’s Watchlist`;
+    $('#lsH').innerHTML = `${esc(who)}’s <em class="grad">Watchlist</em>`;
     $('#lsSub').textContent = d.list.length ? `${d.list.length} title${d.list.length === 1 ? '' : 's'} they want to watch. Tap one for where to watch it.` : 'Nothing on it yet.';
     $('#lsGrid').innerHTML = d.list.map((x) => `<li><a href="./?t=${esc(x.k)}">
       ${x.poster ? `<img src="${esc(x.poster)}" alt="" loading="lazy">` : `<span class="ls-ph" style="background:linear-gradient(160deg,hsl(${hue(x.title)} 45% 42%),hsl(${(hue(x.title) + 40) % 360} 55% 18%))">${esc(x.title)}</span>`}

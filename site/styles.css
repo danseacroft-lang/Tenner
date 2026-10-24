@@ -261,6 +261,10 @@ a.tb-btn:hover { text-decoration: none; }
 /* ============================================================ the chart page header, compact
    Title, one grey line (where the chart is from, and when it was updated), then one row: Shows | Films and the services. */
 .intro { padding-top: 8px; }
+/* Tenner's keynote gradient: one phrase in a headline, pink to purple to blue (people love it; keep it to one phrase per page) */
+.grad { font-style: normal; background: linear-gradient(100deg, #ff375f 0%, #bf5af2 55%, #0a84ff 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone; padding-bottom: .06em; }
+@media (forced-colors: active) { .grad { background: none; color: CanvasText; } }
 .large-title { margin: 22px 0 6px; font: 700 clamp(32px, 5vw, 48px)/1.1 var(--font-display); letter-spacing: -.008em; text-wrap: balance; }
 .intro .large-title { margin: 14px 0 6px; font-size: clamp(30px, 3.6vw, 40px); }
 .lede { margin: 0; color: var(--label2); font-size: 17px; letter-spacing: -.022em; max-width: 60ch; }

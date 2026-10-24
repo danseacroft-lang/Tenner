@@ -36,10 +36,10 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.41.0">
-  <link rel="stylesheet" href="legal.css?v=1.41.0">
-  <link rel="stylesheet" href="settings.css?v=1.41.0">
-  <link rel="stylesheet" href="account.css?v=1.41.0">
+  <link rel="stylesheet" href="styles.css?v=1.42.0">
+  <link rel="stylesheet" href="legal.css?v=1.42.0">
+  <link rel="stylesheet" href="settings.css?v=1.42.0">
+  <link rel="stylesheet" href="account.css?v=1.42.0">
 </head>
 <body class="legal">
   <a class="skip" href="#main">Skip to the page</a>
@@ -89,7 +89,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.41.0</span>
+      <span class="side-ver">Tenner 1.42.0</span>
     </div>
   </div>
 
@@ -103,7 +103,7 @@
     <!-- signed out: what an account is for, and the ways in -->
     <section class="ac-out" id="acOut" hidden>
       <div class="ac-hero" aria-hidden="true"><span class="ac-orb"></span><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4" fill="currentColor"/><path d="M4.5 20c1-4 4-6 7.5-6s6.5 2 7.5 6z" fill="currentColor"/></svg></div>
-      <h1>Your Tenner, everywhere</h1>
+      <h1>Your Tenner, <em class="grad">everywhere</em></h1>
       <p class="l-lede">Sign in to keep your Watchlist, where you’re up to, your services and your settings in step on every phone and computer, get alerts on each of them, and share your Watchlist if you like. It’s optional: Tenner works just the same without.</p>
       <div class="ac-ways">
         <div class="ac-google" id="acGoogle" hidden></div>
@@ -188,7 +188,7 @@
   </main>
 
 
-  <script src="shell.js?v=1.41.0" defer></script>
-  <script src="account.js?v=1.41.0" defer></script>
+  <script src="shell.js?v=1.42.0" defer></script>
+  <script src="account.js?v=1.42.0" defer></script>
 </body>
 </html>

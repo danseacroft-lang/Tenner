@@ -37,8 +37,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.41.0">
-  <link rel="stylesheet" href="about.css?v=1.41.0">
+  <link rel="stylesheet" href="styles.css?v=1.42.0">
+  <link rel="stylesheet" href="about.css?v=1.42.0">
 
 </head>
 <body class="about">
@@ -94,7 +94,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.41.0</span>
+      <span class="side-ver">Tenner 1.42.0</span>
     </div>
   </div>
 
@@ -109,7 +109,7 @@
     <div class="sp-copy">
       <img class="sp-logo" src="logo.svg" alt="" width="72" height="72">
       <p class="sp-eye">About Tenner</p>
-      <h1 id="h-about" data-title="About">Your top ten, every hour.</h1>
+      <h1 id="h-about" data-title="About">Your top ten, <em class="grad">every hour.</em></h1>
       <p class="sp-lead">What the UK is watching right now on Netflix, Disney+, Prime Video, HBO Max and Paramount+. One page, five services, refreshed every hour.</p>
       <div class="sp-ctas"><a class="sp-cta primary" href="./">See the top 10</a><a class="sp-cta" href="browse.html">Browse everything</a></div>
     </div>
@@ -259,7 +259,7 @@
     <nav class="more-links" aria-label="Site information">
       <a href="contact.html">Contact</a><a href="legal.html#privacy">Privacy Policy</a><a href="legal.html#terms">Terms of Service</a><a href="legal.html#cookies">Cookies</a>
     </nav>
-    <p class="more-ver side-ver-text">Tenner 1.41.0</p>
+    <p class="more-ver side-ver-text">Tenner 1.42.0</p>
     </main>
 
 
@@ -277,6 +277,6 @@
     }).catch(function(){});}
     load(false); addEventListener('tn:check', function(){ load(true); });
   })();</script>
-  <script src="shell.js?v=1.41.0" defer></script>
+  <script src="shell.js?v=1.42.0" defer></script>
 </body>
 </html>
