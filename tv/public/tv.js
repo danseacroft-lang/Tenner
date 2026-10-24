@@ -44,7 +44,7 @@
     try {
       const r = await fetch(`/api/day?d=${state.day}`, { signal: ctl.signal });
       const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status);
-      state.data = d; shown.clear(); scrollX = null; crossing = []; drawCats(); drawGuide(); drawPicks();
+      state.data = d; shown.clear(); kept.clear(); drawCats(); drawGuide(); drawPicks();
     } catch (err) {
       if (err.name === 'AbortError') return;
       $('#picksSec').hidden = true;
@@ -83,62 +83,53 @@
   });
 
   // ---------- the guide ----------
-  // the day runs from the first programme (to the hour) to the last one's end; a minute is --px pixels wide
-  let span = null;
+  // each channel is its own strip of programmes, sized by length (a minute is --px pixels), scrolled on its own;
+  // each starts at what's on now (today) or around 7pm (another day)
   const px = () => parseFloat(getComputedStyle($('#epg')).getPropertyValue('--px')) || 5;
-  const xOf = (t) => ((t - span.from) / 60e3) * px();
+  const kept = new Map();   // where you'd scrolled each channel to, kept when the guide is redrawn (a category, a pin)
   function drawGuide(keep) {
     const mine = favs.all(), re = CATS.find(([k]) => k === cat)?.[2];
     const chans = state.data.channels.filter((c) => c.items.length && (cat === 'mine' ? mine.includes(c.name) : re.test(c.name)))
       .sort((a, b) => (mine.includes(b.name) ? 1 : 0) - (mine.includes(a.name) ? 1 : 0));   // pinned first, otherwise as they come
     if (!chans.length) { $('#epg').innerHTML = cat !== 'all' ? '<div class="empty"><h3>None of these channels today</h3><p>Try another category, or All channels.</p></div>'
       : '<div class="empty"><h3>Nothing listed yet</h3><p>Listings for this day haven’t been published. Try a nearer day.</p></div>'; preview(null); return; }
-    const first = Math.min(...chans.map((c) => c.items[0].at)), last = Math.max(...chans.map((c) => ends(c.items.at(-1))));
-    const from = first - (hour(first) % 1) * 3600e3, to = last;
-    span = { from, to };
-    const w = xOf(to) + 60, now = Date.now();
-    // the time along the top, every half hour
-    let ticks = ''; for (let t = from; t < to; t += 1800e3) ticks += `<span class="tick" style="left:${xOf(t)}px">${esc(new Date(t).toLocaleTimeString('en-GB', { timeZone: TZ, hour: 'numeric', minute: '2-digit', hour12: true }).replace(' ', '').replace(':00', ''))}</span>`;
-    const rows = chans.map((c) => `<button type="button" class="ch" role="rowheader" data-ch="${esc(c.name)}" aria-pressed="${mine.includes(c.name)}"
-      aria-label="${esc(`${c.name}: ${mine.includes(c.name) ? 'pinned to the top, tap to unpin' : 'tap to pin to the top'}`)}">${esc(c.name)}${star(mine.includes(c.name))}</button><div class="track" role="row" aria-label="${esc(c.name)}">${c.items.map((x, j) => {
-      const end = ends(x, c.items[j + 1]), live = x.at <= now && now < end, past = end <= now;
-      const l = xOf(x.at), wd = Math.max(xOf(end) - l - 4, 24);
-      const p = live ? Math.round(((now - x.at) / (end - x.at)) * 100) : 0;
-      return `<button type="button" class="blk${live ? ' live' : past ? ' past' : ''}" style="left:${l}px;width:${wd}px${live ? `;--p:${p}%` : ''}" ${reg(x, c.name, c.items[j + 1])}
-        aria-label="${esc(`${c.name}, ${hm(x.at)}: ${x.t}`)}"><span class="bi"><b>${esc(x.t)}</b><small>${hm(x.at)}</small></span></button>`;
-    }).join('')}</div>`).join('');
-    $('#epg').innerHTML = `<div class="epg-scroll" id="epgScroll" tabindex="-1"><div class="epg-grid" style="--w:${w}px">
-      <div class="corner" aria-hidden="true">${esc(state.day === today ? 'Today' : dayName(state.day, { weekday: 'short', day: 'numeric' }))}</div><div class="ruler" aria-hidden="true">${ticks}</div>
-      ${rows}${state.day === today && now >= from && now <= to ? `<i class="nowline" id="nowLine" style="left:calc(var(--chw) + ${xOf(now)}px)" aria-hidden="true"></i>` : ''}
-    </div></div>`;
-    const sc = $('#epgScroll');
-    sc.addEventListener('scroll', () => { scrollX = sc.scrollLeft; if (!edgeQ) edgeQ = requestAnimationFrame(edges); }, { passive: true });
-    if (keep && scrollX != null) sc.scrollLeft = scrollX; else jump(false);
-    edges();
+    const now = Date.now(), m = px();
+    $('#epg').innerHTML = `<div class="rows" role="list">${chans.map((c) => `<div class="crow" role="listitem">
+      <button type="button" class="ch" data-ch="${esc(c.name)}" aria-pressed="${mine.includes(c.name)}"
+        aria-label="${esc(`${c.name}: ${mine.includes(c.name) ? 'pinned to the top, tap to unpin' : 'tap to pin to the top'}`)}">${esc(c.name)}${star(mine.includes(c.name))}</button>
+      <div class="strip" data-strip="${esc(c.name)}" aria-label="${esc(`${c.name} through the day`)}">${c.items.map((x, j) => {
+        const end = ends(x, c.items[j + 1]), live = x.at <= now && now < end, past = end <= now;
+        const p = live ? Math.round(((now - x.at) / (end - x.at)) * 100) : 0;
+        return `<button type="button" class="blk${live ? ' live' : past ? ' past' : ''}" style="width:${Math.max(150, ((end - x.at) / 60e3) * m)}px${live ? `;--p:${p}%` : ''}" ${reg(x, c.name, c.items[j + 1])}
+          aria-label="${esc(`${c.name}, ${hm(x.at)}: ${x.t}`)}"><span class="bi"><b>${esc(x.t)}</b><small>${live ? `Now · ${Math.max(1, Math.round((end - now) / 60e3))} min left` : hm(x.at)}</small></span></button>`;
+      }).join('')}</div></div>`).join('')}</div>`;
+    for (const st of document.querySelectorAll('.strip')) {
+      st.addEventListener('scroll', () => { kept.set(st.dataset.strip, st.scrollLeft); queueEdge(st); }, { passive: true });
+      if (keep && kept.has(st.dataset.strip)) st.scrollLeft = kept.get(st.dataset.strip); else jumpStrip(st, false);
+      edges(st);
+    }
     // the preview starts on what's on now on the first channel (or the first thing this evening)
     const start = [...shown.values()].find((x) => x.ch === chans[0].name && x.at <= now && now < x.end)
       || [...shown.values()].find((x) => x.ch === chans[0].name && hour(x.at) >= 19) || [...shown.values()][0];
     preview(start);
   }
-  // the words of a programme that runs off the left edge start at the edge (only the ones crossing it change)
-  let scrollX = null, edgeQ = 0, crossing = [];
-  function edges() {
-    edgeQ = 0; const sc = $('#epgScroll'); if (!sc) return;
-    const x = sc.scrollLeft, next = [];
-    for (const t of sc.querySelectorAll('.track')) for (const b of t.children) {
-      const l = b.offsetLeft, r = l + b.offsetWidth;
-      if (l < x && r > x + 40) { b.style.setProperty('--off', `${Math.min(x - l, b.offsetWidth - 60)}px`); next.push(b); break; }
-      if (l >= x) break;
+  // the words of a programme that runs off a strip's left edge start at the edge, so you can always read it
+  const queued = new Set();
+  const queueEdge = (st) => { if (queued.has(st)) return; queued.add(st); requestAnimationFrame(() => { queued.delete(st); edges(st); }); };
+  function edges(st) {
+    const x = st.scrollLeft;
+    for (const b of st.children) {
+      const l = b.offsetLeft - st.firstElementChild.offsetLeft, r = l + b.offsetWidth;
+      if (l < x && r > x + 60) b.style.setProperty('--off', `${Math.min(x - l, b.offsetWidth - 120)}px`); else b.style.removeProperty('--off');
     }
-    for (const b of crossing) if (!next.includes(b)) b.style.removeProperty('--off');
-    crossing = next;
   }
-  // scroll the guide so now (today) or 7pm (another day) sits just in from the left
-  function jump(smooth) {
-    const sc = $('#epgScroll'); if (!sc || !span) return;
-    const target = state.day === today ? Date.now() - 20 * 60e3 : span.from + Math.max(0, (19 - hour(span.from))) * 3600e3;
-    sc.scrollTo({ left: Math.max(0, xOf(target)), behavior: smooth && !reduce ? 'smooth' : 'auto' });
+  // a strip to now (today) or the programme on at 7pm (another day)
+  function jumpStrip(st, smooth) {
+    const at = state.day === today ? Date.now() : null, blocks = [...st.children];
+    const b = blocks.find((n) => { const x = shown.get(n.dataset.p); return at ? x.at <= at && at < x.end : hour(x.at) >= 19 || hour(x.end) > 19; }) || (at ? blocks.find((n) => shown.get(n.dataset.p).at > at) : null);
+    st.scrollTo({ left: b ? Math.max(0, b.offsetLeft - st.firstElementChild.offsetLeft) : 0, behavior: smooth && !reduce ? 'smooth' : 'auto' });
   }
+  const jump = (smooth) => { kept.clear(); document.querySelectorAll('.strip').forEach((st) => jumpStrip(st, smooth)); };
   $('#toNow').addEventListener('click', () => jump(true));
 
   // the preview: what you point at (or tab to), its artwork melting in from the right
@@ -196,12 +187,13 @@
   // ---------- start, and keep "now" moving ----------
   load();
   setInterval(() => {
-    if (!state.data || state.day !== today || !span) return;
-    const now = Date.now(), line = $('#nowLine'); if (line) line.style.left = `calc(var(--chw) + ${xOf(now)}px)`;
+    if (!state.data || state.day !== today) return;
+    const now = Date.now();
     document.querySelectorAll('.blk').forEach((b) => {
       const x = shown.get(b.dataset.p); if (!x) return;
       const live = x.at <= now && now < x.end; b.classList.toggle('live', live); b.classList.toggle('past', x.end <= now);
-      if (live) b.style.setProperty('--p', `${Math.round(((now - x.at) / (x.end - x.at)) * 100)}%`);
+      if (live) { b.style.setProperty('--p', `${Math.round(((now - x.at) / (x.end - x.at)) * 100)}%`); b.querySelector('small').textContent = `Now · ${Math.max(1, Math.round((x.end - now) / 60e3))} min left`; }
+      else b.querySelector('small').textContent = hm(x.at);
     });
   }, 60e3);
   document.addEventListener('visibilitychange', () => { if (!document.hidden && ukDay() !== today) location.reload(); });   // past midnight: a new day

@@ -79,7 +79,7 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
 /* the preview: the programme you point at, its artwork filling the right and melting into the page (no edge anywhere) */
 .pv { position: relative; isolation: isolate; display: flex; align-items: flex-end; min-height: 250px; padding: 22px 0 26px; }
 .pv-art { position: absolute; z-index: -1; top: -40px; bottom: -10px; right: calc(-1 * var(--gutter-r)); width: 66%; pointer-events: none;
-  -webkit-mask-image: radial-gradient(70% 75% at 68% 45%, #000 35%, rgba(0, 0, 0, .5) 60%, transparent 82%); mask-image: radial-gradient(70% 75% at 68% 45%, #000 35%, rgba(0, 0, 0, .5) 60%, transparent 82%); }
+  -webkit-mask-image: radial-gradient(closest-side at 60% 50%, #000 45%, rgba(0, 0, 0, .45) 72%, transparent); mask-image: radial-gradient(closest-side at 60% 50%, #000 45%, rgba(0, 0, 0, .45) 72%, transparent); }
 .pv-art img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; opacity: 0; transition: opacity .5s ease; }
 .pv-art img.on { opacity: 1; }
 .pv-copy { position: relative; max-width: min(560px, 52%); }
@@ -92,18 +92,16 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
   background: linear-gradient(100deg, #ff375f, #bf5af2 60%, #0a84ff); box-shadow: 0 6px 18px -6px rgba(191, 90, 242, .7); transition: transform .2s ease; }
 .now-btn:active { transform: scale(.96); }
 .epg-hint { margin: 0; color: var(--label3); font-size: 13px; }
-/* the grid: channels down the left, the clock along the top (both stay put), the day scrolling sideways */
-.epg { --px: 5px; --chw: 150px; --rh: 38px; --rowh: 58px; position: relative; border-radius: 20px; background: var(--bg2); overflow: hidden;
-  box-shadow: inset 0 0 0 .5px var(--sep); }
-.epg-scroll { max-height: min(68svh, 660px); overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scroll-behavior: auto; outline: none; }
-.epg-grid { position: relative; display: grid; grid-template-columns: var(--chw) var(--w); grid-template-rows: var(--rh); grid-auto-rows: var(--rowh); width: max-content; }
-.corner, .ruler { position: sticky; top: 0; height: var(--rh); background: color-mix(in srgb, var(--bg2) 86%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
-.corner { left: 0; z-index: 4; display: flex; align-items: center; padding: 0 16px; font: 600 14px/1 var(--font); border-bottom: .5px solid var(--sep); }
-.ruler { z-index: 3; border-bottom: .5px solid var(--sep); }
-.tick { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; padding-left: 8px; border-left: .5px solid var(--sep); color: var(--label2); font: 500 13px/1 var(--font); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.ch { position: sticky; left: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 0 10px 0 16px; border: 0; border-radius: 0; cursor: pointer; text-align: left; color: var(--label); font: 600 15px/1.15 var(--font); letter-spacing: -.016em;
-  background: var(--bg2); border-bottom: .5px solid var(--sep); box-shadow: 12px 0 16px -12px rgba(0, 0, 0, .35); }
-.track { position: relative; border-bottom: .5px solid var(--sep); }
+/* the guide: each channel a row, its programmes a strip you scroll on its own (as Pluto TV does), fading at the edge */
+.epg { --px: 5px; --chw: 150px; --rowh: 64px; position: relative; border-radius: 20px; background: var(--bg2); overflow: hidden; box-shadow: inset 0 0 0 .5px var(--sep); }
+.rows { display: grid; }
+.crow { display: grid; grid-template-columns: var(--chw) minmax(0, 1fr); height: var(--rowh); border-bottom: .5px solid var(--sep); }
+.crow:last-child { border-bottom: 0; }
+.strip { display: flex; gap: 6px; align-items: stretch; padding: 6px 12px 6px 6px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; scroll-snap-type: x proximity;
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 44px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 44px), transparent); }
+.strip::-webkit-scrollbar { display: none; }
+.ch { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 0 10px 0 16px; border: 0; border-radius: 0; cursor: pointer; text-align: left; color: var(--label); font: 600 15px/1.15 var(--font); letter-spacing: -.016em;
+  background: var(--bg2); box-shadow: 12px 0 16px -12px rgba(0, 0, 0, .35); }
 .ch svg { flex: none; width: 16px; height: 16px; color: var(--label3); opacity: 0; transition: opacity .2s ease, color .2s ease, transform .3s var(--ease-spring); }
 @media (hover: hover) { .ch:hover svg { opacity: 1; } }
 .ch[aria-pressed="true"] svg { opacity: 1; color: #ffcc00; }
@@ -115,7 +113,7 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
   box-shadow: inset 0 0 0 1px var(--sep); transition: background-color .2s ease, color .2s ease, box-shadow .2s ease; }
 .cats button[aria-checked="true"] { color: var(--label); background: var(--fill-strong); box-shadow: none; font-weight: 600; }
 @media (hover: hover) { .cats button[aria-checked="false"]:hover { color: var(--label); } }
-.blk { position: absolute; top: 5px; bottom: 5px; display: block; min-width: 0; padding: 0; border: 0; border-radius: 10px; cursor: pointer;
+.blk { position: relative; flex: none; scroll-snap-align: start; display: block; min-width: 0; padding: 0; border: 0; border-radius: 10px; cursor: pointer;
   text-align: left; color: var(--label); background: var(--fill); overflow: clip; transition: background-color .15s ease, box-shadow .2s ease, transform .2s ease; }
 /* a programme that started before the visible part of the guide keeps its words at the visible edge (--off, set as you scroll) */
 .blk .bi { display: grid; align-content: center; gap: 2px; height: 100%; padding: 0 10px 0 calc(10px + var(--off, 0px)); }
@@ -129,9 +127,6 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); }
 .blk.live small { color: var(--label); }
 .blk.past { opacity: .45; }
-.nowline { position: absolute; top: var(--rh); bottom: 0; z-index: 1; width: 2px; margin-left: -1px; border-radius: 1px; pointer-events: none;
-  background: linear-gradient(180deg, #ff375f, #bf5af2 50%, #0a84ff); box-shadow: 0 0 12px rgba(255, 55, 95, .6); }
-.nowline::before { content: ""; position: absolute; top: -4px; left: -4px; width: 10px; height: 10px; border-radius: 50%; background: #ff375f; box-shadow: 0 0 10px rgba(255, 55, 95, .8); }
 
 /* tonight's picks: wide artwork cards in a row, the time on a frosted chip */
 .picks { list-style: none; display: grid; grid-auto-flow: column; grid-auto-columns: 280px; gap: 16px; margin: 0 calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter));
@@ -189,14 +184,13 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
   .hero { padding-top: 14px; }
   .pv { min-height: 240px; padding-top: 70px; }
   .pv-art { width: calc(100% + var(--gutter) + var(--gutter-r)); right: calc(-1 * var(--gutter-r)); top: 0; bottom: 30%; opacity: .6;
-    -webkit-mask-image: radial-gradient(80% 85% at 60% 40%, #000 30%, transparent 80%); mask-image: radial-gradient(80% 85% at 60% 40%, #000 30%, transparent 80%); }
+    -webkit-mask-image: radial-gradient(closest-side at 55% 50%, #000 40%, transparent); mask-image: radial-gradient(closest-side at 55% 50%, #000 40%, transparent); }
   .pv-copy { max-width: none; }
   .pv-sum { font-size: 15px; -webkit-line-clamp: 2; }
-  .epg { --px: 3.6px; --chw: 104px; --rowh: 54px; border-radius: 16px; }
+  .epg { --px: 3.6px; --chw: 104px; --rowh: 60px; border-radius: 16px; }
   .ch { padding: 0 6px 0 10px; font-size: 13px; }
   .ch svg { width: 13px; height: 13px; opacity: .55; }
   .cats { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); }
-  .corner { padding: 0 10px; font-size: 13px; }
   .epg-hint { display: none; }
   .lede { font-size: 16px; }
   .picks { grid-auto-columns: 78%; gap: 12px; }
