@@ -8,6 +8,9 @@ on:
     paths: ['worker/**', '.github/workflows/api.yml']
   workflow_dispatch:
 concurrency: { group: api, cancel-in-progress: true }
+# the job only reads the code; Cloudflare is reached with its own token, so GitHub's token gets no write access
+permissions:
+  contents: read
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -55,7 +58,7 @@ jobs:
           else echo "::warning title=Accounts are off::Couldn't make the accounts database. Give the Cloudflare API token 'D1: Edit' and run this again."; fi
       - name: Deploy to Cloudflare
         if: steps.ready.outputs.go == 'yes'
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd   # v3.15.0, pinned to the exact release (it handles the Cloudflare token)
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

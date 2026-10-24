@@ -464,7 +464,7 @@ function placeholder(it) {
 const meta = (it) => [
   moveBadge(it, true),
   it.season ? `<span>${esc(it.season)}</span>` : '',
-  it.year ? `<span>${it.year}</span>` : '',
+  it.year ? `<span>${esc(it.year)}</span>` : '',
   it.rating ? `<span class="star" aria-label="Rated ${it.rating} out of 10">★ ${it.rating.toFixed(1)}</span>` : '',
 ].join('');
 

@@ -2,7 +2,7 @@
 // State lives in the URL (#c=top&k=movie&s=netflix,disney&g=18&sort=rating&r=7&y=1990-2010&a=12&rt=60), so any view can be
 // shared or bookmarked.
 (() => {
-  const { esc, hue, glide, arrows, reduce } = window.tn;   // from shell.js
+  const { esc, hue, arrows, reduce } = window.tn;   // from shell.js
   const $ = (s) => document.querySelector(s);
   const PAGE = 48;
   const daysAgo = (n) => new Date(Date.now() - n * 864e5).toLocaleDateString('en-CA');   // your own date (YYYY-MM-DD), worked out each time, so it's right past midnight
@@ -157,11 +157,20 @@
 
   // ---------- controls ----------
   function buildControls() {
-    // collections: a glass capsule with a gliding pill, like the service bar
+    // collections: a row of big words, the chosen one underlined in rainbow
     $('#coll').insertAdjacentHTML('beforeend', COLLECTIONS.map((c) =>
       `<button type="button" role="radio" class="coll-b" data-c="${c.key}" aria-checked="false">${esc(c.label)}</button>`).join(''));
     $('#coll').addEventListener('click', (e) => { const b = e.target.closest('.coll-b'); if (!b) return;
       state.c = b.dataset.c; state.sort = null; if (collection().films) state.k = 'movie'; apply(true); });
+    // the words as big as they can be with every collection on one line (22px down to 14px); smaller screens wrap
+    const track = $('#coll'), fitColl = () => {
+      const bs = [...track.querySelectorAll('.coll-b')]; if (!bs.length || !track.clientWidth) return;
+      track.style.setProperty('--cfs', '22px');
+      const gap = parseFloat(getComputedStyle(track).columnGap) || 0, words = bs.reduce((n, b) => n + b.offsetWidth, 0);
+      const fs = Math.min(22, Math.floor(22 * (track.clientWidth - 4 - gap * (bs.length - 1)) / words * 10) / 10);
+      track.style.setProperty('--cfs', `${Math.max(14, fs)}px`);
+    };
+    new ResizeObserver(fitColl).observe(track); document.fonts?.ready.then(fitColl);
 
     const setKind = (k) => {
       if (collection().films && k !== 'movie') state.c = 'popular';
@@ -247,10 +256,6 @@
     scrim.addEventListener('click', () => setSheet(false));
     addEventListener('keydown', (e) => { if (e.key === 'Escape' && sheet.classList.contains('open')) setSheet(false); });
 
-    const track = $('#coll'), edges = () => { track.parentElement.classList.toggle('at-start', track.scrollLeft < 4);
-      track.parentElement.classList.toggle('at-end', track.scrollLeft + track.clientWidth >= track.scrollWidth - 4); };
-    track.addEventListener('scroll', edges, { passive: true });
-    addEventListener('resize', () => { placeColl(false); edges(); }); requestAnimationFrame(edges);
     new IntersectionObserver((es) => { if (es[0].isIntersecting) more(); }, { rootMargin: '600px 0px' }).observe($('#more'));
     addEventListener('hashchange', () => { readHash(); apply(false); });
   }
@@ -308,7 +313,6 @@
 
     // controls reflect state
     document.querySelectorAll('.coll-b').forEach((b) => b.setAttribute('aria-checked', b.dataset.c === state.c));
-    placeColl(user);
     document.querySelectorAll('[data-kind]').forEach((b) => b.setAttribute('aria-checked', b.dataset.kind === state.k));
     document.querySelectorAll('.w-b').forEach((b) => b.setAttribute('aria-pressed', state.s.includes(b.dataset.s)));
     $('#pWhere').hidden = col.key === 'store';
@@ -682,11 +686,4 @@
     shown += next.length;
   }
 
-  // the gliding pill under the chosen collection, kept in view if the capsule scrolls
-  function placeColl(animate) {
-    const b = $('.coll-b[aria-checked="true"]'); if (!b) return;
-    glide($('#collInd'), b, animate);
-    const track = $('#coll');
-    if (track.scrollWidth > track.clientWidth) track.scrollTo({ left: Math.max(0, b.offsetLeft - (track.clientWidth - b.offsetWidth) / 2), behavior: animate && !reduce ? 'smooth' : 'auto' });
-  }
 })();

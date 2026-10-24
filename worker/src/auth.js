@@ -27,6 +27,9 @@ const rand = (n = 32) => b64u(crypto.getRandomValues(new Uint8Array(n)));
 const sha = async (data) => new Uint8Array(await crypto.subtle.digest('SHA-256', typeof data === 'string' ? enc.encode(data) : data));
 const hashToken = async (t) => b64u(await sha(`tenner:${t}`));
 const now = () => Date.now();
+const SESSION_IDLE = 180 * 864e5;
+// links in Tenner's emails always point at the real site, whatever address the request came from
+const SITE = 'https://tenner.stream';
 const same = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
 
 // the site's own name for passkeys: tenner.stream (also for www.), or whichever allowed address it's opened on
@@ -99,6 +102,7 @@ async function sessionUser(req, env) {
   const h = await hashToken(t);
   const row = await env.DB.prepare('SELECT s.user_id, s.seen, u.* FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token = ?').bind(h).first();
   if (!row) return null;
+  if (now() - row.seen > SESSION_IDLE) { await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(h).run(); return null; }   // unused for six months: signed out
   if (now() - row.seen > 864e5) await env.DB.prepare('UPDATE sessions SET seen = ? WHERE token = ?').bind(now(), h).run();
   return { ...row, token: h };
 }
@@ -258,10 +262,12 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
       if (mm[1] === 'forgot') {
         if (email) {
           const row = await env.DB.prepare('SELECT user_id FROM passwords WHERE email = ?').bind(email).first();
-          if (row && env.RESEND_API_KEY) {
+          // at most one a minute and three an hour for each account, so nobody can flood an inbox with them
+          const recent = row && await env.DB.prepare('SELECT COUNT(*) AS n, MAX(expires) AS t FROM resets WHERE user_id = ? AND expires > ?').bind(row.user_id, now()).first();
+          if (row && env.RESEND_API_KEY && !(recent?.n >= 3) && !(recent?.t && recent.t - now() > 3600e3 - 60e3)) {
             const t = rand(32);
             await env.DB.prepare('INSERT INTO resets (token, user_id, expires) VALUES (?, ?, ?)').bind(await hashToken(t), row.user_id, now() + 3600e3).run();
-            await sendMail(env, email, 'Reset your Tenner password', resetMail(`${origin}/account.html#reset=${t}&e=${encodeURIComponent(email)}`));
+            await sendMail(env, email, 'Reset your Tenner password', resetMail(`${SITE}/account.html#reset=${t}&e=${encodeURIComponent(email)}`));
           }
         }
         return ok({ ok: true });   // the same answer either way, so it never says who has an account
@@ -279,7 +285,7 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
       if (mm[1] === 'resend') {
         if (email) {
           const row = await env.DB.prepare('SELECT user_id FROM passwords WHERE email = ?').bind(email).first();
-          if (row && !await isVerified(env, email)) await sendVerify(env, row.user_id, email, origin);
+          if (row && !await isVerified(env, email)) await sendVerify(env, row.user_id, email);
         }
         return ok({ ok: true });
       }
@@ -287,6 +293,16 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
         const r = await env.DB.prepare('SELECT * FROM resets WHERE token = ?').bind(await hashToken(String(body.token || ''))).first();
         if (!r || r.expires < now()) return fail('That reset link has expired. Ask for a new one');
         if (!validKey(key)) return fail('Something went wrong');
+        // An address that was never confirmed, on an account with other ways in (a passkey, Google): someone may have
+        // attached your email to their own account. Proving the address gives you an account of your own instead of theirs.
+        const pw = await env.DB.prepare('SELECT email FROM passwords WHERE user_id = ?').bind(r.user_id).first();
+        if (pw && !await isVerified(env, pw.email) && await ways(env, { id: r.user_id, google_sub: (await env.DB.prepare('SELECT google_sub FROM users WHERE id = ?').bind(r.user_id).first())?.google_sub }) > 1) {
+          const uid = rand(16);
+          await env.DB.batch([env.DB.prepare('INSERT INTO users (id, name, hue, created) VALUES (?, ?, ?, ?)').bind(uid, pw.email.split('@')[0].slice(0, 40), Math.floor(Math.random() * 360), now()),
+            env.DB.prepare('UPDATE passwords SET user_id = ? WHERE user_id = ?').bind(uid, r.user_id),
+            env.DB.prepare('DELETE FROM resets WHERE user_id = ?').bind(r.user_id), env.DB.prepare('DELETE FROM verifies WHERE user_id = ?').bind(r.user_id)]);
+          r.user_id = uid;
+        }
         const salt = rand(16);
         await env.DB.batch([env.DB.prepare('UPDATE passwords SET salt = ?, hash = ?, fails = 0 WHERE user_id = ?').bind(salt, await pwHash(salt, key), r.user_id),
           env.DB.prepare('DELETE FROM resets WHERE user_id = ?').bind(r.user_id), env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(r.user_id),
@@ -303,7 +319,7 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
         const uid = rand(16), salt = rand(16);
         await env.DB.batch([env.DB.prepare('INSERT INTO users (id, name, hue, created) VALUES (?, ?, ?, ?)').bind(uid, name, Math.floor(Math.random() * 360), now()),
           env.DB.prepare('INSERT INTO passwords (user_id, email, salt, hash, created) VALUES (?, ?, ?, ?, ?)').bind(uid, email, salt, await pwHash(salt, key), now())]);
-        if (env.RESEND_API_KEY) { await sendVerify(env, uid, email, origin); return ok({ verify: email }); }   // signed in once they've clicked the link
+        if (env.RESEND_API_KEY) { await sendVerify(env, uid, email); return ok({ verify: email }); }   // signed in once they've clicked the link
         const u = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(uid).first();
         return ok({ token: await newSession(env, uid, req), user: publicUser(u) });
       }
@@ -374,12 +390,12 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
       const salt = rand(16);
       await env.DB.prepare('INSERT INTO passwords (user_id, email, salt, hash, created) VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET email = excluded.email, salt = excluded.salt, hash = excluded.hash, fails = 0')
         .bind(me.id, email, salt, await pwHash(salt, key), now()).run();
-      if (env.RESEND_API_KEY && !await isVerified(env, email)) { await sendVerify(env, me.id, email, origin); return ok({ verify: email }); }
+      if (env.RESEND_API_KEY && !await isVerified(env, email)) { await sendVerify(env, me.id, email); return ok({ verify: email }); }
       return ok({ ok: true });
     }
     if (p === '/me/verify' && m === 'POST') {   // send the link again
       const pw = await env.DB.prepare('SELECT email FROM passwords WHERE user_id = ?').bind(me.id).first();
-      if (pw && env.RESEND_API_KEY && !await isVerified(env, pw.email)) await sendVerify(env, me.id, pw.email, origin);
+      if (pw && env.RESEND_API_KEY && !await isVerified(env, pw.email)) await sendVerify(env, me.id, pw.email);
       return ok({ ok: true });
     }
     if (p === '/me/password' && m === 'DELETE') {
@@ -420,13 +436,15 @@ async function sendMail(env, to, subject, { html, text }) {
   if (!r.ok) console.log('Resend', r.status, (await r.text()).slice(0, 200));
 }
 const isVerified = async (env, email) => !!(await env.DB.prepare('SELECT 1 FROM verified WHERE email = ?').bind(email).first());
-// the welcome email with its "Confirm your email" link (a day to use it; at most one a minute)
-async function sendVerify(env, userId, email, origin) {
-  const last = await env.DB.prepare('SELECT MAX(created) AS t FROM verifies WHERE user_id = ?').bind(userId).first();
-  if (last?.t && now() - last.t < 60e3) return;
+// the welcome email with its "Confirm your email" link (a day to use it; at most one a minute and five a day)
+async function sendVerify(env, userId, email) {
+  const last = await env.DB.prepare('SELECT MAX(created) AS t, COUNT(*) AS n FROM verifies WHERE user_id = ? AND created > ?').bind(userId, now() - 864e5).first();
+  if (last?.t && now() - last.t < 60e3) return;   // one a minute
+  if (last?.n >= 5) return;                         // and five a day
+
   const t = rand(32);
   await env.DB.prepare('INSERT INTO verifies (token, user_id, email, created, expires) VALUES (?, ?, ?, ?, ?)').bind(await hashToken(t), userId, email, now(), now() + 864e5).run();
-  await sendMail(env, email, 'Confirm your email for Tenner', verifyMail(`${origin}/account.html#verify=${t}`));
+  await sendMail(env, email, 'Confirm your email for Tenner', verifyMail(`${SITE}/account.html#verify=${t}`));
 }
 function verifyMail(link) {
   const text = `Welcome to Tenner.\n\nConfirm this is your email address to finish making your account: ${link}\n\nThe link works for a day. If you didn't sign up, ignore this email and nothing happens.\n\nTenner · tenner.stream`;

@@ -63,22 +63,18 @@ body.browse { overflow-x: clip; }
 
 /* ---------- collections: big type, a rainbow underline gliding to the one you pick ---------- */
 .coll { position: relative; margin-top: 26px; display: flex; max-width: 100%; }
-.coll-track { --fl: 28px; --fr: 28px; position: relative; display: flex; gap: 26px; overflow-x: auto; scrollbar-width: none; min-width: 0; padding: 4px 2px 12px;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--fl), #000 calc(100% - var(--fr)), transparent);
-  mask-image: linear-gradient(to right, transparent, #000 var(--fl), #000 calc(100% - var(--fr)), transparent); transition: --fl .35s ease, --fr .35s ease; }
-.coll.at-start .coll-track { --fl: 0px; }
-.coll.at-end .coll-track { --fr: 0px; }
-.coll-track::-webkit-scrollbar { display: none; }
-.coll-ind { position: absolute; z-index: 0; left: 0; bottom: 4px; top: auto !important; height: 4px !important; width: 0; border-radius: 2px; pointer-events: none;
-  background: linear-gradient(90deg, #ff375f, #ff9f0a, #ffd60a, #30d158, #0a84ff, #bf5af2); box-shadow: 0 0 14px rgba(191, 90, 242, .45); }
+.coll-track { position: relative; display: flex; flex-wrap: wrap; gap: 8px clamp(14px, 1.6vw, 24px); min-width: 0; padding: 4px 2px 12px; }
+/* every collection on the page, never off the edge: one line on computers, wrapping onto more on phones; the chosen one's
+   rainbow underline grows in beneath it */
 .coll-b { position: relative; z-index: 1; flex: none; padding: 4px 0; border: 0; background: none; cursor: pointer;
-  font: 800 24px/1.1 var(--font-display); letter-spacing: -.025em; color: var(--label3); white-space: nowrap; transition: color .25s ease, transform .4s var(--ease-spring); }
+  font: 800 var(--cfs, 20px)/1.1 var(--font-display); letter-spacing: -.025em; color: var(--label3); white-space: nowrap; transition: color .25s ease, transform .4s var(--ease-spring); }
 .coll-b[aria-checked="true"] { color: var(--label); }
 @media (hover: hover) { .coll-b[aria-checked="false"]:hover { color: var(--label2); } }
 .coll-b:active { transform: scale(.96); }
-.coll-b::after { content: ""; position: absolute; left: 0; right: 0; bottom: -8px; height: 4px; border-radius: 2px; pointer-events: none;
+.coll-b::after { content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: 3.5px; border-radius: 2px; pointer-events: none;
   background: linear-gradient(90deg, #ff375f, #ff9f0a, #ffd60a, #30d158, #0a84ff, #bf5af2); opacity: 0; transform: scaleX(.4); transition: opacity .3s ease, transform .45s var(--ease-spring); }
 @media (hover: hover) { .coll-b[aria-checked="false"]:hover::after { opacity: .35; transform: none; } }
+.coll-b[aria-checked="true"]::after { opacity: 1; transform: none; box-shadow: 0 0 12px rgba(191, 90, 242, .4); }
 .coll-b:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
 
 /* ---------- explore by genre ---------- */
@@ -255,8 +251,7 @@ body.browse { overflow-x: clip; }
   .spot-lede { font-size: 16px; }
   .spot-now { position: relative; right: auto; bottom: auto; width: 100%; margin-top: 18px; }
   .spot { flex-direction: column; align-items: stretch; justify-content: flex-end; }
-  .coll-b { font-size: 21px; }
-  .coll-track { gap: 20px; }
+  .coll-track { gap: 10px 16px; }
   .mood { height: 118px; }
   .moods-row { grid-auto-columns: 74%; }
 }
