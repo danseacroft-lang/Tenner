@@ -778,7 +778,7 @@ function pageWatchlist() {
         <select id="wlKind" aria-label="Shows, films or both">${[['tv', 'Shows'], ['movie', 'Films'], ['both', 'Shows and films']].map(([k, l]) => `<option value="${k}"${k === kind ? ' selected' : ''}>${l}</option>`).join('')}</select></label>` : ''}</div>
       <ol class="cl nw-cl wl-cl" data-kind="${both ? kind : 'both'}">${rows}</ol></section>`;
   return `<h1 class="large-title page-title"><em class="grad">Watchlist</em></h1>
-    <p class="lede">${list.length ? `${list.length} title${list.length === 1 ? '' : 's'}, newest first. ` : ''}${window.tn.account.user() ? 'Kept in step on every device you’re signed in on.' : 'Saved on this device. <a href="account.html">Sign in</a> to have it on all your devices.'}</p>
+    <p class="lede">${list.length ? `You have <b>${list.length} title${list.length === 1 ? '' : 's'}</b> on your Watchlist. ` : ''}${window.tn.account.user() ? 'Your Watchlist will be anywhere you’re signed in.' : 'It’s saved on this device. <a href="account.html">Sign in</a> to have it anywhere you’re signed in.'}</p>
     ${list.length ? '<div class="wl-alert" id="wlAlert" hidden></div>' : ''}${body}${comingUp(list)}`;
 }
 // Shows, Films or both, without redrawing

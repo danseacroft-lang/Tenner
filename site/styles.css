@@ -268,6 +268,7 @@ a.tb-btn:hover { text-decoration: none; }
 .large-title { margin: 22px 0 6px; font: 700 clamp(32px, 5vw, 48px)/1.1 var(--font-display); letter-spacing: -.008em; text-wrap: balance; }
 .intro .large-title { margin: 14px 0 6px; font-size: clamp(30px, 3.6vw, 40px); }
 .lede { margin: 0; color: var(--label2); font-size: 17px; letter-spacing: -.022em; max-width: 60ch; }
+.lede b { color: var(--label); font-weight: 600; }
 .sub { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 0; font-size: 16px; letter-spacing: -.022em; }
 #lede { display: inline-flex; align-items: center; gap: 7px; }
 .sub-logo { width: 22px; height: 22px; border-radius: 6px; box-shadow: 0 0 0 .5px var(--sep); }
