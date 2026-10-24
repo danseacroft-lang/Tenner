@@ -730,12 +730,20 @@ function wantTitles() {
 const BELL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M10 20.5a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
 async function alertCard() {
   const box = $('#wlAlert'); if (!box) return;
+  try { if (localStorage.getItem('tenner-alerts-hidden')) return; } catch {}   // closed with its ×: it stays closed (Settings still has alerts)
   const st = await window.tn.alerts.state();
   if (st === 'on' || st === 'unsupported' || st === 'blocked' || !box.isConnected) return;
+  const X = '<button type="button" class="wl-al-x" id="wlAlertX" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>';
   box.innerHTML = st === 'install'
-    ? `<span class="wl-al-ic">${BELL}</span><p><b>Get an alert when these arrive.</b> Add Tenner to your Home Screen (Share, then Add to Home Screen) and open it from there.</p>`
-    : `<span class="wl-al-ic">${BELL}</span><p><b>Get an alert when these arrive.</b> A notification when something here lands on a service, or gets a new season.</p><button type="button" class="btn btn-tinted" id="wlAlertOn">Turn on</button>`;
+    ? `<span class="wl-al-ic">${BELL}</span><p><b>Get an alert when these arrive.</b> Add Tenner to your Home Screen (Share, then Add to Home Screen) and open it from there. You can turn alerts on in Settings later too.</p>${X}`
+    : `<span class="wl-al-ic">${BELL}</span><p><b>Get an alert when these arrive.</b> A notification when something here lands on a service, or gets a new season.</p><button type="button" class="btn btn-tinted" id="wlAlertOn">Turn on</button>${X}`;
   box.hidden = false;
+  $('#wlAlertX').addEventListener('click', () => {
+    try { localStorage.setItem('tenner-alerts-hidden', '1'); } catch {}
+    const done = () => { box.hidden = true; };
+    if (reduceMotion || !box.animate) return done();
+    box.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.97)' }], { duration: 220, easing: 'ease-in' }).finished.then(done, done);
+  });
   $('#wlAlertOn')?.addEventListener('click', async (e) => {
     e.target.disabled = true;
     try { const r = await window.tn.alerts.enable(); if (r === 'on') { box.hidden = true; toast('Alerts on. Change it any time in Settings'); } else { e.target.disabled = false; toast(r === 'blocked' ? 'Notifications are off for Tenner in your browser’s settings' : 'Alerts stay off'); } }

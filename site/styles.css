@@ -721,6 +721,11 @@ a.tb-btn:hover { text-decoration: none; }
 .wl-alert p { flex: 1; margin: 0; font-size: 14px; line-height: 1.4; color: var(--label2); text-wrap: pretty; }
 .wl-alert p b { display: block; color: var(--label); font-weight: 600; }
 .wl-alert .btn { flex: none; }
+.wl-al-x { flex: none; display: grid; place-items: center; width: 28px; height: 28px; margin: -2px -4px 0 0; align-self: flex-start; padding: 0; border: 0; border-radius: 50%;
+  cursor: pointer; color: var(--label2); background: var(--fill); transition: background-color .2s ease, color .2s ease; }
+.wl-al-x svg { width: 12px; height: 12px; }
+@media (hover: hover) { .wl-al-x:hover { color: var(--label); background: var(--fill-strong); } }
+.wl-al-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* Watchlist rows: where it's included, then remove */
 /* This Week */
 .wk { margin-top: 30px; }
