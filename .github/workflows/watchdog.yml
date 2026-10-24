@@ -29,17 +29,23 @@ jobs:
             [ "$code" = 200 ] || echo "update.yml|tenner.stream answered $code"
             mins=$(curl -s -m 30 "https://tenner.stream/data/trending.json?v=$(date +%s)" | age)   # rebuilt hourly
             [ "$mins" -le 150 ] || echo "update.yml|the charts are $((mins/60)) hours old"
-            code=$(curl -s -o /dev/null -w '%{http_code}' -m 30 https://tenner-api.danseacroft.workers.dev/title/t1413)
+            # the search service only answers Tenner's own pages, so the check says it's from tenner.stream
+            code=$(curl -s -o /dev/null -w '%{http_code}' -m 30 -H 'Origin: https://tenner.stream' https://tenner-api.danseacroft.workers.dev/title/t1413)
             [ "$code" = 200 ] || echo "api.yml|the search service answered $code"
-            code=$(curl -s -o /dev/null -w '%{http_code}' -m 30 https://tv.tenner.stream/)
+            # Tenner TV is checked at its own Cloudflare address: tv.tenner.stream sits behind Cloudflare's bot protection,
+            # which turns away automated checks from GitHub's servers (people are let through)
+            code=$(curl -s -o /dev/null -w '%{http_code}' -m 30 https://tenner-tv.danseacroft.workers.dev/)
             [ "$code" = 200 ] || echo "tv.yml|Tenner TV's page answered $code"
-            tv=$(curl -s -m 40 https://tv.tenner.stream/api/day | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const d=JSON.parse(s),c=d.channels||[],x=c[0]?.items?.[0];console.log(c.length>=5&&x&&Array.isArray(x.g)?"ok":"only "+c.length+" channels"+(d.error?" ("+d.error+")":""))}catch{console.log("unreadable")}})')
+            tv=$(curl -s -m 40 https://tenner-tv.danseacroft.workers.dev/api/day | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const d=JSON.parse(s),c=d.channels||[],x=c[0]?.items?.[0];console.log(c.length>=5&&x&&Array.isArray(x.g)?"ok":"only "+c.length+" channels"+(d.error?" ("+d.error+")":""))}catch{console.log("unreadable")}})')
             [ "$tv" = ok ] || echo "tv.yml|Tenner TV's listings: $tv"
           }
           # the Watch live links on Tenner TV: a link that stops opening is flagged (nothing to re-run; it needs a new address)
           for u in $(grep -oE "https://www\.(bbc\.co\.uk/iplayer/live/|itv\.com/watch\?channel=|channel4\.com/now/)[A-Za-z0-9]+" "$GITHUB_WORKSPACE/tv/public/tv.js" | sort -u); do
             c=$(curl -s -L -o /dev/null -w '%{http_code}' -m 25 -A 'Mozilla/5.0 (Macintosh) TennerWatchdog' "$u"); [ "$c" -lt 400 ] 2>/dev/null || echo "::warning title=A Watch live link may be broken::$u answered $c"
           done
+          dom=$(curl -s -o /dev/null -w '%{http_code}' -m 30 -A 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15' https://tv.tenner.stream/)
+          case "$dom" in 200) echo "✓ tv.tenner.stream answers" ;; 403|503) echo "· tv.tenner.stream is behind Cloudflare's bot check for automated visitors ($dom); checked directly instead" ;;
+            *) echo "::warning title=tv.tenner.stream::answered $dom (the Worker itself is checked separately)" ;; esac
           found=$(check)
           if [ -z "$found" ]; then echo "✓ Everything's up and fresh"; exit 0; fi
           echo "$found" | while IFS='|' read -r job what; do echo "↻ $what: re-running $job"; done
