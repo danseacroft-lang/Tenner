@@ -1352,10 +1352,10 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .
    at its own speed as you scroll. Scroll-driven animations only (no script): they run off the main thread, tied to the
    scroll, so they stay smooth. Only with Animations on, and never when the device asks for reduced motion. */
 @supports (animation-timeline: view()) {
-  /* computers: the backdrop sinks slowly and swells a little, while the hero's words lift away faster, so the picture
-     feels far behind them */
+  /* computers: the picture stays pinned to the top and slowly zooms inside its frame (never pulling away from the
+     edge), while the hero's words lift away faster, so the picture feels far behind them */
   @media (min-width: 1000px) {
-    :root:not(.still) .backdrop { animation: bdDim linear both, pxSink linear both; animation-timeline: scroll(root), scroll(root); animation-range: 0 80vh, 0 120vh; }
+    :root:not(.still) .backdrop .bd-l { transform-origin: 70% 0; animation: pxZoom linear both; animation-timeline: scroll(root); animation-range: 0 100vh; }
     :root:not(.still) .hero { animation: pxLift linear both; animation-timeline: scroll(root); animation-range: 0 70vh; }
   }
   /* the neon numbers float upwards a touch faster than their posters, so they sit in front of them */
@@ -1367,16 +1367,14 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .
   :root:not(.still) .f-img > img:first-child:not(.blur) { scale: 1.14; animation: pxPan linear both; animation-timeline: view(); animation-range: cover; }
   /* each section rises gently into place as it comes on screen */
   :root:not(.still) .chart > :is(.feats, .tn-card, .clist, .nrow) { animation: pxRise linear both; animation-timeline: view(); animation-range: entry 0% entry 45%; }
-  /* phones: the banners' pictures drift the other way as you swipe them, and the banners sink back as you scroll on */
+  /* phones: the banners' pictures drift the other way as you swipe them */
   @media (max-width: 560px) {
     :root:not(.still) .mb-card > img:not(.mb-poster):not(.mb-glow):not(.soft) { scale: 1.16; animation: pxSwipe linear both; animation-timeline: view(inline); }
-    :root:not(.still) .mban:not([hidden]) { animation: pxRecede linear both; animation-timeline: scroll(root); animation-range: 0 45vh; transform-origin: 50% 0; }
   }
 }
-@keyframes pxSink { to { translate: 0 14vh; scale: 1.06; } }
+@keyframes pxZoom { to { scale: 1.12; } }
 @keyframes pxLift { to { translate: 0 -90px; opacity: 0; } }
 @keyframes pxFloat { from { translate: 0 14px; } to { translate: 0 -14px; } }
 @keyframes pxPan { from { translate: 0 -6%; } to { translate: 0 6%; } }
 @keyframes pxRise { from { opacity: 0; translate: 0 34px; } }
 @keyframes pxSwipe { from { translate: 9% 0; } to { translate: -9% 0; } }
-@keyframes pxRecede { to { scale: .94; opacity: .35; } }
