@@ -41,23 +41,58 @@
       const t0 = c.currentTime + 0.02, o = c.createOscillator(), lfo = c.createOscillator(), lg = c.createGain(), bp = c.createBiquadFilter(), g = c.createGain();
       o.type = 'sawtooth'; o.frequency.setValueAtTime(95, t0); o.frequency.linearRampToValueAtTime(140, t0 + 0.9); o.frequency.linearRampToValueAtTime(80, t0 + 1.7);
       lfo.frequency.value = 23; lg.gain.value = 18; lfo.connect(lg).connect(o.frequency);
-      bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 6;
-      o.connect(bp).connect(g).connect(out); env(g, t0, 0.15, 0.3, 1.55); o.start(t0); lfo.start(t0); o.stop(t0 + 1.8); lfo.stop(t0 + 1.8);
+      bp.type = 'bandpass'; bp.frequency.value = 700; bp.Q.value = 2.5;
+      o.connect(bp).connect(g).connect(out);
+      g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(1.3, t0 + 0.3); g.gain.setValueAtTime(1.3, t0 + 1.35); g.gain.linearRampToValueAtTime(0, t0 + 1.78); o.start(t0); lfo.start(t0); o.stop(t0 + 1.8); lfo.stop(t0 + 1.8);
+    },
+    // an original sound in the spirit of a horror title sequence (no one's theme, no borrowed tune): a stuttering, glitchy
+    // pulse, metal scraping, a distorted swell, then a hard cut to silence (about 2.5s)
+    glitch(c, out) {
+      const t0 = c.currentTime + 0.02, end = t0 + 2.35;
+      const noise = c.createBuffer(1, c.sampleRate * 2.5, c.sampleRate), ch = noise.getChannelData(0);
+      for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
+      const src = (o) => { const n = c.createBufferSource(); n.buffer = noise; n.start(t0, o || 0); n.stop(end); return n; };
+      // the pulse: short bursts of filtered noise and a dirty low thud, on an uneven, stumbling beat
+      const gate = c.createGain(), bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1400; bp.Q.value = 1.2;
+      src().connect(bp).connect(gate).connect(out); gate.gain.value = 0;
+      const thud = c.createOscillator(), tg = c.createGain(); thud.type = 'square'; thud.frequency.value = 49; thud.connect(tg).connect(out); tg.gain.value = 0;
+      [0, .13, .2, .5, .63, .7, .78, 1.0, 1.13, 1.38, 1.45, 1.52, 1.59, 1.66, 1.9, 1.97, 2.04, 2.11, 2.18, 2.25].forEach((d, i) => {
+        const t = t0 + d, len = i % 3 ? 0.035 : 0.07;
+        gate.gain.setValueAtTime(0.5, t); gate.gain.setValueAtTime(0, t + len);
+        if (i % 3 === 0) { tg.gain.setValueAtTime(0.32, t); tg.gain.exponentialRampToValueAtTime(0.001, t + 0.11); }
+      });
+      thud.start(t0); thud.stop(end);
+      // the scrape: noise through a narrow, wandering filter, like metal dragged on metal
+      const sc = c.createBiquadFilter(), sg = c.createGain(), wob = c.createOscillator(), wg = c.createGain();
+      sc.type = 'bandpass'; sc.Q.value = 28; sc.frequency.setValueAtTime(2300, t0 + 0.4); sc.frequency.linearRampToValueAtTime(3900, t0 + 1.5); sc.frequency.linearRampToValueAtTime(2700, end);
+      wob.frequency.value = 7; wg.gain.value = 260; wob.connect(wg).connect(sc.frequency); wob.start(t0); wob.stop(end);
+      src(0.6).connect(sc).connect(sg).connect(out); sg.gain.setValueAtTime(0.0001, t0 + 0.4); sg.gain.exponentialRampToValueAtTime(0.9, t0 + 1.1); sg.gain.setValueAtTime(0.9, end - 0.3);
+      // the swell: two detuned, distorted saws rising towards the cut
+      const shaper = c.createWaveShaper(), curve = new Float32Array(1024);
+      for (let i = 0; i < 1024; i++) { const x = i / 512 - 1; curve[i] = Math.tanh(x * 6); }
+      shaper.curve = curve;
+      const lp = c.createBiquadFilter(), swg = c.createGain(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(300, t0); lp.frequency.exponentialRampToValueAtTime(3200, end);
+      [73.4, 77.8].forEach((f) => { const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(f, t0); o.frequency.linearRampToValueAtTime(f * 1.06, end); o.connect(shaper); o.start(t0); o.stop(end); });
+      shaper.connect(lp).connect(swg).connect(out); swg.gain.setValueAtTime(0.0001, t0); swg.gain.exponentialRampToValueAtTime(0.16, end - 0.05);
+      // and then nothing
+      for (const g of [gate, tg, sg, swg]) { g.gain.cancelScheduledValues(end); g.gain.setValueAtTime(0, end); }
     },
   };
   function play(names) {
     const c = audio(); if (c.state === 'suspended') c.resume();
-    const out = c.createGain(); out.gain.value = 0.7;
-    const echo = c.createDelay(); echo.delayTime.value = 0.23; const fb = c.createGain(); fb.gain.value = 0.28;   // a little room around it
-    out.connect(c.destination); out.connect(echo); echo.connect(fb).connect(echo); echo.connect(c.destination);
     const name = names[Math.floor(Math.random() * names.length)];
+    const out = c.createGain(); out.gain.value = 0.7; out.connect(c.destination);
+    if (name !== 'glitch') {   // a little room around it (not the glitch, which ends on a hard cut)
+      const echo = c.createDelay(); echo.delayTime.value = 0.23; const fb = c.createGain(); fb.gain.value = 0.28;
+      out.connect(echo); echo.connect(fb).connect(echo); echo.connect(c.destination);
+    }
     SOUNDS[name](c, out);
     return name;
   }
 
   // ---------- the cards ----------
   const CARDS = [{
-    id: 'ahs13', from: '2026-10-01', until: '2026-11-02', k: 't1413', cert18: true, sounds: ['musicbox', 'heartbeat', 'creak'],
+    id: 'ahs13', from: '2026-10-01', until: '2026-11-02', k: 't1413', cert18: true, sounds: ['glitch', 'musicbox', 'heartbeat', 'creak'],
     theme: 'ahs',
     // filled in from the show's details when they arrive: the next episode's date, if there is one
     html: (d) => {
