@@ -38,8 +38,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.37.2">
-  <link rel="stylesheet" href="browse.css?v=1.37.2">
+  <link rel="stylesheet" href="styles.css?v=1.38.0">
+  <link rel="stylesheet" href="browse.css?v=1.38.0">
 </head>
 <body class="browse">
   <a class="skip" href="#grid">Skip to the titles</a>
@@ -89,7 +89,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.37.2</span>
+      <span class="side-ver">Tenner 1.38.0</span>
     </div>
   </div>
 
@@ -128,6 +128,8 @@
         <button type="button" role="radio" data-kind="movie" aria-checked="false">Films</button>
         <button type="button" role="radio" data-kind="both" aria-checked="false">Both</button>
       </div>
+        <button type="button" class="btn btn-tinted b-dice" id="surprise" aria-label="Surprise me" title="Surprise me: a good one at random">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"/></svg></button>
         <button type="button" class="btn btn-tinted f-btn" id="openFilters" aria-controls="filters" aria-expanded="false">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="17" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
             Filters<span class="badge" id="fCount" hidden></span></button>
@@ -135,6 +137,9 @@
     </div>
 
     <div class="coll at-start at-end"><div class="coll-track" id="coll" role="radiogroup" aria-label="Collections"><span class="coll-ind" id="collInd" aria-hidden="true"></span></div></div>
+
+    <!-- for you (from your Watchlist) and recently viewed: rows of posters -->
+    <div class="b-rows" id="bRows" hidden></div>
 
     <!-- explore by genre: big tiles of three fanned posters each -->
     <section class="moods" id="moods" aria-label="Explore by genre" hidden></section>
@@ -159,12 +164,29 @@
           <input type="range" id="rating" min="0" max="9" step="0.5" value="0">
           <div class="scale" aria-hidden="true"><span>Any</span><span>5</span><span>7</span><span>9</span></div>
         </section>
+        <section class="panel">
+          <h3><span id="yearL">Released</span> <output id="yearOut" for="yLo yHi">Any time</output></h3>
+          <div class="yr"><input type="range" id="yLo" aria-label="Released from" step="1"><input type="range" id="yHi" aria-label="Released up to" step="1"></div>
+          <div class="scale" aria-hidden="true" id="yScale"></div>
+        </section>
+        <section class="panel">
+          <h3>Age rating <span class="p-sub">up to</span></h3>
+          <div class="genres" id="ages" role="radiogroup" aria-label="Age rating, up to"></div>
+        </section>
+        <section class="panel">
+          <h3>Length <span class="p-sub">episodes, for shows</span></h3>
+          <div class="genres" id="lens" role="radiogroup" aria-label="Length"></div>
+        </section>
         <button type="button" class="btn btn-tinted clear" id="clear">Clear filters</button>
       </aside>
 
       <section class="results" aria-labelledby="count">
         <div class="r-bar">
           <p id="count" class="count" aria-live="polite">Loading…</p>
+          <div class="view-sw" id="viewSw" role="radiogroup" aria-label="Show as">
+            <button type="button" role="radio" data-view="grid" aria-checked="true" aria-label="Posters" title="Posters"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.8"/><rect x="13" y="4" width="7" height="7" rx="1.8"/><rect x="4" y="13" width="7" height="7" rx="1.8"/><rect x="13" y="13" width="7" height="7" rx="1.8"/></svg></button>
+            <button type="button" role="radio" data-view="list" aria-checked="false" aria-label="List" title="List"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4.5" width="4" height="6" rx="1.2"/><rect x="4" y="13.5" width="4" height="6" rx="1.2"/><path d="M11 6.5h9M11 9h6M11 15.5h9M11 18h6" fill="none" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+          </div>
         </div>
         <ol class="grid" id="grid"></ol>
         <div class="more" id="more" aria-hidden="true"></div>
@@ -179,9 +201,9 @@
   <div class="scrim" id="scrim" hidden></div>
 
 
-  <script src="shell.js?v=1.37.2" defer></script>
-  <script src="links.js?v=1.37.2" defer></script>
-  <script src="sheet.js?v=1.37.2" defer></script>
-  <script src="browse.js?v=1.37.2" defer></script>
+  <script src="shell.js?v=1.38.0" defer></script>
+  <script src="links.js?v=1.38.0" defer></script>
+  <script src="sheet.js?v=1.38.0" defer></script>
+  <script src="browse.js?v=1.38.0" defer></script>
 </body>
 </html>

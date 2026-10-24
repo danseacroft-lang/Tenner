@@ -205,6 +205,12 @@
     info.watch ||= info.tmdb ? `${info.tmdb}/watch?locale=GB` : info.netflix || '#';
     if (!current) pageTitle = document.title;
     current = info; opener = fromUrl ? null : document.activeElement;
+    // Recently viewed (Browse shows the last ten): kept on this device only
+    if (info.k && info.title) try {
+      const r = JSON.parse(localStorage.getItem('tenner-recent') || '[]').filter((x) => x.k !== info.k);
+      r.unshift({ k: info.k, type: info.type, title: info.title, year: info.year || null, poster: info.poster || null });
+      localStorage.setItem('tenner-recent', JSON.stringify(r.slice(0, 10)));
+    } catch {}
     render(info, null);
     sheet.style.translate = '';
     if (!sheet.open) sheet.showModal();

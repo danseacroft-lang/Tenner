@@ -1,20 +1,32 @@
 // Tenner Browse: the hour's catalogue (data/browse.json), filtered and sorted in the browser.
-// State lives in the URL (#c=top&k=movie&s=netflix,disney&g=18&sort=rating&r=7), so any view can be shared or bookmarked.
+// State lives in the URL (#c=top&k=movie&s=netflix,disney&g=18&sort=rating&r=7&y=1990-2010&a=12&rt=60), so any view can be
+// shared or bookmarked.
 (() => {
   const { esc, hue, glide, arrows, reduce } = window.tn;   // from shell.js
   const $ = (s) => document.querySelector(s);
   const PAGE = 48;
-  const daysAgo = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);   // worked out each time, so it's right past midnight
+  const daysAgo = (n) => new Date(Date.now() - n * 864e5).toLocaleDateString('en-CA');   // your own date (YYYY-MM-DD), worked out each time, so it's right past midnight
 
-  // Collections: a filter plus the sort that suits it.
+  // Collections: a filter plus the sort that suits it. New this week and Leaving soon come from data/new.json (the services'
+  // own arrivals and departures), in order of the day; titles there that the catalogue doesn't have are added just for them.
   const COLLECTIONS = [
     { key: 'popular', label: 'Popular', sort: 'pop', test: (x) => x.s.length },
+    { key: 'week', label: 'New this week', extra: true, order: (a, b) => b._new.localeCompare(a._new) || b.p - a.p, test: (x) => x._new },
     { key: 'new', label: 'New releases', sort: 'new', test: (x) => x.s.length && x.d >= daysAgo(150) && x.d <= daysAgo(0) },
     { key: 'top', label: 'Top rated', sort: 'rating', test: (x) => x.s.length && x.r >= 7.6 && x.v >= 300 },
     { key: 'gems', label: 'Hidden gems', sort: 'rating', test: (x) => x.s.length && x.r >= 7.2 && x.v >= 30 && x.v < 600 },
     { key: 'acclaimed', label: 'Acclaimed', sort: 'rating', test: (x) => x.s.length && x.r >= 8 && x.v >= 1500 },
+    { key: 'only', label: 'Only on…', sort: 'pop', test: (x) => x.s.filter((k) => !shops.has(k)).length === 1 },   // on just one of the five
+    { key: 'leaving', label: 'Leaving soon', extra: true, order: (a, b) => a._gone.localeCompare(b._gone) || b.p - a.p, test: (x) => x._gone },
     { key: 'store', label: 'Buy or rent', sort: 'pop', test: (x) => x.b, films: true },
   ];
+  // Filters beyond genre and rating: age rating (UK certificates), length (minutes; episodes for shows) and release years.
+  // Certificates and lengths come from the title details (data/titles.json), loaded the first time either is used.
+  const AGES = [['', 'Any'], ['U', 'U'], ['PG', 'PG'], ['12', '12'], ['15', '15']];
+  const AGE_RANK = { U: 0, PG: 1, 12: 2, '12A': 2, 15: 3, 18: 4, R18: 5 };
+  const LENS = [['', 'Any'], ['30', '30 min'], ['60', '1 hour'], ['90', '90 min'], ['120', '2 hours']];
+  const THIS_YEAR = new Date().getFullYear();
+  let firstYear = 1950;
   const SORTS = [
     { key: 'pop', label: 'Most popular', fn: (a, b) => b.p - a.p },
     { key: 'rating', label: 'Highest rated', fn: (a, b) => b.r - a.r || b.v - a.v },
@@ -25,7 +37,7 @@
 
   let cat = null, logos = {}, labels = {}, shown = 0, list = [];
   const shops = new Set();   // stores (Sky Store): in the Where to watch filter, not in My services
-  const state = { c: 'popular', k: 'tv', s: [], g: [], sort: null, r: 0, q: '' };
+  const state = { c: 'popular', k: 'tv', s: [], g: [], sort: null, r: 0, q: '', y: null, a: '', rt: '' };
 
   // ---------- URL <-> state ----------
   function readHash() {
@@ -39,6 +51,10 @@
     state.sort = SORTS.some((s) => s.key === q.get('sort')) ? q.get('sort') : null;
     state.r = Math.min(9, Math.max(0, parseFloat(q.get('r')) || 0));
     state.q = (q.get('q') || '').slice(0, 80);
+    const y = (q.get('y') || '').split('-').map(Number);
+    state.y = y.length === 2 && y.every((n) => n >= 1900 && n <= THIS_YEAR) && y[0] <= y[1] ? y : null;
+    state.a = AGES.some(([v]) => v && v === q.get('a')) ? q.get('a') : '';
+    state.rt = LENS.some(([v]) => v && v === q.get('rt')) ? q.get('rt') : '';
     if (collection().films) state.k = 'movie';
   }
   function writeHash() {
@@ -51,21 +67,25 @@
     if (state.g.length) q.set('g', state.g.join(','));
     if (state.sort) q.set('sort', state.sort);
     if (state.r) q.set('r', state.r);
+    if (state.y) q.set('y', state.y.join('-'));
+    if (state.a) q.set('a', state.a);
+    if (state.rt) q.set('rt', state.rt);
     if (state.q) q.set('q', state.q);
     const h = q.toString();
     history.replaceState(null, '', h ? '#' + h : location.pathname);
   }
   const collection = () => COLLECTIONS.find((c) => c.key === state.c);
   const kindOk = (x) => state.k === 'both' || x.t === state.k;   // Shows, Films or Both
-  const sortKey = () => state.sort || collection().sort;
+  const sortKey = () => state.sort || collection().sort || '';   // '' : the collection's own order (by the day)
 
   // ---------- data ----------
   Promise.all([
     fetch('data/browse.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))),
     fetch('data/trending.json').then((r) => (r.ok ? r.json() : null)).catch(() => null),
     window.tn.prefs.get().no18 ? window.tnSheet?.details() : null,   // Settings: "Hide titles rated 18" needs the certificates
-  ]).then(([c, t, d]) => {
-    cat = c; certs = d;
+    fetch('data/new.json').then((r) => (r.ok ? r.json() : null)).catch(() => null),
+  ]).then(([c, t, d, f]) => {
+    cat = c; certs = d; fresh = f; mergeFresh();
     for (const s of t?.services || []) if (!s.store) { logos[s.key] = s.logo; labels[s.key] = s.label; if (s.shop) shops.add(s.key); }
     if (!Object.keys(labels).length) Object.assign(labels, { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+' });
     const wantSearch = location.hash === '#search';
@@ -106,10 +126,34 @@
     if (!cat) return;
     fetch(`data/browse.json?v=${Date.now()}`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((c) => {
       if (!c?.items?.length || c.generatedAt === cat.generatedAt) return;
-      cat = c;
+      cat = c; mergeFresh();
       if (scrollY < 400 && !document.activeElement?.matches('input')) apply(false);
     }).catch(() => {});
   });
+
+  // New this week and Leaving soon: mark the catalogue's titles with the day, and add the ones it doesn't have
+  let fresh = null;
+  function mergeFresh() {
+    if (!cat?.items) return;
+    cat.items = cat.items.filter((x) => !x._x);
+    for (const x of cat.items) { delete x._new; delete x._gone; }
+    const byKey = new Map(cat.items.map((x) => [`${x.t[0]}${x.i}`, x]));
+    const add = (f, field) => {
+      if (!f.id || !f.date) return;
+      const t = f.type === 'movie' ? 'movie' : 'tv', k = `${t[0]}${f.id}`;
+      let x = byKey.get(k);
+      if (!x) { x = { i: f.id, t, n: f.title, d: f.date, r: 0, v: 0, p: 0, img: f.poster || null, g: [], s: [], _x: 1 }; cat.items.push(x); byKey.set(k, x); }
+      if (f.service && !x.s.includes(f.service)) x.s.push(f.service);
+      if (!x[field] || (field === '_new' ? f.date > x[field] : f.date < x[field])) x[field] = f.date;
+    };
+    const today = daysAgo(0), weekAgo = daysAgo(7);
+    for (const f of fresh?.items || []) if (f.date >= weekAgo && f.date <= today) add(f, '_new');
+    for (const f of fresh?.leaving || []) if (f.date >= today) add(f, '_gone');
+    firstYear = Math.max(1920, Math.floor(Math.min(...cat.items.map((x) => +x.d.slice(0, 4) || THIS_YEAR)) / 10) * 10);
+  }
+  // the title details (certificates, lengths), the first time they're wanted
+  let detailsP = null;
+  const needDetails = () => { if (!certs && !detailsP && window.tnSheet?.details) detailsP = window.tnSheet.details().then((d) => { certs = d; apply(false); }); };
 
   // ---------- controls ----------
   function buildControls() {
@@ -149,7 +193,38 @@
     const rating = $('#rating');
     rating.addEventListener('input', () => { state.r = +rating.value; paintRating(); apply(true, true); });
 
-    $('#clear').addEventListener('click', () => { Object.assign(state, { s: [], g: [], sort: null, r: 0 }); apply(true); });
+    // age rating and length: one choice each (tap it again for Any)
+    const chips = (box, opts, key) => {
+      $(box).innerHTML = opts.map(([v, l]) => `<button type="button" role="radio" class="g-b" data-v="${v}" aria-checked="false">${esc(l)}</button>`).join('');
+      $(box).addEventListener('click', (e) => { const b = e.target.closest('.g-b'); if (!b) return; state[key] = state[key] === b.dataset.v ? '' : b.dataset.v; apply(true); });
+      arrows($(box), () => [...$(box).querySelectorAll('.g-b')], (b) => b.click());
+    };
+    chips('#ages', AGES, 'a'); chips('#lens', LENS, 'rt');
+    // released: two thumbs on one track
+    const lo = $('#yLo'), hi = $('#yHi');
+    for (const r of [lo, hi]) { r.min = firstYear; r.max = THIS_YEAR; }
+    $('#yScale').innerHTML = [firstYear, Math.round((firstYear + THIS_YEAR) / 2 / 10) * 10, THIS_YEAR].map((y) => `<span>${y}</span>`).join('');
+    const years = (e) => {
+      let a = +lo.value, b = +hi.value;
+      if (a > b) { if (e.target === lo) a = b; else b = a; }
+      state.y = a <= firstYear && b >= THIS_YEAR ? null : [a, b]; apply(true, true);
+    };
+    lo.addEventListener('input', years); hi.addEventListener('input', years);
+
+    $('#clear').addEventListener('click', () => { Object.assign(state, { s: [], g: [], sort: null, r: 0, y: null, a: '', rt: '' }); apply(true); });
+
+    // posters or a list (remembered on this device)
+    const sw = $('#viewSw'), setView = (v) => {
+      sw.querySelectorAll('button').forEach((b) => b.setAttribute('aria-checked', b.dataset.view === v));
+      for (const g of [$('#grid'), $('#webGrid')]) g.classList.toggle('as-list', v === 'list');
+      try { localStorage.setItem('tenner-browse-view', v); } catch {}
+    };
+    sw.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setView(b.dataset.view); });
+    arrows(sw, () => [...sw.querySelectorAll('button')], (b) => setView(b.dataset.view));
+    let view = 'grid'; try { view = localStorage.getItem('tenner-browse-view') === 'list' ? 'list' : 'grid'; } catch {}
+    setView(view);
+
+    $('#surprise').addEventListener('click', surprise);
 
     // search: results as you type; / or ⌘K jumps to the box (shell.js); Escape clears it
     const qi = $('#q');
@@ -208,19 +283,25 @@
 
   // ---------- filtering ----------
   let certs = null;
-  const ok18 = (x) => !certs || certs.items?.[`${x.t[0]}${x.i}`]?.c !== '18';
+  const det = (x) => certs?.items?.[`${x.t[0]}${x.i}`];
+  const no18 = window.tn.prefs.get().no18;
+  const ok18 = (x) => !no18 || !certs || det(x)?.c !== '18';
+  // released, age rating and length (the last two wait for the details, then filter)
+  const okMore = (x) => (!state.y || ((+x.d.slice(0, 4) || 0) >= state.y[0] && (+x.d.slice(0, 4) || 0) <= state.y[1]))
+    && (!state.a || !certs || (det(x)?.c in AGE_RANK && AGE_RANK[det(x).c] <= AGE_RANK[state.a]))
+    && (!state.rt || !certs || (det(x)?.rt && det(x).rt <= +state.rt));
   function apply(user, quiet) {
     const col = collection();
-    const sortFn = SORTS.find((s) => s.key === sortKey()).fn;
+    if (state.a || state.rt) needDetails();
+    const sortFn = state.sort ? SORTS.find((s) => s.key === state.sort).fn : col.order || SORTS.find((s) => s.key === col.sort).fn;
     const q = fold(state.q);
     if (q) {
       // searching looks across shows and films and every collection, closest matches first
-      list = cat.items.map((x) => [x, score(x, q)]).filter(([x, sc]) => sc && ok18(x)
-
+      list = cat.items.map((x) => [x, score(x, q)]).filter(([x, sc]) => sc && ok18(x) && okMore(x)
         && (!state.g.length || x.g.some((g) => state.g.includes(g)))
         && (!state.r || x.r >= state.r))
         .sort((a, b) => (state.sort ? sortFn(a[0], b[0]) : (b[1] - a[1] || b[0].p - a[0].p))).map(([x]) => x);
-    } else list = cat.items.filter((x) => kindOk(x) && col.test(x) && ok18(x)
+    } else list = cat.items.filter((x) => kindOk(x) && (col.extra || !x._x) && col.test(x) && ok18(x) && okMore(x)
       && (!state.s.length || col.key === 'store' || x.s.some((k) => state.s.includes(k)))
       && (!state.g.length || x.g.some((g) => state.g.includes(g)))
       && (!state.r || x.r >= state.r)).sort(sortFn);
@@ -235,7 +316,14 @@
     const gs = [...genreSet()].filter((g) => cat.genres[g]).sort((a, b) => cat.genres[a].localeCompare(cat.genres[b]));
     $('#genres').innerHTML = gs.map((g) => `<button type="button" class="g-b" data-g="${g}" aria-pressed="${state.g.includes(g)}">${esc(cat.genres[g])}</button>`).join('');
     paintRating();
-    const n = (state.s.length ? 1 : 0) + state.g.length + (state.r ? 1 : 0) + (state.sort ? 1 : 0);   // services count once, however many
+    document.querySelectorAll('#ages .g-b').forEach((b) => b.setAttribute('aria-checked', b.dataset.v === state.a));
+    document.querySelectorAll('#lens .g-b').forEach((b) => b.setAttribute('aria-checked', b.dataset.v === state.rt));
+    $('#yLo').value = state.y ? state.y[0] : firstYear; $('#yHi').value = state.y ? state.y[1] : THIS_YEAR;
+    $('#yearOut').textContent = !state.y ? 'Any time' : state.y[0] === state.y[1] ? state.y[0] : `${state.y[0]} to ${state.y[1]}`;
+    const span = THIS_YEAR - firstYear || 1;
+    $('#yLo').parentElement.style.setProperty('--a', `${((+$('#yLo').value - firstYear) / span) * 100}%`);
+    $('#yLo').parentElement.style.setProperty('--b', `${((+$('#yHi').value - firstYear) / span) * 100}%`);
+    const n = (state.s.length ? 1 : 0) + state.g.length + (state.r ? 1 : 0) + (state.sort ? 1 : 0) + (state.y ? 1 : 0) + (state.a ? 1 : 0) + (state.rt ? 1 : 0);   // services count once, however many
     $('#fCount').hidden = !n; $('#fCount').textContent = n;
     $('#clear').disabled = !n;
 
@@ -253,6 +341,7 @@
     webSearch();
     if (user && !quiet && document.startViewTransition && !reduce) document.startViewTransition(draw); else draw();
     if (!q) { spotlight(); moods(); } else $('#moods').hidden = true;
+    rows();
   }
 
   // ---------- the spotlight: the best five of whatever you're browsing, each a full-width picture for a few seconds ----------
@@ -263,7 +352,8 @@
   const kindWord = () => (state.k === 'movie' ? 'Films' : state.k === 'both' ? 'Shows and films' : 'Shows');
   async function spotlight() {
     const col = collection();
-    $('#spotEye').textContent = `${col.label} · ${col.films ? 'Films' : kindWord()}${state.s.length && col.key !== 'store' ? ` · ${state.s.length === 1 ? labels[state.s[0]] : `${state.s.length} services`}` : ''}`;
+    $('#spotEye').textContent = col.key === 'only' && state.s.length === 1 ? `Only on ${labels[state.s[0]]} · ${kindWord()}`
+      : `${col.label} · ${col.films ? 'Films' : kindWord()}${state.s.length && col.key !== 'store' ? ` · ${state.s.length === 1 ? labels[state.s[0]] : `${state.s.length} services`}` : ''}`;
     const m = await moreData(); if (!m?.items) return;
     const picks = list.slice(0, 24).filter((x) => m.items[`${x.t[0]}${x.i}`]?.[1]).slice(0, 5);
     const key = picks.map((x) => x.i).join(',');
@@ -306,7 +396,7 @@
   function moods() {
     const box = $('#moods');
     if (state.g.length || collection().key === 'store') { box.hidden = true; return; }
-    const pool = cat.items.filter((x) => kindOk(x) && x.img && x.s.length && ok18(x) && (!state.s.length || x.s.some((k) => state.s.includes(k))));
+    const pool = cat.items.filter((x) => !x._x && kindOk(x) && x.img && x.s.length && ok18(x) && (!state.s.length || x.s.some((k) => state.s.includes(k))));
     const count = new Map(); for (const x of pool) for (const g of new Set(x.g)) count.set(g, (count.get(g) || 0) + 1);
     // Animation is left out; Sci-Fi (TV's "Sci-Fi & Fantasy", films' "Science Fiction") always gets a tile if there's enough of it
     const SCIFI = [10765, 878], ok = ([g, n]) => cat.genres[g] && g !== 16 && n >= 6;
@@ -480,7 +570,8 @@
         <span class="t">${esc(x.title)}</span>
         <span class="kind-l">${x.type === 'tv' ? 'Show' : 'Film'}</span>
         <span class="m"><span>${esc(x.year || '')}</span></span>
-      </a></li>`;
+        ${x.rating ? `<span class="l-r">★ ${x.rating.toFixed(1)}</span>` : ''}
+      </a>${saveBtn(x.k, x.title)}</li>`;
   }
   $('#webGrid').addEventListener('click', (e) => {
     const a = e.target.closest('.tile a'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
@@ -490,8 +581,84 @@
       tmdb: `https://www.themoviedb.org/${x.type}/${x.k.slice(1)}`, services: [] });
   });
 
+  // ---------- + to save, from the grid, the list or the rows ----------
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-save]'); if (!b || !b.closest('.bwrap')) return;
+    e.preventDefault(); e.stopPropagation();
+    const k = b.dataset.save, x = item(k), w = web.items.get(k);
+    const info = x ? { k, type: x.t, title: x.n, year: (x.d || '').slice(0, 4) || null, poster: x.img ? (x.img.startsWith('/') ? cat.img + x.img : x.img) : null }
+      : w ? { k, type: w.type, title: w.title, year: w.year, poster: w.poster } : null;
+    if (!info) return;
+    const on = window.tn.saved.toggle(info);
+    if (on && !reduce && b.animate) b.animate([{ scale: 1 }, { scale: 1.25 }, { scale: 1 }], { duration: 360, easing: 'cubic-bezier(.3,1.5,.5,1)' });
+  }, true);
+  addEventListener('tn:saved', () => document.querySelectorAll('[data-save]').forEach((b) => {
+    const on = window.tn.saved.has(b.dataset.save);
+    if (String(on) === b.getAttribute('aria-pressed')) return;
+    b.setAttribute('aria-pressed', on); b.innerHTML = on ? TICK : PLUS;
+    b.title = on ? 'In your Watchlist' : 'Add to Watchlist';
+    b.setAttribute('aria-label', b.getAttribute('aria-label').replace(/^[^:]+/, b.title));
+  }));
+
+  // ---------- Surprise me: a good one at random from whatever you're looking at ----------
+  async function surprise() {
+    const good = list.filter((x) => x.img && x.r >= 6.8 && !x._x);
+    const pool = (good.length >= 5 ? good : list).slice(0, 80);
+    if (!pool.length) return;
+    const x = pool[Math.floor(Math.pow(Math.random(), 1.4) * pool.length)];   // the better ones a little more often
+    const b = $('#surprise'); if (!reduce && b.animate) b.querySelector('svg').animate([{ rotate: '0deg' }, { rotate: '360deg' }], { duration: 500, easing: 'cubic-bezier(.3,.9,.3,1)' });
+    window.tnSheet?.open({ ...(await sheetFor(x)), eye: 'Tenner’s surprise pick' });
+  }
+
+  // ---------- For You (from your Watchlist) and Recently viewed: rows of posters above the genres ----------
+  const recent = () => { try { const r = JSON.parse(localStorage.getItem('tenner-recent') || '[]'); return Array.isArray(r) ? r.filter((x) => x?.k && x.title) : []; } catch { return []; } };
+  function forYou() {
+    const saved = window.tn.saved.all(), have = saved.map((s) => item(s.k)).filter((x) => x && !x._x);
+    if (!have.length) return null;
+    const w = new Map(); for (const x of have) for (const g of new Set(x.g)) w.set(g, (w.get(g) || 0) + 1);
+    const savedKeys = new Set(saved.map((s) => s.k));
+    const picks = cat.items.filter((x) => !x._x && x.img && kindOk(x) && ok18(x) && x.r >= 6.5 && x.v >= 50 && !savedKeys.has(`${x.t[0]}${x.i}`)
+        && (state.s.length ? x.s.some((k) => state.s.includes(k)) : x.s.length))
+      .map((x) => [x, x.g.reduce((n, g) => n + (w.get(g) || 0), 0) * x.r * Math.log10(10 + x.v)]).filter(([, n]) => n > 0)
+      .sort((a, b) => b[1] - a[1]).slice(0, 14).map(([x]) => x);
+    if (picks.length < 4) return null;
+    const because = have.find((h) => h.g.some((g) => picks[0].g.includes(g))) || have[0];
+    return { picks, because };
+  }
+  function rows() {
+    const box = $('#bRows');
+    if (state.q || state.g.length || state.c !== 'popular') { box.hidden = true; return; }
+    const poster = (x) => x.img ? (x.img.startsWith('/') ? cat.img + x.img : x.img) : null;
+    const art = (src, title) => src ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async">` : `<span class="ph" style="background:linear-gradient(160deg,hsl(${hue(title)} 45% 42%),hsl(${(hue(title) + 40) % 360} 55% 18%))">${esc(title)}</span>`;
+    const fy = forYou(), rec = recent();
+    box.innerHTML = (fy ? `<section class="b-row" aria-labelledby="fyH"><div class="b-row-hd"><h2 id="fyH">For You</h2><p>Because you saved ${esc(fy.because.n)}</p></div>
+        <ul class="nr">${fy.picks.map((x) => `<li><a href="https://www.themoviedb.org/${x.t}/${x.i}" target="_blank" rel="noopener" data-row="${x.t[0]}${x.i}">
+          <span class="nr-art">${art(poster(x), x.n)}</span><b>${esc(x.n)}</b><small>${esc([x.t === 'tv' ? 'Show' : 'Film', (x.d || '').slice(0, 4), x.r ? `★ ${x.r.toFixed(1)}` : ''].filter(Boolean).join(' · '))}</small></a></li>`).join('')}</ul></section>` : '')
+      + (rec.length ? `<section class="b-row" aria-labelledby="rvH"><div class="b-row-hd"><h2 id="rvH">Recently Viewed</h2><button type="button" class="b-row-x" id="rvClear">Clear</button></div>
+        <ul class="nr">${rec.map((r) => `<li><a href="https://www.themoviedb.org/${r.type === 'movie' ? 'movie' : 'tv'}/${esc(r.k.slice(1))}" target="_blank" rel="noopener" data-row="${esc(r.k)}">
+          <span class="nr-art">${art(r.poster, r.title)}</span><b>${esc(r.title)}</b><small>${esc([r.type === 'movie' ? 'Film' : 'Show', r.year].filter(Boolean).join(' · '))}</small></a></li>`).join('')}</ul></section>` : '');
+    box.hidden = !box.innerHTML;
+  }
+  $('#bRows').addEventListener('click', async (e) => {
+    if (e.target.closest('#rvClear')) { try { localStorage.removeItem('tenner-recent'); } catch {} rows(); return; }
+    const a = e.target.closest('[data-row]'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
+    e.preventDefault();
+    const k = a.dataset.row, x = item(k), r = recent().find((y) => y.k === k);
+    if (x) window.tnSheet?.open(await sheetFor(x));
+    else if (r) window.tnSheet?.open({ k, type: r.type, title: r.title, year: r.year, poster: r.poster, tmdb: `https://www.themoviedb.org/${r.type === 'movie' ? 'movie' : 'tv'}/${k.slice(1)}`, services: [] });
+  });
+  // a sheet closed: Recently viewed has a new first title; saving changes For You
+  addEventListener('tn:sheet-closed', () => cat && rows());
+  addEventListener('tn:saved', () => cat && !window.tnSheet?.isOpen() && rows());
+
   // ---------- the grid ----------
   const fmt = (d) => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+  const day = (d) => d === daysAgo(0) ? 'today' : new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+  const PLUS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
+  const TICK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 12.5l3.6 3.6 7.4-8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  // + on a poster: straight into the Watchlist, without opening it (a tick once it's in)
+  const saveBtn = (k, title) => { const on = window.tn.saved.has(k);
+    return `<button type="button" class="t-add" data-save="${esc(k)}" aria-pressed="${on}" aria-label="${on ? 'In your Watchlist' : 'Add to Watchlist'}: ${esc(title)}" title="${on ? 'In your Watchlist' : 'Add to Watchlist'}">${on ? TICK : PLUS}</button>`; };
   function card(x, i) {
     const url = `https://www.themoviedb.org/${x.t}/${x.i}/watch?locale=GB`;
     const h = hue(x.n);
@@ -504,8 +671,9 @@
         <span class="art">${art}${x.r ? `<span class="score" aria-label="Rated ${x.r} out of 10"><b>${x.r.toFixed(1)}</b></span>` : ''}</span>
         <span class="t">${esc(x.n)}</span>
         <span class="kind-l">${x.t === 'tv' ? 'Show' : 'Film'}</span>
-        <span class="m"><span>${esc(fmt(x.d))}</span>${where ? `<span class="on">${where}</span>` : x.b ? '<span class="buy">Buy or rent</span>' : ''}</span>
-      </a></li>`;
+        <span class="m"><span>${esc(state.c === 'week' && x._new ? `Arrived ${day(x._new)}` : state.c === 'leaving' && x._gone ? `Leaves ${day(x._gone)}` : fmt(x.d))}</span>${where ? `<span class="on">${where}</span>` : x.b ? '<span class="buy">Buy or rent</span>' : ''}</span>
+        ${x.r ? `<span class="l-r">★ ${x.r.toFixed(1)}</span>` : ''}
+      </a>${saveBtn(`${x.t[0]}${x.i}`, x.n)}</li>`;
   }
   function more() {
     if (shown >= list.length) return;
