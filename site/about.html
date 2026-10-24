@@ -37,8 +37,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.38.0">
-  <link rel="stylesheet" href="about.css?v=1.38.0">
+  <link rel="stylesheet" href="styles.css?v=1.38.1">
+  <link rel="stylesheet" href="about.css?v=1.38.1">
 
 </head>
 <body class="about">
@@ -94,7 +94,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.38.0</span>
+      <span class="side-ver">Tenner 1.38.1</span>
     </div>
   </div>
 
@@ -259,7 +259,7 @@
     <nav class="more-links" aria-label="Site information">
       <a href="contact.html">Contact</a><a href="legal.html#privacy">Privacy Policy</a><a href="legal.html#terms">Terms of Service</a><a href="legal.html#cookies">Cookies</a>
     </nav>
-    <p class="more-ver side-ver-text">Tenner 1.38.0</p>
+    <p class="more-ver side-ver-text">Tenner 1.38.1</p>
     </main>
 
 
@@ -277,6 +277,6 @@
     }).catch(function(){});}
     load(false); addEventListener('tn:check', function(){ load(true); });
   })();</script>
-  <script src="shell.js?v=1.38.0" defer></script>
+  <script src="shell.js?v=1.38.1" defer></script>
 </body>
 </html>

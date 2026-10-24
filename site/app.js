@@ -770,7 +770,7 @@ function pageWatchlist() {
       <ol class="cl nw-cl wl-cl" data-kind="${both ? kind : 'both'}">${rows}</ol></section>`;
   return `<h1 class="large-title page-title">Watchlist</h1>
     <p class="lede">${list.length ? `${list.length} title${list.length === 1 ? '' : 's'}, newest first. ` : ''}${window.tn.account.user() ? 'Kept in step on every device you’re signed in on.' : 'Saved on this device. <a href="account.html">Sign in</a> to have it on all your devices.'}</p>
-    ${list.length ? '<div class="wl-alert" id="wlAlert" hidden></div>' : ''}${comingUp(list)}${body}`;
+    ${list.length ? '<div class="wl-alert" id="wlAlert" hidden></div>' : ''}${body}${comingUp(list)}`;
 }
 // Shows, Films or both, without redrawing
 function wlKindInit() {
