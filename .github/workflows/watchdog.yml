@@ -36,7 +36,7 @@ jobs:
             # which turns away automated checks from GitHub's servers (people are let through)
             code=$(curl -s -o /dev/null -w '%{http_code}' -m 30 https://tenner-tv.danseacroft.workers.dev/)
             [ "$code" = 200 ] || echo "tv.yml|Tenner TV's page answered $code"
-            tv=$(curl -s -m 40 https://tenner-tv.danseacroft.workers.dev/api/day | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const d=JSON.parse(s),c=d.channels||[],x=c[0]?.items?.[0];console.log(c.length>=25&&x&&Array.isArray(x.g)?"ok":"only "+c.length+" channels"+(d.error?" ("+d.error+")":""))}catch{console.log("unreadable")}})')
+            tv=$(curl -s -m 40 https://tenner-tv.danseacroft.workers.dev/api/day | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const d=JSON.parse(s),c=d.channels||[],x=c[0]?.items?.[0];console.log(c.length>=25&&x&&x.t&&x.at>0?"ok":"only "+c.length+" channels"+(d.error?" ("+d.error+")":""))}catch{console.log("unreadable")}})')
             [ "$tv" = ok ] || echo "tv.yml|Tenner TV's listings: $tv"
             tmins=$(curl -s -m 30 "https://tenner-tv.danseacroft.workers.dev/data/meta.json?v=$(date +%s)" | age)   # rebuilt every 3 hours
             [ "$tmins" -le 480 ] || echo "tv.yml|Tenner TV's listings are $((tmins/60)) hours old"
