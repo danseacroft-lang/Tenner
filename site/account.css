@@ -2,13 +2,13 @@
 .acct h1 { margin-bottom: 8px; }
 .ac-out { text-align: center; max-width: 520px; margin: 0 auto; padding-top: 4vh; }
 .ac-out .l-lede { margin-left: auto; margin-right: auto; }
-.ac-hero { position: relative; display: grid; place-items: center; width: 96px; height: 96px; margin: 0 auto 22px; border-radius: 50%; color: #fff; }
+.ac-hero { position: relative; display: grid; place-items: center; width: 96px; height: 96px; margin: 0 auto 16px; border-radius: 50%; color: #fff; }
 .ac-hero svg { position: relative; width: 48px; height: 48px; }
 .ac-orb { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 200deg, #ff375f, #ff9f0a, #ffd60a, #30d158, #0a84ff, #bf5af2, #ff375f);
   box-shadow: 0 0 60px rgba(191, 90, 242, .45), inset 0 0 0 1px rgba(255, 255, 255, .3); }
 :root:not(.still) .ac-orb { animation: acSpin 14s linear infinite; }
 @keyframes acSpin { to { rotate: 360deg; } }
-.ac-ways { display: grid; gap: 12px; justify-items: center; margin: 26px auto 0; max-width: 360px; }
+.ac-ways { display: grid; gap: 12px; justify-items: center; margin: 18px auto 0; max-width: 360px; }
 .ac-main { width: 100%; height: 52px; font-size: 17px; gap: 10px; }
 .ac-main svg { width: 22px; height: 22px; }
 .ac-google:not([hidden]) { display: flex; justify-content: center; width: 100%; min-height: 44px; }
@@ -17,10 +17,10 @@
 .ac-input { height: 44px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--fill); color: var(--label); font: 400 17px/1 var(--font); }
 .ac-input { height: 36px; max-width: 55%; text-align: right; background: transparent; }
 .ac-input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
-.ac-fine { margin: 26px auto 0; max-width: 440px; font-size: 13px; line-height: 1.45; color: var(--label2); }
+.ac-fine { margin: 18px auto 0; max-width: 440px; font-size: 13px; line-height: 1.45; color: var(--label2); }
 .set-note.bad { color: #ff453a; }
 /* signed in */
-.ac-me { display: flex; align-items: center; gap: 18px; margin: 4px 0 26px; }
+.ac-me { display: flex; align-items: center; gap: 18px; margin: 4px 0 18px; }
 .av-xl { width: 76px; height: 76px; font-size: 32px; box-shadow: 0 10px 30px rgba(0, 0, 0, .25), inset 0 0 0 1px rgba(255, 255, 255, .25); }
 .ac-who { text-align: left; }
 .ac-who h1 { margin: 0; text-align: left; }
@@ -43,7 +43,7 @@
 .ls-grid b { margin-top: 6px; font-size: 15px; font-weight: 600; letter-spacing: -.016em; }
 .ls-grid small { font-size: 13px; color: var(--label2); }
 @media (hover: hover) { .ls-grid a:hover img { translate: 0 -3px; } }
-.ls-cta { margin-top: 34px; }
+.ls-cta { margin-top: 24px; }
 @media (max-width: 560px) { .ls-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .ac-or { display: flex; align-items: center; gap: 12px; width: 100%; margin: 2px 0; color: var(--label3); font-size: 13px; }
 .ac-or::before, .ac-or::after { content: ""; flex: 1; height: .5px; background: var(--sep); }
