@@ -154,8 +154,10 @@ export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
     if (url.pathname === '/api/warnings') return warned(env, ctx);
-    if (url.pathname === '/data/onair.json') {   // On TV this week: read by tenner.stream's title sheets
-      const a = await env.ASSETS.fetch(req), r = new Response(a.body, a);
+    // On TV this week, for tenner.stream's title sheets (across sites). Its own address, not /data/onair.json: a file in
+    // public/ is served straight from the assets without this Worker running, so it couldn't carry the header
+    if (url.pathname === '/api/onair') {
+      const a = await env.ASSETS.fetch(new Request(new URL('/data/onair.json', url))), r = new Response(a.body, a);
       r.headers.set('access-control-allow-origin', '*'); r.headers.set('cache-control', 'public, max-age=900');
       return r;
     }

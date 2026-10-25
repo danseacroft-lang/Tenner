@@ -106,7 +106,7 @@ Mac. When in doubt, ask "would this look at home in Apple TV, Apple Music or the
   9am UK time a morning pass for new episodes out today and titles leaving within three days (`push.js`); on Sunday mornings
   the opt-in Sunday email through Resend, with a signed unsubscribe link (`digest.js`).
 - **On TV this week**: `scripts/fetch-tv.mjs` also writes `onair.json` (title → next showings); tenner.stream's title sheet
-  reads it from tenner-tv's workers.dev address, and the line opens Tenner TV's search with `?q=`.
+  reads it from tenner-tv's workers.dev address at `/api/onair` (the Worker adds the cross-site header; a file in `public/` is served without the Worker running), and the line opens Tenner TV's search with `?q=`.
 - **Watchdog** (`watchdog.yml`, every 3 hours): checks the site, the charts' age, the search service and Tenner TV; re-runs
   whatever's behind, re-checks after 7 minutes, and only then fails (GitHub emails the owner). It also checks the Watch live
   links still open. tv.tenner.stream is behind Cloudflare's bot check, so it checks Tenner TV at its workers.dev address.

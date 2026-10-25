@@ -13,7 +13,7 @@
   const prices = () => (priceP ||= fetch(`data/prices.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
   // On TV this week: Freeview showings from Tenner TV's listings (rebuilt every three hours), loaded with the first sheet
   let airP = null, airD = null;
-  const onAir = () => (airP ||= fetch('https://tenner-tv.danseacroft.workers.dev/data/onair.json').then((r) => (r.ok ? r.json() : null)).catch(() => null));
+  const onAir = () => (airP ||= fetch('https://tenner-tv.danseacroft.workers.dev/api/onair').then((r) => (r.ok ? r.json() : null)).catch(() => null));
   addEventListener('tn:check', () => { trailP = null; priceP = null; airP = null; });
   let trailD = null;
   const CHART = { all: 'in the UK', netflix: 'on Netflix', disney: 'on Disney+', prime: 'on Prime Video', hbomax: 'on HBO Max', paramount: 'on Paramount+' };
@@ -238,7 +238,7 @@
       history.pushState({ sheet: info.k }, '', u); pushed = true;
     }
     document.title = `${info.title} | Tenner`;
-    let [d] = await Promise.all([details(), trail().then((t) => { trailD = t; }), prices().then((p) => { priceD = p; }), onAir().then((a) => { airD = a; })]);
+    let [d] = await Promise.all([details(), trail().then((t) => { trailD = t; }), prices().then((p) => { priceD = p; }), Promise.race([onAir().then((a) => { airD = a; }), new Promise((r) => setTimeout(r, 1500))])]);   // another site: never a reason to wait long
     if (current !== info) return;
     if (!d?.items?.[info.k] && window.tn.api) {
       render(info, { ...(d || {}), items: {}, pending: true });   // "Loading…" stays until the live details arrive

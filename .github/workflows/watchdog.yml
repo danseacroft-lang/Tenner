@@ -47,7 +47,7 @@ jobs:
             tmins=$(curl -s -m 30 "https://tenner-tv.danseacroft.workers.dev/data/meta.json?v=$(date +%s)" | age)   # rebuilt every 3 hours
             [ "$tmins" -le 480 ] || echo "tv.yml|Tenner TV's listings are $((tmins/60)) hours old"
             # On TV this week (the title sheets on tenner.stream read it from here, across sites)
-            oa=$(curl -s -m 30 -D /tmp/oa.h "https://tenner-tv.danseacroft.workers.dev/data/onair.json?v=$(date +%s)" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const d=JSON.parse(s);console.log(Object.keys(d.titles||{}).length>=100?"ok":"only "+Object.keys(d.titles||{}).length+" titles")}catch{console.log("unreadable")}})')
+            oa=$(curl -s -m 30 -D /tmp/oa.h "https://tenner-tv.danseacroft.workers.dev/api/onair?v=$(date +%s)" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const d=JSON.parse(s);console.log(Object.keys(d.titles||{}).length>=100?"ok":"only "+Object.keys(d.titles||{}).length+" titles")}catch{console.log("unreadable")}})')
             grep -qi '^access-control-allow-origin' /tmp/oa.h || oa="$oa, and tenner.stream isn't allowed to read it"
             [ "$oa" = ok ] || echo "tv.yml|Tenner TV's On TV this week list: $oa"
           }

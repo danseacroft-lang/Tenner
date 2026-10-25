@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.49.0';
+  const version = '1.49.1';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -181,7 +181,7 @@
   // the planner: how much of your Watchlist each service has, and which one you could pause. Where each title streams
   // comes from data/titles.json, and the search service for anything saved that the charts don't cover (40 at most)
   const SVC_MATCH = { netflix: /^netflix/, disney: /^disney plus/, prime: /^(amazon prime( video)?|prime video)/, hbomax: /^(hbo max|max)( with ads)?$/, paramount: /^paramount plus/ };
-  let planP = null;
+  let planP = null; const planOne = new Map();   // each title asked for once a visit, however often the sheet opens
   const planData = () => (planP ||= fetch(`data/titles.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
   async function plan(dlg, list) {
     const wl = saved.all(), out = dlg.querySelector('#minePlan') || dlg.querySelector('.mine-list').insertAdjacentElement('afterend', Object.assign(document.createElement('p'), { id: 'minePlan', className: 'mine-plan' }));
@@ -189,7 +189,8 @@
     if (!wl.length) return;
     const d = await planData(), providers = { ...(d?.providers || {}) }, items = { ...(d?.items || {}) };
     const missing = wl.filter((x) => !items[x.k]).slice(0, 40).map((x) => x.k);
-    await Promise.all(missing.map((k) => fetch(`${api}/title/${k}`).then((r) => (r.ok ? r.json() : null)).then((r) => { if (r?.items) { Object.assign(items, r.items); Object.assign(providers, r.providers); } }).catch(() => {})));
+    const one = (k) => { if (!planOne.has(k)) planOne.set(k, fetch(`${api}/title/${k}`).then((r) => (r.ok ? r.json() : null)).catch(() => null)); return planOne.get(k); };
+    await Promise.all(missing.map((k) => one(k).then((r) => { if (r?.items) { Object.assign(items, r.items); Object.assign(providers, r.providers); } })));
     if (!dlg.open) return;
     const on = (k) => new Set([...(items[k]?.f || []), ...(items[k]?.fr || [])].map((id) => {
       const n = (providers[id]?.[0] || '').toLowerCase(); return Object.keys(SVC_MATCH).find((s) => SVC_MATCH[s].test(n));

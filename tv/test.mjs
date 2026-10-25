@@ -73,6 +73,11 @@ const { onAir } = await import(new URL('../scripts/fetch-tv.mjs', import.meta.ur
 const air = onAir(built, Date.parse('2026-10-24T12:00:00Z')).titles;
 assert.deepEqual(air['voice and friends'], [['BBC One', Date.parse('2026-10-24T19:35:00Z'), 0, 45]], 'a showing to come is listed under its folded title');
 assert.deepEqual(onAir(built, Date.parse('2026-10-25T12:00:00Z')).titles, {}, 'showings that have finished are left out');
+// On TV this week: read across sites, so it comes through the Worker with the header
+files.set('/data/onair.json', JSON.stringify({ titles: { 'a show': [['BBC One', Date.now(), 0, 60]] } }));
+const oa = await worker.fetch(new Request('https://tenner-tv.danseacroft.workers.dev/api/onair'), env, ctx);
+assert.equal(oa.headers.get('access-control-allow-origin'), '*', 'tenner.stream may read On TV this week');
+assert.ok((await oa.json()).titles['a show'], 'On TV this week is served from the built file');
 // the Met Office's warnings: the worst first, finished ones dropped, UK times read correctly, each with its own link
 const { warnings } = await import(new URL('./src/index.js', import.meta.url));
 const w = warnings(MO_XML, Date.parse('2026-10-25T13:00:00Z'));
