@@ -65,7 +65,7 @@
 .c-note { margin: 0; font-size: 13px; color: var(--label2); text-wrap: pretty; }
 .c-note.bad { color: #ff453a; }
 .c-send.busy { opacity: .6; }
-.c-row select { flex: 1; min-width: 0; height: 34px; margin: 0 -4px 0 0; padding: 0 28px 0 0; border: 0; background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238e8e93' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 6px center;
+.c-row select { flex: 1; min-width: 0; height: 34px; margin: 0 -4px 0 0; padding: 0 28px 0 0; border: 0; background: transparent var(--pop-chev) no-repeat right 6px center / 8px 13px;
   appearance: none; -webkit-appearance: none; font: 400 16px/1 var(--font); letter-spacing: -.016em; color: var(--label3); cursor: pointer; }
 .c-row select.chosen { color: var(--label); }
 .c-row select:focus { outline: none; }
@@ -98,3 +98,5 @@
   .c-note { text-align: center; }
   .c-row > span:first-child { width: 56px; }
 }
+/* computers: the title starts on the same line as every other page's */
+@media (min-width: 1000px) { .lwrap { padding-top: 20px; } }

@@ -200,7 +200,7 @@ body.people { overflow-x: clip; }
 :root:not(.still) .p-sec:nth-of-type(3) { animation-delay: .16s; }
 @keyframes pRise { from { opacity: 0; transform: translateY(14px); } }
 
-@media (min-width: 1000px) { .pc-hero { margin-top: -24px; } }
+@media (min-width: 1000px) { .pc-hero { margin-top: -24px; padding-top: 54px; } }   /* the wall runs up to the top; the words start on the same line as every other page's */
 @media (max-width: 760px) {
   .pc-hero { min-height: 26svh; }
   .pw-f { width: 72px; }

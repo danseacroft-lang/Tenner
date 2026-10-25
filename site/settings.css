@@ -9,8 +9,8 @@
 .set-row:hover { text-decoration: none; }   /* the Account row is a link: no underline on hover */
 .set-l { display: grid; gap: 2px; min-width: 0; }
 .set-l small { color: var(--label2); font-size: 13px; }
-.set-row select { flex: none; max-width: 55%; height: 34px; padding: 0 28px 0 12px; border: 0; border-radius: var(--r-ctl); font: 500 15px/1 var(--font); color: var(--label); appearance: none; cursor: pointer;
-  background: var(--frost) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238e8e93' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center; box-shadow: var(--frost-line); }
+.set-row select { flex: none; width: 172px; max-width: 55%; text-overflow: ellipsis; height: 36px; padding: 0 28px 0 12px; border: 0; border-radius: var(--r-ctl); font: 500 15px/1 var(--font); color: var(--label); appearance: none; cursor: pointer;
+  background: var(--frost) var(--pop-chev) no-repeat right 11px center / 8px 13px; box-shadow: var(--frost-line); }
 .set-row input[type="checkbox"] { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .set-row input:checked + .sw { background: var(--green); }
 .set-row input:checked + .sw::after { translate: 20px 0; }
