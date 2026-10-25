@@ -160,7 +160,7 @@
       + `<button type="button" class="set-row set-link" id="acAddPk"><span class="set-l">Add a passkey<small>For another device, or a password manager</small></span><span class="set-chev" aria-hidden="true"></span></button>`
       + (!u.google && GOOGLE_CLIENT_ID ? '<div class="set-row ac-glink"><span class="set-l">Link Google</span><div id="acGLink"></div></div>' : '');
     if (!u.google && GOOGLE_CLIENT_ID) google($('#acGLink'), true);
-    $('#acDevices').innerHTML = me.sessions.map((x) => `<div class="set-row"><span class="set-l"><span>${esc(x.label)}${x.here ? ' <em class="ac-here">This device</em>' : ''}</span><small>Signed in ${esc(when(x.created).toLowerCase())}${x.here ? '' : ` · seen ${esc(when(x.seen).toLowerCase())}`}</small></span></div>`).join('')
+    $('#acDevices').innerHTML = me.sessions.map((x) => `<div class="set-row"><span class="set-l"><span>${esc(x.label)}${x.here ? ' <em class="ac-here">This device</em>' : ''}</span><small>Signed in ${esc(when(x.created).toLowerCase())}${x.here ? '' : ` · seen ${esc(when(x.seen).toLowerCase())}`}</small></span>${x.here || !x.id ? '' : `<button type="button" class="ac-x" data-ses="${+x.id}" aria-label="Sign out ${esc(x.label)}">Remove</button>`}</div>`).join('')
       + (me.sessions.length > 1 ? '<button type="button" class="set-row set-link" id="acOthers"><span class="set-l">Sign out everywhere else</span></button>' : '');
     syncLine();
   }
@@ -179,6 +179,7 @@
     try {
       if (t.dataset.hue) { me.user = (await account.call('PATCH', '/me', { hue: +t.dataset.hue })).user; account.setUser(me.user); draw(); }
       else if (t.dataset.pk) { if (!confirm('Remove this passkey? You won’t be able to sign in with it any more.')) return; await account.call('DELETE', `/me/passkeys/${encodeURIComponent(t.dataset.pk)}`); load(); say('#acNote', 'Passkey removed'); }
+      else if (t.dataset.ses) { if (!confirm(`Sign out ${t.closest('.set-row').querySelector('.set-l span').textContent || 'that device'}? You can sign in on it again any time.`)) return; await account.call('DELETE', `/me/sessions/${t.dataset.ses}`); load(); say('#acNote', 'Signed out on that device'); }
       else if ('reverify' in t.dataset) { await account.call('POST', '/me/verify'); say('#acNote', `Sent. Check ${me.password}`); }
       else if ('pwOpen' in t.dataset) { $('#acPwForm').hidden = false; $('#acSetEmail').focus(); }
       else if ('pwRemove' in t.dataset) { if (!confirm('Remove your password? You’ll sign in another way.')) return; await account.call('DELETE', '/me/password'); load(); say('#acNote', 'Password removed'); }

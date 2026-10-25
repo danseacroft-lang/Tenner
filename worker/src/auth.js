@@ -16,6 +16,7 @@
 //   PATCH /me                     { name?, hue? }
 //   PUT  /me/data                 { data } → { data } (merged with what's stored, and the result for this device)
 //   POST /me/share                { on } → { share_id }
+//   DELETE /me/sessions/:id (sign out one other device), DELETE /me/sessions (every other device)
 //   DELETE /me/passkeys/:id, DELETE /me/google, DELETE /me (the account and everything in it)
 //   GET  /share/:id               a shared Watchlist: { name, picture, hue, list }
 // A session is a random token kept on the device (no cookies); only a hash of it is stored here.
@@ -350,10 +351,10 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
       const [d, pks, ss] = await Promise.all([
         env.DB.prepare('SELECT data, updated FROM userdata WHERE user_id = ?').bind(me.id).first(),
         env.DB.prepare('SELECT id, label, created, used FROM passkeys WHERE user_id = ? ORDER BY created').bind(me.id).all(),
-        env.DB.prepare('SELECT label, created, seen, token FROM sessions WHERE user_id = ? ORDER BY seen DESC LIMIT 20').bind(me.id).all()]);
+        env.DB.prepare('SELECT rowid AS id, label, created, seen, token FROM sessions WHERE user_id = ? ORDER BY seen DESC LIMIT 20').bind(me.id).all()]);
       return ok({ user: publicUser(me), data: d ? JSON.parse(d.data) : null, updated: d?.updated || 0,
         passkeys: pks.results.map((x) => ({ id: x.id, label: x.label, created: x.created, used: x.used })),
-        sessions: ss.results.map((x) => ({ label: x.label, created: x.created, seen: x.seen, here: x.token === me.token })),
+        sessions: ss.results.map((x) => ({ id: x.id, label: x.label, created: x.created, seen: x.seen, here: x.token === me.token })),
         ...await (async () => { const pw = (await env.DB.prepare('SELECT email FROM passwords WHERE user_id = ?').bind(me.id).first())?.email || null;
           return { password: pw, password_ok: !pw || !env.RESEND_API_KEY || await isVerified(env, pw) }; })(), mail: !!env.RESEND_API_KEY });
     }
@@ -407,6 +408,10 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
     if (p === '/me/password' && m === 'DELETE') {
       if (await ways(env, me) <= 1) return fail('Your password is your only way to sign in. Add another way first');
       await env.DB.prepare('DELETE FROM passwords WHERE user_id = ?').bind(me.id).run();
+      return ok({ ok: true });
+    }
+    if ((mm = p.match(/^\/me\/sessions\/(\d{1,15})$/)) && m === 'DELETE') {   // sign out one device (never this one: that's the slide)
+      await env.DB.prepare('DELETE FROM sessions WHERE rowid = ? AND user_id = ? AND token != ?').bind(+mm[1], me.id, me.token).run();
       return ok({ ok: true });
     }
     if (p === '/me/sessions' && m === 'DELETE') {   // sign out everywhere else
