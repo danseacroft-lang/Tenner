@@ -77,6 +77,8 @@ Mac. When in doubt, ask "would this look at home in Apple TV, Apple Music or the
 - **Buttons and pills:** glass, regular weight (500) with font smoothing, never bold.
 - **Shows / Films / Both** is a native dropdown (`.dd` with a `<select>`) except where a segmented switch was approved
   (Browse's search bar).
+- **The chart numbers never shine:** no rainbow sweep, colour turn (`hue-rotate`) or any other moving effect on the neon
+  ranks, on hover or otherwise. It was removed twice because it slowed the site; the glow is drawn once and stays still.
 - **Selected states** (e.g. Browse collections) get Tenner's rainbow underline.
 - **Popups** look like iOS alerts or sheets: centred glass, blurred backdrop, one clear primary button, tap outside to close.
 - **Colour:** premium and restrained. No muddy greens or browns; Apple system colours (blue `#0a84ff`, pink `#ff375f`,

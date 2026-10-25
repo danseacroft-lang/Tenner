@@ -484,8 +484,7 @@ const RAINBOW = ['#ff375f', '#ff9f0a', '#ffd60a', '#30d158', '#40c8e0', '#5e5ce6
 const RB_STOPS = RAINBOW.map((c, k) => `<stop offset="${(k / (RAINBOW.length - 1)).toFixed(3)}" stop-color="${c}"/>`).join('');
 // Each rank is a neon tube, drawn in four layers: a soft aura, a tinted glass body (lighter at the top),
 // the rainbow tube with a two-step bloom, and a white-hot core that fades towards the bottom like a lit tube.
-// The rainbow runs round each number when you point at it (styles.css): the colours turn on the graphics card, so the
-// number is drawn once and never again, however long you play with it.
+// The number is drawn once and stays still: no shine or colour turn (styles.css says why).
 function rankSvg(i, row = '') {
   const id = `rk${row}${i}`, n = pad(i + 1);
   const t = (cls, extra = '') => `<text class="${cls}" x="0" y="80" ${extra}>${n}</text>`;

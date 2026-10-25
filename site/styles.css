@@ -396,11 +396,8 @@ a.tb-btn:hover { text-decoration: none; }
 .num .tube { fill: none; stroke-width: 3.4; stroke-linejoin: round; stroke-linecap: round; }
 .num .core { fill: none; stroke: url(#coreFade); stroke-width: .9; stroke-linejoin: round; opacity: var(--core); }
 .pcard:hover .num { transform: translateY(-3px); }
-/* pointing at a card runs the rainbow round its number: a colour turn on its own layer, done by the graphics card
-   (the glow is drawn once, not every frame) */
-@media (hover: hover) { :root:not(.still) .num { will-change: transform, filter; }
-  :root:not(.still) .pcard:hover .num, :root:not(.still) .pcard:focus-within .num { animation: rbTurn 1.4s var(--ease-out); } }
-@keyframes rbTurn { to { filter: hue-rotate(-360deg); } }
+/* The numbers never shine: no rainbow running round them, no colour turn, no sweep, on hover or otherwise. It was
+   taken out twice to keep the site fast (1.22.4 and 1.53.2); the glow is drawn once and the number only lifts. Keep it so. */
 
 /* posters, the Apple TV way: flat artwork, softly rounded, a hairline edge and a quiet shadow, always shown whole
    (height: auto beats the img's height attribute, and contain means nothing is ever cut off). On hover it lifts a touch. */
@@ -1394,9 +1391,6 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .
   }
   /* the neon numbers float upwards a touch faster than their posters, so they sit in front of them */
   :root:not(.still) .pcard .num { animation: pxFloat linear both; animation-timeline: view(); animation-range: cover; }
-  @media (hover: hover) {
-    :root:not(.still) .pcard:hover .num, :root:not(.still) .pcard:focus-within .num { animation: rbTurn 1.4s var(--ease-out), pxFloat linear both; animation-timeline: auto, view(); animation-range: normal, cover; }
-  }
   /* the feature cards' artwork pans inside its frame, like a window onto it */
   :root:not(.still) .f-img > img:first-child:not(.blur) { scale: 1.14; animation: pxPan linear both; animation-timeline: view(); animation-range: cover; }
   /* each section rises gently into place as it comes on screen */
