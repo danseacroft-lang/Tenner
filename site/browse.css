@@ -27,25 +27,8 @@ body.browse { overflow-x: clip; }
 .spot-h { margin: 0; font: 800 clamp(64px, 9vw, 132px)/.9 var(--font-display); letter-spacing: -.045em;
   padding-bottom: .06em; }
 .spot-lede { margin: 10px 0 0; font-size: 18px; line-height: 1.4; letter-spacing: -.016em; color: var(--label2); }
-/* the one showing: a glass card, bottom right, with dots */
-.spot-now { position: absolute; right: var(--gutter-r); bottom: 24px; display: flex; align-items: center; gap: 14px; width: min(400px, 42%); padding: 10px 12px 10px 10px; border-radius: 18px; color: var(--label); text-decoration: none;
-  background: var(--gl-fill); box-shadow: inset 0 0 0 1px var(--gl-rim), 0 18px 50px rgba(0, 0, 0, .25); -webkit-backdrop-filter: blur(28px) saturate(1.7); backdrop-filter: blur(28px) saturate(1.7);
-  transition: transform .4s var(--ease-spring), background-color .2s ease; }
-.spot-now:hover { text-decoration: none; background: var(--gl-hover); }
-.spot-now:active { transform: scale(.98); }
-.spot-now:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
-.spot-now img { flex: none; width: 54px; height: 81px; border-radius: 8px; object-fit: cover; box-shadow: 0 6px 16px rgba(0, 0, 0, .3); }
-.sn-copy { flex: 1; min-width: 0; display: grid; gap: 2px; }
-.sn-copy small { font: 600 11px/1.3 var(--font); letter-spacing: .06em; text-transform: uppercase; color: var(--label2); }
-.sn-copy b { font: 700 17px/1.2 var(--font); letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sn-meta { font-size: 13px; color: var(--label2); font-variant-numeric: tabular-nums; }
-.sn-dots { display: flex; gap: 5px; margin-top: 6px; }
-.sn-dots i { width: 6px; height: 6px; border-radius: 3px; background: var(--label3); transition: width .4s var(--ease-out), background-color .4s; }
-.sn-dots i.on { width: 18px; background: var(--label); }
-.sn-go { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; color: var(--bg); background: var(--label); }
-.sn-go svg { width: 14px; height: 14px; margin-left: 2px; }
 .searching .spot { min-height: 0; padding-bottom: 10px; }
-.searching .spot-bg, .searching .spot-now, .searching .spot-lede, .searching .spot-eye { display: none; }
+.searching .spot-bg, .searching .spot-lede, .searching .spot-eye { display: none; }
 .searching .spot-h { font-size: clamp(40px, 5vw, 56px); }
 
 /* ---------- the command bar ---------- */
@@ -247,7 +230,6 @@ body.browse { overflow-x: clip; }
   .spot { min-height: 0; padding-top: 18px; padding-bottom: 14px; }
   .spot-h { font-size: clamp(48px, 14vw, 72px); }
   .spot-lede { margin-top: 8px; font-size: 15px; }
-  .spot-now { position: relative; right: auto; bottom: auto; width: 100%; margin-top: 14px; }
   .spot { flex-direction: column; align-items: stretch; justify-content: flex-end; }
   .coll-track { gap: 10px 16px; }
   .mood { height: 118px; }
@@ -327,7 +309,7 @@ body.browse { overflow-x: clip; }
 .pv-svc img { width: 18px; height: 18px; border-radius: 5px; }
 .pv-svc.buy { padding-left: 9px; color: var(--accent); }
 .pv-hint { margin: 10px 0 0; font-size: 12px; color: var(--label3); }
-@media (prefers-reduced-transparency: reduce) { .cmd, .spot-now { background: var(--bg2); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+@media (prefers-reduced-transparency: reduce) { .cmd { background: var(--bg2); -webkit-backdrop-filter: none; backdrop-filter: none; } }
 :root.still .spot-art img { transition: opacity .3s ease; scale: 1; }
 @media (prefers-reduced-transparency: reduce) { .pv { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--card); } }
 

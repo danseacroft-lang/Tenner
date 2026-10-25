@@ -349,22 +349,23 @@
     rows();
   }
 
-  // ---------- the spotlight: the best five of whatever you're browsing, each a full-width picture for a few seconds ----------
-  // The wide artwork comes from browse-more.json (fetched once, after the grid). A frosted card names the one showing;
-  // click it for where to watch. It moves on by itself unless Animations are off, you're pointing at it, or a sheet is open.
+  // ---------- the spotlight: five of the best of whatever you're browsing, each a full-width picture for a few seconds ----------
+  // The wide artwork comes from browse-more.json (fetched once, after the grid); just the pictures, no card over them.
+  // It moves on by itself unless Animations are off, you're pointing at it, or a sheet is open.
   const still = () => reduce || document.documentElement.classList.contains('still');
-  const spot = { key: '', picks: [], at: 0, timer: 0 };
+  const spot = { key: '', picks: [], at: 0, timer: 0 }, fk = (x) => `${x.t[0]}${x.i}`;
   const kindWord = () => (state.k === 'movie' ? 'Films' : state.k === 'both' ? 'Shows and films' : 'Shows');
   async function spotlight() {
     const col = collection();
     $('#spotEye').textContent = `${col.label} · ${col.films ? 'Films' : kindWord()}${state.s.length && col.key !== 'store' ? ` · ${state.s.length === 1 ? labels[state.s[0]] : `${state.s.length} services`}` : ''}`;
     const m = await moreData(); if (!m?.items) return;
-    const picks = list.slice(0, 24).filter((x) => m.items[`${x.t[0]}${x.i}`]?.[1]).slice(0, 5);
-    const key = picks.map((x) => x.i).join(',');
+    // five of the top 24 with wide artwork, led by the ones you haven't seen in the spotlight lately (each title once)
+    const pool = list.slice(0, 24).filter((x) => m.items[fk(x)]?.[1]), key = pool.map(fk).join(',');
     if (key === spot.key) return;
+    const picks = window.tn.featured.pick(pool, fk, 5);
     spot.key = key; spot.picks = picks; spot.at = 0; clearInterval(spot.timer);
-    const art = $('#spotArt'), now = $('#spotNow');
-    if (!picks.length) { art.innerHTML = ''; now.hidden = true; $('#spot').classList.remove('has-art'); return; }
+    const art = $('#spotArt');
+    if (!picks.length) { art.innerHTML = ''; $('#spot').classList.remove('has-art'); return; }
     art.innerHTML = picks.map((x, i) => `<img ${i ? 'data-' : 'fetchpriority="high" '}src="${esc(m.img.replace('/w780', '/w1280') + m.items[`${x.t[0]}${x.i}`][1])}" alt="" decoding="async">`).join('');
     $('#spot').classList.add('has-art');
     showSpot(0);
@@ -372,22 +373,11 @@
   }
   function showSpot(n) {
     const imgs = [...$('#spotArt').children], picks = spot.picks; if (!picks.length) return;
-    spot.at = (n + picks.length) % picks.length;
+    spot.at = (n + picks.length) % picks.length; window.tn.featured.saw(fk(picks[spot.at]));
     const want = (img) => { if (img?.dataset.src) { img.src = img.dataset.src; delete img.dataset.src; } };
     want(imgs[spot.at]); want(imgs[(spot.at + 1) % imgs.length]);
     imgs.forEach((img, i) => img.classList.toggle('on', i === spot.at));
-    const x = picks[spot.at], now = $('#spotNow'), poster = x.img ? (x.img.startsWith('/') ? cat.img + x.img : x.img) : '';
-    const meta = [x.t === 'tv' ? 'Show' : 'Film', (x.d || '').slice(0, 4), x.r ? `★ ${x.r.toFixed(1)}` : ''].filter(Boolean).join(' · ');
-    now.dataset.k = `${x.t[0]}${x.i}`; now.href = `https://www.themoviedb.org/${x.t}/${x.i}`;
-    now.setAttribute('aria-label', `${x.n}: where to watch`);
-    now.innerHTML = `${poster ? `<img src="${esc(poster)}" alt="">` : ''}<span class="sn-copy"><small>No. ${list.indexOf(x) + 1} in ${esc(collection().label)}</small><b>${esc(x.n)}</b><span class="sn-meta">${esc(meta)}</span>
-      <span class="sn-dots" aria-hidden="true">${picks.map((_, i) => `<i${i === spot.at ? ' class="on"' : ''}></i>`).join('')}</span></span><span class="sn-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg></span>`;
-    now.hidden = false;
   }
-  $('#spotNow').addEventListener('click', async (e) => {
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
-    e.preventDefault(); const x = item(e.currentTarget.dataset.k); if (x) window.tnSheet?.open(await sheetFor(x));
-  });
   // swipe the spotlight on a phone or tablet
   let spX = null;
   $('#spot').addEventListener('touchstart', (e) => { spX = [e.touches[0].clientX, e.touches[0].clientY]; }, { passive: true });
