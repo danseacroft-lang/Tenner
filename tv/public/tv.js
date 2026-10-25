@@ -517,6 +517,7 @@
     }
     hits.sort((a, b) => a.top - b.top || a.x.at - b.x.at);
     const list = hits.slice(0, 60), more = allDays().length < days.length;
+    if (!hits.length && !more) return elsewhere(fq.value.trim());
     fs.textContent = hits.length ? `${hits.length > 60 ? 'The first 60 of ' : ''}${hits.length} programme${hits.length === 1 ? '' : 's'}${more ? ', still searching the rest of the week…' : ''}`
       : more ? 'Searching the rest of the week…' : 'Nothing this week matches that.';
     fr.innerHTML = list.map(({ x, ch, end }) => {
@@ -525,6 +526,21 @@
       return `<li><button type="button" class="fd-row" data-p="${esc(x.id)}">${badge(ch)}<span class="fd-t"><b>${x.isNew ? '<i class="new">New</i>' : ''}${esc(x.t)}</b>
         <small>${esc(`${live ? 'On now' : d === today ? 'Today' : d === days[1] ? 'Tomorrow' : `${dayName(d, { weekday: 'short' })} ${dayName(d, { day: 'numeric', month: 'short' })}`} · ${hm(x.at)} · ${ch}`)}</small></span>${live ? '<i class="fd-live">Now</i>' : ''}</button></li>`;
     }).join('');
+  }
+  // nothing on TV this week: the films and shows of that name on Tenner, to watch on a streaming service instead
+  // (Tenner's own search, the same as tenner.stream's; each opens its page there, with where to watch it)
+  const API = 'https://tenner-api.danseacroft.workers.dev', found = new Map();
+  async function elsewhere(q) {
+    fr.innerHTML = ''; fs.textContent = 'Nothing on TV this week. Looking for it on streaming…';
+    if (!found.has(q)) found.set(q, fetch(`${API}/search?q=${encodeURIComponent(q)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
+    const d = await found.get(q);
+    if (fq.value.trim() !== q || !find.open) return;   // typed on since
+    const list = (d?.results || []).filter((x) => x.poster).slice(0, 6);
+    if (!list.length) { found.delete(q); fs.textContent = 'Nothing this week matches that.'; return; }
+    fs.textContent = 'Not on TV this week, but you can stream it:';
+    fr.innerHTML = list.map((x) => `<li><a class="fd-row" href="https://tenner.stream/?t=${esc(x.k)}"><img class="fd-pst" src="https://image.tmdb.org/t/p/w154${esc(x.poster)}" alt="" loading="lazy" decoding="async" width="40" height="60">
+      <span class="fd-t"><b>${esc(x.title)}</b><small>${esc([x.type === 'movie' ? 'Film' : 'Series', x.year, x.rating ? `★ ${x.rating}` : ''].filter(Boolean).join(' · '))}</small></span>
+      <span class="fd-go">Where to watch<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a></li>`).join('');
   }
   fq.addEventListener('input', () => { clearTimeout(fqT); fqT = setTimeout(search, 70); });
   $('#findBtn').addEventListener('click', openFind);

@@ -7,7 +7,7 @@ workers_dev = true
 
 [vars]
 # Sites allowed to use it (comma-separated): tenner.stream, plus the old GitHub address while links to it are still around.
-ALLOWED_ORIGINS = "https://tenner.stream,https://www.tenner.stream,https://danseacroft-lang.github.io,http://localhost:8777,http://localhost:8778,http://localhost:8779,http://localhost:8780,http://127.0.0.1:8780"
+ALLOWED_ORIGINS = "https://tenner.stream,https://www.tenner.stream,https://tv.tenner.stream,https://danseacroft-lang.github.io,http://localhost:8777,http://localhost:8778,http://localhost:8779,http://localhost:8780,http://127.0.0.1:8780"
 
 # The Contact form emails Tenner's inbox through Cloudflare Email Routing (on tenner.stream). No address here: the
 # inbox is a Worker secret (SUPPORT_EMAIL), and it has to be a verified destination address in Email Routing.
