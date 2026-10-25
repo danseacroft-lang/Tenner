@@ -1,7 +1,7 @@
 /* Settings: grouped lists the iOS Settings way, every control the browser's own (selects, switches, a file picker) */
 .set h1 { margin-bottom: 6px; }
 .set-form { width: 100%; }
-.set .section-label { margin-top: 26px; }
+.set .section-label { margin-top: 20px; }
 .set-group { width: 100%; border-radius: 12px; background: var(--bg2); overflow: hidden; }
 .set-row { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 14px; width: 100%; min-height: 52px;
   padding: 8px 16px; border: 0; background: none; color: var(--label); font: 400 16px/1.3 var(--font); letter-spacing: -.016em; text-align: left; cursor: pointer; }
@@ -23,7 +23,7 @@
 @media (hover: hover) { .set-link:hover { background: var(--fill); } }
 .set-row:focus-visible, .set-row:has(.set-file:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
 .set-note { min-height: 20px; margin: 12px 4px 0; font-size: 14px; color: var(--green); }
-.set-ver { margin: 24px 0 0; color: var(--label3); font-size: 13px; }
+.set-ver { margin: 18px 0 0; color: var(--label3); font-size: 13px; }
 @media (max-width: 999px) { .set-wide { display: none; } }   /* the featured artwork is a computer thing */
 
 .set-note:empty { display: none; }   /* only takes up room when it has something to say */

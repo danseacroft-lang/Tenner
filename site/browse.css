@@ -8,7 +8,7 @@ body.browse { overflow-x: clip; }
 
 
 /* ---------- the spotlight ---------- */
-.spot { position: relative; isolation: isolate; display: flex; align-items: flex-end; min-height: clamp(380px, 62vh, 620px); margin: 0 calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); padding: 0 var(--gutter-r) 34px var(--gutter); }
+.spot { position: relative; isolation: isolate; display: flex; align-items: flex-end; min-height: clamp(300px, 48vh, 500px); margin: 0 calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); padding: 0 var(--gutter-r) 24px var(--gutter); }
 /* the artwork runs the full width beside the sidebar (not just the column), so it never ends in a hard edge */
 .spot-bg { position: absolute; top: -80px; bottom: -60px; left: calc(50% - (100vw - var(--side, 0px)) / 2); width: calc(100vw - var(--side, 0px)); z-index: -1; pointer-events: none; overflow: hidden;
   -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 16%, #000 52%, rgba(0, 0, 0, .45) 76%, transparent 100%);
@@ -23,12 +23,12 @@ body.browse { overflow-x: clip; }
   linear-gradient(125deg, rgba(255, 55, 95, .16), transparent 40%, rgba(10, 132, 255, .14) 75%, rgba(191, 90, 242, .16)); }
 .spot:not(.has-art) .spot-wash { background: radial-gradient(80% 120% at 85% 10%, rgba(191, 90, 242, .22), transparent 60%), radial-gradient(70% 90% at 15% 0%, rgba(10, 132, 255, .18), transparent 60%); }
 .spot-copy { position: relative; max-width: 640px; }
-.spot-eye { margin: 0 0 10px; font: 600 13px/1.2 var(--font); letter-spacing: .12em; text-transform: uppercase; color: var(--label2); }
+.spot-eye { margin: 0 0 6px; font: 600 13px/1.2 var(--font); letter-spacing: .12em; text-transform: uppercase; color: var(--label2); }
 .spot-h { margin: 0; font: 800 clamp(64px, 9vw, 132px)/.9 var(--font-display); letter-spacing: -.045em;
   padding-bottom: .06em; }
-.spot-lede { margin: 14px 0 0; font-size: 18px; line-height: 1.4; letter-spacing: -.016em; color: var(--label2); }
+.spot-lede { margin: 10px 0 0; font-size: 18px; line-height: 1.4; letter-spacing: -.016em; color: var(--label2); }
 /* the one showing: a glass card, bottom right, with dots */
-.spot-now { position: absolute; right: var(--gutter-r); bottom: 34px; display: flex; align-items: center; gap: 14px; width: min(400px, 42%); padding: 10px 12px 10px 10px; border-radius: 18px; color: var(--label); text-decoration: none;
+.spot-now { position: absolute; right: var(--gutter-r); bottom: 24px; display: flex; align-items: center; gap: 14px; width: min(400px, 42%); padding: 10px 12px 10px 10px; border-radius: 18px; color: var(--label); text-decoration: none;
   background: var(--gl-fill); box-shadow: inset 0 0 0 1px var(--gl-rim), 0 18px 50px rgba(0, 0, 0, .25); -webkit-backdrop-filter: blur(28px) saturate(1.7); backdrop-filter: blur(28px) saturate(1.7);
   transition: transform .4s var(--ease-spring), background-color .2s ease; }
 .spot-now:hover { text-decoration: none; background: var(--gl-hover); }
@@ -61,7 +61,7 @@ body.browse { overflow-x: clip; }
 .cmd .segmented { flex: none; }
 
 /* ---------- collections: big type, a rainbow underline gliding to the one you pick ---------- */
-.coll { position: relative; margin-top: 26px; display: flex; max-width: 100%; }
+.coll { position: relative; margin-top: 18px; display: flex; max-width: 100%; }
 .coll-track { position: relative; display: flex; flex-wrap: wrap; gap: 8px clamp(14px, 1.6vw, 24px); min-width: 0; padding: 4px 2px 12px; }
 /* every collection on the page, never off the edge: one line on computers, wrapping onto more on phones; the chosen one's
    rainbow underline grows in beneath it */
@@ -77,7 +77,7 @@ body.browse { overflow-x: clip; }
 .coll-b:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
 
 /* ---------- explore by genre ---------- */
-.moods { margin-top: 18px; }
+.moods { margin-top: 14px; }
 .moods-h { margin: 0 0 12px; font: 700 15px/1.2 var(--font); letter-spacing: -.01em; color: var(--label2); }
 .moods-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(230px, 1fr); gap: 14px; overflow-x: auto; scrollbar-width: none; padding: 6px 2px 18px; margin: -6px -2px 0; scroll-snap-type: x mandatory; }
 .moods-row::-webkit-scrollbar { display: none; }
@@ -107,7 +107,7 @@ body.browse { overflow-x: clip; }
 .searching .moods { display: none; }
 
 /* ---------- body: filters + results ---------- */
-.b-body { display: grid; grid-template-columns: 272px minmax(0, 1fr); gap: 28px; margin-top: 24px; align-items: start; }
+.b-body { display: grid; grid-template-columns: 272px minmax(0, 1fr); gap: 28px; margin-top: 16px; align-items: start; }
 .filters { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 76px); display: grid; gap: 12px; max-height: calc(100dvh - 96px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding-bottom: 8px; }
 .filters::-webkit-scrollbar { display: none; }
 .sheet-head { display: none; }
@@ -221,7 +221,7 @@ body.browse { overflow-x: clip; }
 
 /* ---------- phones and small tablets: filters become a sheet from the bottom ---------- */
 @media (max-width: 820px) {
-  .b-body { grid-template-columns: minmax(0, 1fr); margin-top: 18px; }
+  .b-body { grid-template-columns: minmax(0, 1fr); margin-top: 12px; }
   .f-btn { display: inline-flex; height: 36px; }
   .filters {
     position: fixed; z-index: 61; left: 0; right: 0; bottom: 0; top: auto; max-height: min(82dvh, 720px); overflow-y: auto;
@@ -240,15 +240,14 @@ body.browse { overflow-x: clip; }
   .sheet-head .btn { color: var(--accent); }
   .sheet-open .tabbar { opacity: 0; pointer-events: none; transform: translateY(16px); }
   .grid { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 22px 14px; }
-  .coll { margin-top: 20px; }
   .cmd { top: calc(env(safe-area-inset-top, 0px) + 66px); flex-wrap: wrap; border-radius: 18px; }
   .cmd .search { flex-basis: 100%; }
   .b-ctl { width: 100%; justify-content: space-between; }
   .b-ctl .f-btn { height: 36px; }
-  .spot { min-height: 46svh; padding-bottom: 22px; }
-  .spot-h { font-size: clamp(56px, 17vw, 84px); }
-  .spot-lede { font-size: 16px; }
-  .spot-now { position: relative; right: auto; bottom: auto; width: 100%; margin-top: 18px; }
+  .spot { min-height: 0; padding-top: 18px; padding-bottom: 14px; }
+  .spot-h { font-size: clamp(48px, 14vw, 72px); }
+  .spot-lede { margin-top: 8px; font-size: 15px; }
+  .spot-now { position: relative; right: auto; bottom: auto; width: 100%; margin-top: 14px; }
   .spot { flex-direction: column; align-items: stretch; justify-content: flex-end; }
   .coll-track { gap: 10px 16px; }
   .mood { height: 118px; }
@@ -333,7 +332,7 @@ body.browse { overflow-x: clip; }
 @media (prefers-reduced-transparency: reduce) { .pv { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--card); } }
 
 /* searching everything: TMDB's results under this hour's catalogue */
-.web { margin-top: 40px; }
+.web { margin-top: 28px; }
 .web-hd { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 14px; padding-top: 22px; border-top: .5px solid var(--sep); }
 .web-hd h2 { margin: 0; font: 700 22px/1.2 var(--font); letter-spacing: .004em; }
 .web-hd .count { margin: 0; }
@@ -347,7 +346,7 @@ body.browse { overflow-x: clip; }
 @media (hover: hover) { .b-people:hover { text-decoration: underline; } }
 
 /* searching: every other film and show carries straight on from the services' matches, as one list */
-.web.merged { margin-top: 26px; }
+.web.merged { margin-top: 20px; }
 .web.merged .web-hd { border-top: 0; padding-top: 0; }
 .web.merged:not(.solo) .web-hd h2 { font-size: 17px; color: var(--label2); }
 .searching #pWhere { opacity: .4; pointer-events: none; }   /* searching covers every film and show: the services filter has nothing to do */
@@ -439,7 +438,7 @@ body.browse { overflow-x: clip; }
 #ages .g-b[aria-checked="true"], #lens .g-b[aria-checked="true"] { background: var(--accent); color: #fff; box-shadow: none; }
 
 /* ---------- For You: a row of posters, as on the homepage ---------- */
-.b-rows:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr); gap: 26px; margin-top: 26px; }
+.b-rows:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; margin-top: 20px; }
 .b-row { min-width: 0; }
 .b-row-hd { display: flex; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; margin-bottom: 12px; }
 .b-row-hd h2 { margin: 0; font: 700 20px/1.2 var(--font); letter-spacing: -.02em; }
@@ -469,7 +468,7 @@ body.browse { overflow-x: clip; }
   .cmd .f-btn .badge { position: absolute; top: -4px; right: -4px; font-size: 11px; }
 
   /* the collections: one line that scrolls sideways, like Apple TV's categories, fading out at the edges */
-  .coll { margin: 18px calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); }
+  .coll { margin: 12px calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); }
   .coll-track { --cfs: 17px !important; flex-wrap: nowrap; gap: 22px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain;
     scroll-snap-type: x proximity; scroll-padding-inline: var(--gutter); padding: 4px var(--gutter-r) 14px var(--gutter);
     -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--gutter), #000 calc(100% - 36px), transparent);
@@ -491,7 +490,7 @@ body.browse { overflow-x: clip; }
   transition: opacity .2s ease; }
 .dyn-x:hover, .dyn-x:focus-visible { opacity: 1; }
 .dyn-x svg { width: 100%; height: 100%; display: block; }
-@media (max-width: 820px) { .dyn { min-height: 320px; margin-top: 26px; } }
+@media (max-width: 820px) { .dyn { min-height: 300px; margin-top: 16px; } }
 
 /* American Horror Story: blood red and bone white, an old reel's grain and scratches, a dying bulb over the 13. Its own
    palette in light and dark alike (it's the show's mood, not the page's). The type is the system's Didot, not the show's. */

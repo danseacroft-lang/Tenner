@@ -6,13 +6,13 @@
   max-width: 680px; margin: 0 auto; padding: 8px var(--gutter-r) 0 var(--gutter);
   display: flex; flex-direction: column; align-items: center;
 }
-.lwrap h1 { margin: 18px 0 6px; font: 700 28px/1.15 var(--font); letter-spacing: .004em; text-align: center; text-wrap: balance; }
-.l-updated, .l-lede { margin: 0 0 24px; font-size: 15px; color: var(--label2); text-align: center; text-wrap: balance; }
+.lwrap h1 { margin: 10px 0 4px; font: 700 28px/1.15 var(--font); letter-spacing: .004em; text-align: center; text-wrap: balance; }
+.l-updated, .l-lede { margin: 0 0 16px; font-size: 15px; color: var(--label2); text-align: center; text-wrap: balance; }
 .section-label {
   width: 100%; margin: 0 0 8px; padding-inline: 16px;
   font-size: 13px; font-weight: 400; color: var(--label2); text-transform: uppercase; letter-spacing: -.005em;
 }
-.policy-box + .section-label { margin-top: 32px; }
+.policy-box + .section-label { margin-top: 24px; }
 
 /* each document scrolls inside its own box */
 .policy-box {
@@ -23,7 +23,7 @@
 /* the words fade out at the foot of the box as they scroll on, rather than being cut off */
 .policy-box::after { content: ""; position: sticky; bottom: -24px; display: block; height: 56px; margin: -32px calc(-1 * clamp(18px, 4vw, 32px)) -24px; pointer-events: none;
   background: linear-gradient(to bottom, transparent, var(--card) 85%); border-radius: 0 0 12px 12px; }
-.policy-box h2 { margin: 26px 0 8px; font: 600 17px/1.3 var(--font); letter-spacing: -.022em; }
+.policy-box h2 { margin: 20px 0 6px; font: 600 17px/1.3 var(--font); letter-spacing: -.022em; }
 .policy-box h2:first-child { margin-top: 0; }
 .policy-box p, .policy-box li { margin: 0 0 12px; font-size: 15px; line-height: 1.55; letter-spacing: -.016em; }
 .policy-box ul { margin: 0 0 12px; padding-left: 20px; }
@@ -43,7 +43,7 @@
    Rows like Mail's (To, From, Subject), a topic switch, then the message. Send opens your own email app with it all
    filled in: nothing is sent to or stored by Tenner. */
 .c-icon {
-  display: grid; place-items: center; width: 64px; height: 64px; margin: 18px 0 4px; border-radius: 16px; color: var(--accent);
+  display: grid; place-items: center; width: 64px; height: 64px; margin: 10px 0 4px; border-radius: 16px; color: var(--accent);
   background: var(--frost); box-shadow: var(--frost-line); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur);
 }
 .c-icon svg { width: 30px; height: 30px; }
@@ -80,7 +80,7 @@
 @keyframes cPop { from { transform: scale(.4); opacity: 0; } }
 .c-send { flex: none; gap: 8px; height: 40px; padding: 0 18px 0 15px; color: var(--accent); }
 .c-send svg { width: 16px; height: 16px; }
-.c-more { width: 100%; margin-top: 32px; }
+.c-more { width: 100%; margin-top: 24px; }
 .c-list { list-style: none; margin: 0; padding: 0; background: var(--bg2); border-radius: 12px; overflow: hidden; }
 .c-list li + li { border-top: .5px solid var(--sep); }
 .c-list a { display: flex; align-items: center; gap: 12px; padding: 13px 16px; color: var(--label); }

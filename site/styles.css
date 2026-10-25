@@ -96,7 +96,7 @@ img { display: block; max-width: 100%; }
 :focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 2px; }
 main:focus { outline: none; }
 ::selection { background: color-mix(in srgb, var(--accent) 28%, transparent); }
-.page-title { margin-top: 24px; }
+.page-title { margin-top: 14px; }
 .wrap { max-width: var(--max); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter-r); }
 
 /* ============================================================ one button family */
@@ -118,7 +118,7 @@ main:focus { outline: none; }
    as in iOS. From 1000px wide it becomes the Apple Music sidebar (further down). */
 .top-row {
   position: sticky; top: 0; z-index: 49; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px;
-  max-width: var(--max); margin: 0 auto; padding: calc(env(safe-area-inset-top, 0px) + 10px) var(--gutter-r) 10px var(--gutter); pointer-events: none;
+  max-width: var(--max); margin: 0 auto; padding: calc(env(safe-area-inset-top, 0px) + 6px) var(--gutter-r) 6px var(--gutter); pointer-events: none;
   view-transition-name: topbar;   /* it stays put while the page crossfades */
 }
 .top-row > * { position: relative; z-index: 1; animation: riseIn .6s var(--ease-out) both; }
@@ -265,8 +265,8 @@ a.tb-btn:hover { text-decoration: none; }
 .grad { font-style: normal; background: linear-gradient(100deg, #ff375f 0%, #bf5af2 55%, #0a84ff 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
   -webkit-box-decoration-break: clone; box-decoration-break: clone; padding-bottom: .06em; }
 @media (forced-colors: active) { .grad { background: none; color: CanvasText; } }
-.large-title { margin: 22px 0 6px; font: 700 clamp(32px, 5vw, 48px)/1.1 var(--font-display); letter-spacing: -.008em; text-wrap: balance; }
-.intro .large-title { margin: 14px 0 6px; font-size: clamp(30px, 3.6vw, 40px); }
+.large-title { margin: 14px 0 4px; font: 700 clamp(32px, 5vw, 48px)/1.1 var(--font-display); letter-spacing: -.008em; text-wrap: balance; }
+.intro .large-title { margin: 8px 0 4px; font-size: clamp(30px, 3.6vw, 40px); }
 .lede { margin: 0; color: var(--label2); font-size: 17px; letter-spacing: -.022em; max-width: 60ch; }
 .lede b { color: var(--label); font-weight: 600; }
 .sub { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 0; font-size: 16px; letter-spacing: -.022em; }
@@ -285,13 +285,13 @@ a.tb-btn:hover { text-decoration: none; }
 .share-chart:disabled { opacity: .5; }
 /* Share: a round button in the very top-right corner of the page's header (beside the title on phones) */
 .intro { position: relative; }
-.controls .share-chart { position: absolute; top: 22px; right: var(--gutter-r); width: 42px; height: 42px; margin: 0; padding: 0; justify-content: center; border-radius: 50%; font-size: 0; gap: 0; }
+.controls .share-chart { position: absolute; top: 14px; right: var(--gutter-r); width: 42px; height: 42px; margin: 0; padding: 0; justify-content: center; border-radius: 50%; font-size: 0; gap: 0; }
 .controls .share-chart svg { width: 19px; height: 19px; margin-top: -2px; }
 @media (hover: hover) { .controls .share-chart:hover { background: color-mix(in srgb, var(--frost) 60%, var(--fill-strong)); } }
 .controls .share-chart:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .intro .large-title { padding-right: 56px; }
 .intro > .controls { animation-name: fadeOnly; }   /* no movement on this row, so Share stays pinned in its corner */
-@media (max-width: 560px) { .controls .share-chart { top: 18px; } }
+@media (max-width: 560px) { .controls .share-chart { top: 10px; } }
 @keyframes fadeOnly { from { opacity: 0; } }
 .live-dot { position: relative; width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
 .live-dot::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--green); opacity: 0; animation: ping 2.4s ease-out 4; }
@@ -301,7 +301,7 @@ a.tb-btn:hover { text-decoration: none; }
 #ago.swap { display: inline-block; animation: agoSwap .5s var(--ease-out); }
 @keyframes agoSwap { from { opacity: 0; transform: translateY(6px); filter: blur(3px); } }
 
-.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 18px; }
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
 .segmented { position: relative; isolation: isolate; touch-action: pan-y;
   display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; flex: none; height: 36px; padding: 3px; border-radius: 999px;
   background: var(--frost); box-shadow: var(--frost-line); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); }
@@ -357,12 +357,12 @@ a.tb-btn:hover { text-decoration: none; }
   #kindDD { flex: none; height: 40px; }
 }
 
-.notice { margin: 18px 0 0; padding: 12px 16px; border-radius: var(--radius); background: color-mix(in srgb, var(--accent) 12%, transparent); font-size: 15px; }
+.notice { margin: 12px 0 0; padding: 12px 16px; border-radius: var(--radius); background: color-mix(in srgb, var(--accent) 12%, transparent); font-size: 15px; }
 .chart { min-width: 0; padding-top: 6px; }
 
 /* phones: page titles at the iOS Large Title size (34pt bold) */
 @media (max-width: 560px) {
-  .large-title { font-size: 34px; line-height: 1.12; margin-top: 18px; }
+  .large-title { font-size: 34px; line-height: 1.12; margin-top: 10px; }
   .intro .large-title { font-size: 34px; }
   .lede, .sub { font-size: 15px; }
   .updated { flex: none; }
@@ -378,10 +378,10 @@ a.tb-btn:hover { text-decoration: none; }
   --edge: max(76px, var(--col));
   position: relative; width: calc(100vw - var(--side, 0px)); margin-left: calc(50% - (100vw - var(--side, 0px)) / 2);
 }
-.row-wrap + .feats { margin-top: 30px; }
+.row-wrap + .feats { margin-top: 22px; }
 .posters {
-  list-style: none; margin: 0; padding: 34px var(--col) 14px;
-  display: grid; grid-auto-flow: column; grid-auto-columns: var(--cw); gap: 26px;
+  list-style: none; margin: 0; padding: 30px var(--col) 10px;
+  display: grid; grid-auto-flow: column; grid-auto-columns: var(--cw); gap: 22px;
   overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; scroll-padding-inline: var(--col);
 }
 .posters::-webkit-scrollbar { display: none; }
@@ -502,8 +502,8 @@ a.tb-btn:hover { text-decoration: none; }
   /* the Apple TV hero: a tall stage with the words at the bottom left, over the faded part of the artwork; arrows at
      either side, dots under the buttons and a pause button at the bottom right. A steady height, so nothing jumps as
      titles change. */
-  .hero { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: clamp(400px, calc(94vh - 350px), 660px);
-    margin: 0 calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); padding: 24px 76px 30px; }
+  .hero { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: clamp(360px, calc(94vh - 390px), 620px);
+    margin: 0 calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); padding: 16px 76px 22px; }
   /* a soft shade of the page's own colour behind the words, so they read on any artwork; no edge, it melts like the fade */
   /* closest-side: the glow reaches nothing exactly at its box's edges, so it can never be cut off into a line */
   .hero::before { content: ""; position: absolute; z-index: -1; left: -14%; right: 22%; top: -6%; bottom: -30%; pointer-events: none;
@@ -526,7 +526,7 @@ a.tb-btn:hover { text-decoration: none; }
   .h-cert[data-c="12"], .h-cert[data-c="12A"] { background: #f37021; } .h-cert[data-c="15"] { background: #e2357b; } .h-cert[data-c="18"], .h-cert[data-c="R18"] { background: #dc1e2d; }
   .h-blurb { margin: 14px 0 0; max-width: 34em; color: var(--label); opacity: .74; font-size: 20px; line-height: 1.42; letter-spacing: -.018em;
     display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-  .h-btns { display: flex; align-items: center; gap: 22px; margin-top: 30px; }
+  .h-btns { display: flex; align-items: center; gap: 22px; margin-top: 22px; }
   .h-cta {
     display: inline-flex; align-items: center; justify-content: center; gap: 12px; width: min(300px, 100%); height: 64px; border-radius: 14px;
     background: color-mix(in srgb, var(--label) 82%, transparent); color: var(--bg); font: 600 21px/1 var(--font); letter-spacing: -.02em;
@@ -545,7 +545,7 @@ a.tb-btn:hover { text-decoration: none; }
   .h-add:active { transform: scale(.92); }
   .h-add[aria-pressed="true"] { color: var(--accent); }
   /* the dots, like the TV: small circles, the one showing is bright */
-  .h-dots { display: flex; gap: 14px; margin-top: 30px; }
+  .h-dots { display: flex; gap: 14px; margin-top: 22px; }
   .h-dots button { position: relative; width: 10px; height: 10px; padding: 0; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--label) 34%, transparent); cursor: pointer; transition: background-color .25s ease, transform .3s var(--ease-spring); }
   .h-dots button::after { content: ""; position: absolute; inset: -8px; }   /* a bigger target than it looks */
   .h-dots button[aria-current="true"] { background: var(--label); transform: scale(1.15); }
@@ -571,18 +571,18 @@ a.tb-btn:hover { text-decoration: none; }
 /* ============================================================ homepage, the Apple Music "New" way
    Feature cards up top, the neon row, the ten as a column list, then New This Week. Section headings link on, with a chevron. */
 /* with Both, each chart gets a heading above its neon row */
-.row-h.kind-h { margin: 40px 0 -10px; font-size: 26px; }
-.row-h { margin: 44px 0 14px; font: 700 22px/1.2 var(--font); letter-spacing: -.008em; }
+.row-h.kind-h { margin: 30px 0 -10px; font-size: 26px; }
+.row-h { margin: 32px 0 12px; font: 700 22px/1.2 var(--font); letter-spacing: -.008em; }
 .row-h a { color: var(--label); display: inline-flex; align-items: center; gap: 6px; }
 .row-h a:hover { text-decoration: none; color: var(--accent); }
 .chev { width: 9px; height: 9px; border-right: 2.4px solid currentColor; border-bottom: 2.4px solid currentColor; transform: rotate(-45deg); opacity: .55; margin-left: 2px; }
-.row-hd { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin: 44px 0 14px; }
+.row-hd { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin: 32px 0 12px; }
 .row-hd .row-h { margin: 0; }
 .see-all { display: inline-flex; align-items: center; gap: 5px; flex: none; font-size: 15px; font-weight: 500; letter-spacing: -.016em; }
 .see-all .chev { width: 7px; height: 7px; border-width: 0 2px 2px 0; }
 
 /* feature cards */
-.feats { margin-top: 26px; }
+.feats { margin-top: 18px; }
 .feat-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 .feat { display: flex; flex-direction: column; min-width: 0; color: inherit; }
 .feat:hover { text-decoration: none; }
@@ -656,14 +656,14 @@ a.tb-btn:hover { text-decoration: none; }
   .cl { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-flow: row; }
   .cl li:nth-child(5n + 1) { border-top: .5px solid var(--sep); }
   .cl li:first-child { border-top: 0; }
-  .row-h { margin-top: 34px; font-size: 20px; }
-  .row-hd { margin-top: 34px; }
+  .row-h { margin-top: 26px; font-size: 20px; }
+  .row-hd { margin-top: 26px; }
   .see-all { font-size: 14px; }
   .nr { grid-auto-columns: 124px; gap: 12px; }
 }
 
 /* ============================================================ New This Week: the week on the charts, then releases day by day */
-.group { margin: 26px 0 0; animation: riseIn .6s var(--ease-out) both; }
+.group { margin: 20px 0 0; animation: riseIn .6s var(--ease-out) both; }
 .group:nth-of-type(2) { animation-delay: .05s; } .group:nth-of-type(3) { animation-delay: .1s; }
 .group:nth-of-type(4) { animation-delay: .15s; } .group:nth-of-type(n+5) { animation-delay: .2s; }
 .group h2 { margin: 0 0 6px; font: 700 17px/1.3 var(--font); color: var(--label); letter-spacing: -.015em; }
@@ -690,7 +690,7 @@ a.tb-btn:hover { text-decoration: none; }
 @media (hover: hover) { .cal-add:hover { background: color-mix(in srgb, var(--accent) 20%, transparent); } }
 .cal-add:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* the homepage's "What should I watch tonight?" card, and its three-step picker */
-.tn-card { display: flex; align-items: center; gap: 18px; margin: 34px 0 0; padding: 20px 22px; border-radius: 22px; position: relative; overflow: hidden;
+.tn-card { display: flex; align-items: center; gap: 18px; margin: 24px 0 0; padding: 18px 20px; border-radius: 22px; position: relative; overflow: hidden;
   background: linear-gradient(120deg, rgba(191, 90, 242, .12), rgba(10, 132, 255, .08) 60%, transparent), color-mix(in srgb, var(--bg) 22%, transparent);
   box-shadow: inset 0 0 0 1px var(--gl-rim); -webkit-backdrop-filter: blur(24px) saturate(1.6); backdrop-filter: blur(24px) saturate(1.6); }
 .tn-c-copy { flex: 1; min-width: 0; }
@@ -736,13 +736,13 @@ a.tb-btn:hover { text-decoration: none; }
 .wl-al-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* Watchlist rows: where it's included, then remove */
 /* This Week */
-.wk { margin-top: 30px; }
+.wk { margin-top: 22px; }
 .wk-hd { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-bottom: 12px; }
 .wk-hd .row-h { margin: 0; }
 .wk-hd p { margin: 0; color: var(--label2); font-size: 14px; }
 .wl-go { color: var(--accent); font-weight: 600; }
 /* Watchlist: the homepage's chart list (.cl), with where it's streaming and a quiet remove button on each row */
-.wl-hd { margin-top: 30px; }
+.wl-hd { margin-top: 22px; }
 .wl-hd .dd { flex: none; }
 .wl-cl[data-kind="tv"] > li[data-type="movie"], .wl-cl[data-kind="movie"] > li[data-type="tv"] { display: none; }
 .wl-next { margin-top: 1px; }
@@ -758,7 +758,7 @@ a.tb-btn:hover { text-decoration: none; }
   .wl-x:hover { color: #fff; background: rgba(255, 55, 95, .85); }
 }
 @media (max-width: 420px) { .wl-on img:nth-child(n+2) { display: none; } }
-.wl-soon { margin: 34px 0 0; }
+.wl-soon { margin: 24px 0 0; }
 .cu-when { position: absolute; left: 8px; top: 8px; padding: 4px 8px; border-radius: 8px; font: 600 12px/1 var(--font); color: #fff;
   background: rgba(20, 20, 24, .6); -webkit-backdrop-filter: blur(12px) saturate(160%); backdrop-filter: blur(12px) saturate(160%); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .22); }
 /* the sheet's Watchlist button, once saved */
@@ -839,7 +839,7 @@ a.sh-pr:hover { text-decoration: none; color: var(--accent); }
 .sh-spark text { font: 500 10px var(--font); fill: var(--label3); } .sh-spark .y { text-anchor: end; }
 
 /* empty states */
-.empty { margin: 34px 0 0; padding: 40px 24px 36px; border-radius: 26px; background: var(--bg2); text-align: center; animation: riseIn .7s var(--ease-out) both; }
+.empty { margin: 24px 0 0; padding: 32px 22px 28px; border-radius: 26px; background: var(--bg2); text-align: center; animation: riseIn .7s var(--ease-out) both; }
 .empty-ic { display: inline-grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; color: #fff; background: linear-gradient(135deg, #ff375f, #bf5af2 55%, #0a84ff); box-shadow: 0 8px 24px rgba(191, 90, 242, .35); }
 .empty-ic svg { width: 28px; height: 28px; }
 .empty h2 { margin: 16px 0 6px; font: 700 26px/1.15 var(--font); letter-spacing: .004em; }
@@ -851,7 +851,7 @@ a.sh-pr:hover { text-decoration: none; color: var(--accent); }
   transform: translateX(-50%); padding: 12px 18px; border-radius: 999px;
   background: var(--label); color: var(--bg); font: 600 15px/1.2 var(--font); box-shadow: var(--shadow);
 }
-main { padding-bottom: 56px; }   /* breathing room at the end of every page */
+main { padding-bottom: 40px; }   /* breathing room at the end of every page */
 
 /* ============================================================ motion: fluid and springy, and only on arrival or touch */
 @media (hover: none) { a, button, select { -webkit-tap-highlight-color: transparent; } }
@@ -1229,7 +1229,7 @@ a.sh-prov:hover { text-decoration: none; }
   .nr-art { border-radius: 8px; }
 
   /* section headings: bold, with a round arrow on the ones that lead somewhere */
-  .row-h { margin: 34px 0 12px; font: 700 21px/1.2 var(--font); letter-spacing: -.015em; }
+  .row-h { margin: 26px 0 10px; font: 700 21px/1.2 var(--font); letter-spacing: -.015em; }
   .row-h a { gap: 10px; }
   .row-h .chev { position: relative; width: 28px; height: 28px; margin: 0; opacity: 1; border: 1.5px solid color-mix(in srgb, var(--label) 40%, transparent); border-radius: 50%; transform: none; }
   .row-h .chev::after { content: ""; position: absolute; left: 7px; top: 9.5px; width: 6px; height: 6px; border-top: 2px solid var(--label); border-right: 2px solid var(--label); transform: rotate(45deg); }
@@ -1240,7 +1240,7 @@ a.sh-prov:hover { text-decoration: none; }
   .top-brand .brand-name { display: none; }   /* just the logo in the middle: there isn't room for the name and the buttons */
   /* scrolled: the page's title appears in the empty space on the left, the logo staying in the middle */
   .top-brand { position: static; }
-  .bar-title { left: calc(var(--gutter) + 52px); right: auto; top: calc(env(safe-area-inset-top, 0px) + 10px); height: 42px; display: flex; align-items: center;
+  .bar-title { left: calc(var(--gutter) + 52px); right: auto; top: calc(env(safe-area-inset-top, 0px) + 6px); height: 42px; display: flex; align-items: center;
     max-width: calc(50vw - var(--gutter) - 80px); font-size: .95rem; }
   .title-in .lt-logo { opacity: 0; transition: opacity .2s ease; }   /* the title takes the stage; the logo steps back */
   .title-in .bar-title { left: 50%; translate: -50% 0; max-width: calc(100vw - 2 * var(--gutter) - 120px); justify-content: center; }
@@ -1327,7 +1327,7 @@ a.sh-prov:hover { text-decoration: none; }
 
   .mban:not([hidden]) + .intro + #view .page-title { margin-top: 14px; font-size: 28px; }
   /* each day: a bold heading, then the list without a box, rows divided by hairlines */
-  .group { margin-top: 30px; }
+  .group { margin-top: 22px; }
   .group h2 { margin: 0 0 6px; font: 700 21px/1.2 var(--font); letter-spacing: -.015em; color: var(--label); }
   .group h2.today { color: var(--accent); }
 }
