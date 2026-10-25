@@ -70,21 +70,21 @@
         <label><span>Watched up to</span>
           <select data-pr="s" aria-label="Season">${opts(x.sz.length, p ? s : 0, (n) => `Season ${n}`)}${p ? '' : '<option value="" selected>Season</option>'}</select>
           <select data-pr="e" aria-label="Episode"${p ? '' : ' disabled'}>${opts(x.sz[s - 1] || 1, p?.[1] || 0, (n) => `Episode ${n}`)}</select></label>
-        ${up ? `<button type="button" class="btn btn-tinted" data-act="watched">Mark S${up[0]} E${up[1]} watched</button>` : ''}
+        ${up ? `<button type="button" class="btn btn-tinted" data-act="watched" aria-keyshortcuts="E">Mark S${up[0]} E${up[1]} watched</button>` : ''}
         ${p ? '<button type="button" class="btn btn-tinted sh-reset" data-act="reset" aria-label="Clear progress" title="Clear progress">Clear</button>' : ''}
       </div>
       <p class="sh-pstat">${esc(status)}${p && !(p[0] === last[0] && p[1] === last[1]) ? ` · ${x.sz.reduce((a, n) => a + n, 0) - (x.sz.slice(0, p[0] - 1).reduce((a, n) => a + n, 0) + p[1])} episodes to go` : ''}</p>
     </section>`;
   }
   // the Watchlist button: a bookmark that fills in once saved
-  const saveBtn = (on) => `<button type="button" class="btn btn-tinted sh-save${on ? ' on' : ''}" data-act="save" aria-pressed="${on}">
+  const saveBtn = (on) => `<button type="button" class="btn btn-tinted sh-save${on ? ' on' : ''}" data-act="save" aria-pressed="${on}" aria-keyshortcuts="W">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h11v17L12 16.6 6.5 20.5z" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>${on ? 'In Watchlist' : 'Watchlist'}</button>`;
   // the star (phones): tells Tenner you like this, for better recommendations; it does nothing else
   const starBtn = (on) => `<button type="button" class="btn btn-tinted sh-star${on ? ' on' : ''}" data-act="star" aria-pressed="${on}" aria-label="${on ? 'Starred' : 'Star'}: tell Tenner you like this" title="${on ? 'Starred' : 'Star it, for better recommendations'}">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.5l-5.1 2.7 1-5.6-4.1-4 5.7-.8z" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg></button>`;
   const $ = (s, el = document) => el.querySelector(s);
-  let dataP = null;
-  const details = () => (dataP ||= fetch(`data/titles.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
+  let dataP = null, dataD = null;
+  const details = () => (dataP ||= fetch(`data/titles.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).then((d) => (dataD = d || dataD)).catch(() => null));
   addEventListener('tn:check', () => { dataP = null; });   // the next sheet picks up the new hour's details
   // titles Tenner doesn't follow (from searching everything) come live from the search API instead
   const apiCache = new Map();
@@ -170,9 +170,9 @@
   // side by side in equal widths
   function btnsHtml(info, x) {
     const nf = info.netflix || (x.ln?.nf ? `https://www.netflix.com/title/${x.ln.nf}` : '');
-    const trailer = x.tr ? `<button type="button" class="btn btn-tinted" data-act="trailer"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>Trailer</button>` : '';
+    const trailer = x.tr ? `<button type="button" class="btn btn-tinted" data-act="trailer" aria-keyshortcuts="T"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>Trailer</button>` : '';
     const netflix = nf ? `<a class="btn btn-tinted" href="${esc(nf)}" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>Watch on Netflix</a>` : '';
-    const share = `<button type="button" class="btn btn-tinted" data-act="share"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M6 11v8.5h12V11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Share</button>`;
+    const share = `<button type="button" class="btn btn-tinted" data-act="share" aria-keyshortcuts="S"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M6 11v8.5h12V11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Share</button>`;
     const main = netflix || trailer, rest = [netflix ? trailer : '', info.k ? saveBtn(saved.has(info.k)) : '', info.k ? starBtn(window.tn.stars.has(info.k)) : '', share].filter(Boolean);
     return `<div class="sh-btns">${main ? `<div class="sh-main">${main}</div>` : ''}<div class="sh-more">${rest.join('')}</div><p class="sh-thanks" id="shThanks" role="status"></p></div>`;
   }
@@ -319,9 +319,19 @@
       redrawProgress(b.dataset.act);
     }
     if (b.dataset.act === 'share') {
-      const url = new URL(location.href); if (current.k) url.searchParams.set('t', current.k);
+      // a title with its own page (t/m123/, built hourly) shares that, so the link's preview shows its artwork and name
+      const page = !!dataD?.items?.[current.k], url = new URL(page ? `t/${current.k}/` : location.href, location.href); if (current.k && !page) url.searchParams.set('t', current.k);
       window.tn.share({ heading: `Share ${current.title} with someone who'd like it`, title: `${current.title} on Tenner`, text: `Where to watch ${current.title} in the UK`, url: url.toString() });
     }
+  });
+
+  // the keyboard, as in Apple's apps: W for Watchlist, T for the trailer, S to share, E to mark the next episode watched
+  const KEYS = { w: 'save', t: 'trailer', s: 'share', e: 'watched' };
+  sheet.addEventListener('keydown', (e) => {
+    const act = KEYS[e.key.toLowerCase()];
+    if (!act || e.metaKey || e.ctrlKey || e.altKey || e.repeat || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    const b = sheet.querySelector(`[data-act="${act}"]`); if (!b) return;
+    e.preventDefault(); b.click();
   });
 
   // choosing a season or episode from the menus

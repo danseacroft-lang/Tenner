@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.50.0';
+  const version = '1.51.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -423,6 +423,37 @@
   let syncT;   // the Watchlist changed: tell the Worker a moment later (once, however many changes)
   addEventListener('tn:saved', () => { clearTimeout(syncT); syncT = setTimeout(async () => { const sub = await pushSub(); if (sub) syncAlerts(sub).catch(() => {}); }, 1500); });
 
+  // ---------- offline: the service worker keeps every Watchlist title's details and poster (sw.js) ----------
+  // and, in the installed app on Chrome and Edge, fetches the hour's charts in the background so they're waiting
+  const keepOffline = () => navigator.serviceWorker?.ready.then((reg) => reg.active?.postMessage({ type: 'keep', items: saved.all().map((x) => ({ k: x.k, poster: x.poster })) })).catch(() => {});
+  let keepT; addEventListener('tn:saved', () => { clearTimeout(keepT); keepT = setTimeout(keepOffline, 2000); });
+  if (standalone) navigator.serviceWorker?.ready.then(async (reg) => {
+    if (!reg.periodicSync) return;
+    const st = await navigator.permissions?.query({ name: 'periodic-background-sync' }).catch(() => null);
+    if (st?.state === 'granted') await reg.periodicSync.register('tenner-charts', { minInterval: 3600e3 });
+  }).catch(() => {});
+
+  // ---------- the Home Screen icon's badge: how many shows on your Watchlist have a new episode out today ----------
+  // Worked out once a day (and again when the Watchlist changes) from the hour's title details, and the search service
+  // for saved shows the charts don't cover (40 at most). The installed app only; nothing shows in a browser tab.
+  const BADGE = 'tenner-badge';
+  async function badge(force) {
+    if (!navigator.setAppBadge || !standalone) return;
+    const day = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
+    let last = null; try { last = JSON.parse(localStorage.getItem(BADGE) || 'null'); } catch {}
+    if (!force && last?.day === day) return;
+    const shows = saved.all().filter((x) => x.type === 'tv' || x.k[0] === 't');
+    const d = shows.length ? await fetch(`data/titles.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null) : null;
+    const items = { ...(d?.items || {}) };
+    await Promise.all(shows.filter((x) => !items[x.k]).slice(0, 40).map((x) => fetch(`${api}/title/${x.k}`).then((r) => (r.ok ? r.json() : null)).then((a) => Object.assign(items, a?.items)).catch(() => {})));
+    const n = shows.filter((x) => items[x.k]?.nx?.[0] === day).length;
+    try { localStorage.setItem(BADGE, JSON.stringify({ day, n })); } catch {}
+    (n ? navigator.setAppBadge(n) : navigator.clearAppBadge()).catch(() => {});
+  }
+  let badgeT; addEventListener('tn:saved', () => { clearTimeout(badgeT); badgeT = setTimeout(() => badge(true), 2500); });
+  addEventListener('tn:check', () => badge());
+  addEventListener('load', () => { setTimeout(() => { badge(); keepOffline(); }, 3000); });
+
   // ---------- iPhone and iPad: a one-time tip to put Tenner on the Home Screen (full screen, and alerts) ----------
   // On the third page you open in Safari, after the privacy note has been put away; Got it puts it away for good.
   const A2 = 'tenner-a2hs';
@@ -535,6 +566,36 @@
   };
 
   window.tn = { prefs, esc, hue, glide, arrows, segment, reduce, saved, stars, progress, nextUp, whenText, mine, pickMine, api, share, alerts, isIOS, account, avatar, featured, findTitle, sharedTitle };
+
+  // ---------- paste or drop a link: an IMDb, TMDB, Letterboxd, JustWatch or Tenner link opens that title's sheet ----------
+  // ⌘V (Ctrl+V) anywhere but a text box, or a link dragged onto the page. Anything else pasted is left alone.
+  const LINKY = /imdb\.com\/(?:[a-z]{2}\/)?title\/tt\d|themoviedb\.org\/(?:movie|tv)\/\d|letterboxd\.com\/film\/[a-z0-9-]|justwatch\.com\/[a-z]{2}\/(?:movie|film|tv-show|tv-series)\/[a-z0-9-]|tenner\.stream\S*(?:[?&]t=|\/t\/)[mt]\d/;
+  async function openLink(text) {
+    text = String(text || '').trim().slice(0, 600);
+    if (!LINKY.test(text)) return false;
+    const own = text.match(/tenner\.stream\S*(?:[?&]t=|\/t\/)([mt]\d{1,9})/)?.[1];
+    const x = own ? { k: own } : await sharedTitle(new URLSearchParams({ text }));
+    if (!x?.k) return true;
+    if (!window.tnSheet) { location.href = `./?t=${x.k}`; return true; }
+    if (window.tnSheet.isOpen()) { window.tnSheet.close(); await new Promise((r) => setTimeout(r, 380)); }
+    // the page opens it the way it opens a shared link (with what the chart knows), or the search service does
+    const u = new URL(location.href); u.searchParams.set('t', x.k); history.pushState(null, '', u);
+    dispatchEvent(new PopStateEvent('popstate'));
+    setTimeout(() => { if (!window.tnSheet.isOpen()) window.tnSheet.openKey(x.k); }, 400);
+    return true;
+  }
+  const typingIn = (el) => /^(INPUT|TEXTAREA|SELECT)$/.test(el?.tagName) || el?.isContentEditable;
+  document.addEventListener('paste', (e) => {
+    if (typingIn(document.activeElement) || document.querySelector('dialog[open]:not(.sheet)')) return;
+    const text = e.clipboardData?.getData('text/plain'); if (LINKY.test(text || '')) { e.preventDefault(); openLink(text); }
+  });
+  const linkIn = (e) => [...(e.dataTransfer?.types || [])].some((t) => t === 'text/uri-list' || t === 'text/plain') && ![...(e.dataTransfer?.types || [])].includes('Files');
+  document.addEventListener('dragover', (e) => { if (linkIn(e) && !typingIn(e.target)) e.preventDefault(); });
+  document.addEventListener('drop', (e) => {
+    if (!linkIn(e) || typingIn(e.target)) return;
+    const text = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
+    if (LINKY.test(text || '')) { e.preventDefault(); openLink(text); }
+  });
 
   // ---------- tabs ----------
   const tabs = [...document.querySelectorAll('#tabs [role=tab]')], ind = $('#tabInd'), names = tabs.map((t) => t.dataset.tab);

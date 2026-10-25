@@ -15,7 +15,7 @@
 //   node scripts/fetch-data.mjs           fetch real data
 //   node scripts/fetch-data.mjs --sample  write fictional sample data (no keys needed)
 
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -757,6 +757,58 @@ export async function buildCinema() {
   return { v: CINEMA_V, generatedAt: new Date().toISOString(), now: nowItems, soon: soonItems };
 }
 
+// ---------- A page for each title, for link previews ----------
+// t/m123/index.html for every title Tenner has details for: its name, artwork and where it streams in the tags that
+// Messages, WhatsApp, Slack and the rest read when a link is shared, and straight on to the title's sheet for people.
+// Built from the data files just written, so it follows the hour's chart, Browse and New.
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const BRAND = (n) => { const s = serviceFor(n); return s ? s.label : n.replace(/ (Standard|Basic|Premium)? ?with Ads$/i, '').replace(/^Amazon Prime Video$/, 'Prime Video').replace(/^Disney Plus$/, 'Disney+'); };
+export async function buildTitlePages() {
+  const read = async (n) => { try { return JSON.parse(await readFile(join(OUT, n), 'utf8')); } catch { return null; } };
+  const [trending, browse, more, fresh, titles] = await Promise.all(['trending.json', 'browse.json', 'browse-more.json', 'new.json', 'titles.json'].map(read));
+  if (!titles?.items) return 0;
+  const info = new Map();   // k → { title, year, overview, art }
+  const put = (k, x) => { const o = info.get(k) || {}; for (const [f, v] of Object.entries(x)) if (v && !o[f]) o[f] = v; info.set(k, o); };
+  const fromChart = (it, t) => /^\d+$/.test(String(it.id)) && put(`${t[0]}${it.id}`, { title: it.title, year: it.year, overview: it.overview, art: it.backdrop || it.poster });
+  for (const sv of trending?.services || []) for (const t of ['tv', 'movie']) for (const it of sv[t] || []) fromChart(it, t);
+  for (const t of ['tv', 'movie']) for (const it of trending?.overall?.[t] || []) fromChart(it, t);
+  for (const it of fresh?.items || []) if (it.id) put(`${it.type === 'movie' ? 'm' : 't'}${it.id}`, { title: it.title, art: it.poster });
+  for (const x of browse?.items || []) {
+    const k = `${x.t[0]}${x.i}`, m = more?.items?.[k];
+    put(k, { title: x.n, year: (x.d || '').slice(0, 4), overview: m?.[0], art: m?.[1] && more.img ? more.img + m[1] : x.img && browse.img ? browse.img + x.img : null });
+  }
+  await rm(join(ROOT, 'site', 't'), { recursive: true, force: true });
+  let n = 0;
+  for (const [k, x] of Object.entries(titles.items)) {
+    const t = info.get(k); if (!t?.title) continue;
+    const seen = new Set(), on = (x.f || []).map((id) => titles.providers?.[id]?.[0]).filter(Boolean).map(BRAND).filter((b) => !seen.has(b) && seen.add(b)).slice(0, 3);
+    const where = on.length ? `On ${on.length > 1 ? `${on.slice(0, -1).join(', ')} and ${on.at(-1)}` : on[0]} in the UK` : (x.re?.length || x.bu?.length) ? 'To rent or buy in the UK' : 'Where to watch it in the UK';
+    const kind = k[0] === 'm' ? 'Film' : 'Series', year = t.year ? ` · ${t.year}` : '';
+    const ov = String(t.overview || '').replace(/\s+/g, ' ').trim(), desc = `${kind}${year} · ${where}.${ov ? ` ${ov.length > 160 ? `${ov.slice(0, 157).replace(/\s+\S*$/, '')}…` : ov}` : ''}`;
+    const url = `https://tenner.stream/t/${k}/`, img = /^https:\/\/image\.tmdb\.org\//.test(t.art || '') ? t.art : 'https://tenner.stream/og.jpg';
+    const html = `<!doctype html>
+<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${esc(t.title)} | Tenner</title>
+<meta name="description" content="${esc(desc)}">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<meta property="og:type" content="${k[0] === 'm' ? 'video.movie' : 'video.tv_show'}"><meta property="og:site_name" content="Tenner">
+<meta property="og:title" content="${esc(t.title)}${t.year ? ` (${esc(t.year)})` : ''}"><meta property="og:description" content="${esc(desc)}">
+<meta property="og:url" content="${url}"><meta property="og:image" content="${esc(img)}">
+<meta name="twitter:card" content="summary_large_image">
+<style>html{background:#000;color-scheme:dark}</style>
+<script>location.replace('../../?t=${k}')</script>
+<noscript><meta http-equiv="refresh" content="0; url=../../?t=${k}"></noscript>
+</head><body></body></html>
+`;
+    await mkdir(join(ROOT, 'site', 't', k), { recursive: true });
+    await writeFile(join(ROOT, 'site', 't', k, 'index.html'), html); n++;
+  }
+  console.log(`Title pages: ${n}`);
+  return n;
+}
+
 // ---------- main ----------
 async function write(name, obj) {
   await mkdir(OUT, { recursive: true });
@@ -806,6 +858,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     await write('browse.json', sc);
     await write('browse-more.json', { generatedAt: sc.generatedAt, img: '', sample: true,
       items: Object.fromEntries(sc.items.map((x) => [`${x.t[0]}${x.i}`, ['Fictional sample title. Add your TMDB key and run the workflow to see real descriptions and artwork.', '']])) });
+    await buildTitlePages();
   } else if (!process.env.TMDB_TOKEN && !process.env.TMDB_API_KEY) {
     const msg = 'No TMDB_TOKEN secret found, so the site is still showing sample data. Add it under Settings > Secrets and variables > Actions.';
     console.warn(process.env.GITHUB_ACTIONS ? `::warning title=Sample data::${msg}` : msg);
@@ -928,5 +981,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       warn('Title details', `not rebuilt (${err.message})${prev ? ', keeping the live copy' : ''}`);
       if (prev) await write('titles.json', prev);
     }
+
+    // 5. A page for each title, so a shared link shows its artwork (never a reason for the run to fail)
+    try { await buildTitlePages(); } catch (err) { warn('Title pages', err.message); }
   }
 }
