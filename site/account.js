@@ -187,11 +187,21 @@
       else if (t.id === 'acAddPk') { await makePasskey(); load(); say('#acNote', 'Passkey added'); }
       else if (t.id === 'acOthers') { await account.call('DELETE', '/me/sessions'); load(); say('#acNote', 'Signed out everywhere else'); }
       else if (t.id === 'acCopy') { const link = $('#acUrl').textContent; if (navigator.share && window.tn.isIOS) navigator.share({ title: `${me.user.name}’s Watchlist`, url: link }).catch(() => {}); else { await navigator.clipboard.writeText(link); t.textContent = 'Copied'; setTimeout(() => (t.textContent = 'Copy'), 1500); } }
-      else if (t.id === 'acDelete') {
-        if (!confirm('Delete your Tenner account? Your Watchlist, progress and settings are removed from Tenner. What’s on this device stays. This can’t be undone.')) return;
-        await account.call('DELETE', '/me'); account.forget(); show(); say('#acMsg', 'Your account has been deleted');
-      }
+      else if (t.id === 'acDelete') askDelete();
     } catch (err) { say('#acNote', friendly(err), err.name !== 'NotAllowedError'); }
+  });
+  // ---------- delete: ask once, kindly, saying what goes; keeping it is the default, deleting one tap away ----------
+  const delDlg = $('#acDelDlg');
+  function askDelete() {
+    const n = window.tn.saved.all().length;
+    $('#acDelP').textContent = `Deleting your account removes ${n ? `your Watchlist of ${n} title${n === 1 ? '' : 's'}` : 'your Watchlist'}, where you’re up to and your settings from Tenner for good. What’s on this device stays. This can’t be undone.`;
+    delDlg.returnValue = ''; delDlg.showModal();
+  }
+  delDlg.addEventListener('click', (e) => { if (e.target === delDlg) delDlg.close(); });   // a tap outside keeps it, as on iPhone
+  delDlg.addEventListener('close', async () => {
+    if (delDlg.returnValue !== 'delete') return;
+    try { await account.call('DELETE', '/me'); account.forget(); show(); say('#acMsg', 'Your account has been deleted'); }
+    catch (err) { say('#acNote', friendly(err), true); }
   });
   $('#acIn').addEventListener('submit', async (e) => {
     if (e.target.id !== 'acPwForm') return; e.preventDefault();

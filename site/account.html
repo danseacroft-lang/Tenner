@@ -39,10 +39,10 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=1.52.1">
-  <link rel="stylesheet" href="legal.css?v=1.52.1">
-  <link rel="stylesheet" href="settings.css?v=1.52.1">
-  <link rel="stylesheet" href="account.css?v=1.52.1">
+  <link rel="stylesheet" href="styles.css?v=1.53.0">
+  <link rel="stylesheet" href="legal.css?v=1.53.0">
+  <link rel="stylesheet" href="settings.css?v=1.53.0">
+  <link rel="stylesheet" href="account.css?v=1.53.0">
 </head>
 <body class="legal">
   <a class="skip" href="#main">Skip to the page</a>
@@ -92,7 +92,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.52.1</span>
+      <span class="side-ver">Tenner 1.53.0</span>
     </div>
   </div>
 
@@ -188,10 +188,19 @@
       </div>
       <p class="set-note" id="acNote" role="status" aria-live="polite"></p>
     </section>
+    <!-- Delete account: an iOS alert asking once, kindly, whether they're sure. Keeping it is the default; deleting is one tap -->
+    <dialog class="mine-dlg ac-del-dlg" id="acDelDlg" aria-labelledby="acDelH" aria-describedby="acDelP">
+      <form method="dialog">
+        <span class="ac-del-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2z" fill="currentColor"/></svg></span>
+        <h2 id="acDelH">We’d be sorry to see you go</h2>
+        <p id="acDelP"></p>
+        <p class="ac-del-alt">Just need a break? Sign out instead and it’ll all be here when you’re back.</p>
+        <div class="ac-del-acts"><button class="btn ac-del-keep" value="keep" autofocus>Keep my account</button><button class="btn ac-del-go" value="delete">Delete account</button></div>
+      </form></dialog>
   </main>
 
 
-  <script src="shell.js?v=1.52.1" defer></script>
-  <script src="account.js?v=1.52.1" defer></script>
+  <script src="shell.js?v=1.53.0" defer></script>
+  <script src="account.js?v=1.53.0" defer></script>
 </body>
 </html>
