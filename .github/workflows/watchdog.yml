@@ -41,6 +41,9 @@ jobs:
             [ "$code" = 200 ] || echo "tv.yml|Tenner TV's page answered $code"
             tv=$(curl -s -m 40 https://tenner-tv.danseacroft.workers.dev/api/day | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const d=JSON.parse(s),c=d.channels||[],x=c[0]?.items?.[0];console.log(c.length>=25&&x&&x.t&&x.at>0?"ok":"only "+c.length+" channels"+(d.error?" ("+d.error+")":""))}catch{console.log("unreadable")}})')
             [ "$tv" = ok ] || echo "tv.yml|Tenner TV's listings: $tv"
+            # the weather alert: the Met Office's warnings must keep coming through (an empty list is fine: no bad weather)
+            wx=$(curl -s -m 40 https://tenner-tv.danseacroft.workers.dev/api/warnings | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const d=JSON.parse(s);console.log(Array.isArray(d.warnings)&&!d.error?"ok":(d.error||"no list"))}catch{console.log("unreadable")}})')
+            [ "$wx" = ok ] || echo "tv.yml|Tenner TV's weather warnings: $wx"
             tmins=$(curl -s -m 30 "https://tenner-tv.danseacroft.workers.dev/data/meta.json?v=$(date +%s)" | age)   # rebuilt every 3 hours
             [ "$tmins" -le 480 ] || echo "tv.yml|Tenner TV's listings are $((tmins/60)) hours old"
           }

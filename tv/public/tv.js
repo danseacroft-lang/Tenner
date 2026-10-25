@@ -578,6 +578,61 @@
     }
   }, 60e3);
   document.addEventListener('visibilitychange', () => { if (!document.hidden && ukDay() !== today) location.reload(); });
+  // ---------- weather warnings: when the Met Office has one, a box in the top right says so (bad weather can knock a
+  // dish or an aerial out, and live TV can still be watched online). It glides in, flashes red twice and stays until
+  // closed; a closed warning stays closed, a new one shows again. Checked every quarter of an hour. ----------
+  const WX = 'tv-wx-closed', LV = { red: 'Red', amber: 'Amber', yellow: 'Yellow' };
+  const closedWx = { all() { try { const l = JSON.parse(localStorage.getItem(WX) || '[]'); return Array.isArray(l) ? l : []; } catch { return []; } },
+    add(ids) { try { localStorage.setItem(WX, JSON.stringify([...new Set([...this.all(), ...ids])].slice(-40))); } catch {} } };
+  const wxKey = (w) => `${w.id}|${w.level}|${w.to || ''}`;   // a warning raised to amber, or extended, shows again
+  const TIPS = {
+    wind: 'Strong wind can knock a satellite dish or an aerial out of line, so the picture may freeze or break up.',
+    rain: 'Heavy rain can weaken a satellite signal, so the picture may freeze or break up.',
+    thunderstorm: 'Thunderstorms can interrupt satellite and aerial signals, and lightning can cut the power.',
+    snow: 'Snow building up on a satellite dish can block its signal.',
+    ice: 'Ice on a satellite dish can block its signal.',
+  };
+  const tip = (type) => Object.entries(TIPS).find(([k]) => type.includes(k))?.[1] || 'Bad weather can interrupt satellite and aerial signals.';
+  const clock = (t) => { const [h, m] = hm(t).split(':').map(Number); return `${h % 12 || 12}${m ? `:${String(m).padStart(2, '0')}` : ''}${h < 12 ? 'am' : 'pm'}`; };
+  const onDay = (t) => { const d = ukDay(t); return d === ukDay() ? 'today' : d === ukDay(Date.now() + 864e5) ? 'tomorrow' : dayName(d, { weekday: 'short' }); };
+  const when = (w, now = Date.now()) => {
+    const to = w.to ? `${clock(w.to)} ${onDay(w.to)}` : '';
+    if (!w.from || w.from <= now) return to ? `In force until ${to}` : 'In force now';
+    const from = `${clock(w.from)} ${onDay(w.from)}`;
+    return `From ${from}${to ? ` until ${w.to && ukDay(w.to) === ukDay(w.from) ? clock(w.to) : to}` : ''}`;
+  };
+  const tri = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 2.6 17.6A2 2 0 0 0 4.3 20.6h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" fill="currentColor"/><path d="M12 9v4.6" stroke="#000" stroke-opacity=".78" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="17" r="1.25" fill="#000" fill-opacity=".78"/></svg>';
+  let wxShown = '';
+  function drawWx(list) {
+    const box = $('#wx'), gone = new Set(closedWx.all()), open = list.filter((w) => !gone.has(wxKey(w)));
+    const sig = open.map(wxKey).join(',');
+    if (!open.length) { box.hidden = true; wxShown = ''; return; }
+    if (sig === wxShown) return;   // the same warnings: leave the box be
+    const w = open[0], more = open.slice(1), now = Date.now();
+    box.dataset.level = w.level;
+    box.innerHTML = `<div class="wx-ic">${tri}</div>
+      <div class="wx-copy">
+        <p class="wx-k">Weather alert · Met Office</p>
+        <h2 id="wxT">${esc(LV[w.level] || '')} warning of ${esc(w.type)}</h2>
+        <p class="wx-where">${esc([w.where, w.areas].filter(Boolean).join(': '))}</p>
+        <p class="wx-when">${esc(when(w, now))}</p>
+        <p class="wx-tip">${esc(tip(w.type))} If it does, tap <b>Watch live</b> to watch online.</p>
+        ${more.length ? `<ul class="wx-more">${more.slice(0, 2).map((x) => `<li><i data-level="${esc(x.level)}"></i>${esc(LV[x.level] || '')} warning of ${esc(x.type)}${x.where ? ` · ${esc(x.where)}` : ''}</li>`).join('')}${more.length > 2 ? `<li class="wx-n">and ${more.length - 2} more</li>` : ''}</ul>` : ''}
+        <a class="wx-go" href="${esc(w.link)}" target="_blank" rel="noopener">Full warning at the Met Office<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      </div>
+      <button type="button" class="wx-x" aria-label="Close the weather alert"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>`;
+    box.setAttribute('role', 'alert');
+    box.hidden = false; box.parentElement.style.setProperty('--wxh', `${box.offsetHeight}px`); box.classList.remove('wx-out', 'wx-in'); void box.offsetWidth; box.classList.add('wx-in');   // glides in, then the two red flashes (tv.css)
+    box.querySelector('.wx-x').onclick = () => {
+      closedWx.add(open.map(wxKey)); wxShown = '';
+      if (reduce) { box.hidden = true; return; }
+      box.classList.add('wx-out'); box.addEventListener('animationend', () => { box.hidden = true; }, { once: true });
+    };
+    wxShown = sig;
+  }
+  const checkWx = () => fetch('/api/warnings').then((r) => (r.ok ? r.json() : null)).then((d) => { if (Array.isArray(d?.warnings)) drawWx(d.warnings.filter((w) => !w.to || w.to > Date.now())); }).catch(() => {});
+  checkWx(); setInterval(() => { if (!document.hidden) checkWx(); }, 15 * 60e3);
+
   // kept on the device: opens instantly, and works with a weak signal or none (sw.js)
   if ('serviceWorker' in navigator && location.protocol === 'https:') addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
 })();

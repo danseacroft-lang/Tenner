@@ -4,7 +4,16 @@
 import assert from 'node:assert/strict';
 const store = new Map(), kvs = new Map();
 globalThis.caches = { default: { match: async (r) => store.get(r.url)?.clone(), put: async (r, res) => { store.set(r.url, res.clone()); } } };
-let up = true;
+let up = true, moUp = true;
+// the Met Office's warnings feed, as it reads (one warning over, one in force, one coming up)
+const MO_XML = `<?xml version="1.0"?><rss version="2.0"><channel><title>Met Office warnings</title>
+<item><title>Yellow warning of rain affecting Wales</title><link>https://weather.metoffice.gov.uk/warnings-and-advice/uk-warnings#?id=old&amp;referrer=rss</link>
+  <description>Yellow warning of rain affecting Wales: Gwynedd valid from 0600 Mon 01 Jan to 0900 Mon 01 Jan</description><pubDate>Sun, 31 Dec 2023 10:00:00 GMT</pubDate><guid isPermaLink="false">old</guid></item>
+<item><title>Yellow warning of wind affecting London &amp; South East England</title><link>https://weather.metoffice.gov.uk/warnings-and-advice/uk-warnings#?id=a1&amp;referrer=rss</link>
+  <description><![CDATA[Yellow warning of wind affecting London & South East England: Kent, East Sussex valid from 1200 Sun 25 Oct to 2100 Sun 25 Oct]]></description><pubDate>Sat, 24 Oct 2026 10:00:00 GMT</pubDate><guid isPermaLink="false">a1</guid></item>
+<item><title>Amber warning of wind affecting South West England</title><link>https://weather.metoffice.gov.uk/warnings-and-advice/uk-warnings#?id=a2&amp;referrer=rss</link>
+  <description>Amber warning of wind affecting South West England: Cornwall valid from 0300 Mon 26 Oct to 1500 Mon 26 Oct</description><pubDate>Sun, 25 Oct 2026 09:00:00 GMT</pubDate><guid isPermaLink="false">a2</guid></item>
+</channel></rss>`;
 const at = (m) => new Date(Date.now() + m * 60e3).toISOString();
 globalThis.fetch = async (u) => {
   u = String(u);
@@ -15,6 +24,7 @@ globalThis.fetch = async (u) => {
       show: { id: 10, name: 'Another', genres: [], network: { name: 'ITV', country: { code: 'GB' } }, image: null, externals: {} } },
     { id: 3, name: 'Elsewhere', airstamp: at(0), show: { id: 11, name: 'Not UK', network: { name: 'NBC', country: { code: 'US' } } } },
   ])) : new Response('down', { status: 503 });
+  if (u.includes('metoffice')) return moUp ? new Response(MO_XML, { headers: { 'content-type': 'application/rss+xml' } }) : new Response('down', { status: 503 });
   if (u.includes('/find/')) return new Response(JSON.stringify({ tv_results: [{ id: 5 }] }));
   if (u.includes('/tv/5')) return new Response(JSON.stringify({ networks: [{ name: 'BBC One', logo_path: '/bbc1.svg' }] }));
   return new Response('?', { status: 404 });
@@ -58,4 +68,14 @@ const sky = build(xml.replace('https://images.example/x/cover', 'https://images.
 assert.equal(sky.sky, '2fe55478-24f6-48ef-a5fe-458345bbb469', "Sky's pictures are kept as their id");
 assert.ok(!('wide' in sky) && !('show' in sky) && !Object.values(sky).includes(null), 'no empty or repeated fields');
 assert.equal(p.wide, 'https://images.example/x/cover', 'other pictures keep their address');
+// the Met Office's warnings: the worst first, finished ones dropped, UK times read correctly, each with its own link
+const { warnings } = await import(new URL('./src/index.js', import.meta.url));
+const w = warnings(MO_XML, Date.parse('2026-10-25T13:00:00Z'));
+assert.deepEqual(w.map((x) => [x.id, x.level, x.type]), [['a2', 'amber', 'wind'], ['a1', 'yellow', 'wind']], 'the worst warning first, finished ones dropped');
+assert.deepEqual([w[1].where, w[1].areas, new Date(w[1].from).toISOString(), new Date(w[1].to).toISOString()], ['London & South East England', 'Kent, East Sussex', '2026-10-25T12:00:00.000Z', '2026-10-25T21:00:00.000Z'], 'areas and times (UK time) are read');
+assert.match(w[0].link, /^https:\/\/weather\.metoffice\.gov\.uk\/.*id=a2/, 'each warning links to the Met Office');
+const getW = async () => { const r = await worker.fetch(new Request('https://tv.tenner.stream/api/warnings'), env, ctx); await Promise.all(waits.splice(0)); return [r.status, await r.json()]; };
+store.clear(); kvs.clear(); [s, d] = await getW(); assert.equal(s, 200); assert.ok(Array.isArray(d.warnings) && kvs.has('warnings'), 'the warnings are served and kept');
+store.clear(); moUp = false; [s, d] = await getW(); assert.equal(s, 200); assert.equal(d.source, 'Met Office', 'a feed outage serves the last good copy');
+kvs.clear(); store.clear(); [s, d] = await getW(); assert.deepEqual([s, d.warnings], [200, []], 'no feed and no copy: no warnings, no error page');
 console.log('Tenner TV checks passed');
