@@ -1,7 +1,8 @@
 // Tenner TV's endpoint: GET /api/day?d=YYYY-MM-DD → that day's UK TV, channel by channel. First choice: the Freeview
 // listings built every three hours into public/data/ (scripts/fetch-tv.mjs: the 35 main channels, complete schedules,
 // our own logos). Only a day those don't cover falls back to TVmaze (CC BY-SA 4.0), with logos from TMDB.
-// Anything else is the page itself (public/). Days from yesterday to a week ahead.
+// GET /api/warnings → the Met Office's weather warnings in force or coming up (wind, rain, snow… can knock out a
+// satellite dish or an aerial's signal). Anything else is the page itself (public/). Days from yesterday to a week ahead.
 const TVMAZE = 'https://api.tvmaze.com';
 // the channels people look for first, in the order of a remote control; anything else follows, busiest first
 const ORDER = ['BBC One', 'BBC Two', 'ITV1', 'Channel 4', 'Channel 5', 'Sky Atlantic', 'Sky Max', 'Sky Showcase', 'BBC Three', 'BBC Four',
@@ -94,11 +95,65 @@ async function logos(env, ctx, imdb, names) {
   ctx.waitUntil(work);   // the listings go out now; the logos follow on the next load
   return {};
 }
+// ---------- the Met Office's weather warnings (its public RSS feed for the whole UK; no key). Each warning keeps the
+// Met Office's link straight to it, as their terms ask. Kept 10 minutes at the edge; the last good copy (KV) stands in
+// for up to a day if the feed can't be read, and a feed that's down just means no box on the page. ----------
+const MO = ['https://www.metoffice.gov.uk/public/data/PWSCache/WarningsRSS/Region/UK', 'https://weather.metoffice.gov.uk/public/data/PWSCache/WarningsRSS/Region/UK'];
+const MON = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+const tag = (x, t) => { const m = x.match(new RegExp(`<${t}\\b[^>]*>([\\s\\S]*?)</${t}>`, 'i')); return m ? m[1].replace(/^\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*$/, '$1') : ''; };
+// "1200 Sun 25 Oct" in UK time → a timestamp, in the year that puts it nearest the warning's issue time
+function ukTime(s, near) {
+  const m = s.match(/(\d{2})(\d{2})\s+\w{3}\s+(\d{1,2})\s+(\w{3})/); if (!m || !(m[4].toLowerCase() in MON)) return null;
+  const y0 = new Date(near).getUTCFullYear();
+  const at = (y) => {
+    const t = Date.UTC(y, MON[m[4].toLowerCase()], +m[3], +m[1], +m[2]);
+    const p = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', timeZoneName: 'shortOffset' }).formatToParts(t).find((x) => x.type === 'timeZoneName')?.value || '';
+    return t - (+(p.match(/[+-]\d+/)?.[0] || 0)) * 36e5;   // GMT+1 in summer
+  };
+  return [y0 - 1, y0, y0 + 1].map(at).sort((a, b) => Math.abs(a - near) - Math.abs(b - near))[0];
+}
+export function warnings(xml, now = Date.now()) {
+  const out = [];
+  for (const [, it] of xml.matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi)) {
+    const title = text(tag(it, 'title')), body = text(text(tag(it, 'description'))), link = text(tag(it, 'link'));
+    const head = title.match(/\b(yellow|amber|red)\b[^,:]*?\bwarnings?\s+of\s+(.+?)(?:\s+affecting\s+(.+))?$/i);
+    if (!head) continue;
+    const issued = Date.parse(text(tag(it, 'pubDate'))) || now;
+    const v = body.match(/valid\s+from\s+(.+?)\s+to\s+(.+?)(?:\s*$|\.)/i);
+    const from = v ? ukTime(v[1], issued) : null, to = v ? ukTime(v[2], issued) : null;
+    if (to && to < now) continue;   // over
+    const areas = body.replace(/\s*valid\s+from[\s\S]*$/i, '').replace(/^[^:]*:\s*/, '').trim();
+    out.push({
+      id: text(tag(it, 'guid')) || link || title, level: head[1].toLowerCase(), type: head[2].trim().toLowerCase(), where: head[3]?.trim() || null,
+      title, areas: areas && areas !== title ? areas : null, from, to,
+      link: /^https:\/\/(www|weather)\.metoffice\.gov\.uk\//.test(link) ? link : 'https://weather.metoffice.gov.uk/warnings-and-advice/uk-warnings',
+    });
+  }
+  const rank = { red: 0, amber: 1, yellow: 2 };
+  return out.sort((a, b) => rank[a.level] - rank[b.level] || (a.from || 0) - (b.from || 0));
+}
+async function warned(env, ctx, force) {
+  const cache = caches.default, key = new Request('https://tenner-tv-cache/v1/warnings'), kv = env.TV;
+  if (!force) { const hit = await cache.match(key); if (hit) return hit; }
+  for (const u of MO) {
+    let r = null; try { r = await fetch(u, { headers: { accept: 'application/rss+xml, application/xml, text/xml', 'user-agent': 'TennerTV/1.0 (+https://tv.tenner.stream)' } }); } catch {}
+    if (!r?.ok) continue;
+    const xml = await r.text(); if (!/<rss|<channel/i.test(xml)) continue;
+    const out = { at: Date.now(), source: 'Met Office', warnings: warnings(xml) }, res = json(out, 200, 600);
+    ctx.waitUntil(cache.put(key, res.clone()));
+    if (kv) ctx.waitUntil(kv.put('warnings', JSON.stringify(out), { expirationTtl: 86400 }));
+    return res;
+  }
+  const old = kv ? await kv.get('warnings', 'json') : null;
+  if (old) { old.warnings = (old.warnings || []).filter((w) => !w.to || w.to > Date.now()); return json(old, 200, 120); }
+  return json({ at: Date.now(), source: 'Met Office', warnings: [], error: "The Met Office's warnings didn't load" }, 200, 120);
+}
 const json = (b, status = 200, age = 1800) => new Response(JSON.stringify(b), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': `public, max-age=${age}` } });
 
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
+    if (url.pathname === '/api/warnings') return warned(env, ctx);
     if (url.pathname !== '/api/day') return env.ASSETS.fetch(req);
     const d = url.searchParams.get('d') || ukDay();
     const ok = /^\d{4}-\d{2}-\d{2}$/.test(d) && d >= ukDay(Date.now() - 864e5) && d <= ukDay(Date.now() + 7 * 864e5);
@@ -109,8 +164,9 @@ export default {
     return day(env, ctx, d);
   },
   // every half hour, on its own: today's and tomorrow's listings (and the logos) fetched ahead of anyone asking, so the
-  // page is always quick and the fallback copy is always fresh
+  // page is always quick and the fallback copy is always fresh; the weather warnings too
   async scheduled(event, env, ctx) {
     for (const d of [ukDay(), ukDay(Date.now() + 864e5)]) { try { await day(env, ctx, d, true); } catch {} }
+    try { await warned(env, ctx, true); } catch {}
   },
 };

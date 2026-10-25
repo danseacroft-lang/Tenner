@@ -379,3 +379,50 @@ html:has(.sheet[open]) { overflow: hidden; }
 .fd-go { display: inline-flex; align-items: center; gap: 2px; flex: none; margin-left: auto; color: var(--accent); font: 500 14px/1 var(--font); }
 .fd-go svg { width: 13px; height: 13px; }
 @media (max-width: 420px) { .fd-go { font-size: 0; } .fd-go svg { width: 15px; height: 15px; color: var(--label3); } }
+
+/* ---------- the weather alert: a notification in the top right of the page (beside the headline on wide screens,
+   above it on narrower ones), glass with a hairline, the warning's colour on its icon. It glides in on a spring, then
+   flashes red twice; it closes with its ×. With Reduce Motion it just appears, its red rim steady. ---------- */
+.hero { position: relative; }
+.wx { --lv: #ffd60a; position: relative; z-index: 5; display: grid; grid-template-columns: 34px minmax(0, 1fr) 30px; gap: 12px; width: min(100%, 400px); margin: 0 0 18px auto;
+  padding: 14px 8px 14px 14px; border-radius: 22px; background: var(--gl-fill); -webkit-backdrop-filter: blur(24px) saturate(1.8); backdrop-filter: blur(24px) saturate(1.8);
+  box-shadow: inset 0 0 0 1px var(--gl-rim), 0 18px 40px -18px rgba(0, 0, 0, .45); font-size: 14px; line-height: 1.38; -webkit-font-smoothing: antialiased; overflow: hidden; }
+.wx[hidden] { display: none; }
+.wx[data-level="amber"] { --lv: #ff9f0a; } .wx[data-level="red"] { --lv: #ff453a; }
+.wx::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0;
+  background: radial-gradient(120% 140% at 0% 0%, rgba(255, 59, 48, .55), rgba(255, 59, 48, .28)); box-shadow: inset 0 0 0 1.5px #ff3b30; }
+.wx-in { animation: wxIn .6s var(--ease-spring) both; }
+.wx-in::after { animation: wxFlash 1.25s ease-in-out .5s both; }
+.wx-out { animation: wxOut .26s cubic-bezier(.4, 0, 1, 1) forwards; }
+@keyframes wxIn { from { opacity: 0; transform: translateY(-14px) scale(.94); filter: blur(4px); } }
+@keyframes wxFlash { 0%, 50%, 100% { opacity: 0; } 22%, 72% { opacity: 1; } }
+@keyframes wxOut { to { opacity: 0; transform: translateY(-8px) scale(.96); } }
+.wx-ic { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: color-mix(in srgb, var(--lv) 20%, transparent); }
+.wx-ic svg { width: 22px; height: 22px; color: var(--lv); }
+.wx-copy { min-width: 0; }
+.wx-copy p { margin: 0; }
+.wx-k { color: var(--label2); font: 500 12px/1.2 var(--font); letter-spacing: -.005em; }
+.wx h2 { margin: 3px 0 2px; font: 600 16px/1.25 var(--font); letter-spacing: -.02em; }
+.wx-where { color: color-mix(in srgb, var(--label) 82%, transparent); overflow-wrap: anywhere; }
+.wx-when { margin-top: 2px !important; color: var(--label); font-weight: 500; }
+.wx-tip { margin-top: 8px !important; color: var(--label2); }
+.wx-tip b { font-weight: 600; color: var(--label); }
+.wx-more { margin: 8px 0 0; padding: 8px 0 0; list-style: none; border-top: .5px solid var(--sep); color: var(--label2); font-size: 13px; }
+.wx-more li { display: flex; align-items: baseline; gap: 7px; padding: 1px 0; }
+.wx-more i { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #ffd60a; }
+.wx-more i[data-level="amber"] { background: #ff9f0a; } .wx-more i[data-level="red"] { background: #ff453a; }
+.wx-n { padding-left: 15px !important; }
+.wx-go { display: inline-block; padding: 9px 0 4px; font: 500 14px/1.25 var(--font); }
+.wx-go svg { width: 13px; height: 13px; margin-left: 2px; vertical-align: -1px; }
+.wx-x { display: grid; place-items: center; width: 44px; height: 44px; margin: -10px -8px 0 -14px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--label2); cursor: pointer;
+  -webkit-tap-highlight-color: transparent; }
+.wx-x svg { width: 28px; height: 28px; padding: 7px; border-radius: 50%; background: var(--fill); transition: background-color .2s ease, transform .3s var(--ease-spring); }
+.wx-x:hover svg { background: var(--fill-strong); color: var(--label); }
+.wx-x:active svg { transform: scale(.88); transition-duration: .1s; }
+/* wide screens: in the space beside the headline, the guide moved down below it if it's tall (--wxh, from tv.js) */
+@media (min-width: 1400px) { .wx { position: absolute; top: 44px; right: 0; width: 380px; margin: 0; }
+  .hero:has(> .wx:not([hidden])) { min-height: calc(var(--wxh, 0px) + 60px); } }
+@media (max-width: 760px) { .wx { width: 100%; margin-bottom: 14px; grid-template-columns: 30px minmax(0, 1fr) 30px; gap: 10px; padding-left: 12px; } .wx-ic { width: 30px; height: 30px; border-radius: 9px; } .wx-ic svg { width: 19px; height: 19px; } }
+@media (prefers-reduced-transparency: reduce) { .wx { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--bg2); } }
+@media (prefers-color-scheme: light) { .wx { box-shadow: inset 0 0 0 1px var(--gl-rim), 0 14px 34px -18px rgba(0, 0, 0, .25); } }
+@media (prefers-reduced-motion: reduce) { .wx::after { opacity: 0 !important; } .wx { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, #ff3b30 70%, transparent), 0 18px 40px -18px rgba(0, 0, 0, .45); } }
