@@ -252,7 +252,8 @@ const wide = matchMedia('(min-width: 1000px)');
 wide.addEventListener('change', () => state.trending && state.route !== 'new' && render());
 const heroOn = () => wide.matches && window.tn.prefs.get().hero;   // Settings: "Featured artwork"
 const HERO_N = 8, HERO_MS = 8000;
-let heroList = [], heroAt = 0, heroScope = null;
+let heroList = [], heroAt = 0, heroScope = null, heroSig = '';
+const heroKey = (it) => wlKey(it, it.type) || `${it.type}:${it.title}`;
 const PLUS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
 const TICK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 12.5l4.2 4.2 8.8-9.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function heroCopy({ it, n }) {
@@ -274,10 +275,16 @@ function heroCopy({ it, n }) {
 }
 function hero(picks, s) {   // picks: [{ it, n }] where n is the title's rank in its own chart
   if (!heroOn() || !picks.length) { stopHero(); return ''; }
-  // a redraw (a new hour, a save to the Watchlist) keeps the title that's showing, if it's still in the chart
-  const was = heroScope?.key === s?.key && heroList[heroAt]?.it, list = picks.slice(0, HERO_N);
-  const keep = was ? list.findIndex((p) => p.it.id === was.id && p.it.type === was.type) : -1;
-  heroList = list; heroAt = Math.max(0, keep); heroScope = s;
+  // the whole chart takes turns, led by the ones you haven't seen up here lately (not the same No. 1 every visit);
+  // a redraw (a new hour, a save to the Watchlist) keeps the line-up and the title that's showing, if it's still in the chart
+  const sig = `${s?.key}|${picks.map((p) => heroKey(p.it)).join(',')}`, was = heroScope?.key === s?.key && heroList[heroAt]?.it;
+  const byKey = new Map(picks.map((p) => [heroKey(p.it), p]));
+  let list = sig === heroSig ? heroList.map((p) => byKey.get(heroKey(p.it))).filter(Boolean)
+    : window.tn.featured.pick(picks, (p) => heroKey(p.it), HERO_N, (p) => p.it.backdrop);
+  const now = was && byKey.get(heroKey(was));
+  if (now && !list.includes(now)) list = [now, ...list].slice(0, HERO_N);
+  heroList = list; heroAt = Math.max(0, now ? list.indexOf(now) : 0); heroScope = s; heroSig = sig;
+  window.tn.featured.saw(heroKey(heroList[heroAt].it));
   if (!state.titles) window.tnSheet?.details().then((d) => { if (d && !state.titles) { state.titles = d; redrawHeroCopy(); } });   // genres and age ratings
   const many = heroList.length > 1, arrow = (dir, d) => `<button type="button" class="h-arrow ${dir}" data-hero-step="${dir === 'prev' ? -1 : 1}" aria-label="${dir === 'prev' ? 'Previous' : 'Next'} title"><svg viewBox="0 0 24 40" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
   queueMicrotask(startHero);
@@ -317,7 +324,7 @@ function setBackdrop(it) {
 }
 function showHero(i) {
   if (i === heroAt || !heroList[i]) return;
-  heroAt = i;
+  heroAt = i; window.tn.featured.saw(heroKey(heroList[i].it));
   document.querySelectorAll('[data-hero]').forEach((b) => b.setAttribute('aria-current', String(Number(b.dataset.hero) === i)));
   const copy = $('#heroCopy');
   const swap = () => { copy.innerHTML = heroCopy(heroList[i]); copy.classList.remove('out'); };
@@ -361,9 +368,13 @@ view.addEventListener('keydown', (e) => {   // ← → move between the hero's t
 const phone = matchMedia('(max-width: 560px)');
 phone.addEventListener('change', () => state.trending && render());
 const mBan = $('#mBan');
+let banSig = '', banKeys = [];
 function banners(picks, s) {
   if (!phone.matches || !picks.length) { mBan.hidden = true; mBan.innerHTML = ''; return; }
-  const list = picks.slice(0, 6), wide = (u) => u && u.replace('/w1280/', '/w780/');
+  // six of the chart, led by the ones you haven't seen up top lately; the same line-up while the chart's the same
+  const sig = `${s?.key}|${picks.map((p) => heroKey(p.it)).join(',')}`;
+  if (sig !== banSig) { banSig = sig; banKeys = window.tn.featured.pick(picks, (p) => heroKey(p.it), 6, (p) => p.it.backdrop).map((p) => heroKey(p.it)); window.tn.featured.saw(banKeys[0]); }
+  const byKey = new Map(picks.map((p) => [heroKey(p.it), p])), list = banKeys.map((k) => byKey.get(k)), wide = (u) => u && u.replace('/w1280/', '/w780/');
   mountBanners(list.map(({ it, n }, i) => {
     const kind = it.type === 'tv' ? 'show' : 'film', badge = s?.store ? `No. ${n} to buy or rent` : s ? `No. ${n} on ${s.label}` : `No. ${n} ${kind} in the UK`;
     const art = it.backdrop ? `<img src="${esc(wide(it.backdrop))}" alt="" ${i ? 'loading="lazy"' : 'fetchpriority="high"'} decoding="async">`
