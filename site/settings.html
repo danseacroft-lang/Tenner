@@ -36,9 +36,9 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.48.0">
-  <link rel="stylesheet" href="legal.css?v=1.48.0">
-  <link rel="stylesheet" href="settings.css?v=1.48.0">
+  <link rel="stylesheet" href="styles.css?v=1.49.0">
+  <link rel="stylesheet" href="legal.css?v=1.49.0">
+  <link rel="stylesheet" href="settings.css?v=1.49.0">
 </head>
 <body class="legal">
   <a class="skip" href="#main">Skip to the page</a>
@@ -88,7 +88,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.48.0</span>
+      <span class="side-ver">Tenner 1.49.0</span>
     </div>
   </div>
 
@@ -140,16 +140,18 @@
 
       <h2 class="section-label">Alerts</h2>
       <div class="set-group">
-        <label class="set-row"><span class="set-l">Watchlist alerts<small id="alNow">A notification when something you’ve saved arrives, or gets a new season</small></span>
+        <label class="set-row"><span class="set-l">Watchlist alerts<small id="alNow">A notification when something you’ve saved arrives, has a new episode or is about to leave</small></span>
           <input type="checkbox" switch role="switch" id="setAlerts"><i class="sw" aria-hidden="true"></i></label>
+        <label class="set-row"><span class="set-l">Sunday email<small id="dgNow">A short round-up each Sunday morning: new episodes, arrivals and what’s leaving from your Watchlist</small></span>
+          <input type="checkbox" switch role="switch" name="digest" id="setDigest"><i class="sw" aria-hidden="true"></i></label>
       </div>
 
       <h2 class="section-label">Your data</h2>
       <div class="set-group">
         <button type="button" class="set-row set-link" id="setMove"><span class="set-l">Move to another device<small>A code to scan or a link to open on your other phone or computer</small></span><span class="set-chev" aria-hidden="true"></span></button>
         <button type="button" class="set-row set-link" id="setExport"><span class="set-l">Export Watchlist and progress<small>A file to move them to another device</small></span><span class="set-chev" aria-hidden="true"></span></button>
-        <label class="set-row set-link"><span class="set-l">Import from a file<small>Adds to what's already here</small></span><span class="set-chev" aria-hidden="true"></span>
-          <input type="file" id="setImport" accept="application/json,.json" class="set-file"></label>
+        <label class="set-row set-link"><span class="set-l">Import from a file<small>A Tenner export, or your Letterboxd, IMDb, Trakt or Netflix history. Adds to what's already here</small></span><span class="set-chev" aria-hidden="true"></span>
+          <input type="file" id="setImport" accept="application/json,.json,text/csv,.csv" class="set-file"></label>
         <button type="button" class="set-row set-link set-danger" id="setClear"><span class="set-l">Clear everything<small>Watchlist, progress, My services and these settings</small></span></button>
       </div>
       <p class="set-note" id="setNote" role="status" aria-live="polite"></p>
@@ -170,7 +172,7 @@
   </main>
 
 
-  <script src="shell.js?v=1.48.0" defer></script>
-  <script src="settings.js?v=1.48.0" defer></script>
+  <script src="shell.js?v=1.49.0" defer></script>
+  <script src="settings.js?v=1.49.0" defer></script>
 </body>
 </html>

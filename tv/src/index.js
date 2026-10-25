@@ -154,6 +154,11 @@ export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
     if (url.pathname === '/api/warnings') return warned(env, ctx);
+    if (url.pathname === '/data/onair.json') {   // On TV this week: read by tenner.stream's title sheets
+      const a = await env.ASSETS.fetch(req), r = new Response(a.body, a);
+      r.headers.set('access-control-allow-origin', '*'); r.headers.set('cache-control', 'public, max-age=900');
+      return r;
+    }
     if (url.pathname !== '/api/day') return env.ASSETS.fetch(req);
     const d = url.searchParams.get('d') || ukDay();
     const ok = /^\d{4}-\d{2}-\d{2}$/.test(d) && d >= ukDay(Date.now() - 864e5) && d <= ukDay(Date.now() + 7 * 864e5);

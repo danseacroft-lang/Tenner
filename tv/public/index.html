@@ -17,7 +17,7 @@
   <meta property="og:description" content="Every UK channel, now and next, and the whole evening.">
   <meta property="og:image" content="https://tenner.stream/og.jpg">
   <link rel="preconnect" href="https://images.metadata.sky.com">
-  <link rel="stylesheet" href="tv.css?v=2.8.0">
+  <link rel="stylesheet" href="tv.css?v=2.9.0">
   <!-- the listings start downloading now, alongside the page's own files (not after them) -->
   <script>(() => { const t = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(Date.now()), q = new URLSearchParams(location.search).get('d'), d = /^\d{4}-\d\d-\d\d$/.test(q || '') && q >= t ? q : t;
     const day = fetch('/api/day?d=' + d), meta = fetch('/data/meta.json').then((r) => (r.ok ? r.json() : null)).catch(() => null); day.catch(() => {});
@@ -43,7 +43,7 @@
     </nav>
     <div class="side-links">
       <a href="https://tenner.stream/legal.html#terms">Terms of Service</a><a href="https://tenner.stream/legal.html#privacy">Privacy Policy</a><a href="https://tenner.stream/legal.html#cookies">Cookies</a><a href="https://tenner.stream/contact.html">Contact</a>
-      <span class="side-ver">Tenner TV 2.8.0</span>
+      <span class="side-ver">Tenner TV 2.9.0</span>
     </div>
   </aside>
   <header class="bar">
@@ -109,6 +109,6 @@
     <div class="sh-in" id="shIn"></div>
   </dialog>
 
-  <script src="tv.js?v=2.8.0" defer></script>
+  <script src="tv.js?v=2.9.0" defer></script>
 </body>
 </html>

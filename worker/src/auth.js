@@ -436,10 +436,11 @@ const normEmail = (e) => { const x = String(e || '').trim().toLowerCase().slice(
 const validKey = (k) => /^[\w-]{43}$/.test(k);   // 32 bytes, base64url
 const pwHash = async (salt, key) => b64u(await sha(`${salt}|${key}`));
 // email through Resend (RESEND_API_KEY, a Worker secret), from Tenner's own address
-async function sendMail(env, to, subject, { html, text }) {
+export async function sendMail(env, to, subject, { html, text, headers }) {
   const r = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
-    body: JSON.stringify({ from: 'Tenner <account@tenner.stream>', to: [to], subject, html, text }) });
+    body: JSON.stringify({ from: 'Tenner <account@tenner.stream>', to: [to], subject, html, text, ...(headers ? { headers } : {}) }) });
   if (!r.ok) console.log('Resend', r.status, (await r.text()).slice(0, 200));
+  return r.ok;
 }
 const isVerified = async (env, email) => !!(await env.DB.prepare('SELECT 1 FROM verified WHERE email = ?').bind(email).first());
 // the welcome email with its "Confirm your email" link (a day to use it; at most one a minute and five a day)

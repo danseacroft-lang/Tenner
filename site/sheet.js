@@ -11,7 +11,10 @@
   // what it costs to rent or buy (data/prices.json, the buy-or-rent chart's titles), loaded with the first sheet too
   let priceP = null, priceD = null;
   const prices = () => (priceP ||= fetch(`data/prices.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
-  addEventListener('tn:check', () => { trailP = null; priceP = null; });
+  // On TV this week: Freeview showings from Tenner TV's listings (rebuilt every three hours), loaded with the first sheet
+  let airP = null, airD = null;
+  const onAir = () => (airP ||= fetch('https://tenner-tv.danseacroft.workers.dev/data/onair.json').then((r) => (r.ok ? r.json() : null)).catch(() => null));
+  addEventListener('tn:check', () => { trailP = null; priceP = null; airP = null; });
   let trailD = null;
   const CHART = { all: 'in the UK', netflix: 'on Netflix', disney: 'on Disney+', prime: 'on Prime Video', hbomax: 'on HBO Max', paramount: 'on Paramount+' };
 
@@ -92,7 +95,7 @@
   };
   let shown = null;   // the details the open sheet was drawn from
   // the first touch, click or key anywhere starts fetching the details, so the first sheet opens already filled in
-  for (const t of ['pointerdown', 'keydown']) addEventListener(t, () => { details(); trail(); prices(); }, { once: true, passive: true });
+  for (const t of ['pointerdown', 'keydown']) addEventListener(t, () => { details(); trail(); prices(); onAir(); }, { once: true, passive: true });
 
   // ---------- the sheet, built once ----------
   document.body.insertAdjacentHTML('beforeend', `
@@ -121,11 +124,27 @@
     const x = d?.items?.[info.k];
     if (!x) {   // no details (yet): what we know from the chart or catalogue
       const on = (info.services || []).map((s) => `<a class="sh-prov" href="${esc(linkFor(s.label, info.title, {}, info))}" target="_blank" rel="noopener">${s.logo ? `<img src="${esc(s.logo)}" alt="">` : `<i>${esc(s.label[0])}</i>`}<span>${esc(s.label)}</span></a>`).join('');
-      return on ? `<div class="sh-grp"><h4>Included with</h4><div class="sh-provs">${on}</div></div>` : `<p class="sh-none">${d && !d.pending ? 'We don’t have where-to-watch details for this one yet.' : 'Loading where to watch…'}</p>`;
+      return on ? `<div class="sh-grp"><h4>Included with</h4><div class="sh-provs">${on}</div></div>${tvHtml(info)}` : tvHtml(info) || `<p class="sh-none">${d && !d.pending ? 'We don’t have where-to-watch details for this one yet.' : 'Loading where to watch…'}</p>`;
     }
     const groups = [['Included with', x.f], ['Free', x.fr], ['Rent', x.re], ['Buy', x.bu]]
       .map(([label, ids]) => { const list = providerList(ids, d, info); return list ? `<div class="sh-grp"><h4>${label}</h4><div class="sh-provs">${list}</div></div>` : ''; }).join('');
-    return (groups + priceHtml(info)) || '<p class="sh-none">Not available to stream, rent or buy in the UK right now.</p>';
+    return (groups + priceHtml(info) + tvHtml(info)) || '<p class="sh-none">Not available to stream, rent or buy in the UK right now.</p>';
+  }
+  // its next two Freeview showings this week, each opening Tenner TV's search for it (where Watch live is a tap away)
+  const fold = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim().replace(/^the /, '');
+  const ukDate = (t) => new Date(t).toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
+  const tvTime = (t) => {
+    const d = ukDate(t), rel = d === ukDate(Date.now()) ? 'Today' : d === ukDate(Date.now() + 864e5) ? 'Tomorrow'
+      : new Date(t).toLocaleDateString('en-GB', { timeZone: 'Europe/London', weekday: 'long' });
+    const [h, m] = new Date(t).toLocaleTimeString('en-GB', { timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).split(':').map(Number);
+    return `${rel} at ${h % 12 || 12}${m ? `:${String(m).padStart(2, '0')}` : ''}${h < 12 ? 'am' : 'pm'}`;
+  };
+  function tvHtml(info) {
+    const film = info.type === 'movie' ? 1 : 0, now = Date.now();
+    const list = (airD?.titles?.[fold(info.title)] || []).filter((x) => x[2] === film && x[1] + (x[3] || 30) * 6e4 > now).slice(0, 2);
+    if (!list.length) return '';
+    const href = `https://tv.tenner.stream/?q=${encodeURIComponent(info.title)}`;
+    return `<div class="sh-grp sh-prices"><h4>On TV this week</h4>${list.map((x) => `<a class="sh-pr" href="${esc(href)}" target="_blank" rel="noopener">${x[1] <= now ? '<b>On now</b>' : `<b>${esc(tvTime(x[1]))}</b>`} on ${esc(x[0])}</a>`).join('')}</div>`;
   }
   // the cheapest way to rent it and to buy it, where we have prices
   const money = (n) => `£${n.toFixed(2)}`;
@@ -219,7 +238,7 @@
       history.pushState({ sheet: info.k }, '', u); pushed = true;
     }
     document.title = `${info.title} | Tenner`;
-    let [d] = await Promise.all([details(), trail().then((t) => { trailD = t; }), prices().then((p) => { priceD = p; })]);
+    let [d] = await Promise.all([details(), trail().then((t) => { trailD = t; }), prices().then((p) => { priceD = p; }), onAir().then((a) => { airD = a; })]);
     if (current !== info) return;
     if (!d?.items?.[info.k] && window.tn.api) {
       render(info, { ...(d || {}), items: {}, pending: true });   // "Loading…" stays until the live details arrive
