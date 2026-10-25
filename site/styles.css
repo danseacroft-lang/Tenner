@@ -875,6 +875,9 @@ main { padding-bottom: 40px; }   /* breathing room at the end of every page */
    chosen one on a grey pill, icons in the accent colour), then a "More" section (About, Theme and Settings, the same
    rows), and the small print and the version at the very foot. The page sits to the right of it. */
 .side-links, .side-about, .side-h { display: none; }
+/* TV Guide's small New badge: Apple's tinted style, so it reads in light and dark without shouting */
+.side-new { margin-left: auto; padding: 4px 8px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent);
+  font: 500 11px/1 var(--font); letter-spacing: .02em; text-transform: uppercase; -webkit-font-smoothing: antialiased; }
 @media (min-width: 1000px) {
   :root { --side: 236px; --side-bg: rgba(242, 242, 247, .82); }
   :root[data-theme="dark"] { --side-bg: rgba(28, 28, 30, .82); }
@@ -914,6 +917,7 @@ main { padding-bottom: 40px; }   /* breathing room at the end of every page */
     color: var(--label); font: 500 15px/1 var(--font); letter-spacing: -.016em; text-decoration: none; transition: background-color .2s ease; }
   .side-h + .side-about { margin-top: -12px; }
   .side-about.side-settings { margin-top: -20px; }
+  .side-tv + .side-about { margin-top: -20px; }
   .side-about svg, .tb-btn svg { width: 20px; height: 20px; flex: none; color: var(--accent); }
   .side-about:hover, .tb-btn:hover { text-decoration: none; background: var(--fill); }
   .side-about:active, .tb-btn:active { background: var(--fill-strong); transform: none; filter: none; }

@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.53.2';
+  const version = '1.54.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -295,7 +295,7 @@
   }
 
   // ---------- phones: the Rakuten way. A round menu button opens a drawer that slides in from the left, laid out like
-  // the sidebar on computers (the pages, then More: About, Theme and Settings, then the small print); the bar keeps
+  // the sidebar on computers (the pages, then More: TV Guide, About, Theme and Settings, then the small print); the bar keeps
   // the logo in the middle and a round Share (or Search) on the right. The drawer is a native modal <dialog>. ----------
   const drawerQ = matchMedia('(max-width: 719px)');
   const topRow = $('.top-row');
@@ -315,7 +315,7 @@
       <div class="dr-body" id="drBody"></div></dialog>`);
     const drawer = $('#drawer'), drBody = $('#drBody'), menuBtn = $('#menuBtn');
     // the sidebar's own pieces move into the drawer on phones (and back again on bigger screens), listeners and all
-    const movers = ['.tabbar', '.side-h', '.side-about:not(.side-settings)', '.top-act', '.side-about.side-settings', '.side-links'].map((q) => $(q)).filter(Boolean);
+    const movers = ['.tabbar', '.side-h', '.side-tv', '.side-about:not(.side-settings):not(.side-tv)', '.top-act', '.side-about.side-settings', '.side-links'].map((q) => $(q)).filter(Boolean);
     const marks = movers.map((el) => { const m = document.createComment('drawer'); el.before(m); return m; });
     const place = () => {
       if (drawerQ.matches) { movers.forEach((el) => drBody.append(el)); topRow.append(right); }
