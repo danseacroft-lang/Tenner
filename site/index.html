@@ -44,7 +44,7 @@
   /* the big "Tenner" that zooms in: once a visit, for everyone but those who ask for reduced motion; it removes itself when it's done */
   try{if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&!sessionStorage.getItem("tenner-intro")){sessionStorage.setItem("tenner-intro","1");document.documentElement.classList.add("intro")}}catch(e){}
   addEventListener("animationend",function(e){if(e.target.id==="introMark")e.target.remove()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.56.1">
+  <link rel="stylesheet" href="styles.css?v=1.56.2">
 </head>
 <body>
   <a class="skip" href="#main">Skip to the chart</a>
@@ -116,7 +116,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.56.1</span>
+      <span class="side-ver">Tenner 1.56.2</span>
     </div>
   </div>
 
@@ -158,9 +158,9 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-  <script src="shell.js?v=1.56.1" defer></script>
-  <script src="links.js?v=1.56.1" defer></script>
-  <script src="sheet.js?v=1.56.1" defer></script>
-  <script src="app.js?v=1.56.1" defer></script>
+  <script src="shell.js?v=1.56.2" defer></script>
+  <script src="links.js?v=1.56.2" defer></script>
+  <script src="sheet.js?v=1.56.2" defer></script>
+  <script src="app.js?v=1.56.2" defer></script>
 </body>
 </html>
