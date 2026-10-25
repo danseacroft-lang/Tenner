@@ -90,3 +90,4 @@ body.discover { overflow-x: clip; }
 
 /* on a computer: a little room at the top */
 @media (min-width: 720px) { .dwrap { padding-top: 16px; } }
+@media (min-width: 1000px) { .dwrap { padding-top: 22px; } }   /* the title on the same line as every other page's */
