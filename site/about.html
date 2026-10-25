@@ -112,15 +112,12 @@
       <p class="sp-eye">About Tenner</p>
       <div class="sp-hd">
         <h1 id="h-about" data-title="About">Your top ten, <em class="grad">every hour.</em></h1>
-        <!-- a note pencilled beside the headline: handwriting (Caveat) and a drawn arrow, each stroke traced twice, given
-             graphite's grain and wobble by the pencil filter below -->
-        <p class="sp-note"><svg class="sp-arw sp-arw-side" viewBox="0 0 120 70" aria-hidden="true"><path d="M114 12c-22-9-58-7-80 12-9 8-15 17-20 28" pathLength="1"/><path class="re" d="M111 15c-20-6-54-6-75 12-8 8-14 16-19 26" pathLength="1"/><path class="hd" d="M8 60c3-6 4-13 4-19M8 60c6-3 13-5 20-6" pathLength="1"/><path class="hd re" d="M9 58c2-5 3-11 4-17M9 59c5-2 11-4 18-5" pathLength="1"/></svg><svg class="sp-arw sp-arw-up" viewBox="0 0 70 84" aria-hidden="true"><path d="M58 80c4-22-4-46-42-68" pathLength="1"/><path class="re" d="M55 78c3-20-5-43-39-63" pathLength="1"/><path class="hd" d="M12 9c7 0 14 1 20 3M12 9c2 6 5 13 8 18" pathLength="1"/><path class="hd re" d="M13 11c6 0 12 1 18 3M13 10c2 6 4 12 7 16" pathLength="1"/></svg><span class="sp-words"><span style="--t:0;--n:3">Oh,</span> <span style="--t:0.205;--n:3">and</span> <span style="--t:0.41;--n:4">btw…</span> <span style="--t:0.66;--n:6">Tenner</span> <span style="--t:1;--n:2">is</span> <span class="ul" style="--t:1.16;--n:13">independently</span> <span style="--t:1.815;--n:4">run.</span> <span style="--t:2.065;--n:2">No</span> <span style="--t:2.225;--n:4">huge</span> <span style="--t:2.475;--n:11">corporation</span> <span style="--t:3.04;--n:6">behind</span> <span style="--t:3.38;--n:3">it!</span></span></p>
-        <svg class="sp-defs" width="0" height="0" aria-hidden="true"><filter id="pencil" x="-5%" y="-5%" width="110%" height="110%">
-          <feTurbulence type="fractalNoise" baseFrequency=".045" numOctaves="2" seed="4" result="wobble"/>
-          <feDisplacementMap in="SourceGraphic" in2="wobble" scale="2.4" xChannelSelector="R" yChannelSelector="G" result="drawn"/>
-          <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" seed="9" result="tooth"/>
-          <feColorMatrix in="tooth" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.6 0 0 0 -.55" result="grain"/>
-          <feComposite in="drawn" in2="grain" operator="in"/></filter></svg>
+        <!-- a note written beside the headline: handwriting (Caveat) and a drawn arrow, given a hand's slight wobble by the
+             pen filter below -->
+        <p class="sp-note"><svg class="sp-arw sp-arw-side" viewBox="0 0 120 70" aria-hidden="true"><path d="M114 12c-22-9-58-7-80 12-9 8-15 17-20 28" pathLength="1"/><path class="hd" d="M8 60c3-6 4-13 4-19M8 60c6-3 13-5 20-6" pathLength="1"/></svg><svg class="sp-arw sp-arw-up" viewBox="0 0 70 84" aria-hidden="true"><path d="M58 80c4-22-4-46-42-68" pathLength="1"/><path class="hd" d="M12 9c7 0 14 1 20 3M12 9c2 6 5 13 8 18" pathLength="1"/></svg><span class="sp-words"><span style="--t:0;--n:3">Oh,</span> <span style="--t:0.205;--n:3">and</span> <span style="--t:0.41;--n:4">btw…</span> <span style="--t:0.66;--n:6">Tenner</span> <span style="--t:1;--n:2">is</span> <span class="ul" style="--t:1.16;--n:13">independently</span> <span style="--t:1.815;--n:4">run.</span> <span style="--t:2.065;--n:2">No</span> <span style="--t:2.225;--n:4">huge</span> <span style="--t:2.475;--n:11">corporation</span> <span style="--t:3.04;--n:6">behind</span> <span style="--t:3.38;--n:3">it!</span></span></p>
+        <svg class="sp-defs" width="0" height="0" aria-hidden="true"><filter id="pen" x="-5%" y="-5%" width="110%" height="110%">
+          <feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="4" result="wobble"/>
+          <feDisplacementMap in="SourceGraphic" in2="wobble" scale="1.4" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
       </div>
       <p class="sp-lead">What the UK is watching right now on Netflix, Disney+, Prime Video, HBO Max and Paramount+. One page, five services, refreshed every hour.</p>
       <div class="sp-ctas"><a class="sp-cta primary" href="./">See the top 10</a><a class="sp-cta" href="browse.html">Browse everything</a></div>
