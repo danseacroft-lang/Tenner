@@ -1086,18 +1086,19 @@ a.sh-prov:hover { text-decoration: none; }
 .no-ratings .star, .no-ratings .cl-r, .no-ratings .score { display: none !important; }
 
 /* ============================================================ the homepage's opening: a big "Tenner" zooms in from the distance,
-   sharpening as it comes, holds for a beat, then flies on past you as the page shows through. Once a visit, only with
-   animations on (the head script adds .intro), never touchable, and gone in under two seconds.
+   sharpening as it comes, holds for a beat, then flies on past you as the page shows through. Once a visit, for everyone (even with
+   Settings → Animations off, hence the !important over .still) but never with Reduce Motion (the head script adds .intro),
+   never touchable, and gone in under two seconds.
    It's sized to the screen rather than inset: 0, because the body rises in on a transform and "fixed" would mean the whole page. */
 .intro-mark { display: none; }
-:root.intro:not(.still) .intro-mark {
+:root.intro .intro-mark {
   position: fixed; inset: 0 0 auto; height: 100lvh; z-index: 300; display: grid; place-items: center; overflow: hidden; pointer-events: none;
-  background: var(--bg); animation: imOut .6s var(--ease-out) 1.15s forwards; }
-.intro-mark span {
+  background: var(--bg); animation: imOut .6s var(--ease-out) 1.15s forwards !important; }
+:root.intro .intro-mark span {
   font: 800 min(25vw, 40vh)/1 var(--font-display); letter-spacing: -.045em; padding: 0 .04em .08em; white-space: nowrap;
   background: linear-gradient(100deg, #ff375f 0%, #bf5af2 52%, #0a84ff 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
   will-change: transform, filter, opacity;
-  animation: imIn 1.1s cubic-bezier(.16, 1, .3, 1) both, imAway .6s cubic-bezier(.55, 0, .75, .2) 1.15s forwards; }
+  animation: imIn 1.1s cubic-bezier(.16, 1, .3, 1) both, imAway .6s cubic-bezier(.55, 0, .75, .2) 1.15s forwards !important; }
 @keyframes imIn { from { opacity: 0; transform: scale(.35); filter: blur(28px); } 45% { opacity: 1; } to { opacity: 1; transform: scale(1); filter: blur(0); } }
 @keyframes imAway { to { opacity: 0; transform: scale(1.7); filter: blur(14px); } }
 @keyframes imOut { to { opacity: 0; visibility: hidden; } }
