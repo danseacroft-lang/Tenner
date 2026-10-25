@@ -17,6 +17,7 @@
   ],
   "share_target": { "action": "./", "method": "GET", "params": { "title": "title", "text": "text", "url": "url" } },
   "shortcuts": [
+    { "name": "Search", "url": "browse.html#search" },
     { "name": "New This Week", "url": "./#new" },
     { "name": "Browse", "url": "browse.html" },
     { "name": "Watchlist", "url": "./#watchlist" }

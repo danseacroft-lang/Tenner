@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/" xmlns:moz="http://www.mozilla.org/2006/browser/search/">
+  <ShortName>Tenner</ShortName>
+  <Description>Find any film or show, and where to watch it in the UK</Description>
+  <InputEncoding>UTF-8</InputEncoding>
+  <Language>en-GB</Language>
+  <Image width="16" height="16" type="image/x-icon">https://tenner.stream/favicon.ico</Image>
+  <Image width="96" height="96" type="image/png">https://tenner.stream/icon-96.png</Image>
+  <Url type="text/html" method="get" template="https://tenner.stream/browse.html#q={searchTerms}"/>
+  <moz:SearchForm>https://tenner.stream/browse.html#search</moz:SearchForm>
+</OpenSearchDescription>

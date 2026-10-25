@@ -95,6 +95,8 @@ Mac. When in doubt, ask "would this look at home in Apple TV, Apple Music or the
 
 ## Runs by itself (keep it that way)
 - **Hourly** (`update.yml`): charts, Browse, New, cinema and title details rebuilt and deployed; keeps its own schedule alive.
+  It also writes a small page per title (`site/t/<key>/`, not in git) whose tags give shared links that title's artwork and
+  name; the sheet's Share uses it, and it sends people on to `/?t=<key>`.
 - **On every push**: the site (`update.yml`), the search/accounts Worker (`api.yml`) and Tenner TV (`tv.yml`) deploy themselves.
   Tenner TV runs `node tv/test.mjs` first; a failing test stops the deploy, so what's live keeps working.
 - **Tenner TV** (`tv/`, tv.tenner.stream): listings from the open Freeview EPG feed, built every 3 hours by
@@ -103,7 +105,8 @@ Mac. When in doubt, ask "would this look at home in Apple TV, Apple Music or the
   (sized for where they're shown). A service worker (`tv/public/sw.js`) keeps the page on the device: it opens instantly
   and works offline. Bump its `?v=` with every Tenner TV update (sed over `tv/public/index.html tv/public/sw.js`).
 - **Alerts and the Sunday email** (the search/accounts Worker's hourly cron): Watchlist alerts for arrivals each hour; from
-  9am UK time a morning pass for new episodes out today and titles leaving within three days (`push.js`); on Sunday mornings
+  9am UK time a morning pass for new episodes out today, titles leaving within three days, Watchlist titles on Freeview
+  later that day and ones that got cheaper to rent or buy (`push.js`); on Sunday mornings
   the opt-in Sunday email through Resend, with a signed unsubscribe link (`digest.js`).
 - **On TV this week**: `scripts/fetch-tv.mjs` also writes `onair.json` (title → next showings); tenner.stream's title sheet
   reads it from tenner-tv's workers.dev address at `/api/onair` (the Worker adds the cross-site header; a file in `public/` is served without the Worker running), and the line opens Tenner TV's search with `?q=`.

@@ -98,7 +98,7 @@
       else window.tnSheet?.openKey?.(shared);
     };
     openShared(); addEventListener('popstate', openShared);
-    if (!wantSearch && !new URL(location.href).searchParams.has('t')) setTimeout(welcome, 900);
+    if (!wantSearch && !state.q && !new URL(location.href).searchParams.has('t')) setTimeout(welcome, 900);   // not over a search from the address bar
   }).catch((err) => {
     $('#count').textContent = `The catalogue didn't load (${err.message}). It's rebuilt every hour, so try again shortly.`;
   });

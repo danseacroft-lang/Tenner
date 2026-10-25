@@ -100,8 +100,11 @@
     const bits = [saves && `${saves} added to your Watchlist`, starred && `${starred} starred for For You`].filter(Boolean);
     say(bits.length ? `${got.from}: ${bits.join(', ')}${missed ? ` (${missed} not found)` : ''}` : `Nothing new from ${got.from}${missed ? ` (${missed} not found)` : ''}`);
   }
-  document.getElementById('setImport').addEventListener('change', async (e) => {
-    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  document.getElementById('setImport').addEventListener('change', (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) importFile(f); });
+  // or drop the file anywhere on this page
+  addEventListener('dragover', (e) => { if ([...(e.dataTransfer?.types || [])].includes('Files')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; } });
+  addEventListener('drop', (e) => { const f = e.dataTransfer?.files?.[0]; if (!f) return; e.preventDefault(); importFile(f); });
+  async function importFile(f) {
     let text = ''; try { text = await f.text(); } catch { say("That file didn't open"); return; }
     let d = null; try { d = JSON.parse(text); } catch {}
     if (d?.tenner === 1) {
@@ -116,7 +119,7 @@
     if (!got) { say('That file isn’t one Tenner can read. Try a Tenner, Letterboxd, IMDb, Trakt or Netflix export'); return; }
     if (!got.list.length) { say(`Nothing to bring in from that ${got.from} file`); return; }
     importOther(got);
-  });
+  }
   // ---------- Watchlist alerts (shell.js tn.alerts, sent by the Worker) ----------
   const al = document.getElementById('setAlerts'), alNow = document.getElementById('alNow');
   const AL_TEXT = {
