@@ -34,7 +34,7 @@ After that it rebuilds every hour on its own.
 
 | Tab | What |
 | --- | --- |
-| Top 10 (`./`) | Highlights, the neon top 10 row, the ten at a glance, and new this week. Pick Shows or Films, and a service (`#netflix`, `#disney`, `#prime`, `#hbomax`, `#paramount`; Films also has `#store` for buy or rent) |
+| Top 10 (`./`) | Highlights, the neon top 10 row, the ten at a glance, and new this week. Pick Shows or Films, and a service (`#netflix`, `#disney`, `#prime`, `#hbomax`, `#paramount`, `#appletv`; Films also has `#store` for buy or rent) |
 | New (`#new`) | Releases from the last and next seven days |
 | Browse (`browse.html`) | Search, collections and filters over each service's most popular titles |
 | About (`about.html`) | About Tenner and FAQs |

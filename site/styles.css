@@ -31,6 +31,8 @@
   --frost-line: inset 0 0 0 .5px var(--frost-edge), inset 0 1px 0 var(--frost-hi);
   /* glass buttons: a see-through fill with a thin light rim (by day: milky white with a soft grey rim) */
   --gl-fill: rgba(255, 255, 255, .62); --gl-hover: rgba(255, 255, 255, .85); --gl-rim: rgba(60, 60, 67, .16);
+  /* frosted glass on a solid surface (the title sheet): a milky sheen, lighter at the top, and a bright top edge */
+  --gl-sheen: linear-gradient(180deg, rgba(255, 255, 255, .95), rgba(255, 255, 255, .6)); --gl-shine: rgba(255, 255, 255, 1); --gl-drop: 0 2px 10px rgba(0, 0, 0, .08);
   --frost-blur: blur(14px) saturate(180%);
   /* sheets (the title sheet, My services, the Theme card, Browse's filters on phones): one frosted glass */
   --sheet-bg: color-mix(in srgb, var(--bg) 62%, transparent); --sheet-blur: blur(28px) saturate(180%);
@@ -51,6 +53,7 @@
     --pill: rgba(118, 118, 128, .28);
     --frost: rgba(40, 40, 46, .42); --frost-on: rgba(255, 255, 255, .16); --frost-edge: rgba(255, 255, 255, .16); --frost-hi: rgba(255, 255, 255, .08);
     --gl-fill: rgba(255, 255, 255, .13); --gl-hover: rgba(255, 255, 255, .2); --gl-rim: rgba(255, 255, 255, .2);
+    --gl-sheen: linear-gradient(180deg, rgba(255, 255, 255, .2), rgba(255, 255, 255, .07)); --gl-shine: rgba(255, 255, 255, .3); --gl-drop: 0 6px 18px rgba(0, 0, 0, .3);
     color-scheme: dark;
   }
 }
@@ -67,6 +70,7 @@
   --pill: rgba(118, 118, 128, .28);
   --frost: rgba(40, 40, 46, .42); --frost-on: rgba(255, 255, 255, .16); --frost-edge: rgba(255, 255, 255, .16); --frost-hi: rgba(255, 255, 255, .08);
   --gl-fill: rgba(255, 255, 255, .13); --gl-hover: rgba(255, 255, 255, .2); --gl-rim: rgba(255, 255, 255, .2);
+    --gl-sheen: linear-gradient(180deg, rgba(255, 255, 255, .2), rgba(255, 255, 255, .07)); --gl-shine: rgba(255, 255, 255, .3); --gl-drop: 0 6px 18px rgba(0, 0, 0, .3);
   color-scheme: dark;
 }
 
@@ -1352,8 +1356,15 @@ a.sh-prov:hover { text-decoration: none; }
   .btn-tinted:hover, .dd:hover, .share-chart:hover, .pv-ok:hover, .h-cta:hover, .sh-main .btn:hover, .h-add:hover, .tb-round:hover, .cal-add:hover { background: var(--gl-hover) !important; }
 }
 .cal-add, .h-add[aria-pressed="true"], .sh-more .btn[aria-pressed="true"] { color: var(--accent) !important; }
+/* the title sheet's buttons sit on the sheet's own surface, with little behind them to blur, so their frost is drawn:
+   a milky sheen over the glass, a bright edge along the top and a soft shadow, the way Apple TV's own buttons look */
+.sh-btns .btn {
+  background: var(--gl-sheen), var(--gl-fill) !important;
+  box-shadow: inset 0 0 0 1px var(--gl-rim), inset 0 1px 0 var(--gl-shine), var(--gl-drop) !important;
+}
+@media (hover: hover) { .sh-btns .btn:hover { background: var(--gl-sheen), var(--gl-hover) !important; } }
 @media (prefers-reduced-transparency: reduce) {
-  .btn-tinted, .dd, .h-badge, .mb-badge, .share-chart, .pv-ok, .h-cta, .sh-main .btn, .h-add, .tb-round, .cal-add { background: var(--bg2) !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .btn-tinted, .dd, .h-badge, .mb-badge, .share-chart, .pv-ok, .h-cta, .sh-main .btn, .h-add, .tb-round, .cal-add, .sh-btns .btn { background: var(--bg2) !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
 /* ============================================================ accounts: your picture and name at the foot of the sidebar
