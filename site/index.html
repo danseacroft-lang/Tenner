@@ -44,7 +44,7 @@
   /* the big "Tenner" that zooms in: once a visit, for everyone but those who ask for reduced motion; it removes itself when it's done */
   try{if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&!sessionStorage.getItem("tenner-intro")){sessionStorage.setItem("tenner-intro","1");document.documentElement.classList.add("intro")}}catch(e){}
   addEventListener("animationend",function(e){if(e.target.id==="introMark")e.target.remove()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.53.2">
+  <link rel="stylesheet" href="styles.css?v=1.54.0">
 </head>
 <body>
   <a class="skip" href="#main">Skip to the chart</a>
@@ -103,6 +103,7 @@
         <span>Watchlist</span></button>
     </div></nav>
     <h2 class="side-h" id="sideMore">More</h2>
+    <a class="side-about side-tv" href="https://tv.tenner.stream/"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.8" y="5.5" width="18.4" height="12.5" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M8.5 21h7M9 2.8l3 2.7 3-2.7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg><span>TV Guide</span><span class="side-new">New</span></a>
     <a class="side-about" href="about.html"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M12 11v5.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.1" fill="currentColor"/></svg><span>About</span></a>
     <div class="top-act">
       <a class="tb-btn tb-about tb-settings" href="settings.html" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-2.6-1.5L14.2 2.6h-4l-.4 2.5A7.6 7.6 0 0 0 7.2 6.6l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.6 7.6 0 0 0 2.6-1.5l2.3 1 2-3.4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></a>
@@ -115,7 +116,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.53.2</span>
+      <span class="side-ver">Tenner 1.54.0</span>
     </div>
   </div>
 
@@ -157,9 +158,9 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-  <script src="shell.js?v=1.53.2" defer></script>
-  <script src="links.js?v=1.53.2" defer></script>
-  <script src="sheet.js?v=1.53.2" defer></script>
-  <script src="app.js?v=1.53.2" defer></script>
+  <script src="shell.js?v=1.54.0" defer></script>
+  <script src="links.js?v=1.54.0" defer></script>
+  <script src="sheet.js?v=1.54.0" defer></script>
+  <script src="app.js?v=1.54.0" defer></script>
 </body>
 </html>
