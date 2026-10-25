@@ -79,7 +79,7 @@
     ctl?.abort(); ctl = new AbortController(); state.day = null; state.loading = null; state.failedAt = 0;
     try {
       const d = await fetchDay(state.base, ctl.signal);
-      state.data = d; state.loaded = new Map([[state.base, d]]); shown.clear(); kept.clear();
+      state.data = d; state.loaded = new Map([[state.base, d]]); shown.clear();
       setDay(state.base); drawCats(); drawGuide();
       loadNext();   // the next day ready before anyone scrolls to it
     } catch (err) {
@@ -157,7 +157,7 @@
     if (!live.some(([k]) => k === cat)) cat = 'all';
     $('#cats').innerHTML = live.length > 2 ? live.map(([k, l]) => `<button type="button" role="radio" data-cat="${k}" aria-checked="${k === cat}" tabindex="${k === cat ? 0 : -1}">${esc(l)}</button>`).join('') : '';
   }
-  $('#cats').addEventListener('click', (e) => { const b = e.target.closest('[data-cat]'); if (!b || b.dataset.cat === cat) return; cat = b.dataset.cat; drawCats(); drawGuide(true, true); $(`[data-cat="${cat}"]`)?.focus({ preventScroll: true }); });
+  $('#cats').addEventListener('click', (e) => { const b = e.target.closest('[data-cat]'); if (!b || b.dataset.cat === cat) return; cat = b.dataset.cat; drawCats(); arrange(true); $(`[data-cat="${cat}"]`)?.focus({ preventScroll: true }); });
   $('#cats').addEventListener('keydown', (e) => {   // a radio group: the arrows move between categories
     if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return; e.preventDefault();
     const l = [...$('#cats').children], i = l.findIndex((b) => b.dataset.cat === cat), n = l[(i + (e.key === 'ArrowRight' ? 1 : -1) + l.length) % l.length]; n?.click();
@@ -167,42 +167,65 @@
     const b = e.target.closest('.ch[data-ch]'); if (!b) return;
     const n = b.dataset.ch, l = favs.all(), on = !l.includes(n);
     favs.set(on ? [...l, n] : l.filter((x) => x !== n));
-    const redraw = () => { drawCats(); drawGuide(true); };
-    if (!reduce && document.startViewTransition) document.startViewTransition(redraw); else redraw();
+    // the rows on screen glide from where they were to where they are now (only those: it's instant, whatever the size)
+    const before = new Map(), vh = innerHeight;
+    if (!reduce) for (const r of $('#epg').querySelectorAll('.crow')) { const t = r.getBoundingClientRect().top; if (t > -200 && t < vh + 200) before.set(r.firstElementChild.dataset.ch, t); }
+    drawCats(); arrange();
+    if (before.size) for (const r of $('#epg').querySelectorAll('.crow')) {
+      if (r.hidden) continue;
+      const n = r.firstElementChild.dataset.ch, t = r.getBoundingClientRect().top; if (t < -200 || t > vh + 200) continue;
+      const was = before.get(n), dy = was == null ? null : was - t;
+      if (dy) r.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], { duration: 520, easing: 'cubic-bezier(.3,1.25,.4,1)' });
+      else if (dy == null) r.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 });
+    }
     $(`.ch[data-ch="${CSS.escape(n)}"]`)?.focus({ preventScroll: true });
   });
 
   // ---------- the guide ----------
   const px = () => parseFloat(getComputedStyle($('#epg')).getPropertyValue('--px')) || 5;   // a minute's width
-  const kept = new Map();   // where each channel was scrolled to, kept when the guide is redrawn (a category, a pin)
-  function drawGuide(keep, rise) {
+  // every channel is drawn once, when a day's listings arrive; a category or a pin only shows, hides and reorders the
+  // rows (CSS order: nothing is rebuilt or moved, so each row keeps its place in the week, and it's instant)
+  function drawGuide() {
     if (!state.data) return;
-    const mine = favs.all(), re = CATS.find(([k]) => k === cat)?.[2];
-    const chans = state.data.channels.filter((c) => c.items.length && (cat === 'mine' ? mine.includes(c.name) : re.test(c.name)))
-      .sort((a, b) => (mine.includes(b.name) ? 1 : 0) - (mine.includes(a.name) ? 1 : 0));   // pinned first, otherwise as they come
-    if (!chans.length) {
-      $('#epg').innerHTML = cat !== 'all' ? '<div class="empty"><h3>None of these channels today</h3><p>Try another category, or All channels.</p></div>'
-        : '<div class="empty"><h3>Nothing listed yet</h3><p>Listings for this day haven’t been published. Try a nearer day.</p></div>';
-      preview(null); return;
-    }
+    const chans = state.data.channels.filter((c) => c.items.length);
+    if (!chans.length) { $('#epg').innerHTML = '<div class="empty"><h3>Nothing listed yet</h3><p>Listings for this day haven’t been published. Try a nearer day.</p></div>'; preview(null); return; }
     const now = Date.now(), m = px(), loaded = [...state.loaded];
-    $('#epg').innerHTML = `<div class="rows">${chans.map((c) => `<div class="crow" style="view-transition-name:r${state.data.channels.indexOf(c)}">
-      <button type="button" class="ch" data-ch="${esc(c.name)}" aria-pressed="${mine.includes(c.name)}"
-        aria-label="${esc(`${c.name}: ${mine.includes(c.name) ? 'pinned to the top. Press to unpin' : 'press to pin to the top'}. Arrow right for its programmes`)}">${badge(c.name)}<span class="ch-name">${esc(c.name)}</span>${star(mine.includes(c.name))}</button>
+    $('#epg').innerHTML = `<div class="empty" hidden><h3>None of these channels today</h3><p>Try another category, or All channels.</p></div><div class="rows">${chans.map((c) => `<div class="crow">
+      <button type="button" class="ch" data-ch="${esc(c.name)}">${badge(c.name)}<span class="ch-name">${esc(c.name)}</span><span class="ch-star"></span></button>
       <div class="strip" data-strip="${esc(c.name)}" role="group" aria-label="${esc(`${c.name}, through the week`)}">${loaded.map(([d, day], i) => dayBlocks(c.name, d, day, i > 0, now, m)).join('')}</div></div>`).join('')}</div>`;
     near.clear(); io.disconnect();
-    const vh = innerHeight;
-    $('#epg').querySelectorAll('.crow').forEach((row, i) => {
+    arrange(true, true);
+    for (const row of $('#epg').querySelectorAll('.crow')) io.observe(row);
+  }
+  // which rows show, and in what order: pinned channels first, then as they come
+  const visRows = () => [...$('#epg').querySelectorAll('.crow:not([hidden])')].sort((a, b) => a.style.order - b.style.order);
+  function arrange(rise, fresh) {
+    const rows = $('#epg').querySelectorAll('.crow'); if (!rows.length) return;
+    const mine = favs.all(), re = CATS.find(([k]) => k === cat)?.[2], names = state.data.channels.map((c) => c.name);
+    for (const row of rows) {
+      const ch = row.firstElementChild, n = ch.dataset.ch, pin = mine.includes(n);
+      row.hidden = !(cat === 'mine' ? pin : re.test(n));
+      row.style.order = names.indexOf(n) - (pin ? 1000 : 0);
+      row.classList.remove('first');
+      if (ch.getAttribute('aria-pressed') !== String(pin)) {
+        ch.setAttribute('aria-pressed', pin);
+        ch.setAttribute('aria-label', `${n}: ${pin ? 'pinned to the top. Press to unpin' : 'press to pin to the top'}. Arrow right for its programmes`);
+        ch.lastElementChild.innerHTML = star(pin);
+      }
+    }
+    const vis = visRows();
+    $('#epg .empty').hidden = vis.length > 0;
+    if (!vis.length) { preview(null); return; }
+    vis[0].classList.add('first');
+    const vh = innerHeight, now = Date.now();
+    vis.forEach((row, i) => {
       const st = row.lastElementChild, r = row.getBoundingClientRect(), close = r.bottom > -300 && r.top < vh + 300;
-      st._auto = true;
-      if (keep && kept.has(st.dataset.strip)) st.scrollLeft = kept.get(st.dataset.strip);
-      else if (close) jumpStrip(st, state.day || state.base); else st._want = state.day || state.base;
-      if (close) { edges(st); if (!reduce && (rise || !keep) && i < 14) row.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 420, delay: i * 22, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' }); }
-      io.observe(row);
+      if (fresh) { if (close) jumpStrip(st, state.day || state.base); else st._want = state.day || state.base; }
+      if (close) { edges(st); if (!reduce && rise && i < 14) row.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 420, delay: i * 22, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' }); }
     });
-    // the preview starts on what's on now on the first channel (or the first thing this evening)
-    const first = chans[0].name, all = [...shown.values()];
-    preview(all.find((x) => x.ch === first && isLive(x, now)) || all.find((x) => x.ch === first && hour(x.at) >= 19) || all[0], true);
+    // the preview: what's on now on the first channel shown (or the first thing this evening)
+    const first = vis[0].firstElementChild.dataset.ch, all = [...shown.values()];
+    if (fresh || rise) preview(all.find((x) => x.ch === first && isLive(x, now)) || all.find((x) => x.ch === first && hour(x.at) >= 19) || all[0], true);
   }
   // one channel's programmes for one day (with a marker first, from the second day on). Blocks aren't tab stops: the
   // channel buttons are, and the arrow keys move around the grid from there (see "keys" below)
@@ -224,6 +247,7 @@
     if (!st._pend?.length) return;
     const now = Date.now(), m = px();
     st.insertAdjacentHTML('beforeend', st._pend.map(([d, day]) => dayBlocks(st.dataset.strip, d, day, true, now, m)).join('')); st._pend = null; st._b = null;
+    if (st._aim != null) place(st, st._aim);
   }
   function appendDay(d, day) {
     const rest = [];
@@ -248,13 +272,14 @@
   const dirty = new Set(); let frame = 0;
   $('#epg').addEventListener('scroll', (e) => {
     const st = e.target; if (!st.classList?.contains('strip') || gliding) return;
-    kept.set(st.dataset.strip, st.scrollLeft); dirty.add(st); st._t = e.timeStamp;
+    dirty.add(st); st._t = e.timeStamp;
     if (!frame) frame = requestAnimationFrame(() => {
       frame = 0;
       for (const s of dirty) {
         edges(s);
         if (s.scrollLeft + s.clientWidth > s.scrollWidth - 1600) loadNext();
         if (s._auto) { s._auto = false; continue; }
+        s._aim = null;
         const k = blockAt(s, s.scrollLeft + 40); if (k) setDay(k.b.dataset.day);
       }
       dirty.clear();
@@ -271,7 +296,10 @@
       || (at ? l.find(({ b }) => (shown.get(b.dataset.p)?.at || 0) > at) : l.find(({ b }) => b.dataset.day === d)) || l[0];
     return { x: Math.max(0, pick.l - l[0].l), b: pick.b };
   }
-  function jumpStrip(st, d = state.day) { const t = targetOf(st, d); if (t) { st._auto = true; st.scrollLeft = t.x; } }
+  function jumpStrip(st, d = state.day) { const t = targetOf(st, d); if (t) place(st, t.x); }
+  // near the end of the days loaded so far a strip can't yet scroll as far as asked (on a wide screen, late in the
+  // evening): it remembers where it was going, and gets there once the next day is added (unless you've moved it)
+  function place(st, x) { st._auto = true; st.scrollLeft = x; st._aim = Math.abs(st.scrollLeft - x) > 1 ? x : null; }
   // rows near the screen (the only ones worth moving smoothly); a row arriving that was waiting for a day goes straight there
   const near = new Set();
   const io = new IntersectionObserver((es) => {
@@ -288,7 +316,6 @@
   let gliding = false, glideId = 0;
   function glide(d) {
     const id = ++glideId, list = [];
-    kept.clear();
     for (const st of $('#epg').querySelectorAll('.strip')) {
       if (!near.has(st)) { st._want = d; continue; }
       st._want = null; fill(st); const t = targetOf(st, d); if (t) list.push({ st, from: st.scrollLeft, to: t.x, b: t.b });
@@ -302,7 +329,7 @@
       requestAnimationFrame(() => { if (id === glideId) gliding = false; });
       const top = innerHeight;
       list.forEach((g, i) => {
-        kept.set(g.st.dataset.strip, g.to); edges(g.st);
+        g.st._aim = Math.abs(g.st.scrollLeft - g.to) > 1 ? g.to : null; edges(g.st);
         const r = g.st.getBoundingClientRect();
         if (!reduce && r.bottom > 0 && r.top < top) g.b.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.04)', offset: .35 }, { transform: 'scale(.985)', offset: .7 }, { transform: 'none' }], { duration: 560, delay: Math.min(i, 12) * 26, easing: 'ease-out' });
       });
@@ -337,9 +364,10 @@
     if (!b) return;
     const st = b.parentElement, row = st.closest('.crow');
     const sib = (dir) => { let n = b; do n = dir > 0 ? n.nextElementSibling : n.previousElementSibling; while (n && !n.classList.contains('blk')); return n; };
-    const near = (r) => { const s = r?.querySelector('.strip'), x = shown.get(b.dataset.p); if (!s || !x) return null;
+    const v = visRows(), at = v.indexOf(row);
+    const same = (r) => { const s = r?.querySelector('.strip'), x = shown.get(b.dataset.p); if (!s || !x) return null; fill(s);
       const l = blocksOf(s); return (l.find(({ b: n }) => { const y = shown.get(n.dataset.p); return y && y.at <= x.at && x.at < y.end; }) || l.find(({ b: n }) => (shown.get(n.dataset.p)?.at || 0) >= x.at) || l.at(-1))?.b; };
-    const go = { ArrowRight: () => sib(1), ArrowLeft: () => sib(-1) || row.querySelector('.ch'), ArrowDown: () => near(row.nextElementSibling), ArrowUp: () => near(row.previousElementSibling),
+    const go = { ArrowRight: () => sib(1), ArrowLeft: () => sib(-1) || row.querySelector('.ch'), ArrowDown: () => same(v[at + 1]), ArrowUp: () => same(v[at - 1]),
       Home: () => blocksOf(st)[0]?.b, End: () => blocksOf(st).at(-1)?.b }[e.key];
     if (!go) return; e.preventDefault();
     const n = go(); if (n?.classList.contains('ch')) n.focus(); else focusBlock(n);

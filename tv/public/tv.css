@@ -109,18 +109,23 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
 .now-btn { height: 34px; padding: 0 16px; border: 0; border-radius: 999px; cursor: pointer; font: 600 14px/1 var(--font); color: #fff;
   background: linear-gradient(100deg, #ff375f, #bf5af2 60%, #0a84ff); box-shadow: 0 6px 18px -6px rgba(191, 90, 242, .7); transition: transform .4s var(--ease-spring); }
 .now-btn:active { transform: scale(.92); transition-duration: .1s; }
-.epg-hint { margin: 0; color: var(--label3); font-size: 13px; }
+.epg-hint { min-width: 0; margin: 0; color: var(--label3); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* the guide: each channel a row, its programmes a strip you scroll on its own (as Pluto TV does), fading at the edge */
 .guide { position: relative; isolation: isolate; }
-.epg { --px: 5px; --chw: 200px; --rowh: 68px; position: relative; }
+.epg { --px: 5px; --chw: 200px; --rowh: 68px; position: relative;
+  /* the strips run on past the page's column to the edge of the screen, fading out there (the left stays in line) */
+  --bleed: calc(var(--gutter-r) + max(0px, (100vw - var(--side, 0px) - var(--max)) / 2)); margin-right: calc(-1 * var(--bleed)); }
 .rows { display: grid; }
 /* rows off screen aren't drawn until they're near (smooth with 35 channels and a week of programmes) */
 .crow { position: relative; display: grid; grid-template-columns: var(--chw) minmax(0, 1fr); height: var(--rowh); content-visibility: auto; contain-intrinsic-size: auto var(--rowh); }
-.crow + .crow::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: .5px; pointer-events: none;
+.crow[hidden] { display: none; }
+.ch-star { display: contents; }
+.crow.first::before { display: none; }
+.crow::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: .5px; pointer-events: none;
   background: linear-gradient(90deg, transparent, var(--sep) 8%, var(--sep) 85%, transparent); }
-.strip { display: flex; gap: 6px; align-items: stretch; padding: 7px 40px 7px 10px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10px, #000 calc(100% - 64px), transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 10px, #000 calc(100% - 64px), transparent); }
+.strip { display: flex; gap: 6px; align-items: stretch; padding: 7px 64px 7px 10px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10px, #000 calc(100% - var(--fade)), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 10px, #000 calc(100% - var(--fade)), transparent); --fade: clamp(64px, 12vw, 220px); }
 .strip::-webkit-scrollbar { display: none; }
 .ch { position: relative; z-index: 2; display: flex; align-items: center; justify-content: flex-start; gap: 12px; padding: 0 10px 0 0; border: 0; border-radius: 12px; cursor: pointer; text-align: left; color: var(--label); font: 600 15px/1.15 var(--font); letter-spacing: -.016em;
   background: transparent; -webkit-tap-highlight-color: transparent; }
@@ -129,7 +134,7 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
 .ch[aria-pressed="true"] svg { opacity: 1; color: #ffcc00; }
 .ch:active svg { transform: scale(1.3); }
 .ch:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
-.cats { display: flex; gap: 8px; margin: 0 calc(-1 * var(--gutter-r)) 12px calc(-1 * var(--gutter)); padding: 2px var(--gutter-r) 4px var(--gutter); overflow-x: auto; scrollbar-width: none; }
+.cats { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); display: flex; gap: 8px; margin: 0 calc(-1 * var(--gutter-r)) 12px calc(-1 * var(--gutter)); padding: 2px var(--gutter-r) 4px var(--gutter); overflow-x: auto; scrollbar-width: none; }
 .cats::-webkit-scrollbar { display: none; }
 .cats button { flex: none; height: 32px; padding: 0 14px; border: 0; border-radius: 999px; cursor: pointer; white-space: nowrap; font: 500 14px/1 var(--font); color: var(--label2); background: none;
   box-shadow: inset 0 0 0 1px var(--sep); transition: background-color .2s ease, color .2s ease, box-shadow .2s ease; }
@@ -143,8 +148,6 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
 .blk small { color: var(--label2); font: 400 12px/1 var(--font); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; }
 @media (hover: hover) { .blk:hover { background: rgba(255, 255, 255, .16); box-shadow: inset 0 0 0 1px var(--gl-rim); } }
 .blk:active { transform: scale(.96); transition-duration: .12s; }
-/* a pinned channel glides to the top */
-::view-transition-group(*) { animation-duration: .5s; animation-timing-function: var(--ease-spring); }
 .blk:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 /* on now: tinted, filled as far as it's got */
 .blk.live { background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 30%, transparent) var(--p, 0%), color-mix(in srgb, var(--accent) 12%, transparent) var(--p, 0%));
@@ -214,7 +217,6 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
   .epg { --px: 3.6px; --chw: 132px; --rowh: 62px; }
   .ch { padding: 0 6px 0 10px; font-size: 13px; }
   .ch svg { width: 13px; height: 13px; opacity: .55; }
-  .cats { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); }
   .epg-hint { display: none; }
   .lede { font-size: 16px; }
   .picks { grid-auto-columns: 78%; gap: 12px; }
@@ -279,7 +281,7 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
 .brand, .bar-link { white-space: nowrap; }
 @media (max-width: 760px) {
   .bar-link .long { display: none; }
-  .epg { --chw: 64px; margin-right: calc(-1 * var(--gutter-r)); }
+  .epg { --chw: 64px; }
   .ch { padding: 0; gap: 4px; }
   .ch:has(.ch-badge:not(.ch-mono)) .ch-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .ch svg { position: absolute; right: 4px; top: 6px; width: 11px; height: 11px; }
@@ -307,3 +309,35 @@ html:has(.sheet[open]) { overflow: hidden; }
 /* the retry link inside a message */
 .retry { padding: 0; border: 0; background: none; color: var(--accent); font: inherit; cursor: pointer; }
 .retry:hover { text-decoration: underline; }
+
+/* ---------- computers: Tenner's sidebar, as on tenner.stream (the pages, More, the small print), the guide to its right.
+   Glass over the wallpaper with no edge line: its colours come through, and the glass alone separates them ---------- */
+.side { display: none; }
+@media (min-width: 1000px) {
+  :root { --side: 236px; --side-bg: rgba(242, 242, 247, .62); }
+  body { padding-left: var(--side); }
+  .bar { display: none; }   /* its logo and Top 10 link are in the sidebar */
+  .hero { padding-top: 44px; }
+  .side { position: fixed; z-index: 30; inset: 0 auto 0 0; width: var(--side); display: flex; flex-direction: column; gap: 22px; overflow-y: auto; scrollbar-width: none;
+    padding: calc(env(safe-area-inset-top, 0px) + 26px) 14px calc(env(safe-area-inset-bottom, 0px) + 20px) max(14px, env(safe-area-inset-left, 0px));
+    background: var(--side-bg); -webkit-backdrop-filter: blur(30px) saturate(180%); backdrop-filter: blur(30px) saturate(180%); }
+  .side-brand { display: flex; align-items: center; gap: 11px; padding: 0 8px; color: var(--label); font: 700 26px/1 var(--font); letter-spacing: -.02em; }
+  .side-brand:hover { text-decoration: none; }
+  .side-brand img { width: 34px; height: 34px; border-radius: 8px; }
+  .side-nav { display: flex; flex-direction: column; gap: 2px; }
+  .side-row { display: flex; align-items: center; gap: 12px; height: 38px; padding: 0 10px; border-radius: 9px; color: var(--label);
+    font: 500 15px/1 var(--font); letter-spacing: -.016em; -webkit-font-smoothing: antialiased; transition: background-color .2s ease; }
+  .side-row svg { width: 20px; height: 20px; flex: none; color: var(--accent); }
+  .side-row:hover { text-decoration: none; background: var(--fill); }
+  .side-row:active { background: var(--fill-strong); }
+  .side-row[aria-current] { background: var(--fill); font-weight: 600; }
+  .side-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .side-row .beta { margin-left: auto; }
+  .side-h { margin: 8px 0 -12px; padding: 0 10px; color: var(--label3); font: 600 13px/1 var(--font); letter-spacing: -.005em; }
+  .side-links { margin-top: auto; display: flex; flex-wrap: wrap; gap: 2px 12px; padding: 0 10px; }
+  .side-links a { padding: 3px 0; color: var(--label2); font: 400 12px/1.3 var(--font); letter-spacing: -.01em; }
+  .side-links a:hover { color: var(--label); text-decoration: none; }
+  .side-ver { flex-basis: 100%; margin-top: 6px; color: var(--label3); font-size: 12px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+}
+@media (min-width: 1000px) and (prefers-color-scheme: dark) { :root { --side-bg: rgba(28, 28, 30, .58); } }
+@media (min-width: 1000px) and (prefers-reduced-transparency: reduce) { .side { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--bg2); } }
