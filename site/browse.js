@@ -344,7 +344,7 @@
     // swap the grid (a quick crossfade where the browser can)
     const draw = () => { shown = 0; $('#grid').innerHTML = ''; more(); empty(); };
     webSearch();
-    if (user && !quiet && document.startViewTransition && !reduce) document.startViewTransition(draw); else draw();
+    if (user && !quiet && document.startViewTransition && !reduce) document.startViewTransition(draw).ready.catch(() => {}); else draw();
     if (!q) { spotlight(); moods(); } else $('#moods').hidden = true;
     rows();
   }

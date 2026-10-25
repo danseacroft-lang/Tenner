@@ -2,16 +2,16 @@
 // Pages, scripts, styles and the hourly data: the network first (so a new deploy or a new hour always wins), with the
 // last copy kept for when there's no connection, or when the network is too slow to answer within a few seconds. Fonts and icons: from the cache. TMDB's posters: from the cache, the most recent
 // 60 or so. The search API is never cached here (Cloudflare caches it).
-const SHELL = 'tenner-shell-1.49.0', IMGS = 'tenner-img-v1';   // the shell cache follows the version
-const CORE = ['./', 'index.html', 'browse.html', 'about.html', 'settings.html', 'settings.css', 'settings.js', 'legal.html', 'legal.css', 'people.html', 'discover.html', 'account.html', 'account.css', 'account.js', 'styles.css', 'browse.css', 'about.css', 'people.css', 'discover.css', 'shell.js', 'links.js', 'sheet.js', 'app.js', 'browse.js', 'cards.js', 'people.js', 'discover.js',
-  'fonts/inter-latin.woff2', 'fonts/inter-tight-latin.woff2', 'logo.svg', 'favicon.svg', 'favicon.ico'];
+const SHELL = 'tenner-shell-1.49.0', IMGS = 'tenner-img-v1', FONTS = 'tenner-font-v1';   // the shell cache follows the version; fonts never change
+const CORE = ['./', 'index.html', 'browse.html', 'about.html', 'settings.html', 'settings.css', 'settings.js', 'legal.html', 'legal.css', 'people.html', 'discover.html', 'account.html', 'account.css', 'account.js', 'styles.css', 'browse.css', 'about.css', 'people.css', 'discover.css', 'contact.html', 'contact.js', 'list.html', 'list.js', 'shell.js', 'links.js', 'sheet.js', 'app.js', 'browse.js', 'cards.js', 'people.js', 'discover.js',
+  'logo.svg', 'favicon.svg', 'favicon.ico'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(SHELL).then((c) => c.addAll(CORE.map((u) => new Request(u, { cache: 'reload' }))))
     .catch(() => {}).then(() => self.skipWaiting()));   // 'reload': past the browser's cache, so this version's own files
 });
 self.addEventListener('activate', (e) => {
-  e.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== SHELL && k !== IMGS).map((k) => caches.delete(k))))
+  e.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== SHELL && k !== IMGS && k !== FONTS).map((k) => caches.delete(k))))
     .then(() => self.clients.claim()));
 });
 
@@ -19,7 +19,8 @@ self.addEventListener('fetch', (e) => {
   const req = e.request; if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin === location.origin) {
-    if (/\.(woff2|png|svg|jpg)$/.test(url.pathname)) { e.respondWith(cacheFirst(e, SHELL)); return; }
+    if (url.pathname.endsWith('.woff2')) { e.respondWith(cacheFirst(e, FONTS)); return; }   // only off Apple devices
+    if (/\.(png|svg|jpg)$/.test(url.pathname)) { e.respondWith(cacheFirst(e, SHELL)); return; }
     e.respondWith(networkFirst(e)); return;
   }
   if (url.hostname === 'image.tmdb.org') e.respondWith(cacheFirst(e, IMGS, 60));

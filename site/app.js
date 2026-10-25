@@ -2,7 +2,7 @@
 // Routes: #top (all services), #netflix, #disney … (one service), #store (buy or rent), #new (new releases).
 // Shared helpers (esc, hue) come from shell.js, which loads first.
 
-const { esc, hue, arrows, reduce: reduceMotion } = window.tn;
+const { esc, hue, reduce: reduceMotion } = window.tn;
 const state = { trending: null, fresh: null, kind: 'tv', route: 'top' };
 const $ = (s, el = document) => el.querySelector(s);
 const view = $('#view');
@@ -74,11 +74,11 @@ function agoText(iso) {
   const mins = Math.floor((Date.now() - Date.parse(iso)) / 60000), h = Math.floor(mins / 60);
   if (narrow.matches) { // phones: the short form, so the line stays on one row
     if (mins < 3) return 'Just updated';
-    return mins < 60 ? `${mins} min ago` : `${h} hr ago`;
+    return mins < 60 ? `${mins} min ago` : h < 48 ? `${h} hr ago` : `${Math.floor(h / 24)} days ago`;
   }
   if (mins < 3) return 'Updated a few moments ago';
   if (mins < 60) return `Updated ${mins} minutes ago`;
-  return `Updated ${h} hour${h === 1 ? '' : 's'} ago`;
+  return h < 48 ? `Updated ${h} hour${h === 1 ? '' : 's'} ago` : `Updated ${Math.floor(h / 24)} days ago`;   // a long outage reads plainly
 }
 narrow.addEventListener('change', () => state.trending && showUpdated());
 function showUpdated() {
@@ -193,7 +193,7 @@ function render() {
 // Swap the page through a View Transition where the browser has one, so changes crossfade instead of jumping.
 function morph(fn) {
   if (!document.startViewTransition || reduceMotion || !view.firstElementChild || view.querySelector('.loading')) { fn(); return; }
-  document.startViewTransition(fn);
+  document.startViewTransition(fn).ready.catch(() => {});   // a newer change can cut one short: that's fine
 }
 // Settings: "Hide titles rated 18" (UK certificates come from the title details)
 function adult(list, k) {

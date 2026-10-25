@@ -8,7 +8,6 @@
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const hue = (s) => [...String(s)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const mouse = matchMedia('(hover: hover) and (pointer: fine)');
 
   // ---------- time, in UK time. Formatters are made once: a week's guide formats tens of thousands of times ----------
   const TZ = 'Europe/London';
