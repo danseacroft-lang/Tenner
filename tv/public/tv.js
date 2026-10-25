@@ -71,9 +71,16 @@
 
   // ---------- loading: the first day, then each next one as the strips near their end ----------
   let ctl = null;
-  const fetchDay = (d, signal) => fetch(`/api/day?d=${d}`, { signal }).then(async (r) => {
-    const j = await r.json().catch(() => ({})); if (!r.ok || !Array.isArray(j.channels)) throw new Error(j.error || `HTTP ${r.status}`); return j;
+  // the first day was asked for by the page itself, before this script arrived (see index.html): used once, if it's the one
+  const early = window.tvEarly;
+  const fetchDay = (d, signal) => (early?.d === d && !early.used ? ((early.used = true), early.day) : fetch(`/api/day?d=${d}`, { signal })).then(async (r) => {
+    const j = await r.json().catch(() => ({})); if (!r.ok || !Array.isArray(j.channels)) throw new Error(j.error || `HTTP ${r.status}`); return expand(j);
   });
+  // the listings arrive compact (only the fields a programme has; Sky's pictures as just their id)
+  function expand(j) {
+    for (const c of j.channels) for (const x of c.items) { if (x.sky) x.wide = `https://images.metadata.sky.com/pd-image/${x.sky}/cover`; x.g ||= []; }
+    return j;
+  }
   async function load() {
     $('#epg').innerHTML = '<div class="skel" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>';
     ctl?.abort(); ctl = new AbortController(); state.day = null; state.loading = null; state.failedAt = 0;
@@ -90,6 +97,7 @@
       preview(null);
     }
   }
+  const extra = new Map();   // days fetched early (for search), as promises: the strips use them when they get there
   // the next day, added to the end of every strip: one at a time, nothing past the last day, and after a failure a
   // calm wait of 20 seconds before trying again (never a fetch per scroll event)
   function loadNext() {
@@ -97,7 +105,7 @@
     if (Date.now() - state.failedAt < 20e3) return Promise.resolve(false);
     const last = [...state.loaded.keys()].at(-1), next = days[days.indexOf(last) + 1];
     if (!next || !state.data) return Promise.resolve(false);
-    state.loading = fetchDay(next).then((d) => { if (!state.loaded.has(next)) { state.loaded.set(next, d); appendDay(next, d); } return true; })
+    state.loading = (extra.get(next) || fetchDay(next)).then((d) => { if (!state.loaded.has(next)) { state.loaded.set(next, d); appendDay(next, d); } return true; })
       .catch(() => { state.failedAt = Date.now(); return false; }).finally(() => { state.loading = null; });
     return state.loading;
   }
@@ -426,6 +434,7 @@
   document.addEventListener('click', (e) => {
     const b = e.target.closest('[data-p]'); if (!b || sheet.contains(b)) return;
     const x = shown.get(b.dataset.p); if (!x) return;
+    if (find.open) find.close();
     preview(x, true);
     const when = `${esc(x.ch)} · ${esc(dayName(ukDay(x.at), { weekday: 'long', day: 'numeric', month: 'long' }))} · ${hm(x.at)}–${hm(x.end)} · ${length(x.end - x.at)}`;
     shIn.innerHTML = `<div class="sh-grab" aria-hidden="true"></div><div class="sh-art${!x.wide && x.poster ? ' sh-poster' : ''}">${x.wide || x.poster ? art(x) : ''}
@@ -477,9 +486,65 @@
   };
   sheet.addEventListener('touchend', letGo); sheet.addEventListener('touchcancel', letGo);
 
+  // ---------- search: every channel, all week (the days not loaded yet are fetched when it opens) ----------
+  // Every word you type matches the start of a word in a title ("str com" finds Strictly Come Dancing), accents
+  // and capitals ignored. Titles that start with what you typed come first, then soonest first; nothing that's over.
+  const find = $('#find'), fq = $('#fq'), fr = $('#fr'), fs = $('#fs');
+  const fold = (t) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim();
+  const index = new Map();   // per day: every programme, with its title folded once
+  function indexOf(d, day) {
+    if (!index.has(d)) index.set(d, day.channels.flatMap((c) => c.items.map((x, j) => ({ x, ch: c.name, next: c.items[j + 1], f: ` ${fold(x.t)}` }))));
+    return index.get(d);
+  }
+  const allDays = () => days.map((d) => [d, state.loaded.get(d) || extra.get(d)?.done]).filter(([, v]) => v);
+  function openFind() {
+    if (!state.data || find.open) return;
+    find.showModal(); fq.focus(); fq.select(); search();
+    for (const d of days) if (!state.loaded.has(d) && !extra.has(d)) {   // the rest of the week, quietly
+      const p = fetchDay(d); extra.set(d, p);
+      p.then((v) => { p.done = v; if (find.open && fq.value.trim()) search(); }, () => extra.delete(d));
+    }
+  }
+  let fqT = 0;
+  function search() {
+    const q = fold(fq.value), words = q.split(' ').filter(Boolean);
+    if (!words.length) { fr.innerHTML = ''; fs.textContent = 'Search every channel, all week.'; return; }
+    const now = Date.now(), hits = [];
+    for (const [d, day] of allDays()) for (const it of indexOf(d, day)) {
+      if (!words.every((w) => it.f.includes(` ${w}`))) continue;
+      const end = ends(it.x, it.next); if (end <= now) continue;
+      hits.push({ ...it, end, top: it.f.startsWith(` ${q}`) ? 0 : 1 });
+    }
+    hits.sort((a, b) => a.top - b.top || a.x.at - b.x.at);
+    const list = hits.slice(0, 60), more = allDays().length < days.length;
+    fs.textContent = hits.length ? `${hits.length > 60 ? 'The first 60 of ' : ''}${hits.length} programme${hits.length === 1 ? '' : 's'}${more ? ', still searching the rest of the week…' : ''}`
+      : more ? 'Searching the rest of the week…' : 'Nothing this week matches that.';
+    fr.innerHTML = list.map(({ x, ch, end }) => {
+      shown.has(String(x.id)) || shown.set(String(x.id), { ...x, ch, end });
+      const d = ukDay(x.at), live = isLive({ at: x.at, end }, now);
+      return `<li><button type="button" class="fd-row" data-p="${esc(x.id)}">${badge(ch)}<span class="fd-t"><b>${x.isNew ? '<i class="new">New</i>' : ''}${esc(x.t)}</b>
+        <small>${esc(`${live ? 'On now' : d === today ? 'Today' : d === days[1] ? 'Tomorrow' : `${dayName(d, { weekday: 'short' })} ${dayName(d, { day: 'numeric', month: 'short' })}`} · ${hm(x.at)} · ${ch}`)}</small></span>${live ? '<i class="fd-live">Now</i>' : ''}</button></li>`;
+    }).join('');
+  }
+  fq.addEventListener('input', () => { clearTimeout(fqT); fqT = setTimeout(search, 70); });
+  $('#findBtn').addEventListener('click', openFind);
+  $('#fdX').addEventListener('click', () => find.close());
+  find.addEventListener('click', (e) => { if (e.target === find) find.close(); });
+  find.addEventListener('close', () => { fq.value = ''; fr.innerHTML = ''; });
+  // the keyboard: / or ⌘K (Ctrl+K) opens it; ↓ and ↑ move through the results, Enter opens one
+  document.addEventListener('keydown', (e) => {
+    const typing = e.target.closest?.('input, textarea, [contenteditable]');
+    if ((e.key === '/' && !typing) || ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k')) { e.preventDefault(); openFind(); }
+  });
+  find.addEventListener('keydown', (e) => {
+    const rows = [...fr.querySelectorAll('.fd-row')], i = rows.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); const n = e.key === 'ArrowDown' ? (i < 0 ? 0 : i + 1) : i - 1; (n < 0 ? fq : rows[Math.min(n, rows.length - 1)])?.focus(); }
+    else if (e.key === 'Enter' && e.target === fq) { e.preventDefault(); rows[0]?.click(); }
+  });
+
   // ---------- start, and keep "now" moving ----------
   // the days the Freeview listings cover (a week or so); the strips run through all of them
-  fetch('/data/meta.json').then((r) => (r.ok ? r.json() : null)).then((m) => {
+  (early?.meta || fetch('/data/meta.json').then((r) => (r.ok ? r.json() : null))).then((m) => {
     const have = (m?.days || []).filter((d) => /^\d{4}-\d\d-\d\d$/.test(d) && d >= today);
     if (have.length >= 5) { days = have; if (!days.includes(state.base)) state.base = today; drawDays(); }
   }).catch(() => {}).finally(load);
@@ -497,4 +562,6 @@
     }
   }, 60e3);
   document.addEventListener('visibilitychange', () => { if (!document.hidden && ukDay() !== today) location.reload(); });
+  // kept on the device: opens instantly, and works with a weak signal or none (sw.js)
+  if ('serviceWorker' in navigator && location.protocol === 'https:') addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
 })();

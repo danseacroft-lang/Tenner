@@ -341,3 +341,36 @@ html:has(.sheet[open]) { overflow: hidden; }
 }
 @media (min-width: 1000px) and (prefers-color-scheme: dark) { :root { --side-bg: rgba(28, 28, 30, .58); } }
 @media (min-width: 1000px) and (prefers-reduced-transparency: reduce) { .side { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--bg2); } }
+
+/* ---------- search: a glass button beside Now, and a sheet of results (the same list style as everywhere) ---------- */
+.find-btn { display: inline-flex; align-items: center; gap: 7px; flex: none; margin-left: auto; height: 34px; padding: 0 10px 0 12px; border: 0; border-radius: 999px; cursor: pointer;
+  color: var(--label); font: 500 14px/1 var(--font); -webkit-font-smoothing: antialiased; background: var(--gl-fill); box-shadow: inset 0 0 0 1px var(--gl-rim);
+  -webkit-backdrop-filter: blur(20px) saturate(1.7); backdrop-filter: blur(20px) saturate(1.7); transition: background-color .2s ease, transform .4s var(--ease-spring); }
+.find-btn svg { width: 16px; height: 16px; color: var(--label2); }
+.find-btn kbd { display: grid; place-items: center; min-width: 20px; height: 20px; margin-left: 2px; border-radius: 6px; font: 500 12px/1 var(--font); color: var(--label2); background: var(--fill); }
+.find-btn:hover { background: var(--gl-hover); }
+.find-btn:active { transform: scale(.94); transition-duration: .1s; }
+@media (hover: none), (max-width: 760px) { .find-btn kbd { display: none; } .find-btn { padding-right: 14px; } }
+.find { width: min(600px, calc(100vw - 24px)); margin-top: max(8vh, 40px); display: none; }
+.find[open] { display: flex; flex-direction: column; }
+.fd-top { display: flex; align-items: center; gap: 12px; padding: 14px 14px 6px 16px; }
+.fd-field { position: relative; flex: 1; }
+.fd-field svg { position: absolute; left: 11px; top: 50%; width: 17px; height: 17px; margin-top: -8.5px; color: var(--label2); pointer-events: none; }
+#fq { width: 100%; height: 42px; padding: 0 12px 0 36px; border: 0; border-radius: 12px; outline: none; background: var(--fill); color: var(--label); font: 400 17px/1 var(--font); -webkit-appearance: none; appearance: none; }
+#fq::placeholder { color: var(--label2); }
+.fd-x { flex: none; height: 44px; padding: 0 4px; border: 0; background: none; color: var(--accent); font: 400 17px/1 var(--font); cursor: pointer; }
+.fd-status { margin: 4px 0 2px; padding: 0 18px; color: var(--label2); font-size: 13px; min-height: 18px; }
+.fd-list { flex: 1; min-height: 0; margin: 0; padding: 4px 8px 12px; list-style: none; overflow-y: auto; overscroll-behavior: contain;
+  -webkit-mask-image: linear-gradient(transparent, #000 10px, #000 calc(100% - 18px), transparent); mask-image: linear-gradient(transparent, #000 10px, #000 calc(100% - 18px), transparent); }
+.fd-list li { position: relative; }
+.fd-list li + li::before { content: ""; position: absolute; top: 0; left: 64px; right: 10px; height: .5px; background: var(--sep); }
+.fd-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 8px 10px; border: 0; border-radius: 12px; background: none; color: var(--label); text-align: left; cursor: pointer; transition: background-color .15s ease; }
+.fd-row:hover, .fd-row:focus-visible { background: var(--fill); outline: none; }
+.fd-row:active { background: var(--fill-strong); }
+.fd-row .ch-badge { width: 42px; height: 42px; }
+.fd-t { display: grid; gap: 3px; min-width: 0; }
+.fd-t b { font: 500 16px/1.25 var(--font); letter-spacing: -.015em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fd-t small { color: var(--label2); font: 400 13px/1.2 var(--font); font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fd-t .new { margin-right: 6px; padding: 2px 5px; border-radius: 5px; vertical-align: 1.5px; font: 700 9.5px/1 var(--font); font-style: normal; letter-spacing: .04em; text-transform: uppercase; color: #fff; background: linear-gradient(100deg, #ff375f, #bf5af2); }
+.fd-live { flex: none; margin-left: auto; padding: 4px 8px; border-radius: 999px; font: 600 12px/1 var(--font); font-style: normal; color: #fff; background: #ff375f; }
+@media (max-width: 760px) { .find { width: 100vw; max-width: 100vw; height: 92svh; margin: auto 0 0; } .fd-top { padding-top: 16px; } }

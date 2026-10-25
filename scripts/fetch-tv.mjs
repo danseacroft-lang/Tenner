@@ -25,7 +25,7 @@ const when = (s) => { const m = s.match(/^(\d{4})(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)\
   const [, y, mo, d, h, mi, se, sg, oh, om] = m; return Date.UTC(+y, mo - 1, +d, +h, +mi, +se) - (sg === '+' ? 1 : -1) * (oh * 3600e3 + om * 60e3); };
 
 export function build(xml, channels, now = Date.now()) {
-  const byId = new Map(channels.map((c) => [c.id, c])), days = new Map(), seen = new Set();
+  const byId = new Map(channels.map((c, i) => [c.id, { ...c, k: i.toString(36) }])), days = new Map(), seen = new Set();
   const re = /<programme channel="([^"]+)" start="([^"]+)" stop="([^"]+)"[^>]*>([\s\S]*?)<\/programme>/g;
   const from = now - 864e5, to = now + 8 * 864e5;
   for (const m of xml.matchAll(re)) {
@@ -36,10 +36,15 @@ export function build(xml, channels, now = Date.now()) {
     // "New: The Voice UK" → "The Voice UK", marked new; a description's "6/8." (the episode, shown separately) goes
     const raw = unxml(tag('title')), t = raw.replace(/^New:\s*/i, ''); if (!t) continue;
     const desc = (unxml(tag('desc')) || '').replace(/^\d+\/\d+\.\s*/, '').replace(/^(New series|New|Series \d+)\.\s*/i, '');
-    const item = { id: `${c.id.replace(/\W/g, '')}${Math.round(at / 6e4)}`, show: t, t, at, rt: Math.round((end - at) / 6e4),
-      s: ep?.[1] ? +ep[1] : null, n: ep?.[2] ? +ep[2] : null, sum: desc || null,
-      wide: body.match(/<icon src="(https:\/\/[^"]+)"/)?.[1] || null, g: [], isNew: /<premiere/.test(body) || /^New:/i.test(raw) || undefined };
-    if (item.sum && item.sum.length > 420) item.sum = item.sum.slice(0, 400).replace(/\s+\S*$/, '') + '…';
+    // compact: a short id (the channel, then the start in minutes), and only the fields a programme has. Sky's pictures
+    // (nearly all of them) are kept as just their id; the page puts the address back together
+    const item = { id: `${c.k}.${Math.round(at / 6e4).toString(36)}`, t, at, rt: Math.round((end - at) / 6e4) };
+    if (ep?.[1]) item.s = +ep[1];
+    if (ep?.[2]) item.n = +ep[2];
+    if (desc) item.sum = desc.length > 420 ? desc.slice(0, 400).replace(/\s+\S*$/, '') + '…' : desc;
+    const icon = body.match(/<icon src="(https:\/\/[^"]+)"/)?.[1], sky = icon?.match(/^https:\/\/images\.metadata\.sky\.com\/pd-image\/([0-9a-f-]{36})\/cover$/)?.[1];
+    if (sky) item.sky = sky; else if (icon) item.wide = icon;
+    if (/<premiere/.test(body) || /^New:/i.test(raw)) item.isNew = true;
     if (seen.has(item.id)) continue; seen.add(item.id);   // the feed sometimes lists a programme twice
     const d = ukDay(at);
     if (!days.has(d)) days.set(d, new Map());

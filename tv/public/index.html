@@ -12,11 +12,16 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <meta name="apple-mobile-web-app-title" content="Tenner TV">
+  <link rel="manifest" href="manifest.webmanifest">
   <meta property="og:title" content="What’s on UK TV tonight · Tenner TV">
   <meta property="og:description" content="Every UK channel, now and next, and the whole evening.">
   <meta property="og:image" content="https://tenner.stream/og.jpg">
   <link rel="preconnect" href="https://images.metadata.sky.com">
-  <link rel="stylesheet" href="tv.css?v=2.5.0">
+  <link rel="stylesheet" href="tv.css?v=2.6.0">
+  <!-- the listings start downloading now, alongside the page's own files (not after them) -->
+  <script>(() => { const t = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(Date.now()), q = new URLSearchParams(location.search).get('d'), d = /^\d{4}-\d\d-\d\d$/.test(q || '') && q >= t ? q : t;
+    const day = fetch('/api/day?d=' + d), meta = fetch('/data/meta.json').then((r) => (r.ok ? r.json() : null)).catch(() => null); day.catch(() => {});
+    window.tvEarly = { d, day, meta }; })();</script>
 </head>
 <body>
   <!-- computers: Tenner's sidebar (as on tenner.stream), with the TV guide chosen; phones keep the bar below -->
@@ -38,7 +43,7 @@
     </nav>
     <div class="side-links">
       <a href="https://tenner.stream/legal.html#terms">Terms of Service</a><a href="https://tenner.stream/legal.html#privacy">Privacy Policy</a><a href="https://tenner.stream/legal.html#cookies">Cookies</a><a href="https://tenner.stream/contact.html">Contact</a>
-      <span class="side-ver">Tenner TV 2.5.0</span>
+      <span class="side-ver">Tenner TV 2.6.0</span>
     </div>
   </aside>
   <header class="bar">
@@ -70,6 +75,7 @@
       <div class="epg-bar">
         <button type="button" class="now-btn" id="toNow">Now</button>
         <p class="epg-hint" id="epgHint">Scroll a channel to move through its week · tap a channel to pin it to the top · arrow keys move around the guide</p>
+        <button type="button" class="find-btn" id="findBtn" aria-haspopup="dialog" aria-keyshortcuts="/ Meta+K Control+K"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 20 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>Search<kbd>/</kbd></button>
       </div>
       <div class="cats" id="cats" role="radiogroup" aria-label="Channels to show"></div>
       <div class="epg" id="epg"><div class="skel" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
@@ -86,10 +92,21 @@
     <p>Part of <a href="https://tenner.stream/">Tenner</a>, the UK’s streaming top 10, every hour.</p>
   </footer>
 
+  <!-- search: every channel, all week -->
+  <dialog class="sheet find" id="find" aria-label="Search the guide">
+    <div class="fd-top">
+      <label class="fd-field"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 20 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        <input type="search" id="fq" placeholder="Programmes this week" enterkeyhint="search" autocomplete="off" autocorrect="off" spellcheck="false" aria-controls="fr" aria-describedby="fs"></label>
+      <button type="button" class="fd-x" id="fdX">Cancel</button>
+    </div>
+    <p class="fd-status" id="fs" aria-live="polite">Search every channel, all week.</p>
+    <ul class="fd-list" id="fr"></ul>
+  </dialog>
+
   <dialog class="sheet" id="sheet" aria-labelledby="shT">
     <div class="sh-in" id="shIn"></div>
   </dialog>
 
-  <script src="tv.js?v=2.5.0" defer></script>
+  <script src="tv.js?v=2.6.0" defer></script>
 </body>
 </html>

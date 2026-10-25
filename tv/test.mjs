@@ -54,4 +54,8 @@ const built = build(xml, [{ name: 'BBC One', id: 'BBCOneLondonHD.uk', logo: '/lo
 const p = built['2026-10-24'].channels[0].items[0];
 assert.deepEqual([p.t, p.s, p.n, p.rt, p.sum, p.isNew, new Date(p.at).toISOString()], ['The Voice & Friends', 1, 6, 45, 'Blind auditions.', true, '2026-10-24T19:35:00.000Z'], 'XMLTV is read correctly (times in UK time)');
 assert.equal(built['2026-10-24'].channels.length, 1, 'only the chosen channels');
+const sky = build(xml.replace('https://images.example/x/cover', 'https://images.metadata.sky.com/pd-image/2fe55478-24f6-48ef-a5fe-458345bbb469/cover'), [{ name: 'BBC One', id: 'BBCOneLondonHD.uk' }], Date.parse('2026-10-24T12:00:00Z'))['2026-10-24'].channels[0].items[0];
+assert.equal(sky.sky, '2fe55478-24f6-48ef-a5fe-458345bbb469', "Sky's pictures are kept as their id");
+assert.ok(!('wide' in sky) && !('show' in sky) && !Object.values(sky).includes(null), 'no empty or repeated fields');
+assert.equal(p.wide, 'https://images.example/x/cover', 'other pictures keep their address');
 console.log('Tenner TV checks passed');

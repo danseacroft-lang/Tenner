@@ -97,8 +97,11 @@ Mac. When in doubt, ask "would this look at home in Apple TV, Apple Music or the
 - **Hourly** (`update.yml`): charts, Browse, New, cinema and title details rebuilt and deployed; keeps its own schedule alive.
 - **On every push**: the site (`update.yml`), the search/accounts Worker (`api.yml`) and Tenner TV (`tv.yml`) deploy themselves.
   Tenner TV runs `node tv/test.mjs` first; a failing test stops the deploy, so what's live keeps working.
-- **Tenner TV** (`tv/`, tv.tenner.stream): listings from TVmaze, logos from TMDB (kept a week), a shared copy in Workers KV
-  refreshed every half hour by the Worker's own schedule, and the last good copy served if TVmaze is down.
+- **Tenner TV** (`tv/`, tv.tenner.stream): listings from the open Freeview EPG feed, built every 3 hours by
+  `scripts/fetch-tv.mjs` into compact day files (only the fields a programme has; Sky pictures as just their id), TVmaze
+  only for a day the feed doesn't cover, and the last good copy served if a source is down. Its own logos in `tv/public/logos`
+  (sized for where they're shown). A service worker (`tv/public/sw.js`) keeps the page on the device: it opens instantly
+  and works offline. Bump its `?v=` with every Tenner TV update (sed over `tv/public/index.html tv/public/sw.js`).
 - **Watchdog** (`watchdog.yml`, every 3 hours): checks the site, the charts' age, the search service and Tenner TV; re-runs
   whatever's behind, re-checks after 7 minutes, and only then fails (GitHub emails the owner). It also checks the Watch live
   links still open. tv.tenner.stream is behind Cloudflare's bot check, so it checks Tenner TV at its workers.dev address.
