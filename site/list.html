@@ -39,10 +39,10 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=1.51.0">
-  <link rel="stylesheet" href="legal.css?v=1.51.0">
-  <link rel="stylesheet" href="settings.css?v=1.51.0">
-  <link rel="stylesheet" href="account.css?v=1.51.0">
+  <link rel="stylesheet" href="styles.css?v=1.51.1">
+  <link rel="stylesheet" href="legal.css?v=1.51.1">
+  <link rel="stylesheet" href="settings.css?v=1.51.1">
+  <link rel="stylesheet" href="account.css?v=1.51.1">
   <meta name="robots" content="noindex">
 </head>
 <body class="legal">
@@ -93,7 +93,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.51.0</span>
+      <span class="side-ver">Tenner 1.51.1</span>
     </div>
   </div>
 
@@ -105,12 +105,12 @@
 
   <main id="main" class="lwrap set acct ls" tabindex="-1">
     <div class="ac-me"><span id="lsAv"></span><div class="ac-who"><h1 id="lsH">Watchlist</h1><p class="ls-sub" id="lsSub">Loading…</p></div></div>
-    <ol class="ls-grid" id="lsGrid"></ol>
+    <ol class="cl nw-cl ls-list" id="lsGrid"></ol>
     <a class="btn btn-tinted ls-cta" href="./">See what’s in the UK Top 10 on Tenner</a>
   </main>
 
 
-  <script src="shell.js?v=1.51.0" defer></script>
-  <script src="list.js?v=1.51.0" defer></script>
+  <script src="shell.js?v=1.51.1" defer></script>
+  <script src="list.js?v=1.51.1" defer></script>
 </body>
 </html>
