@@ -36,8 +36,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still"))e.viewTransition.skipTransition()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.48.0">
-  <link rel="stylesheet" href="legal.css?v=1.48.0">
+  <link rel="stylesheet" href="styles.css?v=1.49.0">
+  <link rel="stylesheet" href="legal.css?v=1.49.0">
 </head>
 <body class="legal">
   <a class="skip" href="#main">Skip to the page</a>
@@ -87,7 +87,7 @@
       <a class="side-link" href="legal.html#privacy" aria-current="page">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies" aria-current="page">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.48.0</span>
+      <span class="side-ver">Tenner 1.49.0</span>
     </div>
   </div>
 
@@ -118,7 +118,9 @@
       <p>We don’t ask for your location. The charts are for the UK as a whole.</p>
       <p><strong>If you send us a message.</strong> The Contact page’s form sends your message, your email address, the type of enquiry you choose and your name, if you add it, to us as an email, through our search service on Cloudflare. It isn’t stored there: it’s passed straight on to our inbox. If you email us at <a class="contact-email" href="mailto:support@tenner.stream">support@tenner.stream</a> instead, we receive your email address and whatever you include in your message. We use it only to read and reply to you. We don’t add you to any mailing list or share your details with anyone. Emails are kept only as long as needed to deal with your message, and you can ask us to delete them at any time. Our email provider processes messages under its own privacy policy.</p>
 
-      <p><strong>If you turn on Watchlist alerts.</strong> Alerts are off unless you switch them on. When you do, your browser gives Tenner a push address for this device (made by your browser’s own notification service, such as Apple’s, Google’s or Mozilla’s), and Tenner keeps it on Cloudflare together with the list of titles on your Watchlist (their TMDB numbers only), so it can tell you when one of them arrives on a service or gets a new season. Nothing else is kept: no name, email address or location. The list is updated when your Watchlist changes, and both are deleted when you turn alerts off, or when your browser tells us the address no longer works. Alerts are sent through your browser’s notification service and are encrypted so that only your device can read them.</p>
+      <p><strong>If you turn on Watchlist alerts.</strong> Alerts are off unless you switch them on. When you do, your browser gives Tenner a push address for this device (made by your browser’s own notification service, such as Apple’s, Google’s or Mozilla’s), and Tenner keeps it on Cloudflare together with the list of titles on your Watchlist (their TMDB numbers only), so it can tell you when one of them arrives on a service, gets a new season or episode, or is about to leave. Nothing else is kept: no name, email address or location. The list is updated when your Watchlist changes, and both are deleted when you turn alerts off, or when your browser tells us the address no longer works. Alerts are sent through your browser’s notification service and are encrypted so that only your device can read them.</p>
+      <p><strong>If you turn on the Sunday email.</strong> It's off unless you switch it on in Settings while signed in. Tenner then sends one email each Sunday to your account's confirmed email address (the one you signed up with, or your Google account's), using the Watchlist and services already kept with your account. Every email has an unsubscribe link, and switching it off in Settings works too. Emails are sent through Resend.</p>
+      <p><strong>If you import from another app.</strong> When you import a Letterboxd, IMDb, Trakt or Netflix file, it's read on your device. Only the names, years and IMDb numbers of the titles in it are sent to Tenner's search service to find each one; the file itself is never uploaded or kept.</p>
 
       <p><strong>If you create an account.</strong> Accounts are optional; Tenner works the same without one. If you make one, we keep:</p>
       <ul>
@@ -223,6 +225,6 @@
   </main>
 
 
-  <script src="shell.js?v=1.48.0" defer></script>
+  <script src="shell.js?v=1.49.0" defer></script>
 </body>
 </html>

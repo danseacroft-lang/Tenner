@@ -1,7 +1,7 @@
 // Settings: every control is the browser's own (selects, switches, a file picker, confirm()), and each change is saved
 // on this device straight away (shell.js keeps them and applies them on every page).
 (() => {
-  const { prefs, mine, saved, progress } = window.tn;
+  const { prefs, mine, saved, progress, stars, findTitle } = window.tn;
   const form = document.getElementById('setForm'), note = document.getElementById('setNote');
   const say = (t) => { note.textContent = t; clearTimeout(say.t); say.t = setTimeout(() => (note.textContent = ''), 3000); };
   form.classList.toggle('native-sw', 'switch' in HTMLInputElement.prototype);   // Safari: the real iOS switch
@@ -38,23 +38,90 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
     say(`Exported ${data.watchlist.length} title${data.watchlist.length === 1 ? '' : 's'}`);
   });
+  // Import: a Tenner export, or what other apps give you. Letterboxd (watchlist.csv, or ratings.csv: 4 stars and up),
+  // IMDb (a list or your ratings: 8 and up), Trakt (its JSON export) and Netflix (viewing activity: shows you've watched
+  // three or more episodes of). Saved titles join the Watchlist; ones you rated highly or watched a lot are starred, so
+  // For You learns from them. Each is matched through the search service, 300 at most.
+  const csv = (t) => {
+    const rows = []; let row = [], cell = '', q = false;
+    for (let i = 0; i < t.length; i++) {
+      const c = t[i];
+      if (q) { if (c === '"') { if (t[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
+      else if (c === '"') q = true; else if (c === ',') { row.push(cell); cell = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && t[i + 1] === '\n') i++; row.push(cell); if (row.some(Boolean)) rows.push(row); row = []; cell = ''; }
+      else cell += c;
+    }
+    row.push(cell); if (row.some(Boolean)) rows.push(row);
+    const head = (rows.shift() || []).map((h) => h.replace(/^\uFEFF/, '').trim());
+    return rows.map((r) => Object.fromEntries(head.map((h, i) => [h, (r[i] || '').trim()])));
+  };
+  function readOther(text) {
+    const out = [];   // { imdb?, tmdb?, title?, year?, type?, as: 'save' | 'star' }
+    if (/^\s*\[/.test(text)) {   // Trakt
+      for (const x of JSON.parse(text)) {
+        const it = x?.movie || x?.show, type = x?.movie ? 'movie' : x?.show ? 'tv' : null; if (!it || !type) continue;
+        if (x.rating != null && x.rating < 8) continue;
+        out.push({ tmdb: it.ids?.tmdb ? `${type === 'movie' ? 'm' : 't'}${it.ids.tmdb}` : null, imdb: it.ids?.imdb, title: it.title, year: it.year, type, as: x.rating != null || x.watched_at || x.plays ? 'star' : 'save' });
+      }
+      return { from: 'Trakt', list: out };
+    }
+    const rows = csv(text), h = rows[0] || {};
+    if ('Letterboxd URI' in h) {
+      for (const r of rows) { const rated = 'Rating' in r; if (rated && !(+r.Rating >= 4)) continue; if (r.Name) out.push({ title: r.Name, year: +r.Year || null, type: 'movie', as: rated ? 'star' : 'save' }); }
+      return { from: 'Letterboxd', list: out };
+    }
+    if ('Const' in h) {
+      const kind = (t) => (/series|episode/i.test(t || '') ? 'tv' : 'movie');
+      for (const r of rows) { const rated = 'Your Rating' in r && r['Your Rating']; if (rated && +r['Your Rating'] < 8) continue; if (/episode/i.test(r['Title Type'] || '')) continue;
+        out.push({ imdb: r.Const, title: r.Title, year: +r.Year || null, type: kind(r['Title Type']), as: rated ? 'star' : 'save' }); }
+      return { from: 'IMDb', list: out };
+    }
+    if ('Title' in h && 'Date' in h) {   // Netflix: "Show: Season 2: Episode name" for each episode watched
+      const n = new Map();
+      for (const r of rows) { const m = r.Title.match(/^(.+?): (?:Season|Series|Limited Series|Part|Volume|Chapter|Collection|Book) /); if (m) n.set(m[1], (n.get(m[1]) || 0) + 1); }
+      for (const [title, c] of n) if (c >= 3) out.push({ title, type: 'tv', as: 'star' });
+      return { from: 'Netflix', list: out };
+    }
+    return null;
+  }
+  async function importOther(got) {
+    const list = got.list.slice(0, 300); let done = 0, saves = 0, starred = 0, missed = 0;
+    const have = saved.all(), keys = new Set(have.map((x) => x.k)), add = [];
+    note.textContent = `Matching ${list.length} title${list.length === 1 ? '' : 's'} from ${got.from}…`; clearTimeout(say.t);
+    const work = async (x) => {
+      const t = x.tmdb ? { k: x.tmdb, type: x.type, title: x.title, year: x.year ? String(x.year) : null, poster: null } : await findTitle(x);
+      done++; if (done % 10 === 0) note.textContent = `Matching ${done} of ${list.length} from ${got.from}…`;
+      if (!t?.k) { missed++; return; }
+      if (x.as === 'star') { if (!stars.has(t.k)) { stars.toggle(t.k); starred++; } }
+      else if (!keys.has(t.k)) { keys.add(t.k); add.push({ k: t.k, type: t.type || x.type, title: t.title || x.title, year: t.year || null, poster: t.poster || null, at: Date.now() }); saves++; }
+    };
+    const queue = [...list]; await Promise.all(Array.from({ length: 6 }, async () => { while (queue.length) await work(queue.shift()); }));
+    if (add.length) saved.set([...add, ...have].slice(0, 500));
+    const bits = [saves && `${saves} added to your Watchlist`, starred && `${starred} starred for For You`].filter(Boolean);
+    say(bits.length ? `${got.from}: ${bits.join(', ')}${missed ? ` (${missed} not found)` : ''}` : `Nothing new from ${got.from}${missed ? ` (${missed} not found)` : ''}`);
+  }
   document.getElementById('setImport').addEventListener('change', async (e) => {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-    try {
-      const d = JSON.parse(await f.text()); if (d?.tenner !== 1) throw 0;
+    let text = ''; try { text = await f.text(); } catch { say("That file didn't open"); return; }
+    let d = null; try { d = JSON.parse(text); } catch {}
+    if (d?.tenner === 1) {
       const have = saved.all(), keys = new Set(have.map((x) => x.k));
       const add = (d.watchlist || []).filter((x) => x?.k && !keys.has(x.k));
       saved.set([...have, ...add]);
       for (const [k, p] of Object.entries(d.progress || {})) if (!progress.get(k)) progress.set(k, p);
       if (!mine.get().length && d.services?.length) mine.set(d.services);
-      show(); say(`Imported ${add.length} new title${add.length === 1 ? '' : 's'}`);
-    } catch { say("That file isn't a Tenner export"); }
+      show(); say(`Imported ${add.length} new title${add.length === 1 ? '' : 's'}`); return;
+    }
+    let got = null; try { got = readOther(text); } catch {}
+    if (!got) { say('That file isn’t one Tenner can read. Try a Tenner, Letterboxd, IMDb, Trakt or Netflix export'); return; }
+    if (!got.list.length) { say(`Nothing to bring in from that ${got.from} file`); return; }
+    importOther(got);
   });
   // ---------- Watchlist alerts (shell.js tn.alerts, sent by the Worker) ----------
   const al = document.getElementById('setAlerts'), alNow = document.getElementById('alNow');
   const AL_TEXT = {
-    on: 'On. You’ll hear when something you’ve saved arrives, or gets a new season',
-    off: 'A notification when something you’ve saved arrives, or gets a new season',
+    on: 'On. You’ll hear when something you’ve saved arrives, has a new episode or is about to leave',
+    off: 'A notification when something you’ve saved arrives, has a new episode or is about to leave',
     blocked: 'Notifications are turned off for Tenner in your browser’s settings',
     install: 'On iPhone and iPad: add Tenner to your Home Screen first (Share, then Add to Home Screen), then open it from there',
     unsupported: 'This browser can’t show notifications from websites',
@@ -142,7 +209,14 @@
     saved.set([]); mine.set([]); prefs.set('start', 'auto'); show(); say('Cleared');
   });
   // the account row at the top: who's signed in
-  const acct = () => { const u = window.tn.account.user(); document.getElementById('setAcctNow').textContent = u ? `Signed in as ${u.name || 'you'}. Everything here is kept in step on your devices` : 'Sign in to keep your Watchlist and settings in step on every device'; };
-  acct(); addEventListener('tn:account', acct);
+  const acct = () => {
+    const u = window.tn.account.user(); document.getElementById('setAcctNow').textContent = u ? `Signed in as ${u.name || 'you'}. Everything here is kept in step on your devices` : 'Sign in to keep your Watchlist and settings in step on every device';
+    // the Sunday email goes to your account's email address (Google's, or the one you signed up with)
+    const dg = document.getElementById('setDigest'); dg.disabled = !u; dg.checked = !!u && !!prefs.get().digest;
+    document.getElementById('dgNow').textContent = !u ? 'Sign in to get a short round-up of your Watchlist each Sunday morning'
+      : dg.checked ? 'On. Each Sunday morning: new episodes, arrivals and what’s leaving from your Watchlist, sent to your account’s email'
+      : 'A short round-up each Sunday morning: new episodes, arrivals and what’s leaving from your Watchlist';
+  };
+  acct(); addEventListener('tn:account', acct); addEventListener('tn:prefs', acct);
   show();
 })();

@@ -1058,3 +1058,17 @@ $('#kindSel').addEventListener('change', (e) => setKind(e.target.value));
 addEventListener('hashchange', () => { route(); scrollTo(0, 0); });
 addEventListener('popstate', () => state.trending && openFromUrl());   // Forward to a title you'd closed opens it again
 load();
+
+// a link shared to Tenner from another app (the manifest's share_target, once it's on the Home Screen): an IMDb,
+// Letterboxd, JustWatch or TMDB link, or just a name. Tenner finds the title and opens its sheet, ready to save
+{
+  const p = new URL(location.href).searchParams;
+  if (!p.get('t') && (p.get('url') || p.get('text') || p.get('title'))) {
+    const u = new URL(location.href); for (const k of ['url', 'text', 'title']) u.searchParams.delete(k); history.replaceState(null, '', u);
+    window.tn.sharedTitle(p).then((x) => {
+      if (!x?.k) { toast('Tenner couldn’t find that title'); return; }
+      const v = new URL(location.href); v.searchParams.set('t', x.k); history.replaceState(null, '', v);
+      if (state.trending) openFromUrl();
+    });
+  }
+}

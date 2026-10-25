@@ -68,6 +68,11 @@ const sky = build(xml.replace('https://images.example/x/cover', 'https://images.
 assert.equal(sky.sky, '2fe55478-24f6-48ef-a5fe-458345bbb469', "Sky's pictures are kept as their id");
 assert.ok(!('wide' in sky) && !('show' in sky) && !Object.values(sky).includes(null), 'no empty or repeated fields');
 assert.equal(p.wide, 'https://images.example/x/cover', 'other pictures keep their address');
+// On TV this week: titles folded, later showings only, a show never taken for a film
+const { onAir } = await import(new URL('../scripts/fetch-tv.mjs', import.meta.url));
+const air = onAir(built, Date.parse('2026-10-24T12:00:00Z')).titles;
+assert.deepEqual(air['voice and friends'], [['BBC One', Date.parse('2026-10-24T19:35:00Z'), 0, 45]], 'a showing to come is listed under its folded title');
+assert.deepEqual(onAir(built, Date.parse('2026-10-25T12:00:00Z')).titles, {}, 'showings that have finished are left out');
 // the Met Office's warnings: the worst first, finished ones dropped, UK times read correctly, each with its own link
 const { warnings } = await import(new URL('./src/index.js', import.meta.url));
 const w = warnings(MO_XML, Date.parse('2026-10-25T13:00:00Z'));

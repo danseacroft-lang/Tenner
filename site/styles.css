@@ -776,7 +776,10 @@ a.tb-btn:hover { text-decoration: none; }
 .mine-row + .mine-row { border-top: .5px solid var(--sep); }
 .mine-ic { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; overflow: hidden; flex: none; background: var(--fill); font-weight: 700; }
 .mine-ic img { width: 100%; height: 100%; object-fit: cover; }
-.mine-l { flex: 1; font-size: 16px; }
+.mine-l { flex: 1; font-size: 16px; padding: 7px 0; }
+.mine-n { display: block; font-size: 13px; color: var(--label2); }
+.mine-n:empty { display: none; }
+.mine-dlg p.mine-plan { margin: 12px 2px 0; font-size: 13px; }
 .mine-row input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .sw { position: relative; width: 51px; height: 31px; flex: none; border-radius: 16px; background: var(--fill-strong); transition: background-color .25s ease; }
 .sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, .25); transition: translate .25s var(--ease-out); }

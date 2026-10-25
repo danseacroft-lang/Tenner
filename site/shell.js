@@ -12,7 +12,7 @@
     edit(fn) { const m = meta.get(); fn(m); try { localStorage.setItem(SYNC, JSON.stringify(m)); } catch {} },
   };
   // ---------- settings (settings.html), on this device (and in your account, if you sign in) ----------
-  const PREFS = 'tenner-settings', DEF = { start: 'auto', anim: false, moves: true, ratings: true, hero: true, trailers: 'here', no18: false };
+  const PREFS = 'tenner-settings', DEF = { start: 'auto', anim: false, moves: true, ratings: true, hero: true, trailers: 'here', no18: false, digest: false };
   const prefs = {
     get() { try { const { still, ...p } = JSON.parse(localStorage.getItem(PREFS) || '{}'); return { ...DEF, ...p }; } catch { return { ...DEF }; } },   // still: the old Reduce motion setting, gone
     set(k, v) { const p = prefs.get(); p[k] = v; try { localStorage.setItem(PREFS, JSON.stringify(p)); } catch {} meta.edit((m) => { m.pfat = Date.now(); }); apply(); dispatchEvent(new Event('tn:prefs')); },
@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.48.0';
+  const version = '1.49.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -172,10 +172,42 @@
     }
     const cur = mine.get();
     dlg.querySelector('#mineList').innerHTML = list.map((s) => `<label class="mine-row">
-      <span class="mine-ic">${s.logo ? `<img src="${esc(s.logo)}" alt="">` : esc(s.label[0])}</span><span class="mine-l">${esc(s.label)}</span>
+      <span class="mine-ic">${s.logo ? `<img src="${esc(s.logo)}" alt="">` : esc(s.label[0])}</span><span class="mine-l">${esc(s.label)}<small class="mine-n" data-svc="${esc(s.key)}"></small></span>
       <input type="checkbox" switch role="switch" value="${esc(s.key)}"${!cur.length || cur.includes(s.key) ? ' checked' : ''}><i class="sw" aria-hidden="true"></i></label>`).join('');
     dlg.classList.toggle('native-sw', 'switch' in HTMLInputElement.prototype);   // Safari 17.4+: the real iOS switch
     dlg.returnValue = ''; dlg.showModal();
+    plan(dlg, list);
+  }
+  // the planner: how much of your Watchlist each service has, and which one you could pause. Where each title streams
+  // comes from data/titles.json, and the search service for anything saved that the charts don't cover (40 at most)
+  const SVC_MATCH = { netflix: /^netflix/, disney: /^disney plus/, prime: /^(amazon prime( video)?|prime video)/, hbomax: /^(hbo max|max)( with ads)?$/, paramount: /^paramount plus/ };
+  let planP = null;
+  const planData = () => (planP ||= fetch(`data/titles.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
+  async function plan(dlg, list) {
+    const wl = saved.all(), out = dlg.querySelector('#minePlan') || dlg.querySelector('.mine-list').insertAdjacentElement('afterend', Object.assign(document.createElement('p'), { id: 'minePlan', className: 'mine-plan' }));
+    out.hidden = true;
+    if (!wl.length) return;
+    const d = await planData(), providers = { ...(d?.providers || {}) }, items = { ...(d?.items || {}) };
+    const missing = wl.filter((x) => !items[x.k]).slice(0, 40).map((x) => x.k);
+    await Promise.all(missing.map((k) => fetch(`${api}/title/${k}`).then((r) => (r.ok ? r.json() : null)).then((r) => { if (r?.items) { Object.assign(items, r.items); Object.assign(providers, r.providers); } }).catch(() => {})));
+    if (!dlg.open) return;
+    const on = (k) => new Set([...(items[k]?.f || []), ...(items[k]?.fr || [])].map((id) => {
+      const n = (providers[id]?.[0] || '').toLowerCase(); return Object.keys(SVC_MATCH).find((s) => SVC_MATCH[s].test(n));
+    }).filter(Boolean));
+    const known = wl.filter((x) => items[x.k]), where = new Map(known.map((x) => [x.k, on(x.k)])), count = {};
+    for (const s of list) count[s.key] = known.filter((x) => where.get(x.k).has(s.key)).length;
+    for (const el of dlg.querySelectorAll('.mine-n')) { const n = count[el.dataset.svc] || 0; el.textContent = n ? `${n} on your Watchlist` : 'Nothing on your Watchlist'; }
+    // a service you could pause: nothing on your Watchlist is only there (and you've chosen it, or chosen none)
+    const chosen = mine.get(), keys = list.map((s) => s.key).filter((k) => !chosen.length || chosen.includes(k));
+    const needs = (k) => known.some((x) => { const w = [...where.get(x.k)].filter((s) => keys.includes(s)); return w.length === 1 && w[0] === k; });
+    const label = (k) => list.find((s) => s.key === k)?.label || k;
+    const pause = known.length >= 3 ? keys.filter((k) => !needs(k)) : [], elsewhere = known.filter((x) => !where.get(x.k).size).length;
+    const lines = [];
+    if (pause.length && pause.length < keys.length) lines.push(`Nothing on your Watchlist needs ${pause.map(label).join(' or ')}, so you could pause ${pause.length > 1 ? 'them' : 'it'} for now.`);
+    else if (known.length) { const best = keys.slice().sort((a, b) => count[b] - count[a])[0]; if (count[best]) lines.push(`${label(best)} has the most of your Watchlist.`); }
+    if (elsewhere) lines.push(`${elsewhere} ${elsewhere > 1 ? 'aren’t' : 'isn’t'} on any of these right now.`);
+    out.textContent = lines.join(' ');
+    out.hidden = !lines.length;
   }
 
   // ---------- Share: the phone's own share sheet where there is one, otherwise the share card ----------
@@ -329,6 +361,32 @@
   // ---------- the search API (worker/, on Cloudflare): every film and show on TMDB. Empty until it's deployed ----------
   const api = 'https://tenner-api.danseacroft.workers.dev';
 
+  // ---------- a title from somewhere else: an IMDb number, a TMDB link, or a name (and year) to search for ----------
+  // Used by Settings' import (Letterboxd, IMDb, Trakt, Netflix) and by links shared to Tenner from other apps.
+  const fold = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim().replace(/^the /, '');
+  async function findTitle({ imdb, title, year, type }) {
+    const get = (p) => fetch(`${api}${p}`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    if (/^tt\d{1,10}$/.test(imdb || '')) { const d = await get(`/find/${imdb}`); if (d?.k) return d; }
+    if (!title) return null;
+    const d = await get(`/search?q=${encodeURIComponent(String(title).slice(0, 80))}`), all = (d?.results || []).filter((x) => !type || x.type === type);
+    const same = all.filter((x) => fold(x.title) === fold(title)), near = (x) => year && x.year && Math.abs(x.year - year) <= 1;
+    const x = same.find(near) || (year ? all.find(near) : null) || same[0] || all[0];
+    return x ? { k: x.k, type: x.type, title: x.title, year: x.year, poster: x.poster ? d.img + x.poster : null } : null;
+  }
+  // a link shared to Tenner (the share sheet, once it's on the Home Screen): what it points at
+  function sharedTitle(p) {
+    const text = [p.get('url'), p.get('text'), p.get('title')].filter(Boolean).join(' ');
+    const imdb = text.match(/imdb\.com\/(?:[a-z]{2}\/)?title\/(tt\d{1,10})/)?.[1];
+    const tmdb = text.match(/themoviedb\.org\/(movie|tv)\/(\d{1,9})/);
+    if (tmdb) return Promise.resolve({ k: `${tmdb[1] === 'movie' ? 'm' : 't'}${tmdb[2]}` });
+    const slug = text.match(/letterboxd\.com\/film\/([a-z0-9-]+)/)?.[1] || text.match(/justwatch\.com\/[a-z]{2}\/(?:movie|film)\/([a-z0-9-]+)/)?.[1];
+    const show = text.match(/justwatch\.com\/[a-z]{2}\/(?:tv-show|tv-series)\/([a-z0-9-]+)/)?.[1];
+    if (slug || show) { const m = (slug || show).match(/^(.*?)(?:-(\d{4}))?$/); return findTitle({ title: m[1].replace(/-/g, ' '), year: +m[2] || null, type: show ? 'tv' : 'movie' }); }
+    const name = (p.get('title') || p.get('text') || '').replace(/https?:\/\/\S+/g, '').replace(/^(watch|check out)\s+/i, '').replace(/\s+(on|\|)\s+(netflix|disney\+?|prime video|apple tv\+?|hbo max|max|paramount\+?|youtube|imdb|letterboxd).*$/i, '').replace(/\s*\((\d{4})\)/, ' $1').trim();
+    const yr = name.match(/\s(\d{4})$/)?.[1];
+    return findTitle({ imdb, title: yr ? name.slice(0, -5) : name, year: +yr || null });
+  }
+
   // ---------- Watchlist alerts (worker/src/push.js): a notification when something you saved arrives ----------
   // The browser's own push service; the Worker is told this device's push address and its Watchlist (and nothing else),
   // and again whenever the Watchlist changes. On an iPhone or iPad, Safari can only do this once Tenner is on the Home Screen.
@@ -475,7 +533,7 @@
     },
   };
 
-  window.tn = { prefs, esc, hue, glide, arrows, segment, reduce, saved, stars, progress, nextUp, whenText, mine, pickMine, api, share, alerts, isIOS, account, avatar, featured };
+  window.tn = { prefs, esc, hue, glide, arrows, segment, reduce, saved, stars, progress, nextUp, whenText, mine, pickMine, api, share, alerts, isIOS, account, avatar, featured, findTitle, sharedTitle };
 
   // ---------- tabs ----------
   const tabs = [...document.querySelectorAll('#tabs [role=tab]')], ind = $('#tabInd'), names = tabs.map((t) => t.dataset.tab);

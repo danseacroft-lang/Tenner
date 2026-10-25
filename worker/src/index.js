@@ -5,24 +5,29 @@
 //                     ?page=N (1–30) a page of the most popular people across all of TMDB, for Cast & Crew's wall of faces
 //   GET /person/123   one person: biography, and everything they've been in or made
 //   GET /credits/m123 a title's main cast and key crew
+//   GET /find/tt123   the film or show with that IMDb number (for imports and links shared from IMDb)
 //   /push/…           Watchlist alerts (push.js)
 //   /auth/…, /me…, /share/…  accounts: passkeys, Google, sync, shared lists (auth.js)
+//   /digest/off       the Sunday email's unsubscribe link (digest.js)
 //   POST /contact     the Contact page's form: emailed to Tenner's inbox (Cloudflare Email Routing). The inbox's
 //                     address is a Worker secret (SUPPORT_EMAIL), so it's never in the website or this code
 // Only Tenner's own pages may call it (CORS), and answers are cached at Cloudflare's edge, so popular searches and
 // titles barely touch TMDB: searches for a day, titles for six hours.
 import { EmailMessage } from 'cloudflare:email';
-import { pushRoute, pushRun, pushSend } from './push.js';
+import { pushRoute, pushRun, pushSend, pushMorning } from './push.js';
 import { authRoute } from './auth.js';
+import { digestRun, digestOff } from './digest.js';
 
 const TMDB = 'https://api.themoviedb.org/3', IMG = 'https://image.tmdb.org/t/p', REGION = 'GB';
 
 export default {
-  // every hour: Watchlist alerts for anything new (push.js)
-  async scheduled(event, env, ctx) { ctx.waitUntil(pushRun(env)); },
+  // every hour: Watchlist alerts for anything new; once each morning, new episodes and titles leaving (push.js); on
+  // Sunday morning, the Sunday email (digest.js)
+  async scheduled(event, env, ctx) { ctx.waitUntil(pushRun(env)); ctx.waitUntil(pushMorning(env)); ctx.waitUntil(digestRun(env)); },
   async fetch(req, env, ctx) {
     const url = new URL(req.url), origin = req.headers.get('origin') || '';
     if (url.pathname === '/push/send' && req.method === 'POST') return pushSend(req, env);   // the hourly run's batches (signed)
+    if (url.pathname === '/digest/off') return digestOff(req, env, url);   // the Sunday email's unsubscribe link (signed)
     const allowed = (env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
     const ok = allowed.includes(origin);
     const cors = ok ? { 'access-control-allow-origin': origin, vary: 'origin' } : {};
@@ -52,6 +57,8 @@ export default {
     } else if (/^\/credits\/[mt]\d{1,9}$/.test(url.pathname)) {
       const k = url.pathname.split('/')[2], type = k[0] === 'm' ? 'movie' : 'tv';
       path = `/${type}/${k.slice(1)}/${type === 'tv' ? 'aggregate_credits' : 'credits'}`; params = { language: 'en-GB' }; shape = (d) => creditsShape(d, type); ttl = 86400;
+    } else if (/^\/find\/tt\d{1,10}$/.test(url.pathname)) {
+      path = url.pathname; params = { external_source: 'imdb_id', language: 'en-GB' }; shape = findShape; ttl = 604800;
     } else {
       const m = url.pathname.match(/^\/title\/([mt])(\d{1,9})$/);
       if (!m) return json({ error: 'Not found' }, 404, cors);
@@ -88,6 +95,13 @@ function searchShape(d) {
       poster: x.poster_path || null, backdrop: x.backdrop_path || null, overview: (x.overview || '').slice(0, 400),
     })),
   };
+}
+
+function findShape(d) {
+  const x = d.movie_results?.[0] || d.tv_results?.[0]; if (!x) return {};
+  const type = d.movie_results?.[0] ? 'movie' : 'tv';
+  return { k: `${type === 'movie' ? 'm' : 't'}${x.id}`, type, title: x.title || x.name, year: (x.release_date || x.first_air_date || '').slice(0, 4) || null,
+    poster: x.poster_path ? `${IMG}/w342${x.poster_path}` : null };
 }
 
 // the same fields as data/titles.json (see buildTitles in scripts/fetch-data.mjs), plus the basics for the sheet

@@ -1,4 +1,5 @@
-// Watchlist alerts: a notification when something on your Watchlist arrives on a service, or gets a new season.
+// Watchlist alerts: a notification when something on your Watchlist arrives on a service, or gets a new season; and each
+// morning, when a show on it has a new episode out that day or a title on it is about to leave its service.
 // No accounts: each phone or computer that turns alerts on hands over its push address (from the browser) and the
 // titles on its Watchlist, kept in Workers KV (PUSH) under a hash of that address. Every hour the Worker reads the
 // site's New list; when it has changed, each subscriber with a match gets one notification, sent with the Web Push
@@ -44,7 +45,7 @@ export async function pushRoute(req, env, ctx, url, json, cors) {
     const acct = await linkAlerts(req, env, id).catch(() => null);   // signed in: this device's alerts follow the account's Watchlist
     if (acct) watch = acct;
     await env.PUSH.put(id, JSON.stringify({ sub: { endpoint: ep, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } }, watch, seen: old?.seen || [], at: Date.now() }));
-    if (!old) ctx.waitUntil(send(sub, { title: 'Alerts are on', body: 'Tenner will tell you when something on your Watchlist arrives or gets a new season.', url: '/#watchlist', tag: 'tenner-hello' }, env).catch(() => {}));
+    if (!old) ctx.waitUntil(send(sub, { title: 'Alerts are on', body: 'Tenner will tell you when something on your Watchlist arrives, has a new episode or is about to leave.', url: '/#watchlist', tag: 'tenner-hello' }, env).catch(() => {}));
     return json({ ok: true, watching: watch.length }, 200, cors);
   }
   return json({ error: 'Not found' }, 404, cors);
@@ -69,10 +70,76 @@ export async function pushRun(env, force = false) {
 // one batch: each subscriber's matches, as one notification each
 export async function pushSend(req, env) {
   if (req.headers.get('x-tenner-run') !== await sha(env.VAPID_JWK || '')) return new Response('No', { status: 403 });
-  const { ids } = await req.json();
+  const { ids, kind } = await req.json();
   const r = await fetch(`${SITE}/data/new.json`); if (!r.ok) return new Response('No list', { status: 502 });
-  await sendBatch(env, ids, await r.json());
+  await (kind === 'morning' ? morningBatch : sendBatch)(env, ids, await r.json());
   return new Response('OK');
+}
+
+// ---------- the morning run (once a day, from 9am UK time) ----------
+// New episodes out today of the shows on each Watchlist (TMDB's next episode, looked up once a day per show and shared by
+// everyone through the edge cache), and Watchlist titles leaving their service in the next three days (the site's
+// Leaving soon list). Each is told once, remembered in the subscriber's seen list like the arrivals.
+export const ukNow = () => {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23' })
+    .formatToParts(new Date()).map((x) => [x.type, x.value]));
+  return { day: `${p.year}-${p.month}-${p.day}`, hour: +p.hour };
+};
+export async function pushMorning(env, force = false) {
+  if (!ready(env) || !env.TMDB_TOKEN) return;
+  const { day, hour } = ukNow();
+  if (!force && (hour < 9 || (await env.PUSH.get('meta:morning')) === day)) return;
+  await env.PUSH.put('meta:morning', day);
+  const r = await fetch(`${SITE}/data/new.json?v=${Date.now()}`, { cf: { cacheTtl: 0 } });
+  const fresh = r.ok ? await r.json() : {};
+  let cursor; const ids = [];
+  do { const page = await env.PUSH.list({ prefix: 'sub:', cursor }); ids.push(...page.keys.map((k) => k.name)); cursor = page.list_complete ? null : page.cursor; } while (cursor);
+  for (let i = 0; i < ids.length; i += 10) {
+    const batch = ids.slice(i, i + 10);
+    if (env.SELF) await env.SELF.fetch('https://self/push/send', { method: 'POST', headers: { 'x-tenner-run': await sha(env.VAPID_JWK) }, body: JSON.stringify({ ids: batch, kind: 'morning' }) });
+    else await morningBatch(env, batch, fresh);
+  }
+}
+export async function nextEpisode(env, id) {
+  const key = new Request(`https://tenner-cache/next/${id}`), hit = await caches.default.match(key);
+  if (hit) return hit.json();
+  const r = await fetch(`https://api.themoviedb.org/3/tv/${id}?language=en-GB`, { headers: { authorization: `Bearer ${env.TMDB_TOKEN}`, accept: 'application/json' } });
+  if (!r.ok) return null;
+  const d = await r.json(), n = d.next_episode_to_air;
+  const out = { title: d.name || '', nx: n?.air_date ? [n.air_date, n.season_number, n.episode_number] : null };
+  await caches.default.put(key, new Response(JSON.stringify(out), { headers: { 'cache-control': 'public, max-age=43200' } }));
+  return out;
+}
+const dayName = (iso, today) => {
+  const gap = Math.round((Date.parse(iso) - Date.parse(today)) / 864e5);
+  return gap <= 0 ? 'today' : gap === 1 ? 'tomorrow' : `on ${new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' })}`;
+};
+async function morningBatch(env, ids, fresh) {
+  const { day } = ukNow(), last = new Date(Date.parse(day) + 3 * 864e5).toISOString().slice(0, 10);
+  const label = { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+' };
+  const leaving = (fresh.leaving || []).filter((x) => x.id && x.date >= day && x.date <= last);
+  for (const id of ids) {
+    const s = await env.PUSH.get(id, 'json'); if (!s) continue;
+    const want = new Set(s.watch), seen = new Set(s.seen || []), hits = [];
+    for (const x of leaving) {
+      const k = `${x.type === 'movie' ? 'm' : 't'}${x.id}`, tag = `l${k}:${x.date}`;
+      if (want.has(k) && !seen.has(tag)) hits.push({ tag, k, short: `${x.title} (leaving ${dayName(x.date, day)})`,
+        title: `${x.title} leaves ${label[x.service] || 'its service'} ${dayName(x.date, day)}`, body: 'From your Watchlist. There’s still time to watch it.' });
+    }
+    for (const k of [...want].filter((k) => k[0] === 't').slice(0, 60)) {
+      const e = await nextEpisode(env, k.slice(1)).catch(() => null);
+      if (!e?.nx || e.nx[0] !== day) continue;
+      const tag = `e${k}:${e.nx[1]}:${e.nx[2]}`;
+      if (!seen.has(tag)) hits.push({ tag, k, short: `${e.title} S${e.nx[1]} E${e.nx[2]}`,
+        title: `New episode of ${e.title} today`, body: `Season ${e.nx[1]}, episode ${e.nx[2]} is out today.` });
+    }
+    if (!hits.length) continue;
+    const msg = hits.length === 1 ? { title: hits[0].title, body: hits[0].body, url: `/?t=${hits[0].k}` }
+      : { title: `${hits.length} things from your Watchlist today`, body: hits.slice(0, 4).map((h) => h.short).join(', '), url: '/#watchlist' };
+    const res = await send(s.sub, { ...msg, tag: 'tenner-morning' }, env).catch(() => null);
+    if (res && (res.status === 404 || res.status === 410)) { await env.PUSH.delete(id); continue; }
+    if (res?.ok) { for (const h of hits) seen.add(h.tag); await env.PUSH.put(id, JSON.stringify({ ...s, seen: [...seen].slice(-300) })); }
+  }
 }
 async function sendBatch(env, ids, fresh) {
   const today = new Date().toISOString().slice(0, 10), since = new Date(Date.now() - 3 * 864e5).toISOString().slice(0, 10);

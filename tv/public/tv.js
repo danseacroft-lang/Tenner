@@ -28,6 +28,9 @@
   const today = ukDay();
   let days = Array.from({ length: 8 }, (_, i) => ukDay(Date.now() + i * 864e5));   // until the listings say which days they cover
   const q = new URLSearchParams(location.search).get('d');
+  // tenner.stream's "On TV" line opens Tenner TV with ?q=: the search, filled in, once the listings are here
+  let askQ = (new URLSearchParams(location.search).get('q') || '').slice(0, 80);
+  if (askQ) { const u = new URL(location.href); u.searchParams.delete('q'); history.replaceState(null, '', u); }
   // base: the first day in the strips; loaded: every day fetched, in order; day: the one in view
   const state = { base: days.includes(q) ? q : today, day: null, data: null, loaded: new Map(), loading: null, failedAt: 0 };
   const label = (d) => (d === today ? 'Tonight' : d === days[1] ? 'Tomorrow' : dayName(d, { weekday: 'short', day: 'numeric' }));
@@ -89,6 +92,7 @@
       state.data = d; state.loaded = new Map([[state.base, d]]); shown.clear();
       setDay(state.base); drawCats(); drawGuide();
       loadNext();   // the next day ready before anyone scrolls to it
+      if (askQ) { fq.value = askQ; askQ = ''; openFind(); }
     } catch (err) {
       if (err.name === 'AbortError') return;
       $('#picksSec').hidden = true;

@@ -102,6 +102,11 @@ Mac. When in doubt, ask "would this look at home in Apple TV, Apple Music or the
   only for a day the feed doesn't cover, and the last good copy served if a source is down. Its own logos in `tv/public/logos`
   (sized for where they're shown). A service worker (`tv/public/sw.js`) keeps the page on the device: it opens instantly
   and works offline. Bump its `?v=` with every Tenner TV update (sed over `tv/public/index.html tv/public/sw.js`).
+- **Alerts and the Sunday email** (the search/accounts Worker's hourly cron): Watchlist alerts for arrivals each hour; from
+  9am UK time a morning pass for new episodes out today and titles leaving within three days (`push.js`); on Sunday mornings
+  the opt-in Sunday email through Resend, with a signed unsubscribe link (`digest.js`).
+- **On TV this week**: `scripts/fetch-tv.mjs` also writes `onair.json` (title → next showings); tenner.stream's title sheet
+  reads it from tenner-tv's workers.dev address, and the line opens Tenner TV's search with `?q=`.
 - **Watchdog** (`watchdog.yml`, every 3 hours): checks the site, the charts' age, the search service and Tenner TV; re-runs
   whatever's behind, re-checks after 7 minutes, and only then fails (GitHub emails the owner). It also checks the Watch live
   links still open. tv.tenner.stream is behind Cloudflare's bot check, so it checks Tenner TV at its workers.dev address.

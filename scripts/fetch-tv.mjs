@@ -59,6 +59,24 @@ export function build(xml, channels, now = Date.now()) {
   return out;
 }
 
+// On TV this week, for tenner.stream's title sheets (onair.json): every title still to come, folded the way both pages
+// fold names, with its next three showings as [channel, start, film, minutes]. A showing with no episode number that runs 75
+// minutes or more counts as a film, so a film and a show of the same name don't get mixed up.
+export const fold = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' and ')
+  .replace(/[^a-z0-9]+/g, ' ').trim().replace(/^the /, '');
+export function onAir(days, now = Date.now()) {
+  const all = new Map();
+  for (const day of Object.values(days)) for (const c of day.channels) for (const x of c.items) {
+    if (x.at + (x.rt || 30) * 6e4 <= now) continue;
+    const k = fold(x.t); if (!k) continue;
+    if (!all.has(k)) all.set(k, []);
+    all.get(k).push([c.name, x.at, !x.s && !x.n && x.rt >= 75 ? 1 : 0, x.rt || 30]);
+  }
+  const titles = {};
+  for (const [k, l] of all) titles[k] = l.sort((a, b) => a[1] - b[1]).slice(0, 3);
+  return { generatedAt: new Date(now).toISOString(), titles };
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const channels = JSON.parse(await readFile(join(ROOT, 'tv', 'channels.json'), 'utf8'));
   await mkdir(OUT, { recursive: true });
@@ -70,6 +88,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     if (full.length < 5) throw new Error(`only ${full.length} full days in the feed`);
     for (const [d, v] of Object.entries(days)) await write(`${d}.json`, v);
     await write('meta.json', { generatedAt: new Date().toISOString(), source: 'freeview', days: Object.keys(days) });
+    await write('onair.json', onAir(days));
     console.log(`Tenner TV: ${Object.keys(days).length} days, ${channels.length} channels, ${Object.values(days).reduce((n, d) => n + d.channels.reduce((m, c) => m + c.items.length, 0), 0)} programmes`);
   } catch (err) {
     // carry the live listings over rather than going blank (the Worker falls back to TVmaze for anything missing)
@@ -78,6 +97,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       const meta = await (await get(`${LIVE}/data/meta.json`, 2)).json();
       for (const d of meta.days || []) { try { await write(`${d}.json`, await (await get(`${LIVE}/data/${d}.json`, 2)).json()); } catch {} }
       await write('meta.json', meta);
+      try { await write('onair.json', await (await get(`${LIVE}/data/onair.json`, 2)).json()); } catch {}
     } catch { console.log('::warning title=Tenner TV listings::no live copy either; the guide uses TVmaze until the feed is back'); }
   }
 }
