@@ -32,6 +32,9 @@ jobs:
             # the search service only answers Tenner's own pages, so the check says it's from tenner.stream
             code=$(curl -s -o /dev/null -w '%{http_code}' -m 30 -H 'Origin: https://tenner.stream' https://tenner-api.danseacroft.workers.dev/title/t1413)
             [ "$code" = 200 ] || echo "api.yml|the search service answered $code"
+            # Tenner TV's search suggests streaming titles through it: it must keep answering tv.tenner.stream
+            code=$(curl -s -o /dev/null -w '%{http_code}' -m 30 -H 'Origin: https://tv.tenner.stream' 'https://tenner-api.danseacroft.workers.dev/search?q=bluey')
+            [ "$code" = 200 ] || echo "api.yml|The search service answered $code to Tenner TV"
             # Tenner TV is checked at its own Cloudflare address: tv.tenner.stream sits behind Cloudflare's bot protection,
             # which turns away automated checks from GitHub's servers (people are let through)
             code=$(curl -s -o /dev/null -w '%{http_code}' -m 30 https://tenner-tv.danseacroft.workers.dev/)
