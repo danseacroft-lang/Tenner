@@ -1,26 +1,16 @@
 /* Tenner TV: Tenner's look (Apple's system colours and type, glass only for the controls, everything blended, never
-   cut off), following the device's light or dark setting. */
+   cut off), always dark, like tenner.stream's standard Night theme. */
 :root {
-  color-scheme: light;
-  --bg: #ffffff; --bg2: #f2f2f7; --label: #000000; --label2: rgba(60, 60, 67, .62); --label3: rgba(60, 60, 67, .36); --sep: rgba(60, 60, 67, .2);
-  --fill: rgba(120, 120, 128, .12); --fill-strong: rgba(120, 120, 128, .2); --accent: #007aff;
-  --gl-fill: rgba(255, 255, 255, .62); --gl-hover: rgba(255, 255, 255, .85); --gl-rim: rgba(60, 60, 67, .16);
-  --sheet-bg: rgba(255, 255, 255, .78);
-  --wp-base: #f7f6fa; --wp-1: rgba(255, 55, 95, .16); --wp-2: rgba(191, 90, 242, .15); --wp-3: rgba(10, 132, 255, .16); --wp-4: rgba(48, 209, 190, .10); --wp-grain: .05;
+  color-scheme: dark;
+  --bg: #000000; --bg2: #1c1c1e; --label: #ffffff; --label2: rgba(235, 235, 245, .62); --label3: rgba(235, 235, 245, .3); --sep: rgba(84, 84, 88, .6);
+  --fill: rgba(118, 118, 128, .24); --fill-strong: rgba(118, 118, 128, .36); --accent: #0a84ff;
+  --gl-fill: rgba(255, 255, 255, .13); --gl-hover: rgba(255, 255, 255, .2); --gl-rim: rgba(255, 255, 255, .2);
+  --sheet-bg: rgba(30, 30, 32, .74);
+  --wp-base: #050508; --wp-1: rgba(255, 55, 95, .17); --wp-2: rgba(191, 90, 242, .16); --wp-3: rgba(10, 132, 255, .17); --wp-4: rgba(48, 209, 190, .07); --wp-grain: .07;
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter Tight", "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --ease-spring: cubic-bezier(.3, 1.25, .4, 1); --ease-out: cubic-bezier(.2, .8, .2, 1);
   --gutter: max(20px, env(safe-area-inset-left, 0px)); --gutter-r: max(20px, env(safe-area-inset-right, 0px)); --max: 1240px;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --bg: #000000; --bg2: #1c1c1e; --label: #ffffff; --label2: rgba(235, 235, 245, .62); --label3: rgba(235, 235, 245, .3); --sep: rgba(84, 84, 88, .6);
-    --fill: rgba(118, 118, 128, .24); --fill-strong: rgba(118, 118, 128, .36); --accent: #0a84ff;
-    --gl-fill: rgba(255, 255, 255, .13); --gl-hover: rgba(255, 255, 255, .2); --gl-rim: rgba(255, 255, 255, .2);
-    --sheet-bg: rgba(30, 30, 32, .74);
-    --wp-base: #050508; --wp-1: rgba(255, 55, 95, .17); --wp-2: rgba(191, 90, 242, .16); --wp-3: rgba(10, 132, 255, .17); --wp-4: rgba(48, 209, 190, .07); --wp-grain: .07;
-  }
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -227,9 +217,6 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
 }
 @media (prefers-reduced-motion: reduce) { *, ::before, ::after { animation: none !important; transition: none !important; } }
 @media (prefers-reduced-transparency: reduce) { .bar-link, .sheet, .chip, .sh-x { -webkit-backdrop-filter: none; backdrop-filter: none; } .sheet { background: var(--bg2); } }
-/* light: the blocks are frosted white rather than see-through grey */
-@media (prefers-color-scheme: light) { .blk { background: rgba(255, 255, 255, .55); box-shadow: inset 0 0 0 .5px rgba(60, 60, 67, .14), 0 1px 2px rgba(0, 0, 0, .04); }
-  @media (hover: hover) { .blk:hover { background: rgba(255, 255, 255, .85); } } }
 @media (prefers-reduced-transparency: reduce) { .blk { background: var(--bg2); } }
 
 /* ---------- channel logos, beside the name: our own copies, on a dark tile (they're made for dark, so the tile stays dark
@@ -314,7 +301,7 @@ html:has(.sheet[open]) { overflow: hidden; }
    Glass over the wallpaper with no edge line: its colours come through, and the glass alone separates them ---------- */
 .side { display: none; }
 @media (min-width: 1000px) {
-  :root { --side: 236px; --side-bg: rgba(242, 242, 247, .62); }
+  :root { --side: 236px; --side-bg: rgba(28, 28, 30, .58); }
   body { padding-left: var(--side); }
   .bar { display: none; }   /* its logo and Top 10 link are in the sidebar */
   .hero { padding-top: 44px; }
@@ -339,7 +326,6 @@ html:has(.sheet[open]) { overflow: hidden; }
   .side-links a:hover { color: var(--label); text-decoration: none; }
   .side-ver { flex-basis: 100%; margin-top: 6px; color: var(--label3); font-size: 12px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
 }
-@media (min-width: 1000px) and (prefers-color-scheme: dark) { :root { --side-bg: rgba(28, 28, 30, .58); } }
 @media (min-width: 1000px) and (prefers-reduced-transparency: reduce) { .side { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--bg2); } }
 
 /* ---------- search: a glass button beside Now, and a sheet of results (the same list style as everywhere) ---------- */
@@ -424,5 +410,4 @@ html:has(.sheet[open]) { overflow: hidden; }
   .hero:has(> .wx:not([hidden])) { min-height: calc(var(--wxh, 0px) + 60px); } }
 @media (max-width: 760px) { .wx { width: 100%; margin-bottom: 14px; grid-template-columns: 30px minmax(0, 1fr) 30px; gap: 10px; padding-left: 12px; } .wx-ic { width: 30px; height: 30px; border-radius: 9px; } .wx-ic svg { width: 19px; height: 19px; } }
 @media (prefers-reduced-transparency: reduce) { .wx { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--bg2); } }
-@media (prefers-color-scheme: light) { .wx { box-shadow: inset 0 0 0 1px var(--gl-rim), 0 14px 34px -18px rgba(0, 0, 0, .25); } }
 @media (prefers-reduced-motion: reduce) { .wx::after { opacity: 0 !important; } .wx { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, #ff3b30 70%, transparent), 0 18px 40px -18px rgba(0, 0, 0, .45); } }
