@@ -261,7 +261,7 @@ function heroCopy({ it, n }) {
   const s = heroScope, kind = it.type === 'tv' ? 'show' : 'film', k = wlKey(it, it.type), x = (k && det(k)) || {};
   const badge = s?.store ? `No. ${n} to buy or rent` : s ? `No. ${n} ${kind} on ${s.label}` : `No. ${n} ${kind} in the UK`;
   const on = s && !s.mine ? s : svc((it.on || [])[0]);
-  const bits = [it.type === 'tv' ? (it.season || 'TV Show') : 'Film', ...(x.g || []).slice(0, 2), it.year,
+  const bits = [it.type === 'tv' ? (it.season || 'Series') : 'Film', ...(x.g || []).slice(0, 2), it.year,
     it.rating && window.tn.prefs.get().ratings ? `★ ${it.rating.toFixed(1)}` : '', n === 1 ? topText(it) : weeksText(it)].filter(Boolean);
   const info = infoFor(it, it.type, badge, s && !s.store && !s.mine ? [s] : null), mark = window.tn.saved.has(k);
   return `<p class="h-badge">${esc(badge)}</p>

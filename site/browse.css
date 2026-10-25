@@ -45,7 +45,8 @@ body.browse { overflow-x: clip; }
 
 /* ---------- collections: big type, a rainbow underline gliding to the one you pick ---------- */
 .coll { position: relative; margin-top: 18px; display: flex; max-width: 100%; }
-.coll-track { position: relative; display: flex; flex-wrap: wrap; gap: 8px clamp(14px, 1.6vw, 24px); min-width: 0; padding: 4px 2px 12px; }
+.coll-track { position: relative; display: flex; flex-wrap: wrap; gap: 8px clamp(14px, 1.6vw, 24px); min-width: 0; padding: 4px 2px 12px;
+  min-height: calc(var(--cfs, 20px) * 1.1 + 26px); }   /* its height before the collections arrive, so nothing below jumps */
 /* every collection on the page, never off the edge: one line on computers, wrapping onto more on phones; the chosen one's
    rainbow underline grows in beneath it */
 .coll-b { position: relative; z-index: 1; flex: none; padding: 4px 0; border: 0; background: none; cursor: pointer;
@@ -53,6 +54,7 @@ body.browse { overflow-x: clip; }
 .coll-b[aria-checked="true"] { color: var(--label); }
 @media (hover: hover) { .coll-b[aria-checked="false"]:hover { color: var(--label2); } }
 .coll-b:active { transform: scale(.96); }
+.coll-b::before { content: ""; position: absolute; inset: -9px -8px; }   /* a 44pt tap around the word */
 .coll-b::after { content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: 3.5px; border-radius: 2px; pointer-events: none;
   background: linear-gradient(90deg, #ff375f, #ff9f0a, #ffd60a, #30d158, #0a84ff, #bf5af2); opacity: 0; transform: scaleX(.4); transition: opacity .3s ease, transform .45s var(--ease-spring); }
 @media (hover: hover) { .coll-b[aria-checked="false"]:hover::after { opacity: .35; transform: none; } }

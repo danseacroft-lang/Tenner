@@ -44,7 +44,7 @@
   /* the big "Tenner" that zooms in: once a visit, for everyone but those who ask for reduced motion; it removes itself when it's done */
   try{if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&!sessionStorage.getItem("tenner-intro")){sessionStorage.setItem("tenner-intro","1");document.documentElement.classList.add("intro")}}catch(e){}
   addEventListener("animationend",function(e){if(e.target.id==="introMark")e.target.remove()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.52.0">
+  <link rel="stylesheet" href="styles.css?v=1.52.1">
 </head>
 <body>
   <a class="skip" href="#main">Skip to the chart</a>
@@ -115,7 +115,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.52.0</span>
+      <span class="side-ver">Tenner 1.52.1</span>
     </div>
   </div>
 
@@ -132,7 +132,7 @@
     <div class="bd-ext" id="bdExt" aria-hidden="true"></div>
     <!-- phones: the top titles as wide banners you swipe through, the Rakuten TV way -->
     <section class="mban" id="mBan" aria-roledescription="carousel" aria-label="Top of the chart" hidden></section>
-    <section class="intro wrap" id="controls" hidden>
+    <section class="intro wrap" id="controls">
       <h1 id="heading" class="large-title">Top 10</h1>
       <p class="lede sub">
         <span id="lede">On all five services in the UK</span>
@@ -149,15 +149,17 @@
       </div>
     </section>
 
+    <!-- the heading is there from the start (no jump when the chart arrives), except on the pages that don't have one -->
+    <script>try{var h=location.hash.slice(1),s=JSON.parse(localStorage.getItem("tenner-settings")||"{}").start;if(/^(new|watchlist|week)$/.test(h||s||""))document.getElementById("controls").hidden=true}catch(e){}</script>
     <div id="view"><div class="wrap loading" aria-busy="true"><p class="sk-say">Loading the chart…</p><div class="sk-row" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div></div>
   </main>
 
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-  <script src="shell.js?v=1.52.0" defer></script>
-  <script src="links.js?v=1.52.0" defer></script>
-  <script src="sheet.js?v=1.52.0" defer></script>
-  <script src="app.js?v=1.52.0" defer></script>
+  <script src="shell.js?v=1.52.1" defer></script>
+  <script src="links.js?v=1.52.1" defer></script>
+  <script src="sheet.js?v=1.52.1" defer></script>
+  <script src="app.js?v=1.52.1" defer></script>
 </body>
 </html>

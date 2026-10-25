@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.52.0';
+  const version = '1.52.1';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -541,7 +541,7 @@
   const links = $('.side-links');
   if (links) {
     links.insertAdjacentHTML('afterbegin', '<a class="side-acct" id="sideAcct" href="account.html"></a>');
-    const draw = () => { const u = account.user(); $('#sideAcct').innerHTML = `${avatar(u)}<span><b>${u ? esc(u.name || 'You') : 'Sign in'}</b><small>${u ? 'Your account' : 'Sync across your devices'}</small></span>`; if (location.pathname.endsWith('account.html')) $('#sideAcct').setAttribute('aria-current', 'page'); };
+    const draw = () => { const u = account.user(); $('#sideAcct').innerHTML = `${avatar(u)}<span><b>${u ? esc(u.name || 'You') : 'Sign in'}</b><small>${u ? 'Your account' : 'Sync your devices'}</small></span>`; if (location.pathname.endsWith('account.html')) $('#sideAcct').setAttribute('aria-current', 'page'); };
     draw(); addEventListener('tn:account', draw);
   }
 
