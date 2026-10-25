@@ -37,8 +37,9 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=1.49.1">
-  <link rel="stylesheet" href="about.css?v=1.49.1">
+  <link rel="stylesheet" href="styles.css?v=1.50.0">
+  <link rel="stylesheet" href="about.css?v=1.50.0">
+  <link rel="preload" href="fonts/caveat-latin.woff2" as="font" type="font/woff2" crossorigin>
 
 </head>
 <body class="about">
@@ -94,7 +95,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.49.1</span>
+      <span class="side-ver">Tenner 1.50.0</span>
     </div>
   </div>
 
@@ -111,8 +112,12 @@
       <p class="sp-eye">About Tenner</p>
       <div class="sp-hd">
         <h1 id="h-about" data-title="About">Your top ten, <em class="grad">every hour.</em></h1>
-        <!-- a note scribbled beside the headline, in the device's own handwriting font, with a drawn arrow -->
-        <p class="sp-note"><svg class="sp-arw sp-arw-side" viewBox="0 0 120 70" aria-hidden="true"><path d="M114 12c-22-9-58-7-80 12-9 8-15 17-20 28" pathLength="1"/><path class="hd" d="M8 60c3-6 4-13 4-19M8 60c6-3 13-5 20-6" pathLength="1"/></svg><svg class="sp-arw sp-arw-up" viewBox="0 0 70 84" aria-hidden="true"><path d="M58 80c4-22-4-46-42-68" pathLength="1"/><path class="hd" d="M12 9c7 0 14 1 20 3M12 9c2 6 5 13 8 18" pathLength="1"/></svg><span>Oh, and btw… Tenner is independently run. No huge corporation behind it!</span></p>
+        <!-- a note written beside the headline: handwriting (Caveat) and a drawn arrow, given a hand's slight wobble by the
+             pen filter below -->
+        <p class="sp-note"><svg class="sp-arw sp-arw-side" viewBox="0 0 120 70" aria-hidden="true"><path d="M114 12c-22-9-58-7-80 12-9 8-15 17-20 28" pathLength="1"/><path class="hd" d="M8 60c3-6 4-13 4-19M8 60c6-3 13-5 20-6" pathLength="1"/></svg><svg class="sp-arw sp-arw-up" viewBox="0 0 70 84" aria-hidden="true"><path d="M58 80c4-22-4-46-42-68" pathLength="1"/><path class="hd" d="M12 9c7 0 14 1 20 3M12 9c2 6 5 13 8 18" pathLength="1"/></svg><span class="sp-words"><span style="--t:0;--n:3">Oh,</span> <span style="--t:0.205;--n:3">and</span> <span style="--t:0.41;--n:4">btw…</span> <span style="--t:0.66;--n:6">Tenner</span> <span style="--t:1;--n:2">is</span> <span class="ul" style="--t:1.16;--n:13">independently</span> <span style="--t:1.815;--n:4">run.</span> <span style="--t:2.065;--n:2">No</span> <span style="--t:2.225;--n:4">huge</span> <span style="--t:2.475;--n:11">corporation</span> <span style="--t:3.04;--n:6">behind</span> <span style="--t:3.38;--n:3">it!</span></span></p>
+        <svg class="sp-defs" width="0" height="0" aria-hidden="true"><filter id="pen" x="-5%" y="-5%" width="110%" height="110%">
+          <feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="4" result="wobble"/>
+          <feDisplacementMap in="SourceGraphic" in2="wobble" scale="1.4" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
       </div>
       <p class="sp-lead">What the UK is watching right now on Netflix, Disney+, Prime Video, HBO Max and Paramount+. One page, five services, refreshed every hour.</p>
       <div class="sp-ctas"><a class="sp-cta primary" href="./">See the top 10</a><a class="sp-cta" href="browse.html">Browse everything</a></div>
@@ -263,7 +268,7 @@
     <nav class="more-links" aria-label="Site information">
       <a href="contact.html">Contact</a><a href="legal.html#privacy">Privacy Policy</a><a href="legal.html#terms">Terms of Service</a><a href="legal.html#cookies">Cookies</a>
     </nav>
-    <p class="more-ver side-ver-text">Tenner 1.49.1</p>
+    <p class="more-ver side-ver-text">Tenner 1.50.0</p>
     </main>
 
 
@@ -281,6 +286,6 @@
     }).catch(function(){});}
     load(false); addEventListener('tn:check', function(){ load(true); });
   })();</script>
-  <script src="shell.js?v=1.49.1" defer></script>
+  <script src="shell.js?v=1.50.0" defer></script>
 </body>
 </html>
