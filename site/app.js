@@ -226,10 +226,11 @@ function draw() {
     : s ? `${s.shop ? 'To buy or rent on' : 'On'} ${s.logo ? `<img class="sub-logo" src="${esc(s.logo)}" alt="">` : ''}${esc(s.label)}${s.official ? ` · ${esc(officialLine(s.official))}` : ''}` : 'On all six services in the UK';
   document.title = s?.mine ? 'My Top 10 | Tenner' : s ? `${s.label} Top 10 | Tenner` : 'Tenner';
 
-  banners(picks, s);
+  const feat = s ? picks : withEvery(picks, kinds);
+  banners(feat, s);
   const chart = list.length
     ? `${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up. Add your TMDB key and run the workflow to see the real chart.</p>` : ''}
-       ${hero(picks, s)}
+       ${hero(feat, s)}
        ${kinds.map((k, r) => `${kinds.length > 1 ? `<h2 class="row-h kind-h">Top 10 ${words(k)}</h2>` : ''}${posterRow(listOf(k), k, r === 0)}`).join('')}
        ${s?.store ? '' : tonightCard()}
        ${s?.store ? '' : features(s)}
@@ -256,9 +257,27 @@ let heroList = [], heroAt = 0, heroScope = null, heroSig = '';
 const heroKey = (it) => wlKey(it, it.type) || `${it.type}:${it.title}`;
 const PLUS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
 const TICK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 12.5l4.2 4.2 8.8-9.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-function heroCopy({ it, n }) {
+// On All, the UK-wide chart can miss a service altogether (Apple TV's titles are rarely the UK's most popular), so each
+// service that isn't in it adds its own No. 1, badged with that service; the hero and the banners always show those
+function withEvery(picks, kinds) {
+  const have = new Set(picks.map((p) => heroKey(p.it))), extra = [];
+  for (const k of kinds) for (const sv of services().filter((x) => !x.store && !x.shop)) {
+    if (picks.some((p) => p.it.type === k && (p.it.on || []).includes(sv.key))) continue;
+    const i = adult(sv[k] || [], k).findIndex((it) => it.backdrop && !have.has(heroKey(it)));
+    if (i < 0) continue;
+    const it = sv[k][i]; have.add(heroKey(it)); extra.push({ it: { ...it, type: it.type || k }, n: i + 1, sv });
+  }
+  return [...picks, ...extra];
+}
+// featured.pick chooses n of the pool; a service's own No. 1 always gets a place, spread through the line-up
+function pickFeatured(pool, n) {
+  const own = pool.filter((p) => p.sv), list = window.tn.featured.pick(pool.filter((p) => !p.sv), (p) => heroKey(p.it), Math.max(1, n - own.length), (p) => p.it.backdrop);
+  own.forEach((p, i) => list.splice(Math.min(list.length, i * 2 + 1), 0, p));
+  return list.slice(0, Math.max(n, own.length + 1));
+}
+function heroCopy({ it, n, sv }) {
   // on a service's page it's that service's chart; on All it's the UK-wide chart, and the details say where to find it
-  const s = heroScope, kind = it.type === 'tv' ? 'show' : 'film', k = wlKey(it, it.type), x = (k && det(k)) || {};
+  const s = sv || heroScope, kind = it.type === 'tv' ? 'show' : 'film', k = wlKey(it, it.type), x = (k && det(k)) || {};
   const badge = s?.store ? `No. ${n} to buy or rent` : s ? `No. ${n} ${kind} on ${s.label}` : `No. ${n} ${kind} in the UK`;
   const on = s && !s.mine ? s : svc((it.on || [])[0]);
   const bits = [it.type === 'tv' ? (it.season || 'Series') : 'Film', ...(x.g || []).slice(0, 2), it.year,
@@ -280,7 +299,7 @@ function hero(picks, s) {   // picks: [{ it, n }] where n is the title's rank in
   const sig = `${s?.key}|${picks.map((p) => heroKey(p.it)).join(',')}`, was = heroScope?.key === s?.key && heroList[heroAt]?.it;
   const byKey = new Map(picks.map((p) => [heroKey(p.it), p]));
   let list = sig === heroSig ? heroList.map((p) => byKey.get(heroKey(p.it))).filter(Boolean)
-    : window.tn.featured.pick(picks, (p) => heroKey(p.it), HERO_N, (p) => p.it.backdrop);
+    : pickFeatured(picks, HERO_N);
   const now = was && byKey.get(heroKey(was));
   if (now && !list.includes(now)) list = [now, ...list].slice(0, HERO_N);
   heroList = list; heroAt = Math.max(0, now ? list.indexOf(now) : 0); heroScope = s; heroSig = sig;
@@ -291,7 +310,7 @@ function hero(picks, s) {   // picks: [{ it, n }] where n is the title's rank in
   return `<section class="hero" id="hero" aria-roledescription="carousel" aria-label="Top of the chart">
     ${many ? arrow('prev', 'M16 6 6 20l10 14') : ''}
     <div class="h-copy" id="heroCopy" aria-live="polite">${heroCopy(heroList[heroAt])}</div>
-    ${many ? `<div class="h-dots">${heroList.map((p, i) => `<button type="button" data-hero="${i}" aria-label="Number ${p.n}: ${esc(p.it.title)}" title="${esc(p.it.title)}" aria-current="${i === heroAt}"></button>`).join('')}</div>
+    ${many ? `<div class="h-dots">${heroList.map((p, i) => `<button type="button" data-hero="${i}" aria-label="Number ${p.n}${p.sv ? ` on ${esc(p.sv.label)}` : ''}: ${esc(p.it.title)}" title="${esc(p.it.title)}" aria-current="${i === heroAt}"></button>`).join('')}</div>
     <button type="button" class="h-pause" id="heroPause" aria-pressed="${heroPaused}" aria-label="${heroPaused ? 'Play' : 'Pause'}" title="${heroPaused ? 'Play' : 'Pause'}"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="i-pause" d="M8.5 6.5v11M15.5 6.5v11" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path class="i-play" d="M8.5 5.8v12.4L18.6 12z" fill="currentColor"/></svg></button>` : ''}
     ${many ? arrow('next', 'M8 6l10 14L8 34') : ''}
   </section>`;
@@ -369,13 +388,14 @@ const phone = matchMedia('(max-width: 560px)');
 phone.addEventListener('change', () => state.trending && render());
 const mBan = $('#mBan');
 let banSig = '', banKeys = [];
-function banners(picks, s) {
+function banners(picks, scope) {
   if (!phone.matches || !picks.length) { mBan.hidden = true; mBan.innerHTML = ''; return; }
   // six of the chart, led by the ones you haven't seen up top lately; the same line-up while the chart's the same
-  const sig = `${s?.key}|${picks.map((p) => heroKey(p.it)).join(',')}`;
-  if (sig !== banSig) { banSig = sig; banKeys = window.tn.featured.pick(picks, (p) => heroKey(p.it), 6, (p) => p.it.backdrop).map((p) => heroKey(p.it)); window.tn.featured.saw(banKeys[0]); }
+  const sig = `${scope?.key}|${picks.map((p) => heroKey(p.it)).join(',')}`;
+  if (sig !== banSig) { banSig = sig; banKeys = pickFeatured(picks, 6).map((p) => heroKey(p.it)); window.tn.featured.saw(banKeys[0]); }
   const byKey = new Map(picks.map((p) => [heroKey(p.it), p])), list = banKeys.map((k) => byKey.get(k)), wide = (u) => u && u.replace('/w1280/', '/w780/');
-  mountBanners(list.map(({ it, n }, i) => {
+  mountBanners(list.map(({ it, n, sv }, i) => {
+    const s = sv || scope;   // a service's own No. 1 (on All) is badged and linked as that service's
     const kind = it.type === 'tv' ? 'show' : 'film', badge = s?.store ? `No. ${n} to buy or rent` : s ? `No. ${n} on ${s.label}` : `No. ${n} ${kind} in the UK`;
     const art = it.backdrop ? `<img src="${esc(wide(it.backdrop))}" alt="" ${i ? 'loading="lazy"' : 'fetchpriority="high"'} decoding="async">`
       : it.poster ? `<img class="soft" src="${esc(it.poster)}" alt="" loading="lazy">` : `<span class="mb-ph" style="--h:${hue(it.title)}"></span>`;

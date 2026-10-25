@@ -40,8 +40,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=1.55.0">
-  <link rel="stylesheet" href="about.css?v=1.55.0">
+  <link rel="stylesheet" href="styles.css?v=1.56.0">
+  <link rel="stylesheet" href="about.css?v=1.56.0">
   <link rel="preload" href="fonts/caveat-latin.woff2" as="font" type="font/woff2" crossorigin>
 
 </head>
@@ -99,7 +99,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.55.0</span>
+      <span class="side-ver">Tenner 1.56.0</span>
     </div>
   </div>
 
@@ -136,6 +136,11 @@
     function load(bust){ fetch('data/trending.json'+(bust?'?v='+Date.now():'')).then(function(r){return r.json()}).then(function(d){
       var o=d.overall||{}, pick=[], seen={};
       [o.tv&&o.tv[0],o.movie&&o.movie[0],o.tv&&o.tv[1],o.movie&&o.movie[1],o.tv&&o.tv[2]].forEach(function(x){ if(x&&x.backdrop&&!seen[x.title]){seen[x.title]=1;pick.push(x);} });
+      /* a service the UK-wide chart leaves out (often Apple TV) adds its own No. 1 show and film */
+      (d.services||[]).forEach(function(s){ if(s.store||s.shop) return; ['tv','movie'].forEach(function(k){
+        if((o[k]||[]).some(function(x){return (x.on||[]).indexOf(s.key)>=0;})) return;
+        var x=(s[k]||[])[0]; if(x&&x.backdrop&&!seen[x.title]){seen[x.title]=1;pick.push({title:x.title,id:x.id,type:k,poster:x.poster,backdrop:x.backdrop,svc:s.label});}
+      }); });
       if(!pick.length) return;
       var big=function(u){return u.replace('/t/p/w1280/','/t/p/original/');};
       /* only the first picture loads now; each of the others just before its turn (one at a time, not all five at once) */
@@ -149,7 +154,8 @@
         now.hidden=false; now.href='./?t='+(x.type==='movie'?'m':'t')+x.id;
         now.innerHTML=(x.poster?'<img src="'+x.poster+'" alt="">':'')+'<span><small>No. 1 '+(x.type==='movie'?'film':'show')+' in the UK</small><b>'+x.title.replace(/</g,'&lt;')+'</b>'
           +'<span class="sp-dots">'+pick.map(function(_,k){return '<i class="'+(k===n?'on':'')+'"></i>';}).join('')+'</span></span>';
-        if(o.tv&&o.tv.indexOf(x)>0||o.movie&&o.movie.indexOf(x)>0) now.querySelector('small').textContent='No. '+((o.tv.indexOf(x)+1)||(o.movie.indexOf(x)+1))+' '+(x.type==='movie'?'film':'show')+' in the UK';
+        if(x.svc) now.querySelector('small').textContent='No. 1 '+(x.type==='movie'?'film':'show')+' on '+x.svc;
+        else if(o.tv&&o.tv.indexOf(x)>0||o.movie&&o.movie.indexOf(x)>0) now.querySelector('small').textContent='No. '+((o.tv.indexOf(x)+1)||(o.movie.indexOf(x)+1))+' '+(x.type==='movie'?'film':'show')+' in the UK';
       }
       show(0); clearInterval(timer);
       if(!still&&pick.length>1) timer=setInterval(function(){ if(document.visibilityState==='visible'){i=(i+1)%pick.length; show(i);} }, 7000);
@@ -272,7 +278,7 @@
     <nav class="more-links" aria-label="Site information">
       <a href="contact.html">Contact</a><a href="legal.html#privacy">Privacy Policy</a><a href="legal.html#terms">Terms of Service</a><a href="legal.html#cookies">Cookies</a>
     </nav>
-    <p class="more-ver side-ver-text">Tenner 1.55.0</p>
+    <p class="more-ver side-ver-text">Tenner 1.56.0</p>
     </main>
 
 
@@ -290,6 +296,6 @@
     }).catch(function(){});}
     load(false); addEventListener('tn:check', function(){ load(true); });
   })();</script>
-  <script src="shell.js?v=1.55.0" defer></script>
+  <script src="shell.js?v=1.56.0" defer></script>
 </body>
 </html>
