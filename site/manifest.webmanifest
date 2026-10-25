@@ -1,7 +1,7 @@
 {
   "name": "Tenner",
   "short_name": "Tenner",
-  "description": "The UK's top 10 shows and films on Netflix, Disney+, Prime Video, HBO Max and Paramount+, updated every hour.",
+  "description": "The UK's top 10 shows and films on Netflix, Disney+, Prime Video, HBO Max, Paramount+ and Apple TV, updated every hour.",
   "id": "./",
   "start_url": "./",
   "scope": "./",

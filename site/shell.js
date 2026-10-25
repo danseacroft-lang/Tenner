@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.54.0';
+  const version = '1.55.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -144,7 +144,7 @@
   addEventListener('storage', (e) => { if (e.key === WL || e.key === PR || e.key === ST) dispatchEvent(new Event('tn:saved')); if (e.key === MS) dispatchEvent(new Event('tn:mine')); if (e.key === PREFS) { apply(); dispatchEvent(new Event('tn:prefs')); } });
 
   // ---------- My services: the ones you pay for, on this device. The Top 10 gets a chart of just those, and Browse
-  // starts filtered to them. Empty means "all five". ----------
+  // starts filtered to them. Empty means "all six". ----------
   const MS = 'tenner-services';
   const mine = {
     get() { try { const l = JSON.parse(localStorage.getItem(MS) || '[]'); return Array.isArray(l) ? l : []; } catch { return []; } },
@@ -158,15 +158,15 @@
         <form method="dialog"><h2 id="mineH">My services</h2>
           <p>Pick the services you pay for. Tenner makes you a Top 10 of just those, and Browse starts with them. Saved on this device only.</p>
           <div class="mine-list" id="mineList"></div>
-          <div class="mine-acts"><button type="button" class="btn btn-tinted" id="mineClear">Use all five</button><button class="btn btn-tinted mine-done" value="done">Done</button></div>
+          <div class="mine-acts"><button type="button" class="btn btn-tinted" id="mineClear">Use all six</button><button class="btn btn-tinted mine-done" value="done">Done</button></div>
         </form></dialog>`);
       dlg = document.getElementById('mineDlg');
       dlg.addEventListener('close', () => {
         if (dlg.returnValue !== 'done') return;
         const on = [...dlg.querySelectorAll('input:checked')].map((i) => i.value);
-        mine.set(on.length === dlg.querySelectorAll('input').length ? [] : on);   // all five is the same as none chosen
+        mine.set(on.length === dlg.querySelectorAll('input').length ? [] : on);   // all six is the same as none chosen
       });
-      // "Use all five": every switch turns on (so you see it happen), then it closes; all five is the same as none chosen
+      // "Use all six": every switch turns on (so you see it happen), then it closes; all six is the same as none chosen
       dlg.querySelector('#mineClear').addEventListener('click', () => { dlg.querySelectorAll('input').forEach((i) => { i.checked = true; }); setTimeout(() => dlg.close('done'), 450); });
       dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });   // a tap outside the card closes it
     }
@@ -180,7 +180,7 @@
   }
   // the planner: how much of your Watchlist each service has, and which one you could pause. Where each title streams
   // comes from data/titles.json, and the search service for anything saved that the charts don't cover (40 at most)
-  const SVC_MATCH = { netflix: /^netflix/, disney: /^disney plus/, prime: /^(amazon prime( video)?|prime video)/, hbomax: /^(hbo max|max)( with ads)?$/, paramount: /^paramount plus/ };
+  const SVC_MATCH = { netflix: /^netflix/, disney: /^disney plus/, prime: /^(amazon prime( video)?|prime video)/, hbomax: /^(hbo max|max)( with ads)?$/, paramount: /^paramount plus/, appletv: /^apple ?tv( plus|\+)?$/ };
   let planP = null; const planOne = new Map();   // each title asked for once a visit, however often the sheet opens
   const planData = () => (planP ||= fetch(`data/titles.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
   async function plan(dlg, list) {

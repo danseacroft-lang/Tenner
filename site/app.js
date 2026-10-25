@@ -117,7 +117,7 @@ $('#shareChart').addEventListener('click', () => {
   const list = ((s ? s[kind] : state.trending.overall[kind]) || []).slice(0, 10);
   if (!list.length) return;
   const title = s?.store ? 'Top 10 to buy or rent' : `Top 10 ${words(kind)}`;
-  const where = s?.mine ? 'On my services' : s?.store ? 'Apple TV, Sky Store and others' : s ? `On ${s.label}` : 'In the UK, on all five services';
+  const where = s?.mine ? 'On my services' : s?.store ? 'Apple TV, Sky Store and others' : s ? `On ${s.label}` : 'In the UK, on all six services';
   const url = new URL(location.href); url.search = ''; url.hash = s && !s.mine ? s.key : '';
   const top3 = list.slice(0, 3).map((it, i) => `${i + 1}. ${it.title}`).join(', ');
   window.tn.share({
@@ -165,7 +165,7 @@ function loadImg(src, cors) {
 }
 function roundRect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
 function clip(g, t, max) { if (g.measureText(t).width <= max) return t; while (t.length > 1 && g.measureText(t + '…').width > max) t = t.slice(0, -1); return t.trimEnd() + '…'; }
-// choosing your services: rebuild the bar and show your own chart (or the UK's, if you went back to all five)
+// choosing your services: rebuild the bar and show your own chart (or the UK's, if you went back to all six)
 addEventListener('tn:mine', () => {
   if (!state.trending) return;
   const has = window.tn.mine.get().length;
@@ -223,7 +223,7 @@ function draw() {
   $('#heading').innerHTML = `Top 10 <em class="grad">${esc(words())}</em>${s?.store ? ' to buy or rent' : ''}`;
   $('#lede').innerHTML = s?.mine ? `On your services: ${esc(s.names)}`
     : s?.store ? 'New releases from Apple TV, Sky Store and others'
-    : s ? `${s.shop ? 'To buy or rent on' : 'On'} ${s.logo ? `<img class="sub-logo" src="${esc(s.logo)}" alt="">` : ''}${esc(s.label)}${s.official ? ` · ${esc(officialLine(s.official))}` : ''}` : 'On all five services in the UK';
+    : s ? `${s.shop ? 'To buy or rent on' : 'On'} ${s.logo ? `<img class="sub-logo" src="${esc(s.logo)}" alt="">` : ''}${esc(s.label)}${s.official ? ` · ${esc(officialLine(s.official))}` : ''}` : 'On all six services in the UK';
   document.title = s?.mine ? 'My Top 10 | Tenner' : s ? `${s.label} Top 10 | Tenner` : 'Tenner';
 
   banners(picks, s);
@@ -235,7 +235,7 @@ function draw() {
        ${s?.store ? '' : features(s)}
        ${kinds.map((k) => chartList(s, k)).join('')}
        ${s?.store ? '' : savedRow()}${s && !s.mine ? '' : weekRow()}${s?.store ? '' : newRow(s)}`
-    : `<div class="empty"><h2>Nothing here right now</h2><p>The chart for ${esc(where)} will be back after the next hourly update.</p><a class="btn btn-tinted" href="#top">See all five services</a></div>`;
+    : `<div class="empty"><h2>Nothing here right now</h2><p>The chart for ${esc(where)} will be back after the next hourly update.</p><a class="btn btn-tinted" href="#top">See all six services</a></div>`;
   view.innerHTML = `<div class="wrap chart">${chart}</div>`;
   openFromUrl();
   setBackdrop(heroOn() && list.length ? heroList[heroAt]?.it || list[0] : null);   // the hero's pick
@@ -527,9 +527,9 @@ const firstSentence = (t) => { const m = String(t || '').match(/^.{20,140}?[.!?]
 const onText = (it, fallback) => (it.on || []).map((k) => svc(k)?.label).filter(Boolean).slice(0, 2).join(', ') || fallback || '';
 // ---------- "What should I watch tonight?": three taps, three picks from your services ----------
 // How long you've got (an episode or two, a film, either), the mood, and who's watching; then the best-rated, most-watched
-// matches from the Browse catalogue on your services (or all five), a few at random from the top so it's never the same.
+// matches from the Browse catalogue on your services (or all six), a few at random from the top so it's never the same.
 function tonightCard() {
-  return `<section class="tn-card"><div class="tn-c-copy"><h2>What should I watch tonight?</h2><p>Three quick taps and Tenner picks from ${window.tn.mine.get().length ? 'your services' : 'all five services'}.</p></div>
+  return `<section class="tn-card"><div class="tn-c-copy"><h2>What should I watch tonight?</h2><p>Three quick taps and Tenner picks from ${window.tn.mine.get().length ? 'your services' : 'all six services'}.</p></div>
     <button type="button" class="btn btn-tinted" data-tonight>Help me choose</button></section>`;
 }
 const MOODS = [
@@ -655,7 +655,7 @@ function features(s) {
   }).join('')}</div></section>`;
 }
 
-// The best-rated ten on the service (or all five), as a tidy list in columns like "Best New Songs": rank, a small
+// The best-rated ten on the service (or all six), as a tidy list in columns like "Best New Songs": rank, a small
 // poster, title and where it's on. The posters above already show the chart, so this list shows something else:
 // the catalogue's highest-rated titles with enough votes to trust (the same test as Browse's Top rated).
 // The buy-or-rent chart has no catalogue behind it, so there it stays a list of that chart.

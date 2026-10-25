@@ -2,7 +2,7 @@
 // The front: faces from all of TMDB drifting past behind the title, a glass search bar, the Top 10 people everyone's
 // looking up, and who made this week's top 10 as round portraits. A person (?p=ID): what they're best known
 // for as a cinematic backdrop, their portrait and name, a few facts and figures, what of theirs is streaming on the
-// five services right now, Known For, and their whole career by decade. Any title opens the usual title sheet.
+// six services right now, Known For, and their whole career by decade. Any title opens the usual title sheet.
 (() => {
   const { esc, hue, reduce, api, segment } = window.tn;
   const $ = (s) => document.querySelector(s);
@@ -14,7 +14,7 @@
     ? `<img src="${esc(p.photo)}" alt="" loading="lazy" decoding="async">` : `<i aria-hidden="true">${esc(initials(p.name))}</i>`}</span>`;
   const still = () => reduce || document.documentElement.classList.contains('still');
 
-  // the hour's chart and the Browse catalogue: which of someone's titles are streaming on the five services right now
+  // the hour's chart and the Browse catalogue: which of someone's titles are streaming on the six services right now
   let catP = null;
   const catalogue = () => (catP ||= Promise.all([
     fetch(`data/browse.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
@@ -150,7 +150,7 @@
           <div class="pp-acts"><button type="button" class="btn btn-tinted" id="ppShare"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M6 11v8.5h12V11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Share</button>${cap}</div>
         </div></div></div>
       ${pd.bio ? `<section class="pp-bio"><div class="pp-bio-t" id="ppBio"><p>${esc(pd.bio).replace(/\n\n+/g, '</p><p>')}</p></div><button type="button" class="pp-more" id="ppMore" hidden>More</button></section>` : ''}
-      ${nowOn.length ? `<section class="p-sec"><div class="p-sh"><h2>Watch ${esc(pd.name.split(' ')[0])} Now</h2><p>On the five services right now.</p></div><ul class="pp-known p-shelf">${nowOn.slice(0, 20).map((x) =>
+      ${nowOn.length ? `<section class="p-sec"><div class="p-sh"><h2>Watch ${esc(pd.name.split(' ')[0])} Now</h2><p>On the six services right now.</p></div><ul class="pp-known p-shelf">${nowOn.slice(0, 20).map((x) =>
         `<li><a href="./?t=${x.k}" data-k="${x.k}">${poster(x)}${onLogos(x.k, 'pp-on pp-on-art')}<b>${esc(x.title)}</b><small>${esc([x.year, x.role].filter(Boolean).join(' · '))}</small></a></li>`).join('')}</ul></section>` : ''}
       ${pd.known.length ? `<section class="p-sec"><div class="p-sh"><h2>Known For</h2></div><ul class="pp-known pp-big p-shelf">${pd.known.map((x) =>
         `<li><a href="./?t=${x.k}" data-k="${x.k}">${poster(x)}${onLogos(x.k, 'pp-on pp-on-art')}<b>${esc(x.title)}</b><small>${esc([x.year, x.role].filter(Boolean).join(' · '))}</small></a></li>`).join('')}</ul></section>` : ''}

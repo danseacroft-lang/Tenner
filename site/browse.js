@@ -43,7 +43,7 @@
     const q = new URLSearchParams(location.hash.slice(1));
     state.c = COLLECTIONS.some((c) => c.key === q.get('c')) ? q.get('c') : 'popular';
     state.k = ['movie', 'both'].includes(q.get('k')) ? q.get('k') : 'tv';
-    // no services in the address: your own (My services), if you've chosen them; "all" means all five
+    // no services in the address: your own (My services), if you've chosen them; "all" means all six
     const mine = window.tn.mine.get().filter((k) => labels[k]);
     state.s = q.get('s') === 'all' ? [] : q.has('s') ? q.get('s').split(',').filter((k) => labels[k]) : mine;
     state.g = (q.get('g') || '').split(',').map(Number).filter((g) => cat.genres[g]);
@@ -86,7 +86,7 @@
   ]).then(([c, t, d, f]) => {
     cat = c; certs = d; fresh = f; mergeFresh();
     for (const s of t?.services || []) if (!s.store) { logos[s.key] = s.logo; labels[s.key] = s.label; if (s.shop) shops.add(s.key); }
-    if (!Object.keys(labels).length) Object.assign(labels, { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+' });
+    if (!Object.keys(labels).length) Object.assign(labels, { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+', appletv: 'Apple TV' });
     const wantSearch = location.hash === '#search';
     if (wantSearch) history.replaceState(null, '', location.pathname);
     readHash(); buildControls(); apply(false);
@@ -333,7 +333,7 @@
     $('#clear').disabled = !n;
 
     // nothing on the services: no "0 results" line; the full catalogue's results below say it
-    $('#count').textContent = !q || (!list.length && window.tn.api) ? '' : `${list.length.toLocaleString('en-GB')} on the five services`;
+    $('#count').textContent = !q || (!list.length && window.tn.api) ? '' : `${list.length.toLocaleString('en-GB')} on the six services`;
     document.body.classList.toggle('searching', !!q);
 
     document.body.classList.toggle('mixed', !!q || state.k === 'both');   // show/film labels on the tiles when both are listed
@@ -547,7 +547,7 @@
       $('#webGrid').insertAdjacentHTML('beforeend', res.map((x, i) => webCard(web.items.get(x.k), i)).join(''));
       $('#web').classList.toggle('solo', !list.length);   // nothing in the catalogue: these are the results
       const n = web.items.size;
-      $('#webNote').textContent = !d ? 'Couldn’t search everything right now.' : n ? `${n.toLocaleString('en-GB')}${web.page < web.pages ? '+' : ''}${list.length ? '' : ' · not on the five services right now'}` : list.length ? '' : `Nothing found for “${q}”. Try another spelling.`;
+      $('#webNote').textContent = !d ? 'Couldn’t search everything right now.' : n ? `${n.toLocaleString('en-GB')}${web.page < web.pages ? '+' : ''}${list.length ? '' : ' · not on the six services right now'}` : list.length ? '' : `Nothing found for “${q}”. Try another spelling.`;
       if (!list.length && !n) { web.on = false; $('#web').hidden = true; empty(); }
     } catch (e) { if (e.name !== 'AbortError') $('#webNote').textContent = 'Couldn’t search everything right now.'; }
     finally { web.busy = false; }

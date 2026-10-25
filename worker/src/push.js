@@ -153,7 +153,7 @@ const dayName = (iso, today) => {
 };
 async function morningBatch(env, ids, fresh) {
   const { day } = ukNow(), last = new Date(Date.parse(day) + 3 * 864e5).toISOString().slice(0, 10);
-  const label = { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+' };
+  const label = { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+', appletv: 'Apple TV' };
   const leaving = (fresh.leaving || []).filter((x) => x.id && x.date >= day && x.date <= last);
   // On Freeview today (Tenner TV's list, rebuilt every three hours), and what's got cheaper (pushMorning)
   const air = await fetch('https://tenner-tv.danseacroft.workers.dev/api/onair', { cf: { cacheTtl: 900 } }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
@@ -203,7 +203,7 @@ async function morningBatch(env, ids, fresh) {
 }
 async function sendBatch(env, ids, fresh) {
   const today = new Date().toISOString().slice(0, 10), since = new Date(Date.now() - 3 * 864e5).toISOString().slice(0, 10);
-  const label = { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+' };
+  const label = { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+', appletv: 'Apple TV' };
   const arrived = (fresh.items || []).filter((x) => x.id && x.date <= today && x.date >= since);
   for (const id of ids) {
     const s = await env.PUSH.get(id, 'json'); if (!s) continue;

@@ -16,13 +16,13 @@
   const onAir = () => (airP ||= fetch('https://tenner-tv.danseacroft.workers.dev/api/onair').then((r) => (r.ok ? r.json() : null)).catch(() => null));
   addEventListener('tn:check', () => { trailP = null; priceP = null; airP = null; });
   let trailD = null;
-  const CHART = { all: 'in the UK', netflix: 'on Netflix', disney: 'on Disney+', prime: 'on Prime Video', hbomax: 'on HBO Max', paramount: 'on Paramount+' };
+  const CHART = { all: 'in the UK', netflix: 'on Netflix', disney: 'on Disney+', prime: 'on Prime Video', hbomax: 'on HBO Max', paramount: 'on Paramount+', appletv: 'on Apple TV' };
 
   // ---------- trackers ----------
   // On the chart: a line of the title's rank (No. 1 at the top) over the last month, or the last day while the history
   // is still building up, gaps where it was out of the top 10; and its life on the charts so far (days in the top 10,
   // its peak, days at No. 1, when it first charted)
-  const SVC = { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+' };
+  const SVC = { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+', appletv: 'Apple TV' };
   function lifeHtml(p) {
     if (!p?.n) return '';
     const peak = p.u ? `Peaked at No. ${p.u} in the UK` : p.b ? `Peaked at No. ${p.b[0]} on ${SVC[p.b[1]] || p.b[1]}` : '';

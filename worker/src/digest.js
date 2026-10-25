@@ -11,7 +11,7 @@ const SITE = 'https://tenner.stream', API = 'https://tenner-api.danseacroft.work
 const enc = new TextEncoder();
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const sign = async (env, uid) => [...new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(`digest|${uid}|${env.RESEND_API_KEY}`)))].slice(0, 16).map((b) => b.toString(16).padStart(2, '0')).join('');
-const LABEL = { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+' };
+const LABEL = { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+', appletv: 'Apple TV' };
 const MAX = 90;   // Resend's free plan sends 100 a day
 
 export async function digestOff(req, env, url) {

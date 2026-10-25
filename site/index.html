@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Tenner</title>
-  <meta name="description" content="The UK's top 10 shows and films right now on Netflix, Disney+, Prime Video, HBO Max and Paramount+. Updated every hour.">
+  <meta name="description" content="The UK's top 10 shows and films right now on Netflix, Disney+, Prime Video, HBO Max, Paramount+ and Apple TV. Updated every hour.">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="favicon.ico" sizes="48x48">
@@ -28,7 +28,7 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Tenner">
   <meta property="og:title" content="Tenner: your top ten, every hour">
-  <meta property="og:description" content="The UK's top 10 shows and films on Netflix, Disney+, Prime Video, HBO Max and Paramount+.">
+  <meta property="og:description" content="The UK's top 10 shows and films on Netflix, Disney+, Prime Video, HBO Max, Paramount+ and Apple TV.">
   <meta property="og:url" content="https://tenner.stream/">
   <meta property="og:image" content="https://tenner.stream/og.jpg">
   <meta property="og:image:width" content="1200">
@@ -44,7 +44,7 @@
   /* the big "Tenner" that zooms in: once a visit, for everyone but those who ask for reduced motion; it removes itself when it's done */
   try{if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&!sessionStorage.getItem("tenner-intro")){sessionStorage.setItem("tenner-intro","1");document.documentElement.classList.add("intro")}}catch(e){}
   addEventListener("animationend",function(e){if(e.target.id==="introMark")e.target.remove()});</script>
-  <link rel="stylesheet" href="styles.css?v=1.54.0">
+  <link rel="stylesheet" href="styles.css?v=1.55.0">
 </head>
 <body>
   <a class="skip" href="#main">Skip to the chart</a>
@@ -116,7 +116,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.54.0</span>
+      <span class="side-ver">Tenner 1.55.0</span>
     </div>
   </div>
 
@@ -136,7 +136,7 @@
     <section class="intro wrap" id="controls">
       <h1 id="heading" class="large-title">Top 10</h1>
       <p class="lede sub">
-        <span id="lede">On all five services in the UK</span>
+        <span id="lede">On all six services in the UK</span>
         <button type="button" id="refresh" class="updated" aria-live="polite" title="Check for a newer chart">
           <span class="live-dot" aria-hidden="true"></span><span id="ago">Updated just now</span></button>
       </p>
@@ -158,9 +158,9 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-  <script src="shell.js?v=1.54.0" defer></script>
-  <script src="links.js?v=1.54.0" defer></script>
-  <script src="sheet.js?v=1.54.0" defer></script>
-  <script src="app.js?v=1.54.0" defer></script>
+  <script src="shell.js?v=1.55.0" defer></script>
+  <script src="links.js?v=1.55.0" defer></script>
+  <script src="sheet.js?v=1.55.0" defer></script>
+  <script src="app.js?v=1.55.0" defer></script>
 </body>
 </html>

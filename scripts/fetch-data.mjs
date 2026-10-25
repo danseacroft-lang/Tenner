@@ -32,6 +32,8 @@ export const SERVICES = [
   { key: 'prime',     label: 'Prime Video', match: /^(amazon prime( video)?|prime video)/ },
   { key: 'hbomax',    label: 'HBO Max',     match: /^(hbo max|max)( with ads)?$/ },
   { key: 'paramount', label: 'Paramount+',  match: /^paramount plus/ },
+  // TMDB's 350 is the subscription (Apple TV+ until Apple renamed it "Apple TV"); its 2, also "Apple TV", is the store
+  { key: 'appletv',   label: 'Apple TV',    match: /^apple ?tv plus/, ids: [350] },
 ];
 // Stores: services where you buy or rent one title at a time. Each gets its own chart of shows and films (shop: true),
 // stays out of the combined chart and My services, and can be picked in Browse.
@@ -41,10 +43,10 @@ export const SHOPS = [
 const RESELLER = /\b(amazon|apple tv|roku premium|roku) channel\b/;
 
 const norm = (s) => s.toLowerCase().replace(/\+/g, ' plus').replace(/[^a-z0-9]+/g, ' ').trim();
-export const serviceFor = (name) => {
+export const serviceFor = (name, id) => {
   const n = norm(name);
   if (RESELLER.test(n)) return null;
-  return SERVICES.find((s) => s.match.test(n)) || null;
+  return SERVICES.find((s) => s.match.test(n) || s.ids?.includes(id)) || null;
 };
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -124,7 +126,7 @@ async function buildTrending() {
   const seen = {};
   for (const s of SHOPS) ids[s.key] = new Set();
   for (const p of [...pm.results, ...pt.results]) {
-    const s = serviceFor(p.provider_name) || SHOPS.find((x) => x.match.test(norm(p.provider_name)));
+    const s = serviceFor(p.provider_name, p.provider_id) || SHOPS.find((x) => x.match.test(norm(p.provider_name)));
     if (!s) continue;
     ids[s.key].add(p.provider_id); seen[p.provider_id] = p.provider_name;
     const prio = p.display_priorities?.[REGION] ?? p.display_priority ?? 999;

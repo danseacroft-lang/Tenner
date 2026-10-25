@@ -31,21 +31,21 @@
   ]).then(([c, t, d]) => {
     cat = c; certs = d;
     for (const s of t?.services || []) if (!s.store) { logos[s.key] = s.logo; labels[s.key] = s.label; }
-    if (!Object.keys(labels).length) Object.assign(labels, { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+' });
+    if (!Object.keys(labels).length) Object.assign(labels, { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+', appletv: 'Apple TV' });
     build();
     // the overviews and wide artwork come a moment later, for the cards' blurb and the sheet
     fetch('data/browse-more.json').then((r) => (r.ok ? r.json() : null)).then((m) => { more = m; cards.forEach((el) => fillBlurb(el)); }).catch(() => {});
   }).catch(() => { stage.innerHTML = '<div class="d-end"><h2>The titles didn’t load</h2><p>They’re rebuilt every hour, so try again shortly.</p></div>'; });
 
-  // the deck: mostly the five big services, with the rest of the catalogue (other services, and to buy or rent) mixed in about
+  // the deck: mostly the six big services, with the rest of the catalogue (other services, and to buy or rent) mixed in about
   // one card in five; not already saved or skipped, popular first but shuffled a little in small batches so it feels fresh
-  const FIVE = new Set(['netflix', 'disney', 'prime', 'hbomax', 'paramount']);
+  const BIG = new Set(['netflix', 'disney', 'prime', 'hbomax', 'paramount', 'appletv']);
   function build() {
     const skip = skipped.all(), withArt = cat.items.some((x) => x.img);
     const pool = cat.items.filter((x) => (kind === 'both' || x.t === kind) && (x.s.length || x.b) && (!withArt || x.img)
       && !skip[keyOf(x)] && !saved.has(keyOf(x)) && (!certs || certs.items?.[keyOf(x)]?.c !== '18'))
       .sort((a, b) => (b.p * (0.6 + (b.r || 6) / 20)) - (a.p * (0.6 + (a.r || 6) / 20)));
-    const five = pool.filter((x) => x.s.some((k) => FIVE.has(k))), rest = pool.filter((x) => !x.s.some((k) => FIVE.has(k)));
+    const five = pool.filter((x) => x.s.some((k) => BIG.has(k))), rest = pool.filter((x) => !x.s.some((k) => BIG.has(k)));
     const mixed = [];
     while (five.length || rest.length) { mixed.push(...five.splice(0, 4)); if (rest.length) mixed.push(rest.shift()); }
     deck = [];

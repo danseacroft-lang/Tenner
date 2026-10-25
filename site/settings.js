@@ -5,7 +5,7 @@
   const form = document.getElementById('setForm'), note = document.getElementById('setNote');
   const say = (t) => { note.textContent = t; clearTimeout(say.t); say.t = setTimeout(() => (note.textContent = ''), 3000); };
   form.classList.toggle('native-sw', 'switch' in HTMLInputElement.prototype);   // Safari: the real iOS switch
-  const LABELS = { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+' };
+  const LABELS = { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+', appletv: 'Apple TV' };
   let logos = {};
 
   function show() {
@@ -15,7 +15,7 @@
     form.kind.value = kind; form.start.value = p.start; form.trailers.value = p.trailers;
     for (const k of ['anim', 'moves', 'ratings', 'hero', 'no18']) form[k].checked = !!p[k];
     const m = mine.get();
-    document.getElementById('mineNow').textContent = m.length ? m.map((k) => LABELS[k] || k).join(', ') : 'All five';
+    document.getElementById('mineNow').textContent = m.length ? m.map((k) => LABELS[k] || k).join(', ') : 'All six';
   }
   form.addEventListener('change', (e) => {
     const el = e.target, n = el.name; if (!n) return;

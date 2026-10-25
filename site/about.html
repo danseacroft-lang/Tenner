@@ -27,7 +27,7 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Tenner">
   <meta property="og:title" content="Tenner: your top ten, every hour">
-  <meta property="og:description" content="The UK's top 10 shows and films on Netflix, Disney+, Prime Video, HBO Max and Paramount+.">
+  <meta property="og:description" content="The UK's top 10 shows and films on Netflix, Disney+, Prime Video, HBO Max, Paramount+ and Apple TV.">
   <meta property="og:url" content="https://tenner.stream/about.html">
   <meta property="og:image" content="https://tenner.stream/og.jpg">
   <meta property="og:image:width" content="1200">
@@ -40,8 +40,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=1.54.0">
-  <link rel="stylesheet" href="about.css?v=1.54.0">
+  <link rel="stylesheet" href="styles.css?v=1.55.0">
+  <link rel="stylesheet" href="about.css?v=1.55.0">
   <link rel="preload" href="fonts/caveat-latin.woff2" as="font" type="font/woff2" crossorigin>
 
 </head>
@@ -99,7 +99,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.54.0</span>
+      <span class="side-ver">Tenner 1.55.0</span>
     </div>
   </div>
 
@@ -123,7 +123,7 @@
           <feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="4" result="wobble"/>
           <feDisplacementMap in="SourceGraphic" in2="wobble" scale="1.4" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
       </div>
-      <p class="sp-lead">What the UK is watching right now on Netflix, Disney+, Prime Video, HBO Max and Paramount+. One page, five services, refreshed every hour.</p>
+      <p class="sp-lead">What the UK is watching right now on Netflix, Disney+, Prime Video, HBO Max, Paramount+ and Apple TV. One page, six services, refreshed every hour.</p>
       <div class="sp-ctas"><a class="sp-cta primary" href="./">See the top 10</a><a class="sp-cta" href="browse.html">Browse everything</a></div>
     </div>
     <a class="sp-now" id="spNow" href="./" hidden></a>
@@ -253,7 +253,7 @@
       <div class="sec-h"><h2 id="h-faq">Questions and answers.</h2></div>
       <div class="faq-list">
         <details><summary>What is Tenner?</summary>
-          <div class="a"><p>Tenner shows the UK's top 10 shows and films on Netflix, Disney+, Prime Video, HBO Max and Paramount+, all in one place. You can look at every service together or one at a time, and browse everything popular on them.</p></div></details>
+          <div class="a"><p>Tenner shows the UK's top 10 shows and films on Netflix, Disney+, Prime Video, HBO Max, Paramount+ and Apple TV, all in one place. You can look at every service together or one at a time, and browse everything popular on them.</p></div></details>
         <details><summary>How is the top 10 worked out?</summary>
           <div class="a"><p>We use popularity from TMDB, which reflects what people are watching, searching for, rating and adding to their lists, and keep only the titles streaming on each service in the UK. It's a strong guide to what's popular, though not official viewing figures.</p></div></details>
         <details><summary>How often is it updated?</summary>
@@ -272,7 +272,7 @@
     <nav class="more-links" aria-label="Site information">
       <a href="contact.html">Contact</a><a href="legal.html#privacy">Privacy Policy</a><a href="legal.html#terms">Terms of Service</a><a href="legal.html#cookies">Cookies</a>
     </nav>
-    <p class="more-ver side-ver-text">Tenner 1.54.0</p>
+    <p class="more-ver side-ver-text">Tenner 1.55.0</p>
     </main>
 
 
@@ -290,6 +290,6 @@
     }).catch(function(){});}
     load(false); addEventListener('tn:check', function(){ load(true); });
   })();</script>
-  <script src="shell.js?v=1.54.0" defer></script>
+  <script src="shell.js?v=1.55.0" defer></script>
 </body>
 </html>
