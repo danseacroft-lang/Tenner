@@ -1105,14 +1105,14 @@ a.sh-prov:hover { text-decoration: none; }
 
 /* ============================================================ the homepage's opening: a big "Tenner" zooms in from the distance,
    sharpening as it comes, holds for a beat, then flies on past you as the page shows through. Once a visit, for everyone (even with
-   Settings → Animations off, hence the !important over .still) but never with Reduce Motion (the head script adds .intro),
+   Settings → Animations off, hence the !important over .still) but never with Reduce Motion (the head script adds .intro-on, not .intro, which is the page header),
    never touchable, and gone in under two seconds.
    It's sized to the screen rather than inset: 0, because the body rises in on a transform and "fixed" would mean the whole page. */
 .intro-mark { display: none; }
-:root.intro .intro-mark {
+:root.intro-on .intro-mark {
   position: fixed; inset: 0 0 auto; height: 100lvh; z-index: 300; display: grid; place-items: center; overflow: hidden; pointer-events: none;
   background: var(--bg); animation: imOut .6s var(--ease-out) 1.15s forwards !important; }
-:root.intro .intro-mark span {
+:root.intro-on .intro-mark span {
   font: 800 min(25vw, 40vh)/1 var(--font-display); letter-spacing: -.045em; padding: 0 .04em .08em; white-space: nowrap;
   background: linear-gradient(100deg, #ff375f 0%, #bf5af2 52%, #0a84ff 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
   will-change: transform, filter, opacity;
