@@ -39,11 +39,10 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=1.56.4">
-  <link rel="stylesheet" href="legal.css?v=1.56.4">
-  <link rel="stylesheet" href="settings.css?v=1.56.4">
+  <link rel="stylesheet" href="styles.css?v=1.57.0">
+  <link rel="stylesheet" href="settings.css?v=1.57.0">
 </head>
-<body class="legal">
+<body>
   <a class="skip" href="#main">Skip to the page</a>
 
   <!-- the bar at the top: the logo, the tabs (a floating bar at the bottom on phones) and the round button -->
@@ -92,7 +91,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.56.4</span>
+      <span class="side-ver">Tenner 1.57.0</span>
     </div>
   </div>
 
@@ -102,62 +101,81 @@
   </div>
 
 
-  <main id="main" class="lwrap set" tabindex="-1">
-    <h1>Settings</h1>
-    <p class="l-lede">Make Tenner yours. Saved on this device, and in your account if you sign in.</p>
+  <main id="main" class="set set-page" tabindex="-1">
+    <h1 class="large-title">Settings</h1>
+    <p class="set-lede">Make Tenner yours. Saved on this device, and in your account if you sign in.</p>
 
-    <form class="set-form" id="setForm" onsubmit="return false">
-      <div class="set-group set-acct">
-        <a class="set-row set-link" href="account.html" id="setAcct"><span class="set-l">Account<small id="setAcctNow">Sign in to keep your Watchlist and settings in step on every device</small></span><span class="set-chev" aria-hidden="true"></span></a>
+    <!-- one panel in three columns on computers (two on tablets, one on phones): you, the charts, alerts and your data -->
+    <form class="set-form" id="setForm" onsubmit="return false"><div class="set-panel">
+      <div class="set-col">
+        <section class="set-sec" aria-labelledby="setHYou">
+          <h2 class="set-h" id="setHYou">Your account</h2>
+          <a class="set-hero" href="account.html" id="setAcct">
+            <span class="set-art" id="setArt" aria-hidden="true"><span class="av set-av"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4" fill="currentColor"/><path d="M4.5 20c1-4 4-6 7.5-6s6.5 2 7.5 6z" fill="currentColor"/></svg></span></span>
+            <span class="set-hero-foot"><span class="set-l"><b id="setAcctName">Account</b><small id="setAcctNow">Sign in to keep your Watchlist and settings in step on every device</small></span><span class="set-pill" id="setAcctBtn">Sign in</span></span>
+          </a>
+        </section>
+        <section class="set-sec" aria-labelledby="setHLook">
+          <h2 class="set-h" id="setHLook">Appearance</h2>
+          <div class="set-group">
+            <label class="set-row"><span class="set-l">Theme</span>
+              <select name="theme"><option value="auto">Auto</option><option value="light">Day</option><option value="dark">Night</option></select></label>
+            <label class="set-row"><span class="set-l">Animations<small>Sliding, zooming and fades. Off is quicker</small></span>
+              <input type="checkbox" switch role="switch" name="anim"><i class="sw" aria-hidden="true"></i></label>
+          </div>
+        </section>
       </div>
 
-      <h2 class="section-label">Appearance</h2>
-      <div class="set-group">
-        <label class="set-row"><span class="set-l">Theme</span>
-          <select name="theme"><option value="auto">Auto</option><option value="light">Day</option><option value="dark">Night</option></select></label>
-        <label class="set-row"><span class="set-l">Animations<small>Sliding, zooming and fades. Off is quicker</small></span>
-          <input type="checkbox" switch role="switch" name="anim"><i class="sw" aria-hidden="true"></i></label>
+      <div class="set-col">
+        <section class="set-sec" aria-labelledby="setHCharts">
+          <h2 class="set-h" id="setHCharts">Charts</h2>
+          <div class="set-group">
+            <label class="set-row"><span class="set-l">Open Tenner on<small>Top 10 shows your services, if you’ve chosen them</small></span>
+              <select name="start"><option value="auto">Top 10</option><option value="top">All services</option><option value="mine">My services</option><option value="new">New This Week</option><option value="week">This Week</option><option value="watchlist">Watchlist</option></select></label>
+            <label class="set-row"><span class="set-l">Show</span>
+              <select name="kind"><option value="tv">Shows</option><option value="movie">Films</option><option value="both">Shows and films</option></select></label>
+            <button type="button" class="set-row set-link" id="setMine"><span class="set-l">My services<small id="mineNow">All six</small></span><span class="set-pill">Choose</span></button>
+            <label class="set-row"><span class="set-l">Up and down arrows<small>How far each title has moved since yesterday</small></span>
+              <input type="checkbox" switch role="switch" name="moves"><i class="sw" aria-hidden="true"></i></label>
+            <label class="set-row"><span class="set-l">Star ratings<small>TMDB's ratings on posters and lists</small></span>
+              <input type="checkbox" switch role="switch" name="ratings"><i class="sw" aria-hidden="true"></i></label>
+            <label class="set-row set-wide"><span class="set-l">Featured artwork<small>The big picture of the No. 1 at the top, on computers</small></span>
+              <input type="checkbox" switch role="switch" name="hero"><i class="sw" aria-hidden="true"></i></label>
+          </div>
+        </section>
+        <section class="set-sec" aria-labelledby="setHTitles">
+          <h2 class="set-h" id="setHTitles">Titles</h2>
+          <div class="set-group">
+            <label class="set-row"><span class="set-l">Play trailers<small>In Tenner, or on YouTube</small></span>
+              <select name="trailers"><option value="here">In Tenner</option><option value="youtube">On YouTube</option></select></label>
+            <label class="set-row"><span class="set-l">Hide titles rated 18<small>On the charts and in Browse</small></span>
+              <input type="checkbox" switch role="switch" name="no18"><i class="sw" aria-hidden="true"></i></label>
+          </div>
+        </section>
       </div>
 
-      <h2 class="section-label">Charts</h2>
-      <div class="set-group">
-        <label class="set-row"><span class="set-l">Open Tenner on<small>Top 10 shows your services, if you’ve chosen them</small></span>
-          <select name="start"><option value="auto">Top 10</option><option value="top">All services</option><option value="mine">My services</option><option value="new">New This Week</option><option value="week">This Week</option><option value="watchlist">Watchlist</option></select></label>
-        <label class="set-row"><span class="set-l">Show</span>
-          <select name="kind"><option value="tv">Shows</option><option value="movie">Films</option><option value="both">Shows and films</option></select></label>
-        <button type="button" class="set-row set-link" id="setMine"><span class="set-l">My services<small id="mineNow">All six</small></span><span class="set-chev" aria-hidden="true"></span></button>
-        <label class="set-row"><span class="set-l">Up and down arrows<small>How far each title has moved since yesterday</small></span>
-          <input type="checkbox" switch role="switch" name="moves"><i class="sw" aria-hidden="true"></i></label>
-        <label class="set-row"><span class="set-l">Star ratings<small>TMDB's ratings on posters and lists</small></span>
-          <input type="checkbox" switch role="switch" name="ratings"><i class="sw" aria-hidden="true"></i></label>
-        <label class="set-row set-wide"><span class="set-l">Featured artwork<small>The big picture of the No. 1 at the top, on computers</small></span>
-          <input type="checkbox" switch role="switch" name="hero"><i class="sw" aria-hidden="true"></i></label>
+      <div class="set-col">
+        <section class="set-sec" aria-labelledby="setHAlerts">
+          <h2 class="set-h" id="setHAlerts">Alerts</h2>
+          <div class="set-group">
+            <label class="set-row"><span class="set-l">Watchlist alerts<small id="alNow">A notification when something you’ve saved arrives, has a new episode or is about to leave</small></span>
+              <input type="checkbox" switch role="switch" id="setAlerts"><i class="sw" aria-hidden="true"></i></label>
+            <label class="set-row"><span class="set-l">Sunday email<small id="dgNow">A short round-up each Sunday morning: new episodes, arrivals and what’s leaving from your Watchlist</small></span>
+              <input type="checkbox" switch role="switch" name="digest" id="setDigest"><i class="sw" aria-hidden="true"></i></label>
+          </div>
+        </section>
+        <section class="set-sec" aria-labelledby="setHData">
+          <h2 class="set-h" id="setHData">Your data</h2>
+          <div class="set-tiles">
+            <button type="button" class="set-tile" id="setMove"><i class="set-ic" style="--c:#0a84ff" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="11" height="8" rx="1.6"/><path d="M1.5 16h14"/><rect x="16" y="8" width="6" height="11" rx="1.6"/></svg></i><span class="set-l">Move to another device<small>A code to scan or a link to open on your other phone or computer</small></span><span class="set-chev" aria-hidden="true"></span></button>
+            <button type="button" class="set-tile" id="setExport"><i class="set-ic" style="--c:#30d158" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 14V3.5M8 7.2l4-3.7 4 3.7M7.5 10H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1.5"/></svg></i><span class="set-l">Export Watchlist and progress<small>A file to move them to another device</small></span><span class="set-chev" aria-hidden="true"></span></button>
+            <label class="set-tile"><i class="set-ic" style="--c:#bf5af2" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.5V14M8 10.3l4 3.7 4-3.7M3.5 14.5V18a2.5 2.5 0 0 0 2.5 2.5h12a2.5 2.5 0 0 0 2.5-2.5v-3.5"/></svg></i><span class="set-l">Import from a file<small>A Tenner export, or your Letterboxd, IMDb, Trakt or Netflix history. Adds to what's already here</small></span><span class="set-chev" aria-hidden="true"></span>
+              <input type="file" id="setImport" accept="application/json,.json,text/csv,.csv" class="set-file"></label>
+            <button type="button" class="set-tile set-danger" id="setClear"><i class="set-ic" style="--c:#ff375f" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6.5h16M9.5 6.5V4.5h5v2M6 6.5l1 13a1.6 1.6 0 0 0 1.6 1.5h6.8a1.6 1.6 0 0 0 1.6-1.5l1-13M10 10.5v6.5M14 10.5v6.5"/></svg></i><span class="set-l">Clear everything<small>Watchlist, progress, My services and these settings</small></span></button>
+          </div>
+        </section>
       </div>
-
-      <h2 class="section-label">Titles</h2>
-      <div class="set-group">
-        <label class="set-row"><span class="set-l">Play trailers<small>In Tenner, or on YouTube</small></span>
-          <select name="trailers"><option value="here">In Tenner</option><option value="youtube">On YouTube</option></select></label>
-        <label class="set-row"><span class="set-l">Hide titles rated 18<small>On the charts and in Browse</small></span>
-          <input type="checkbox" switch role="switch" name="no18"><i class="sw" aria-hidden="true"></i></label>
-      </div>
-
-      <h2 class="section-label">Alerts</h2>
-      <div class="set-group">
-        <label class="set-row"><span class="set-l">Watchlist alerts<small id="alNow">A notification when something you’ve saved arrives, has a new episode or is about to leave</small></span>
-          <input type="checkbox" switch role="switch" id="setAlerts"><i class="sw" aria-hidden="true"></i></label>
-        <label class="set-row"><span class="set-l">Sunday email<small id="dgNow">A short round-up each Sunday morning: new episodes, arrivals and what’s leaving from your Watchlist</small></span>
-          <input type="checkbox" switch role="switch" name="digest" id="setDigest"><i class="sw" aria-hidden="true"></i></label>
-      </div>
-
-      <h2 class="section-label">Your data</h2>
-      <div class="set-group">
-        <button type="button" class="set-row set-link" id="setMove"><span class="set-l">Move to another device<small>A code to scan or a link to open on your other phone or computer</small></span><span class="set-chev" aria-hidden="true"></span></button>
-        <button type="button" class="set-row set-link" id="setExport"><span class="set-l">Export Watchlist and progress<small>A file to move them to another device</small></span><span class="set-chev" aria-hidden="true"></span></button>
-        <label class="set-row set-link"><span class="set-l">Import from a file<small>A Tenner export, or your Letterboxd, IMDb, Trakt or Netflix history. Adds to what's already here</small></span><span class="set-chev" aria-hidden="true"></span>
-          <input type="file" id="setImport" accept="application/json,.json,text/csv,.csv" class="set-file"></label>
-        <button type="button" class="set-row set-link set-danger" id="setClear"><span class="set-l">Clear everything<small>Watchlist, progress, My services and these settings</small></span></button>
-      </div>
+    </div>
       <p class="set-note" id="setNote" role="status" aria-live="polite"></p>
     </form>
     <!-- Move to another device: a QR code and a link carrying the Watchlist, progress and services (nothing is uploaded) -->
@@ -176,7 +194,7 @@
   </main>
 
 
-  <script src="shell.js?v=1.56.4" defer></script>
-  <script src="settings.js?v=1.56.4" defer></script>
+  <script src="shell.js?v=1.57.0" defer></script>
+  <script src="settings.js?v=1.57.0" defer></script>
 </body>
 </html>

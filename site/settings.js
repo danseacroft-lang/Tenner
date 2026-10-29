@@ -212,8 +212,19 @@
     saved.set([]); mine.set([]); prefs.set('start', 'auto'); show(); say('Cleared');
   });
   // the account row at the top: who's signed in
+  const person = document.querySelector('#setArt .set-av').innerHTML;
   const acct = () => {
-    const u = window.tn.account.user(); document.getElementById('setAcctNow').textContent = u ? `Signed in as ${u.name || 'you'}. Everything here is kept in step on your devices` : 'Sign in to keep your Watchlist and settings in step on every device';
+    const u = window.tn.account.user(); document.getElementById('setAcctNow').textContent = u ? 'Everything here is kept in step on your devices' : 'Sign in to keep your Watchlist and settings in step on every device';
+    document.getElementById('setAcctName').textContent = u ? u.name || 'Your account' : 'Account';
+    document.getElementById('setAcctBtn').textContent = u ? 'Manage' : 'Sign in';
+    // your picture, blurred to fill the card behind it too (or your initial on your colour)
+    const art = document.getElementById('setArt'), av = art.querySelector('.set-av');
+    art.querySelector('.set-bg')?.remove(); av.removeAttribute('style');
+    if (u?.picture) {
+      const img = (cls) => Object.assign(document.createElement('img'), { className: cls, src: u.picture, alt: '', referrerPolicy: 'no-referrer' });
+      av.replaceChildren(img('')); art.prepend(img('set-bg'));
+    } else if (u) { av.textContent = (u.name || '?').trim()[0]?.toUpperCase() || '?'; av.style.setProperty('--h', u.hue ?? 210); }
+    else av.innerHTML = person;
     // the Sunday email goes to your account's email address (Google's, or the one you signed up with)
     const dg = document.getElementById('setDigest'); dg.disabled = !u; dg.checked = !!u && !!prefs.get().digest;
     document.getElementById('dgNow').textContent = !u ? 'Sign in to get a short round-up of your Watchlist each Sunday morning'
