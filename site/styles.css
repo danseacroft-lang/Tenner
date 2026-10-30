@@ -235,7 +235,7 @@ a.tb-btn:hover { text-decoration: none; }
   position: fixed; inset: auto; margin: 0; border: 0; z-index: 65; box-sizing: border-box; width: min(300px, calc(100vw - 24px)); overflow-y: auto; overscroll-behavior: contain; max-height: calc(100dvh - 90px);
   border-radius: 24px; padding: 18px 18px 12px; color: var(--label);
   background: var(--sheet-bg); -webkit-backdrop-filter: var(--sheet-blur); backdrop-filter: var(--sheet-blur);
-  box-shadow: inset 0 0 0 .5px var(--frost-edge), 0 24px 60px rgba(0, 0, 0, .22);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .22);
   transform-origin: var(--tb-o, top right); animation: tbDrop .5s cubic-bezier(.34, 1.45, .5, 1) both;
 }
 .tb-pop:focus { outline: 0; }
@@ -726,8 +726,7 @@ a.tb-btn:hover { text-decoration: none; }
 .tn-sp { position: absolute; color: #fff; opacity: .8; filter: drop-shadow(0 0 6px rgba(255, 255, 255, .6)); }
 :root[data-theme="light"] .tn-sp { color: #ffb340; filter: none; }
 @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .tn-sp { color: #ffb340; filter: none; } }
-.mine-dlg.tn-dlg { width: min(600px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); overflow: auto; overscroll-behavior: contain; border-radius: 26px;
-  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, .6); }   /* no hairline round the edge */
+.mine-dlg.tn-dlg { width: min(600px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); overflow: auto; overscroll-behavior: contain; border-radius: 26px; }
 .mine-dlg.tn-dlg form { position: relative; padding: 0; }
 .tn-grab { display: none; }
 .tn-x { position: absolute; z-index: 2; top: 14px; right: 14px; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
@@ -872,10 +871,10 @@ a.tb-btn:hover { text-decoration: none; }
   background: rgba(20, 20, 24, .6); -webkit-backdrop-filter: blur(12px) saturate(160%); backdrop-filter: blur(12px) saturate(160%); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .22); }
 /* the sheet's Watchlist button, once saved */
 .sh-save.on { color: var(--accent); }
-/* My services: a small sheet of switches */
+/* My services: a small sheet of switches. No popup has a hairline round its edge: a soft shadow lifts it off the page */
 .mine-dlg { width: min(400px, calc(100vw - 32px)); padding: 0; border: 0; border-radius: 18px; color: var(--label);
   background: var(--sheet-bg); -webkit-backdrop-filter: var(--sheet-blur); backdrop-filter: var(--sheet-blur);
-  box-shadow: inset 0 0 0 .5px var(--frost-edge), 0 30px 80px -20px rgba(0, 0, 0, .6); }
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, .6); }
 .mine-dlg::backdrop { background: rgba(0, 0, 0, .45); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 .mine-dlg form { padding: 22px 20px 18px; }
 .mine-dlg h2 { margin: 0 0 6px; font: 700 22px/1.2 var(--font); }
@@ -1070,7 +1069,7 @@ main { padding-bottom: 40px; }   /* breathing room at the end of every page */
   position: fixed; inset: auto; margin: 0; padding: 0; border: 0; max-width: none; left: 50%; top: 50%; width: min(680px, calc(100vw - 48px)); max-height: min(88vh, 860px);
   display: flex; flex-direction: column; border-radius: 20px; overflow: hidden; color: var(--label);
   background: var(--sheet-bg); -webkit-backdrop-filter: var(--sheet-blur); backdrop-filter: var(--sheet-blur);
-  box-shadow: inset 0 0 0 .5px var(--frost-edge), 0 30px 80px rgba(0, 0, 0, .35);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .35);
   transform: translate(-50%, -50%) scale(.96); opacity: 0; transition: transform .32s var(--ease-out), opacity .2s ease, translate .3s var(--ease-out);
 }
 .sheet.in { transform: translate(-50%, -50%); opacity: 1; }
@@ -1236,7 +1235,7 @@ a.sh-prov:hover { text-decoration: none; }
    share, a note, and a little drive-in scene melting in at the foot. Phones use the system's own share sheet instead. */
 .share-card { position: fixed; inset: 0; margin: auto; padding: 0; border: 0; width: min(360px, calc(100vw - 32px)); height: fit-content; max-height: calc(100dvh - 48px);
   display: flex; flex-direction: column; overflow-y: auto; overscroll-behavior: contain; border-radius: 30px; background: #000; color: #fff;
-  box-shadow: 0 0 0 .5px rgba(255, 255, 255, .1), 0 40px 100px rgba(0, 0, 0, .5); animation: scIn .5s var(--ease-spring) both; }
+  box-shadow: 0 40px 100px rgba(0, 0, 0, .5); animation: scIn .5s var(--ease-spring) both; }
 .share-card:not([open]) { display: none; }
 .share-card.out { animation: scOut .2s ease-in both; }
 .share-card::backdrop { background: rgba(0, 0, 0, .42); animation: scFade .3s ease both; }
@@ -1403,7 +1402,7 @@ a.sh-prov:hover { text-decoration: none; }
   .drawer { position: fixed; inset: 10px auto 10px 10px; width: min(304px, calc(100vw - 56px)); height: auto; max-width: none; max-height: none; margin: 0;
     padding: calc(env(safe-area-inset-top, 0px) + 14px) 12px calc(env(safe-area-inset-bottom, 0px) + 16px); border: 0; border-radius: 30px; overflow-y: auto; overscroll-behavior: contain;
     color: var(--label); background: color-mix(in srgb, var(--bg2) 80%, transparent); -webkit-backdrop-filter: blur(40px) saturate(1.8); backdrop-filter: blur(40px) saturate(1.8);
-    box-shadow: inset 0 0 0 .5px var(--frost-edge), 0 30px 80px rgba(0, 0, 0, .45); }
+    box-shadow: 0 30px 80px rgba(0, 0, 0, .45); }
   .drawer[open] { display: flex; flex-direction: column; gap: 2px; animation: drIn .5s var(--ease-spring) both; }
   .drawer.out { animation: drOut .26s ease-in both; }
   .drawer::backdrop { background: rgba(0, 0, 0, .4); animation: scFade .3s ease both; }
