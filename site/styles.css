@@ -1079,13 +1079,15 @@ main { padding-bottom: 40px; }   /* breathing room at the end of every page */
 .sh-x {
   position: absolute; z-index: 3; top: 12px; right: 12px; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%;
   color: #fff; background: rgba(0, 0, 0, .38); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); cursor: pointer;
-  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .25);
 }
 .sh-x svg { width: 16px; height: 16px; }
 .sh-scroll { overflow-y: auto; overscroll-behavior: contain; }
 /* the artwork melts into the card (a mask on the picture itself, so it works on the frosted card in either theme, with no
    line where it ends); the poster hangs over the edge, uncut */
-.sh-art { position: relative; aspect-ratio: 16 / 9; touch-action: none; }
+/* the artwork stays put at the top while everything below scrolls up underneath it, fading away under its soft lower edge */
+.sh-art { position: sticky; top: 0; z-index: 2; aspect-ratio: 16 / 9; touch-action: none; }
+.sh-art::before { content: ""; position: absolute; inset: 0; background: var(--bg); pointer-events: none;
+  -webkit-mask-image: linear-gradient(#000 62%, transparent); mask-image: linear-gradient(#000 62%, transparent); }
 .sh-art > img:first-child, .sh-art .ph, .sh-art iframe { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border: 0; display: block; }
 .sh-art > img:first-child, .sh-art .ph { -webkit-mask-image: linear-gradient(to bottom, #000 42%, rgba(0, 0, 0, .55) 72%, transparent 100%); mask-image: linear-gradient(to bottom, #000 42%, rgba(0, 0, 0, .55) 72%, transparent 100%);
   transition: opacity .5s ease; }
