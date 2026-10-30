@@ -183,6 +183,27 @@
     if (!castCache.has(k)) castCache.set(k, fetch(`${window.tn.api}/credits/${k}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
     return castCache.get(k);
   };
+  // the description: from wherever the title was opened, or the search API when that had none (the Watchlist, a shared
+  // link, Cast & Crew) or only a shortened one; a few grey placeholder lines hold its place meanwhile. Four lines, then More.
+  const ovLive = (info) => (!info.overview || info.overview.endsWith('…')) && !info.ovDone && window.tn.api && /^[mt]\d+$/.test(info.k || '');
+  const ovHtml = (info) => info.overview ? `<div class="sh-ov" id="shOv"><p>${esc(info.overview)}</p></div>`
+    : ovLive(info) ? '<div class="sh-ov" id="shOv"><p class="sh-sk" aria-hidden="true"><span></span><span></span><span></span></p></div>' : '';
+  async function fillOv(info) {
+    if (ovLive(info)) {
+      const a = await fromApi(info.k); info.ovDone = true;
+      if (current !== info) return;
+      const full = String(a?.info?.overview || '').trim();
+      if (full.length > (info.overview || '').length) info.overview = full;
+      const el = $('#shOv'); if (!el) return;
+      if (!info.overview) { el.remove(); return; }
+      const fresh = el.querySelector('.sh-sk');
+      el.innerHTML = `<p>${esc(info.overview)}</p>`;
+      if (fresh && !reduce) el.firstChild.classList.add('sh-in');
+    }
+    const el = $('#shOv'), p = el?.firstChild; if (!p || current !== info) return;
+    // only offer More when the text really runs past four lines
+    if (p.scrollHeight > p.clientHeight + 2) el.classList.add('clip'), el.insertAdjacentHTML('beforeend', '<button type="button" class="sh-ovmore" data-act="more" aria-label="Read the whole description">More</button>');
+  }
   async function fillCast(info) {
     const c = await castFor(info.k), sec = $('#shCast');
     if (current !== info || !sec) return;
@@ -211,14 +232,14 @@
         ${nextHtml(info, x)}
         ${btnsHtml(info, x)}
         ${x.tl ? `<p class="sh-tl">${esc(x.tl)}</p>` : ''}
-        ${info.overview ? `<p class="sh-ov">${esc(info.overview)}</p>` : ''}
+        ${ovHtml(info)}
         <section class="sh-where" aria-labelledby="shW"><h3 id="shW">Where to Watch</h3>${whereHtml(info, d)}</section>
         ${progressHtml(info, x)}
         ${chartHtml(info)}
         <section class="sh-cast" id="shCast" aria-labelledby="shCC" hidden></section>
         <p class="sh-foot">Where-to-watch information from JustWatch, via TMDB.${info.tmdb ? ` <a href="${esc(info.tmdb)}" target="_blank" rel="noopener">More on TMDB</a>` : ''}</p>
       </div>`;
-    fillCast(info);
+    fillCast(info); fillOv(info);
   }
 
   // ---------- open and close ----------
@@ -292,6 +313,7 @@
   let thanksT = 0;
   sheet.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-act]'); if (!b || !current) return;
+    if (b.dataset.act === 'more') { b.parentElement.classList.add('open'); b.remove(); return; }
     if (b.dataset.act === 'trailer') {
       const key = (shown || await details())?.items?.[current.k]?.tr; if (!key) return;
       if (window.tn.prefs.get().trailers === 'youtube') { window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(key)}`, '_blank', 'noopener'); return; }   // Settings: "Play trailers"
