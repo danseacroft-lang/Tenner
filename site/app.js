@@ -636,7 +636,7 @@ function drawTonight() {
   const opt = (f, v, label, sub) => `<button type="button" class="tn-opt" data-tn="${f}:${v}">${tnIc(v)}<span class="tn-ol"><b>${esc(label)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span>
     <svg class="tn-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
   const head = (n, q, sub) => `${tnScene(TN_SCENES[n - 1])}<div class="tn-pane"><div class="tn-top"><div class="tn-prog" role="img" aria-label="Step ${n} of 3">${[1, 2, 3].map((i) => `<i${i <= n ? ' class="on"' : ''}></i>`).join('')}</div><span class="tn-step">${n} of 3</span></div>
-    <h2 id="tnH">${q}</h2><p class="tn-sub">${sub}</p>`;
+    <h2 id="tnH" tabindex="-1">${q}</h2><p class="tn-sub">${sub}</p>`;
   const back = '<button type="button" class="tn-back" data-tn="back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Back</button>';
   const svcs = window.tn.mine.get().length ? 'your services' : 'all six services';
   let h;
@@ -684,7 +684,7 @@ async function tonightPicks() {
 view.addEventListener('click', (e) => {
   if (!e.target.closest('[data-tonight]')) return;
   Object.assign(tonight, { step: 0, len: null, mood: null, who: null, dir: 1 }); tonight.seen.clear();
-  const d = tonightDialog(); drawTonight(); d.showModal();
+  const d = tonightDialog(); drawTonight(); d.showModal(); $('#tnH')?.focus();   // start on the question, not a ringed close button
 });
 
 // ---------- the Apple Music "New" layout ----------
