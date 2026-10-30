@@ -107,6 +107,7 @@
   // a native modal <dialog>: the browser keeps focus inside it, shuts the page behind off from taps and screen readers,
   // and closes it with Escape (or the back gesture on Android); the dimmed page behind is its ::backdrop
   const sheet = $('#sheet'), body = $('#shScroll');
+  body.addEventListener('scroll', () => sheet.classList.toggle('sh-scrolled', body.scrollTop > 30), { passive: true });   // the poster steps aside
   let current = null, opener = null, pushed = false, pageTitle = document.title;
 
   const runtime = (m) => !m ? '' : m < 60 ? `${m}m` : `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}`;

@@ -1096,6 +1096,15 @@ main { padding-bottom: 40px; }   /* breathing room at the end of every page */
 .sh-art.playing .sh-poster { display: none; }
 .sh-poster { position: absolute; z-index: 1; left: 24px; bottom: -1px; width: 92px; aspect-ratio: 2 / 3; height: auto; object-fit: cover; border-radius: 10px;
   box-shadow: 0 0 0 .5px rgba(255, 255, 255, .25), 0 12px 30px rgba(0, 0, 0, .45); translate: 0 30%; }
+/* the poster glides up and away as you scroll, so nothing sits on top of the words, and comes back at the top: tied to the
+   scroll itself where Safari can (with Animations on), otherwise a quick fade once you're past the first few lines */
+.sh-poster { transition: opacity .3s ease, transform .5s var(--ease-spring); }
+.sh-scrolled .sh-poster { opacity: 0; transform: translateY(-36px) scale(.88); pointer-events: none; }
+@supports (animation-timeline: scroll()) {
+  :root:not(.still) .sh-scroll { scroll-timeline: --shs block; }
+  :root:not(.still) .sh-poster { transition: none; animation: shAway linear both; animation-timeline: --shs; animation-range: 0 150px; }
+}
+@keyframes shAway { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-48px) scale(.86); } }
 .sh-body { padding: 18px 24px 22px; }
 .sh-art:has(.sh-poster) + .sh-body { padding-top: 48px; }
 .sh-art.playing + .sh-body { padding-top: 18px; }
