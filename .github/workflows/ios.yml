@@ -1,0 +1,33 @@
+# Builds the iOS app (ios/) on GitHub's Macs whenever it changes, so it's checked without a Mac of our own.
+# Builds for the Simulator with no signing: this proves the code compiles. Putting it on a phone (TestFlight) needs the
+# Apple Developer Program and its signing secrets, added later.
+name: Build the iOS app
+on:
+  push:
+    paths: ['ios/**', '.github/workflows/ios.yml']
+  pull_request:
+    paths: ['ios/**', '.github/workflows/ios.yml']
+  workflow_dispatch:
+concurrency: { group: 'ios-${{ github.ref }}', cancel-in-progress: true }
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - name: Use the newest Xcode on the runner
+        run: |
+          X=$(ls -d /Applications/Xcode_*.app | grep -v -i beta | sort -V | tail -1)
+          echo "Using $X"; sudo xcode-select -s "$X"; xcodebuild -version
+      - name: Build for the Simulator
+        run: |
+          set -o pipefail
+          xcodebuild -project ios/Tenner.xcodeproj -target Tenner -configuration Debug -sdk iphonesimulator \
+            CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build.log | grep -E "error:|warning: .*(deprecated|will be an error)|BUILD (SUCCEEDED|FAILED)" || true
+          grep -q "BUILD SUCCEEDED" build.log
+      - name: Keep the build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: build-log, path: build.log, if-no-files-found: ignore }
