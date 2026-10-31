@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.63.0';
+  const version = '1.64.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -544,6 +544,10 @@
     const draw = () => { const u = account.user(); $('#sideAcct').innerHTML = `${avatar(u)}<span><b>${u ? esc(u.name || 'You') : 'Sign in'}</b><small>${u ? 'Your account' : 'Sync your devices'}</small></span>`; if (location.pathname.endsWith('account.html')) $('#sideAcct').setAttribute('aria-current', 'page'); };
     draw(); addEventListener('tn:account', draw);
   }
+  // the colour you picked for your account tints the menu links (and only them); the first blue is Tenner's own
+  const menuHue = () => { const u = account.user(), r = document.documentElement.style;
+    if (u && !u.picture && u.hue != null && u.hue !== 210) r.setProperty('--menu', `hsl(${+u.hue} 72% 56%)`); else r.removeProperty('--menu'); };
+  menuHue(); addEventListener('tn:account', menuHue);
 
   // ---------- variety in the big featured artwork (the homepage's hero, Browse's spotlight) ----------
   // Remembers when each title last had the spotlight on this device, so the next visit leads with ones you haven't

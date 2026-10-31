@@ -38,11 +38,12 @@
   <script>/* Night is the default; Day or Auto only when chosen */
   function tnTheme(t){var r=document.documentElement;if(t==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",t);
     var c=t==="auto"?null:(t==="light"?"#ffffff":"#000000");document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){if(!m.dataset.c)m.dataset.c=m.content;m.content=c||m.dataset.c;});}
+  try{var a=JSON.parse(localStorage.getItem("tenner-account")||"null");if(a&&!a.picture&&a.hue!=null&&a.hue!=210)document.documentElement.style.setProperty("--menu","hsl("+a.hue+" 72% 56%)")}catch(e){}
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=1.63.0">
-  <link rel="stylesheet" href="discover.css?v=1.63.0">
+  <link rel="stylesheet" href="styles.css?v=1.64.0">
+  <link rel="stylesheet" href="discover.css?v=1.64.0">
 </head>
 <body class="discover">
   <a class="skip" href="#main">Skip to the page</a>
@@ -93,7 +94,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.63.0</span>
+      <span class="side-ver">Tenner 1.64.0</span>
     </div>
   </div>
 
@@ -124,9 +125,9 @@
   </main>
 
 
-  <script src="shell.js?v=1.63.0" defer></script>
-  <script src="links.js?v=1.63.0" defer></script>
-  <script src="sheet.js?v=1.63.0" defer></script>
-  <script src="discover.js?v=1.63.0" defer></script>
+  <script src="shell.js?v=1.64.0" defer></script>
+  <script src="links.js?v=1.64.0" defer></script>
+  <script src="sheet.js?v=1.64.0" defer></script>
+  <script src="discover.js?v=1.64.0" defer></script>
 </body>
 </html>

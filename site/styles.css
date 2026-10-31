@@ -161,7 +161,8 @@ main:focus { outline: none; }
 .th-sel { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; border: 0; appearance: none; cursor: pointer; }
 .th-wrap:has(.th-sel:focus-visible) .tb-btn { outline: 2px solid var(--accent); outline-offset: 2px; }
 a.tb-btn:hover { text-decoration: none; }
-.tb-about[aria-current] { color: var(--accent); }
+/* --menu: the menu links' colour; your account's colour when you've picked one (shell.js), else the accent */
+.tb-about[aria-current] { color: var(--menu, var(--accent)); }
 
 /* the tabs: a capsule of glass with an even specular rim and a soft shadow below; the chosen tab sits under a pill of
    lighter glass that glides (and squashes a little) as it moves, inset evenly so the two shapes stay concentric */
@@ -189,9 +190,9 @@ a.tb-btn:hover { text-decoration: none; }
   .tabs button { padding: 0 9px; gap: 5px; font-size: 14px; }
   .top-brand .brand-name { display: none; }
 }
-.tabs button[aria-selected="true"] { color: var(--accent); }
+.tabs button[aria-selected="true"] { color: var(--menu, var(--accent)); }
 .tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-@media (hover: hover) { .tabs button[aria-selected="false"]:hover { color: var(--accent); } }
+@media (hover: hover) { .tabs button[aria-selected="false"]:hover { color: var(--menu, var(--accent)); } }
 .tab-ind {
   position: absolute; z-index: 0; left: 0; top: 4px; bottom: 4px; width: 0; border-radius: 999px; transform-origin: center; pointer-events: none;
   background: color-mix(in srgb, var(--pill) 100%, rgba(255, 255, 255, .1)); box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .45), inset 0 0 0 .5px rgba(255, 255, 255, .12);
@@ -987,7 +988,7 @@ main { padding-bottom: 40px; }   /* breathing room at the end of every page */
    rows), and the small print and the version at the very foot. The page sits to the right of it. */
 .side-links, .side-about, .side-h { display: none; }
 /* TV Guide's small New badge: Apple's tinted style, so it reads in light and dark without shouting */
-.side-new { margin-left: auto; padding: 4px 8px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent);
+.side-new { margin-left: auto; padding: 4px 8px; border-radius: 999px; background: color-mix(in srgb, var(--menu, var(--accent)) 15%, transparent); color: var(--menu, var(--accent));
   font: 500 11px/1 var(--font); letter-spacing: .02em; text-transform: uppercase; -webkit-font-smoothing: antialiased; }
 @media (min-width: 1000px) {
   :root { --side: 236px; --side-bg: rgba(242, 242, 247, .82); }
@@ -1014,7 +1015,7 @@ main { padding-bottom: 40px; }   /* breathing room at the end of every page */
     width: 100%; height: 38px; justify-content: flex-start; gap: 12px; padding: 0 10px; border-radius: 9px;
     font: 500 15px/1 var(--font); letter-spacing: -.016em; color: var(--label);
   }
-  .tabs button svg { width: 20px; height: 20px; color: var(--accent); }
+  .tabs button svg { width: 20px; height: 20px; color: var(--menu, var(--accent)); }
   .tabs button[aria-selected="true"] { background: var(--fill); color: var(--label); font-weight: 600; }
   .tabs button:active { transform: none; filter: none; background: var(--fill-strong); }
   @media (hover: hover) { .tabs button[aria-selected="false"]:hover { color: var(--label); background: var(--fill); } }
@@ -1029,7 +1030,7 @@ main { padding-bottom: 40px; }   /* breathing room at the end of every page */
   .side-h + .side-about { margin-top: -12px; }
   .side-about.side-settings { margin-top: -20px; }
   .side-tv + .side-about { margin-top: -20px; }
-  .side-about svg, .tb-btn svg { width: 20px; height: 20px; flex: none; color: var(--accent); }
+  .side-about svg, .tb-btn svg { width: 20px; height: 20px; flex: none; color: var(--menu, var(--accent)); }
   .side-about:hover, .tb-btn:hover { text-decoration: none; background: var(--fill); }
   .side-about:active, .tb-btn:active { background: var(--fill-strong); transform: none; filter: none; }
   .tb-btn[aria-expanded="true"] { background: var(--fill); color: var(--label); }
@@ -1434,7 +1435,7 @@ a.sh-prov:hover { text-decoration: none; }
     flex: none; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 14px; width: 100%; height: 48px; padding: 0 14px;
     border-radius: 999px; font: 500 17px/1 var(--font); letter-spacing: -.02em; color: var(--label); text-decoration: none; background: none; }
   .drawer .tabs button[data-tab="people"] { display: flex; }
-  .drawer .tabs button svg, .drawer .side-about svg, .drawer .tb-btn svg { width: 22px; height: 22px; flex: none; color: var(--accent); }
+  .drawer .tabs button svg, .drawer .side-about svg, .drawer .tb-btn svg { width: 22px; height: 22px; flex: none; color: var(--menu, var(--accent)); }
   .drawer .tabs button[aria-selected="true"], .drawer .side-about[aria-current] { background: var(--fill); font-weight: 600; color: var(--label); }
   .drawer .tabs button:active, .drawer .side-about:active, .drawer .tb-btn:active { transform: none; filter: none; background: var(--fill-strong); }
   /* More */
