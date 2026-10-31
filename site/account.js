@@ -8,7 +8,7 @@
   const GOOGLE_CLIENT_ID = '573684167951-69isfjep31v7kl8hs0083228flhbq53e.apps.googleusercontent.com';
   const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   const unb64u = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), (c) => c.charCodeAt(0));
-  const say = (el, t, bad) => { const n = $(el); n.textContent = t; n.classList.toggle('bad', !!bad); clearTimeout(n.t); if (!bad) n.t = setTimeout(() => (n.textContent = ''), 3500); };
+  const say = (el, t, bad) => { const n = $(el); n.textContent = t; n.classList.toggle('bad', !!bad); clearTimeout(n.t); n.t = setTimeout(() => (n.textContent = ''), bad ? 7000 : 3500); };   // a toast, so even a problem fades in time
   const passkeys = !!window.PublicKeyCredential;
   // Show password: an eye inside each password box, so you can check what you've typed
   const EYE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path class="ac-eye-off" d="M4 4l16 16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
@@ -158,7 +158,10 @@
   }
   function draw() {
     const u = me.user;
-    $('#acAv').innerHTML = avatar(u, 'av-xl');
+    // your picture in the big card, and blurred to fill it behind (or your initial on your colour), as on Settings
+    $('#acAv').innerHTML = avatar(u, 'set-av');
+    $('#acArt').querySelector('.set-bg')?.remove();
+    if (u.picture) $('#acArt').insertAdjacentHTML('afterbegin', `<img class="set-bg" src="${esc(u.picture)}" alt="" referrerpolicy="no-referrer">`);
     $('#acHello').textContent = u.name || 'Your account';
     if (document.activeElement !== $('#acEditName')) $('#acEditName').value = u.name || '';
     $('#acHues').hidden = !!u.picture;
