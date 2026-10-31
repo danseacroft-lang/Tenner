@@ -118,6 +118,13 @@ Mac. When in doubt, ask "would this look at home in Apple TV, Apple Music or the
 - Anything new should follow the same pattern: no step that needs a person, a fallback when a source is down, and a check
   in the watchdog.
 
+## The iOS app (`ios/`)
+- SwiftUI, iOS 18+, opened with `ios/Tenner.xcodeproj` in Xcode 26 on a Mac (building needs Xcode; see `ios/README.md`).
+- Same data and accounts as the website: it reads `tenner.stream/data/*.json` and calls the Worker, so a change to those
+  files' shape or to the Worker's answers must keep the app working (or update `ios/Tenner/Core/Models.swift` too).
+- `ios/Tenner/Core/Links.swift` is a port of `site/links.js`: change both together.
+- The same design rule applies: system components (they're Liquid Glass on iOS 26), dark by default, native first.
+
 ## Security
 - Never post API keys or tokens in chat.
 - The owner's personal email address must never appear on the site or in the code.
