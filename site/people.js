@@ -107,7 +107,7 @@
   const poster = (x) => `<span class="pp-art" style="--h:${hue(x.title)}">${x.poster ? `<img src="${esc(x.poster)}" alt="" loading="lazy" decoding="async">` : `<i>${esc(x.title)}</i>`}</span>`;
   let pd = null, cat = null;
   const onLogos = (k, cls = 'pp-on') => { const s = cat?.on.get(k); if (!s) return ''; const l = s.map((x) => cat.svc[x]).filter((x) => x?.logo).slice(0, 3);
-    return l.length ? `<span class="${cls}" title="On ${esc(l.map((x) => x.label).join(', '))}">${l.map((x) => `<img src="${esc(x.logo)}" alt="${esc(x.label)}">`).join('')}</span>` : ''; };
+    return l.length ? `<span class="${cls}">${l.map((x) => `<img src="${esc(x.logo)}" alt="${esc(x.label)}" data-tip="${esc(x.label)}">`).join('')}</span>` : ''; };
   const credit = (x) => `<li><a href="./?t=${x.k}" data-k="${x.k}">${poster(x)}
     <span class="cl-t"><b>${esc(x.title)}</b><small>${esc([x.role, x.eps > 1 ? `${x.eps} episodes` : '', x.type === 'tv' ? 'Show' : 'Film'].filter(Boolean).join(' · '))}</small></span>
     ${onLogos(x.k)}<span class="cl-r">${esc(x.year || 'Soon')}</span></a></li>`;

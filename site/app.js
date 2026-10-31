@@ -285,7 +285,7 @@ function heroCopy({ it, n, sv }) {
   const info = infoFor(it, it.type, badge, s && !s.store && !s.mine ? [s] : null), mark = window.tn.saved.has(k);
   return `<p class="h-badge">${esc(badge)}</p>
     <h2 class="h-title">${esc(it.title)}</h2>
-    <p class="h-meta">${on?.logo ? `<img class="h-svc" src="${esc(on.logo)}" alt="${esc(on.label)}" title="${esc(on.label)}">` : ''}<span>${bits.map(esc).join(' · ')}</span>${x.c ? `<b class="h-cert" data-c="${esc(String(x.c).toUpperCase())}" title="Rated ${esc(x.c)}">${esc(x.c)}</b>` : ''}</p>
+    <p class="h-meta">${on?.logo ? `<img class="h-svc" src="${esc(on.logo)}" alt="${esc(on.label)}" data-tip="${esc(on.label)}">` : ''}<span>${bits.map(esc).join(' · ')}</span>${x.c ? `<b class="h-cert" data-c="${esc(String(x.c).toUpperCase())}" title="Rated ${esc(x.c)}">${esc(x.c)}</b>` : ''}</p>
     ${it.overview ? `<p class="h-blurb">${esc(firstSentence(it.overview))}</p>` : ''}
     <div class="h-btns">
       <a class="h-cta" href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(info)}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.6v10.8L13.2 8z" fill="currentColor"/></svg>Where to watch</a>
@@ -776,7 +776,7 @@ function newRow(s) {
     <h2 class="row-h" id="nr-h"><a href="#new">New This Week<span class="chev" aria-hidden="true"></span></a></h2>
     <ul class="nr">${items.map((x) => {
       const sv = svc(x.service), what = x.type === 'movie' ? 'Film' : x.season ? `Season ${x.season}` : 'Series';
-      const body = `<span class="nr-art">${x.poster ? `<img src="${esc(x.poster)}" alt="" loading="lazy">` : placeholder({ title: x.title })}${sv?.logo ? `<img class="nr-svc" src="${esc(sv.logo)}" alt="${esc(sv.label)}">` : ''}</span>
+      const body = `<span class="nr-art">${x.poster ? `<img src="${esc(x.poster)}" alt="" loading="lazy">` : placeholder({ title: x.title })}${sv?.logo ? `<img class="nr-svc" src="${esc(sv.logo)}" alt="${esc(sv.label)}" data-tip="${esc(sv.label)}">` : ''}</span>
         <b>${esc(x.title)}</b><small>${esc(what)} · ${esc(when(x.date))}</small>`;
       return `<li>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener" ${reg(infoFor(x, x.type, `New on ${sv?.label || 'streaming'}: ${when(x.date)}`, sv ? [sv] : []))}>${body}</a>` : `<span>${body}</span>`}</li>`;
     }).join('')}</ul>
@@ -843,7 +843,7 @@ function pageWatchlist() {
     const x = d?.items?.[k]; if (!x?.f?.length || !d.logo) return '';
     const seen = new Set();
     return x.f.map((id) => d.providers[id]).filter((p) => p?.[1] && !seen.has(p[0].split(' ')[0]) && seen.add(p[0].split(' ')[0])).slice(0, 3)
-      .map(([n, logo]) => `<img class="nw-logo" src="${esc(d.logo + logo)}" alt="${esc(n)}" title="${esc(n)}">`).join('');
+      .map(([n, logo]) => `<img class="nw-logo" src="${esc(d.logo + logo)}" alt="${esc(n)}" data-tip="${esc(n)}">`).join('');
   };
   const X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
   // the homepage's chart list: poster, title, what it is (and where it charts), where it's streaming, then remove
@@ -944,7 +944,7 @@ function newItem(x, mode) {
   const eye = mode === 'soon' ? `Coming to ${s?.label || 'streaming'}` : mode === 'leaving' ? `Leaving ${s?.label || 'streaming'}` : `New on ${s?.label || 'streaming'}`;
   const art = x.poster ? `<img src="${esc(thumb(x.poster))}" alt="" loading="lazy" decoding="async">` : `<span class="cl-ph" style="background:hsl(${hue(x.title)} 45% 35%)"></span>`;
   const cal = i >= 0 ? `<button type="button" class="cal-add" data-cal="${i}" aria-label="${esc(`Add ${x.title} to your calendar`)}" title="Add to Calendar"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 12.6v5M9.5 15.1h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>` : '';
-  const row = `${art}<span class="cl-t"><b>${esc(x.title)}</b><small>${esc(what)}</small></span>${s?.logo ? `<img class="nw-logo" src="${esc(s.logo)}" alt="">` : ''}`;
+  const row = `${art}<span class="cl-t"><b>${esc(x.title)}</b><small>${esc(what)}</small></span>${s?.logo ? `<img class="nw-logo" src="${esc(s.logo)}" alt="" data-tip="${esc(s.label)}">` : ''}`;
   return `<li>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener" ${reg(infoFor(x, x.type, eye, s ? [s] : []))}>${row}</a>` : `<span class="nw-row">${row}</span>`}${cal}</li>`;
 }
 function dayGroups(list, mode, today) {

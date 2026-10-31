@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '1.61.0';
+  const version = '1.62.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -721,6 +721,38 @@
   setInterval(() => { if (document.visibilityState === 'visible') check(); }, 15 * 60e3);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && Date.now() - lastCheck > 4 * 60e3) check(); });
   addEventListener('pageshow', (e) => { if (e.persisted) check(); });   // back/forward cache
+
+  // ---------- service names: a small glass label over any logo marked data-tip ----------
+  // Hover with a mouse (or focus with the keyboard) to see it; on a phone, press and hold the logo.
+  // A hold that showed the name doesn't also open what's underneath.
+  const tip = document.createElement('div'); tip.className = 'tip'; tip.setAttribute('aria-hidden', 'true'); document.body.append(tip);
+  let tipFor = null, tipWait = 0, tipHide = 0, tipLast = 0, held = false, hold = null;
+  const showTip = (el) => {
+    clearTimeout(tipHide); tipFor = el; tip.textContent = el.dataset.tip;
+    const r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight, below = r.top < h + 14;
+    tip.style.left = Math.round(Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8)) + 'px';
+    tip.style.top = Math.round(below ? r.bottom + 8 : r.top - h - 8) + 'px';
+    tip.classList.toggle('below', below); tip.classList.add('on');
+  };
+  const hideTip = (after = 0) => { clearTimeout(tipWait); clearTimeout(tipHide); tipHide = setTimeout(() => { if (tipFor) tipLast = Date.now(); tipFor = null; tip.classList.remove('on'); }, after); };
+  document.addEventListener('pointerover', (e) => {
+    if (e.pointerType === 'touch') return;
+    const el = e.target.closest?.('[data-tip]'); if (!el || el === tipFor) return;
+    clearTimeout(tipWait); tipWait = setTimeout(() => showTip(el), tipFor || Date.now() - tipLast < 600 ? 0 : 350);
+  });
+  document.addEventListener('pointerout', (e) => { if (e.pointerType !== 'touch' && e.target.closest?.('[data-tip]') && !e.relatedTarget?.closest?.('[data-tip]')) hideTip(); });
+  document.addEventListener('focusin', (e) => { if (e.target.matches?.(':focus-visible[data-tip]')) showTip(e.target); });
+  document.addEventListener('focusout', () => hideTip());
+  document.addEventListener('pointerdown', (e) => {
+    held = false; const el = e.pointerType === 'touch' && e.target.closest?.('[data-tip]'); if (!el) return;
+    hold = { x: e.clientX, y: e.clientY, t: setTimeout(() => { held = true; showTip(el); navigator.vibrate?.(8); }, 450) };
+  }, { passive: true });
+  document.addEventListener('pointermove', (e) => { if (hold && Math.hypot(e.clientX - hold.x, e.clientY - hold.y) > 10) { clearTimeout(hold.t); hold = null; } }, { passive: true });
+  const letGo = () => { if (hold) { clearTimeout(hold.t); hold = null; } if (held) hideTip(1400); };
+  document.addEventListener('pointerup', letGo); document.addEventListener('pointercancel', letGo);
+  document.addEventListener('click', (e) => { if (held) { held = false; e.preventDefault(); e.stopPropagation(); } }, true);
+  document.addEventListener('contextmenu', (e) => { if (e.target.closest?.('[data-tip]') && (held || hold)) e.preventDefault(); });
+  addEventListener('scroll', () => tipFor && hideTip(), { passive: true, capture: true });
 
   window.tnShell = { select, current: () => cur };
 

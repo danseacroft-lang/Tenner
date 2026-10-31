@@ -1564,3 +1564,18 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .
 .sh-thanks { margin: 0; max-height: 0; opacity: 0; overflow: hidden; text-align: center; font-size: 13px; line-height: 1.35; color: var(--label2);
   transition: max-height .4s var(--ease-out), opacity .3s ease, margin .4s var(--ease-out); }
 .sh-thanks.in { max-height: 60px; opacity: 1; margin-top: 2px; }
+
+/* service names: the small glass label over a logo (shell.js) */
+.tip {
+  position: fixed; left: 0; top: 0; z-index: 90; max-width: calc(100vw - 16px); box-sizing: border-box; pointer-events: none;
+  padding: 6px 11px; border-radius: 10px; color: var(--label); font: 500 13px/1.25 var(--font); white-space: nowrap;
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  background: var(--sheet-bg); -webkit-backdrop-filter: var(--sheet-blur); backdrop-filter: var(--sheet-blur);
+  box-shadow: 0 0 0 .5px var(--gl-rim), 0 8px 24px rgba(0, 0, 0, .22);
+  opacity: 0; transform: translateY(4px) scale(.94); transform-origin: 50% 100%;
+}
+.tip.below { transform: translateY(-4px) scale(.94); transform-origin: 50% 0; }
+.tip.on { opacity: 1; transform: none; }
+:root:not(.still) .tip { transition: opacity .18s ease, transform .3s var(--ease-spring); }
+[data-tip] { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+@media (prefers-reduced-transparency: reduce) { .tip { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--card); } }

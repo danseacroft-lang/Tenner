@@ -63,7 +63,7 @@
     el.className = 'dc'; el.dataset.k = keyOf(x); el._x = x;
     const genres = [...new Set(x.g.map((g) => cat.genres[g]).filter(Boolean))].slice(0, 2);
     const meta = [x.t === 'movie' ? 'Film' : 'Series', year(x), ...genres].filter(Boolean).map(esc).join(' · ');
-    const svc = x.s.filter((s) => labels[s]).slice(0, 3).map((s) => (logos[s] ? `<img src="${esc(logos[s])}" alt="${esc(labels[s])}" title="${esc(labels[s])}">` : `<span>${esc(labels[s])}</span>`)).join('')
+    const svc = x.s.filter((s) => labels[s]).slice(0, 3).map((s) => (logos[s] ? `<img src="${esc(logos[s])}" alt="${esc(labels[s])}" data-tip="${esc(labels[s])}">` : `<span>${esc(labels[s])}</span>`)).join('')
       + (x.b && !x.s.length ? '<span>Buy or rent</span>' : '');
     el.innerHTML = `${src ? `<img class="dc-img" src="${esc(src)}" srcset="${esc(src)} 500w, ${esc(img(x, 'w780'))} 780w" sizes="380px" alt="" decoding="async" draggable="false">`
       : `<span class="dc-img dc-ph" style="background:linear-gradient(160deg,hsl(${h} 50% 42%),hsl(${(h + 40) % 360} 55% 16%))"></span>`}
