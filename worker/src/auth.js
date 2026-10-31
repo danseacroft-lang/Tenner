@@ -16,6 +16,7 @@
 //   PATCH /me                     { name?, hue? }
 //   PUT  /me/data                 { data } → { data } (merged with what's stored, and the result for this device)
 //   POST /me/share                { on } → { share_id }
+//   POST /me/handoff              → { token, to }: a session for Tenner TV, handed over in the address it opens
 //   DELETE /me/sessions/:id (sign out one other device), DELETE /me/sessions (every other device)
 //   DELETE /me/passkeys/:id, DELETE /me/google, DELETE /me (the account and everything in it)
 //   GET  /share/:id               a shared Watchlist: { name, picture, hue, list }
@@ -137,7 +138,32 @@ export function merge(a = {}, b = {}) {
   const stars = { ...(a.stars || {}) };
   for (const [k, v] of Object.entries(b.stars || {})) if (!stars[k] || v[1] > stars[k][1]) stars[k] = v;
   for (const k of Object.keys(stars)) if (!stars[k][0] && stars[k][1] < cut) delete stars[k];
-  return { v: 1, watchlist, removed, progress, pat, stars, services: newer('services', 'sat') || [], sat: Math.max(a.sat || 0, b.sat || 0), settings: newer('settings', 'pfat') || {}, pfat: Math.max(a.pfat || 0, b.pfat || 0) };
+  return { v: 1, watchlist, removed, progress, pat, stars, services: newer('services', 'sat') || [], sat: Math.max(a.sat || 0, b.sat || 0), settings: newer('settings', 'pfat') || {}, pfat: Math.max(a.pfat || 0, b.pfat || 0),
+    tv: mergeTv(a.tv, b.tv) };
+}
+// Tenner TV's own things (tv.tenner.stream): pinned channels (the newest list wins, by pat) and programme reminders
+// (kept by id, a removal remembered in gone so other devices hear of it; finished programmes drop off). tenner.stream
+// doesn't send these, so its syncs leave them as they are.
+export function mergeTv(a = {}, b = {}) {
+  a ||= {}; b ||= {};
+  const gone = { ...(a.gone || {}) }, t = now();
+  for (const [k, w] of Object.entries(b.gone || {})) if (!(gone[k] >= w)) gone[k] = w;
+  for (const k of Object.keys(gone)) if (gone[k] < t - 30 * 864e5) delete gone[k];
+  const byId = new Map();
+  for (const x of [...(a.rem || []), ...(b.rem || [])]) if (x?.id && (!byId.has(x.id) || (x.add || 0) > (byId.get(x.id).add || 0))) byId.set(x.id, x);
+  const rem = [...byId.values()].filter((x) => !(gone[x.id] >= (x.add || 0)) && x.end > t - 36e5).sort((x, y) => x.at - y.at).slice(0, 200);
+  const pb = (b.pat || 0) > (a.pat || 0);
+  return { pins: (pb ? b.pins : a.pins ?? b.pins) || [], pat: Math.max(a.pat || 0, b.pat || 0), rem, gone };
+}
+function cleanTv(v) {
+  if (!v || typeof v !== 'object') return undefined;
+  const str = (s, n) => (typeof s === 'string' ? s.slice(0, n) : '');
+  return {
+    pins: (Array.isArray(v.pins) ? v.pins : []).filter((n) => typeof n === 'string' && n.length <= 40).slice(0, 60), pat: +v.pat || 0,
+    rem: (Array.isArray(v.rem) ? v.rem : []).filter((x) => /^[a-z0-9.]{1,24}$/.test(x?.id) && +x.at && +x.end).slice(0, 200)
+      .map((x) => ({ id: x.id, t: str(x.t, 160), ch: str(x.ch, 40), ep: str(x.ep, 160) || undefined, at: +x.at, end: +x.end, add: +x.add || 0 })),
+    gone: Object.fromEntries(Object.entries(v.gone && typeof v.gone === 'object' ? v.gone : {}).filter(([k, w]) => /^[a-z0-9.]{1,24}$/.test(k) && +w).slice(0, 400).map(([k, w]) => [k, +w])),
+  };
 }
 // keep what a device sends to the shape and size we expect
 function clean(d) {
@@ -152,6 +178,7 @@ function clean(d) {
       .filter(([k, v]) => /^[mt]\d{1,9}$/.test(k) && Array.isArray(v) && +v[1]).slice(0, 1000).map(([k, v]) => [k, [v[0] ? 1 : 0, +v[1]]])),
     services: (Array.isArray(d?.services) ? d.services : []).filter((k) => /^[a-z+]{2,20}$/.test(k)).slice(0, 10), sat: +d?.sat || 0,
     settings: Object.fromEntries(Object.entries(d?.settings && typeof d.settings === 'object' ? d.settings : {}).filter(([k, v]) => /^[a-z0-9]{1,20}$/i.test(k) && ['string', 'boolean', 'number'].includes(typeof v)).slice(0, 30)), pfat: +d?.pfat || 0,
+    tv: cleanTv(d?.tv),
   };
 }
 
@@ -372,6 +399,13 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
       await env.DB.prepare('INSERT INTO userdata (user_id, data, updated) VALUES (?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET data = excluded.data, updated = excluded.updated').bind(me.id, text, now()).run();
       ctx.waitUntil(syncAlerts(env, me.id, merged.watchlist.map((x) => x.k)));   // alerts on all your devices watch the same list
       return ok({ data: merged });
+    }
+    // Tenner TV (another site, so its own storage): tenner.stream, signed in, asks for a session of its own to hand over
+    // in the address it sends you to (tv.tenner.stream only). It shows in your devices as Tenner TV, signed out separately
+    if (p === '/me/handoff' && m === 'POST') {
+      const t = rand(32);
+      await env.DB.prepare('INSERT INTO sessions (token, user_id, label, created, seen) VALUES (?, ?, ?, ?, ?)').bind(await hashToken(t), me.id, 'Tenner TV', now(), now()).run();
+      return ok({ token: t, to: `https://tv.tenner.stream/#signin=${t}` });
     }
     if (p === '/me/share' && m === 'POST') {
       const sid = body.on ? (me.share_id || rand(9)) : null;

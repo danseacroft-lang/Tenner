@@ -3,8 +3,8 @@
 // - listings: the same, with a 4s wait; old days are cleared away
 // - the page's own files (versioned), logos and icons: kept on the device, as they never change under the same name
 // Sky's programme pictures are left to the browser's own cache. The version below changes with every update.
-const V = 'tenner-tv?v=2.10.0';
-const SHELL = ['/', '/tv.css?v=2.10.0', '/tv.js?v=2.10.0', '/logo.svg'];
+const V = 'tenner-tv?v=3.0.0';
+const SHELL = ['/', '/tv.css?v=3.0.0', '/tv.js?v=3.0.0', '/logo.svg'];
 
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(V).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => {
@@ -37,4 +37,14 @@ self.addEventListener('fetch', (e) => {
   if (u.pathname === '/api/day') { e.waitUntil(tidy()); return e.respondWith(fresh(req, 4000)); }
   if (u.pathname === '/data/meta.json') return e.respondWith(fresh(req, 4000));
   if (u.searchParams.has('v') || u.pathname.startsWith('/logos/') || /\.(svg|png|ico|webp)$/.test(u.pathname)) return e.respondWith(kept(req));
+});
+
+// a reminder's notification, tapped: the guide (already open, or opened) at that programme
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const url = new URL(e.notification.data?.url || '/', location.origin).href;
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((l) => {
+    const c = l.find((w) => new URL(w.url).origin === location.origin);
+    return c ? c.focus().then((w) => w?.navigate?.(url)) : self.clients.openWindow(url);
+  }));
 });

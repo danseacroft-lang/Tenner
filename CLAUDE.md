@@ -106,6 +106,9 @@ Mac. When in doubt, ask "would this look at home in Apple TV, Apple Music or the
   only for a day the feed doesn't cover, and the last good copy served if a source is down. Its own logos in `tv/public/logos`
   (sized for where they're shown). A service worker (`tv/public/sw.js`) keeps the page on the device: it opens instantly
   and works offline. Bump its `?v=` with every Tenner TV update (sed over `tv/public/index.html tv/public/sw.js`).
+  Signing in on Tenner TV goes through tenner.stream (`account.html?to=tv`), which asks the Worker for a session of its own
+  (`/me/handoff`) and sends you back with it in the address (`#signin=`); the TV's pins and reminders are kept in the
+  account's data as `tv` (merged in `auth.js`, untouched by tenner.stream's syncs), and the Watchlist feeds its shelf.
 - **Alerts and the Sunday email** (the search/accounts Worker's hourly cron): Watchlist alerts for arrivals each hour; from
   9am UK time a morning pass for new episodes out today, titles leaving within three days, Watchlist titles on Freeview
   later that day and ones that got cheaper to rent or buy (`push.js`); on Sunday mornings

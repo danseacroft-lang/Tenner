@@ -255,8 +255,19 @@
     catch (err) { e.target.checked = !e.target.checked; say('#acNote', friendly(err), true); }
   });
 
+  // Tenner TV sends you here to sign in (?to=tv): once you're in, it gets a session of its own and you go straight back
+  const toTv = new URLSearchParams(location.search).get('to') === 'tv';
+  let handing = false;
+  if (toTv) $('#acOut .set-lede').textContent = 'Sign in, and you’ll go straight back to Tenner TV with your reminders and pinned channels.';
+  async function handOff() {
+    if (!toTv || handing || !account.token()) return;
+    handing = true;
+    try { const out = await account.call('POST', '/me/handoff'); if (/^https:\/\/tv\.tenner\.stream\/#signin=/.test(out.to)) location.replace(out.to); }
+    catch (err) { handing = false; say('#acNote', friendly(err), true); }
+  }
   function show() {
     const inn = !!account.token();
+    if (inn && toTv) handOff();
     $('#acOut').hidden = inn; $('#acIn').hidden = !inn;
     if (inn) { const u = account.user(); if (u) { me ||= { user: u, passkeys: [], sessions: [] }; draw(); } load(); }
     else {

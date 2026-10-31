@@ -16,7 +16,7 @@
   <meta property="og:description" content="Every UK channel, now and next, and the whole evening.">
   <meta property="og:image" content="https://tenner.stream/og.jpg">
   <link rel="preconnect" href="https://images.metadata.sky.com">
-  <link rel="stylesheet" href="tv.css?v=2.10.0">
+  <link rel="stylesheet" href="tv.css?v=3.0.0">
   <!-- the listings start downloading now, alongside the page's own files (not after them) -->
   <script>(() => { const t = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(Date.now()), q = new URLSearchParams(location.search).get('d'), d = /^\d{4}-\d\d-\d\d$/.test(q || '') && q >= t ? q : t;
     const day = fetch('/api/day?d=' + d), meta = fetch('/data/meta.json').then((r) => (r.ok ? r.json() : null)).catch(() => null); day.catch(() => {});
@@ -41,28 +41,32 @@
       <a class="side-row" href="https://tenner.stream/settings.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-2.6-1.5L14.2 2.6h-4l-.4 2.5A7.6 7.6 0 0 0 7.2 6.6l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.6 7.6 0 0 0 2.6-1.5l2.3 1 2-3.4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><span>Settings</span></a>
     </nav>
     <div class="side-links">
+      <button type="button" class="side-acct" id="acctSide" aria-haspopup="dialog"></button>
       <a href="https://tenner.stream/legal.html#terms">Terms of Service</a><a href="https://tenner.stream/legal.html#privacy">Privacy Policy</a><a href="https://tenner.stream/legal.html#cookies">Cookies</a><a href="https://tenner.stream/contact.html">Contact</a>
-      <span class="side-ver">Tenner TV 2.10.0</span>
+      <span class="side-ver">Tenner TV 3.0.0</span>
     </div>
   </aside>
   <header class="bar">
     <a class="brand" href="/" aria-label="Tenner TV, tonight"><img src="logo.svg" alt="" width="32" height="32"><span>Tenner <b>TV</b></span><span class="beta" title="Tenner TV is new, and still being built">Beta</span></a>
-    <a class="bar-link" href="https://tenner.stream/"><span class="long">Streaming&nbsp;</span>Top 10<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    <span class="bar-end"><button type="button" class="acct-btn" id="acctBar" aria-haspopup="dialog" aria-label="Your account"></button>
+    <a class="bar-link" href="https://tenner.stream/"><span class="long">Streaming&nbsp;</span>Top 10<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a></span>
   </header>
 
   <main id="main">
+    <!-- the artwork of whatever's in the preview, blurred into the top of the page and on under the sidebar's glass -->
+    <div class="amb" aria-hidden="true"><img alt="" decoding="async"><img alt="" decoding="async"></div>
     <section class="hero">
       <!-- the Met Office's weather warnings, when there are any: bad weather can knock out a dish or an aerial's signal -->
       <aside class="wx" id="wx" aria-labelledby="wxT" hidden></aside>
       <p class="eye" id="eye">&nbsp;</p>
       <h1 id="h1">What’s on <br class="ph-br"><em class="grad">tonight</em>.</h1>
-      <p class="lede">The main Freeview channels, for the week ahead. Swipe any channel to move through its week, and tap a programme to see what it’s about.</p>
+      <p class="lede">The main Freeview channels, all week. Swipe a channel through its week, and tap anything to see what it’s about.</p>
       <nav class="days" id="days" aria-label="Choose a day"></nav>
     </section>
 
-    <!-- the guide: a preview of whatever you point at, then every channel against the clock -->
     <section class="guide" aria-labelledby="gH">
       <h2 class="vh" id="gH">TV guide</h2>
+      <!-- the preview: whatever you point at -->
       <div class="pv" id="pv" aria-live="polite">
         <div class="pv-art" aria-hidden="true"><img id="pvImg" alt="" hidden decoding="async"></div>
         <div class="pv-copy">
@@ -73,18 +77,41 @@
           <div class="pv-live" id="pvLive"></div>
         </div>
       </div>
-      <div class="epg-bar">
-        <button type="button" class="now-btn" id="toNow">Now</button>
-        <p class="epg-hint" id="epgHint">Scroll a channel to move through its week · tap a channel to pin it to the top · arrow keys move around the guide</p>
-        <button type="button" class="find-btn" id="findBtn" aria-haspopup="dialog" aria-keyshortcuts="/ Meta+K Control+K"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 20 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>Search<kbd>/</kbd></button>
+      <!-- the controls, in one bar of glass that stays at the top while the guide scrolls -->
+      <div class="tools" id="tools" role="toolbar" aria-label="Guide controls">
+        <div class="seg" id="view" role="tablist" aria-label="View"><span class="thumb" aria-hidden="true"></span>
+          <button type="button" role="tab" id="tabGuide" data-view="guide" aria-selected="true" aria-controls="epg">Guide</button>
+          <button type="button" role="tab" id="tabNow" data-view="now" aria-selected="false" aria-controls="onnow">On now</button></div>
+        <label class="pop" id="catPop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M7 12h10M10 17h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="pop-l" id="catL">All channels</span><i class="chev" aria-hidden="true"></i>
+          <select id="catSel" aria-label="Channels to show"></select></label>
+        <label class="pop" id="timePop"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="pop-l" id="timeL">Now</span><i class="chev" aria-hidden="true"></i>
+          <select id="timeSel" aria-label="Jump to a time"></select></label>
+        <span class="tools-end">
+          <button type="button" class="ic-btn" id="remBtn" aria-haspopup="dialog" aria-label="Reminders"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.6 2H4.4z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M10 21h4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg><b class="count" id="remN" hidden></b></button>
+          <button type="button" class="find-btn" id="findBtn" aria-haspopup="dialog" aria-keyshortcuts="/ Meta+K Control+K" aria-label="Search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 20 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><span class="find-l">Search</span><kbd>/</kbd></button>
+        </span>
       </div>
-      <div class="cats" id="cats" role="radiogroup" aria-label="Channels to show"></div>
-      <div class="epg" id="epg"><div class="skel" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+      <p class="epg-hint" id="epgHint">Scroll a channel through its week · tap a channel for its whole week · arrow keys move around the guide</p>
+      <div class="epg" id="epg" role="tabpanel" aria-labelledby="tabGuide"><div class="skel" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+      <!-- On now: every channel at a glance (or at the time chosen, on the day chosen) -->
+      <div class="onnow" id="onnow" role="tabpanel" aria-labelledby="tabNow" hidden><p class="on-h" id="onH"></p><ul class="tiles" id="tiles"></ul></div>
     </section>
 
+    <section class="sec" id="mineSec" aria-labelledby="mineH" hidden>
+      <div class="sec-hd"><h2 id="mineH">From your Watchlist</h2><p id="mineP">Titles on your Tenner Watchlist that are on TV this week</p></div>
+      <ul class="picks" id="mine"></ul>
+    </section>
     <section class="sec" id="picksSec" aria-labelledby="picksH" hidden>
       <div class="sec-hd"><h2 id="picksH">Tonight’s picks</h2><p id="picksP">The best of the evening on the main channels</p></div>
       <ul class="picks" id="picks"></ul>
+    </section>
+    <section class="sec" id="filmsSec" aria-labelledby="filmsH" hidden>
+      <div class="sec-hd"><h2 id="filmsH">Films this week</h2><p>Every film on Freeview in the week ahead</p></div>
+      <ul class="picks" id="films"></ul>
+    </section>
+    <section class="sec" id="seriesSec" aria-labelledby="seriesH" hidden>
+      <div class="sec-hd"><h2 id="seriesH">New series</h2><p>First episodes this week</p></div>
+      <ul class="picks" id="series"></ul>
     </section>
   </main>
 
@@ -108,6 +135,16 @@
     <div class="sh-in" id="shIn"></div>
   </dialog>
 
-  <script src="tv.js?v=2.10.0" defer></script>
+  <!-- a channel's whole week -->
+  <dialog class="sheet chs" id="chSheet" aria-labelledby="chT"><div class="sh-in" id="chIn"></div></dialog>
+  <!-- your reminders -->
+  <dialog class="sheet rems" id="remSheet" aria-labelledby="remT"><div class="sh-in" id="remIn"></div></dialog>
+  <!-- your account -->
+  <dialog class="sheet acs" id="acSheet" aria-labelledby="acT"><div class="sh-in" id="acIn"></div></dialog>
+  <!-- small confirmations, and the alert when a reminder comes round -->
+  <div class="toast" id="toast" role="status" aria-live="polite" popover="manual"></div>
+  <div class="banner" id="banner" role="alert" popover="manual"></div>
+
+  <script src="tv.js?v=3.0.0" defer></script>
 </body>
 </html>

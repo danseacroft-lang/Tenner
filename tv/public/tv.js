@@ -8,6 +8,23 @@
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const hue = (s) => [...String(s)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const store = { get(k, d) { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v ?? d; } catch { return d; } }, set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+  // a light tap where the device can give one (Android; iPhones' Safari gives none to web pages)
+  const buzz = (ms = 8) => { try { navigator.vibrate?.(ms); } catch {} };
+  // a small confirmation, as a capsule of glass that rises from the bottom and goes by itself
+  let toastT = 0;
+  function toast(html) {
+    const t = $('#toast'); t.innerHTML = html; t.classList.remove('in');
+    try { t.hidePopover(); t.showPopover(); } catch {}   // in the top layer, so it shows above an open sheet too
+    void t.offsetWidth; t.classList.add('in');
+    clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('in'), 4200);
+  }
+  // a glass selector's thumb glides to the chosen button (the days, the views)
+  function thumb(box, sel) {
+    const b = box.querySelector(sel), t = box.querySelector('.thumb'); if (!t) return;
+    if (!b) { t.style.opacity = 0; return; }
+    t.style.opacity = 1; t.style.width = `${b.offsetWidth}px`; t.style.transform = `translateX(${b.offsetLeft}px)`;
+  }
 
   // ---------- time, in UK time. Formatters are made once: a week's guide formats tens of thousands of times ----------
   const TZ = 'Europe/London';
@@ -29,14 +46,16 @@
   const q = new URLSearchParams(location.search).get('d');
   // tenner.stream's "On TV" line opens Tenner TV with ?q=: the search, filled in, once the listings are here
   let askQ = (new URLSearchParams(location.search).get('q') || '').slice(0, 80);
-  if (askQ) { const u = new URL(location.href); u.searchParams.delete('q'); history.replaceState(null, '', u); }
+  // a shared programme (?p=, with its day as ?d=): its sheet opens once the listings are here
+  let askP = (new URLSearchParams(location.search).get('p') || '').slice(0, 24);
+  if (askQ || askP) { const u = new URL(location.href); u.searchParams.delete('q'); u.searchParams.delete('p'); history.replaceState(null, '', u); }
   // base: the first day in the strips; loaded: every day fetched, in order; day: the one in view
-  const state = { base: days.includes(q) ? q : today, day: null, data: null, loaded: new Map(), loading: null, failedAt: 0 };
+  const state = { base: days.includes(q) ? q : today, day: null, data: null, loaded: new Map(), loading: null, failedAt: 0, time: 'now' };
   const label = (d) => (d === today ? 'Tonight' : d === days[1] ? 'Tomorrow' : dayName(d, { weekday: 'short', day: 'numeric' }));
   const word = (d) => (d === today ? 'tonight' : d === days[1] ? 'tomorrow' : dayName(d, { weekday: 'long' }));
 
   // ---------- the days ----------
-  const drawDays = () => { $('#days').innerHTML = days.map((d) => `<button type="button" data-d="${d}"${d === state.day ? ' aria-current="date"' : ''}>${esc(label(d))}</button>`).join(''); };
+  const drawDays = () => { $('#days').innerHTML = '<span class="thumb" aria-hidden="true"></span>' + days.map((d) => `<button type="button" data-d="${d}"${d === state.day ? ' aria-current="date"' : ''}>${esc(label(d))}</button>`).join(''); thumb($('#days'), '[aria-current]'); };
   drawDays();
   $('#days').addEventListener('click', (e) => { const b = e.target.closest('[data-d]'); if (b) goDay(b.dataset.d); });
 
@@ -92,6 +111,11 @@
       setDay(state.base); drawCats(); drawGuide();
       loadNext();   // the next day ready before anyone scrolls to it
       if (askQ) { fq.value = askQ; askQ = ''; openFind(); }
+      else if (askP) { const x = shown.get(askP); askP = ''; if (x) openProgramme(x); }
+      if (view === 'now') drawOnNow(true);
+      drawShelves();
+      // the rest of the week, once the page has settled: for the shelves, search and channel pages (kept by sw.js)
+      setTimeout(() => idle(() => wholeWeek()), 2500);
     } catch (err) {
       if (err.name === 'AbortError') return;
       $('#picksSec').hidden = true;
@@ -132,6 +156,7 @@
   function setDay(d) {
     if (!d || d === state.day) return; state.day = d;
     for (const b of document.querySelectorAll('#days button')) b.dataset.d === d ? b.setAttribute('aria-current', 'date') : b.removeAttribute('aria-current');
+    thumb($('#days'), '[aria-current]');
     // the pill into view along its own row only (never scrolling the page away from the guide)
     const row = $('#days'), pill = $(`#days [data-d="${d}"]`);
     if (pill && row.scrollWidth > row.clientWidth) {
@@ -139,12 +164,11 @@
       if (l < row.scrollLeft + pad || l + pill.offsetWidth > row.scrollLeft + row.clientWidth - pad) row.scrollTo({ left: Math.max(0, l - pad), behavior: reduce ? 'auto' : 'smooth' });
     }
     const u = new URL(location.href); d === today ? u.searchParams.delete('d') : u.searchParams.set('d', d); history.replaceState(null, '', u);
-    if (!reduce && state.data) $(`#days [data-d="${d}"]`)?.animate([{ transform: 'scale(.9)' }, { transform: 'scale(1.06)', offset: .45 }, { transform: 'scale(.99)', offset: .75 }, { transform: 'none' }], { duration: 520, easing: 'ease-out' });
     $('#eye').textContent = dayName(d, { weekday: 'long', day: 'numeric', month: 'long' });
     $('#h1').innerHTML = `What’s on <br class="ph-br"><em class="grad">${esc(word(d))}</em>.`;   // phones: the day on its own line, so the headline never changes height
     document.title = `What’s on UK TV ${word(d)} · Tenner TV`;
-    $('#toNow').textContent = state.loaded.has(today) ? 'Now' : 'This evening';
-    drawPicks(d);
+    drawTimes();
+    drawPicks(d); if (view === 'now') drawOnNow();
   }
 
   // ---------- which channels: a category, or your own (pinned channels always come first) ----------
@@ -156,41 +180,43 @@
     ['film', 'Films', /^(Film4|Talking Pictures TV|GREAT! movies|5Action|Sky Cinema.*)$/],
     ['kids', 'Kids', /^(CBBC|CBeebies|CITV|POP|Tiny Pop)$/],
     ['news', 'News', /^(BBC News|Sky News|GB News|BBC Parliament)$/]];
+  // pinned channels (kept on the device, and in your Tenner account if you're signed in: see "accounts" below)
   const FAV = 'tenner-tv-fav';
   const favs = {
-    all() { try { const l = JSON.parse(localStorage.getItem(FAV) || '[]'); return Array.isArray(l) ? l.filter((x) => typeof x === 'string') : []; } catch { return []; } },
-    set(l) { try { localStorage.setItem(FAV, JSON.stringify(l)); } catch {} },
+    all() { const l = store.get(FAV, []); return Array.isArray(l) ? l.filter((x) => typeof x === 'string') : []; },
+    set(l, quiet) { store.set(FAV, l); if (!quiet) { store.set('tenner-tv-pat', Date.now()); acct.soon(); } },
   };
   let cat = 'all';
+  // the channels to show: a native menu (Tenner's way for a choice like this), in a glass capsule that shows the choice
   function drawCats() {
     const names = state.data.channels.map((c) => c.name), mine = favs.all();
     const live = CATS.filter(([k, , re]) => k === 'all' || (k === 'mine' ? mine.some((n) => names.includes(n)) : names.some((n) => re.test(n))));
     if (!live.some(([k]) => k === cat)) cat = 'all';
-    $('#cats').innerHTML = live.length > 2 ? live.map(([k, l]) => `<button type="button" role="radio" data-cat="${k}" aria-checked="${k === cat}" tabindex="${k === cat ? 0 : -1}">${esc(l)}</button>`).join('') : '';
+    $('#catSel').innerHTML = live.map(([k, l]) => `<option value="${k}"${k === cat ? ' selected' : ''}>${esc(l)}</option>`).join('');
+    $('#catL').textContent = CATS.find(([k]) => k === cat)[1];
+    $('#catPop').classList.toggle('on', cat !== 'all');
   }
-  $('#cats').addEventListener('click', (e) => { const b = e.target.closest('[data-cat]'); if (!b || b.dataset.cat === cat) return; cat = b.dataset.cat; drawCats(); arrange(true); $(`[data-cat="${cat}"]`)?.focus({ preventScroll: true }); });
-  $('#cats').addEventListener('keydown', (e) => {   // a radio group: the arrows move between categories
-    if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return; e.preventDefault();
-    const l = [...$('#cats').children], i = l.findIndex((b) => b.dataset.cat === cat), n = l[(i + (e.key === 'ArrowRight' ? 1 : -1) + l.length) % l.length]; n?.click();
-  });
+  $('#catSel').addEventListener('change', (e) => { cat = e.target.value; buzz(); drawCats(); arrange(true); if (view === 'now') drawOnNow(true); });
   const star = (on) => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.5l-5.1 2.7 1-5.6-4.1-4 5.7-.8z" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>`;
-  $('#epg').addEventListener('click', (e) => {
-    const b = e.target.closest('.ch[data-ch]'); if (!b) return;
-    const n = b.dataset.ch, l = favs.all(), on = !l.includes(n);
-    favs.set(on ? [...l, n] : l.filter((x) => x !== n));
-    // the rows on screen glide from where they were to where they are now (only those: it's instant, whatever the size)
+  // a channel: its whole week, in a sheet (pinning it to the top is in there)
+  $('#epg').addEventListener('click', (e) => { const b = e.target.closest('.ch[data-ch]'); if (b) openChannel(b.dataset.ch); });
+  // pin or unpin: the rows on screen glide from where they were to where they are now
+  function togglePin(n) {
+    const l = favs.all(), on = !l.includes(n);
+    favs.set(on ? [...l, n] : l.filter((x) => x !== n)); buzz();
     const before = new Map(), vh = innerHeight;
     if (!reduce) for (const r of $('#epg').querySelectorAll('.crow')) { const t = r.getBoundingClientRect().top; if (t > -200 && t < vh + 200) before.set(r.firstElementChild.dataset.ch, t); }
     drawCats(); arrange();
     if (before.size) for (const r of $('#epg').querySelectorAll('.crow')) {
       if (r.hidden) continue;
-      const n = r.firstElementChild.dataset.ch, t = r.getBoundingClientRect().top; if (t < -200 || t > vh + 200) continue;
-      const was = before.get(n), dy = was == null ? null : was - t;
+      const k = r.firstElementChild.dataset.ch, t = r.getBoundingClientRect().top; if (t < -200 || t > vh + 200) continue;
+      const was = before.get(k), dy = was == null ? null : was - t;
       if (dy) r.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], { duration: 520, easing: 'cubic-bezier(.3,1.25,.4,1)' });
       else if (dy == null) r.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 });
     }
-    $(`.ch[data-ch="${CSS.escape(n)}"]`)?.focus({ preventScroll: true });
-  });
+    if (view === 'now') drawOnNow();
+    return on;
+  }
 
   // ---------- the guide ----------
   const px = () => parseFloat(getComputedStyle($('#epg')).getPropertyValue('--px')) || 5;   // a minute's width
@@ -201,6 +227,7 @@
     const chans = state.data.channels.filter((c) => c.items.length);
     if (!chans.length) { $('#epg').innerHTML = '<div class="empty"><h3>Nothing listed yet</h3><p>Listings for this day haven’t been published. Try a nearer day.</p></div>'; preview(null); return; }
     const now = Date.now(), m = px(), loaded = [...state.loaded];
+    remIds = new Set(rem.all().map((r) => r.id));
     $('#epg').innerHTML = `<div class="empty" hidden><h3>None of these channels today</h3><p>Try another category, or All channels.</p></div><div class="rows">${chans.map((c) => `<div class="crow">
       <button type="button" class="ch" data-ch="${esc(c.name)}">${badge(c.name)}<span class="ch-name">${esc(c.name)}</span><span class="ch-star"></span></button>
       <div class="strip" data-strip="${esc(c.name)}" role="group" aria-label="${esc(`${c.name}, through the week`)}">${loaded.map(([d, day], i) => dayBlocks(c.name, d, day, i > 0, now, m)).join('')}</div></div>`).join('')}</div>`;
@@ -220,7 +247,7 @@
       row.classList.remove('first');
       if (ch.getAttribute('aria-pressed') !== String(pin)) {
         ch.setAttribute('aria-pressed', pin);
-        ch.setAttribute('aria-label', `${n}: ${pin ? 'pinned to the top. Press to unpin' : 'press to pin to the top'}. Arrow right for its programmes`);
+        ch.setAttribute('aria-label', `${n}${pin ? ', pinned to the top' : ''}: press for its whole week. Arrow right for its programmes`);
         ch.lastElementChild.innerHTML = star(pin);
       }
     }
@@ -240,13 +267,14 @@
   }
   // one channel's programmes for one day (with a marker first, from the second day on). Blocks aren't tab stops: the
   // channel buttons are, and the arrow keys move around the grid from there (see "keys" below)
+  let remIds = new Set();
   function dayBlocks(name, d, day, mark, now, m) {
     const items = day.channels.find((c) => c.name === name)?.items || [], dn = dayName(d, { weekday: 'long' });
     return (mark ? `<span class="daymark" aria-hidden="true"><b>${esc(dayName(d, { weekday: 'short' }))}</b>${esc(dayName(d, { day: 'numeric', month: 'short' }))}</span>` : '')
       + items.map((x, j) => {
         const end = ends(x, items[j + 1]), live = x.at <= now && now < end, past = end <= now, t = hm(x.at);
         const p = live ? Math.round(((now - x.at) / (end - x.at)) * 100) : 0;
-        return `<button type="button" tabindex="-1" class="blk${live ? ' live' : past ? ' past' : ''}" style="width:${Math.max(150, Math.round(((end - x.at) / 60e3) * m))}px${live ? `;--p:${p}%` : ''}" ${reg(x, name, items[j + 1])} data-day="${d}"
+        return `<button type="button" tabindex="-1" class="blk${live ? ' live' : past ? ' past' : ''}${remIds.has(String(x.id)) ? ' rem' : ''}" style="width:${Math.max(150, Math.round(((end - x.at) / 60e3) * m))}px${live ? `;--p:${p}%` : ''}" ${reg(x, name, items[j + 1])} data-day="${d}"
           aria-label="${esc(`${name}, ${dn} ${t}: ${x.t}${x.isNew ? ', new' : ''}`)}"><span class="bi"><b>${x.isNew ? '<i class="new">New</i>' : ''}${esc(x.t)}</b><small>${live ? `Now · ${Math.max(1, Math.round((end - now) / 60e3))} min left` : t}</small></span></button>`;
       }).join('');
   }
@@ -256,7 +284,7 @@
   const idle = window.requestIdleCallback || ((f) => setTimeout(() => f({ timeRemaining: () => 8 }), 50));
   function fill(st) {
     if (!st._pend?.length) return;
-    const now = Date.now(), m = px();
+    const now = Date.now(), m = px(); remIds = new Set(rem.all().map((r) => r.id));
     st.insertAdjacentHTML('beforeend', st._pend.map(([d, day]) => dayBlocks(st.dataset.strip, d, day, true, now, m)).join('')); st._pend = null; st._b = null;
     if (st._aim != null) place(st, st._aim);
   }
@@ -300,11 +328,14 @@
   // (cheaply: they're only marked to be measured again, the next time each strip is used)
   let lastW = 0;
   new ResizeObserver(([e]) => { const w = Math.round(e.contentRect.width); if (w === lastW) return; lastW = w; for (const st of $('#epg').querySelectorAll('.strip')) st._b = null; }).observe($('#epg'));
-  // where a strip goes for day d: what's on now (today), or the programme on at 7pm
+  // the moment the guide is pointed at: now (today, with Now chosen), or the hour chosen on day d (7pm unless you pick)
+  const atHour = (d, h) => { const t = Date.parse(`${d}T${String(h).padStart(2, '0')}:00:00Z`); let k = hour(t) - h; if (k < -12) k += 24; return t - k * 36e5; };
+  const momentOf = (d) => (state.time === 'now' && d === today ? Date.now() : atHour(d, state.time === 'now' ? 19 : state.time));
+  // where a strip goes for day d: the programme on at that moment, or the next one after it
   function targetOf(st, d) {
-    const at = d === today ? Date.now() : null, l = blocksOf(st); if (!l.length) return null;
-    const pick = l.find(({ b }) => { const x = shown.get(b.dataset.p); return x && (at ? isLive(x, at) : b.dataset.day === d && (hour(x.at) >= 19 || hour(x.end) > 19)); })
-      || (at ? l.find(({ b }) => (shown.get(b.dataset.p)?.at || 0) > at) : l.find(({ b }) => b.dataset.day === d)) || l[0];
+    const at = momentOf(d), l = blocksOf(st); if (!l.length) return null;
+    const pick = l.find(({ b }) => { const x = shown.get(b.dataset.p); return x && isLive(x, at); })
+      || l.find(({ b }) => (shown.get(b.dataset.p)?.at || 0) > at) || l.find(({ b }) => b.dataset.day === d) || l[0];
     return { x: Math.max(0, pick.l - l[0].l), b: pick.b };
   }
   function jumpStrip(st, d = state.day) { const t = targetOf(st, d); if (t) place(st, t.x); }
@@ -359,7 +390,22 @@
   // a person taking hold stops the glide where it is
   const takeOver = () => { if (!gliding) return; glideId++; gliding = false; };
   for (const ev of ['wheel', 'touchstart', 'pointerdown']) $('#epg').addEventListener(ev, takeOver, { passive: true, capture: true });
-  $('#toNow').addEventListener('click', () => goDay(state.loaded.has(today) ? today : state.base));
+
+  // ---------- jump to a time: every channel glides to it, on the day in view (Now goes back to today) ----------
+  const HOURS = [[9, '9am'], [12, 'Midday'], [15, '3pm'], [18, '6pm'], [19, '7pm'], [20, '8pm'], [21, '9pm'], [22, '10pm'], [23, '11pm']];
+  const timeLabel = () => (state.time === 'now' ? (state.loaded.has(today) ? 'Now' : 'This evening') : HOURS.find(([h]) => h === state.time)?.[1] || '');
+  function drawTimes() {
+    $('#timeSel').innerHTML = `<option value="now"${state.time === 'now' ? ' selected' : ''}>${state.loaded.has(today) ? 'Now' : 'This evening'}</option>`
+      + HOURS.map(([h, l]) => `<option value="${h}"${state.time === h ? ' selected' : ''}>${l}</option>`).join('');
+    $('#timeL').textContent = timeLabel();
+    $('#timePop').classList.toggle('on', state.time !== 'now');
+  }
+  $('#timeSel').addEventListener('change', (e) => {
+    const v = e.target.value; state.time = v === 'now' ? 'now' : +v; buzz(); drawTimes();
+    if (state.time === 'now') { const d = state.loaded.has(today) ? today : state.base; if (d === state.day) glide(d); else goDay(d); }
+    else glide(state.day || state.base);
+    if (view === 'now') drawOnNow(true);
+  });
 
   // ---------- the keyboard: the channel buttons are the tab stops; the arrows move around the grid ----------
   // → from a channel: into its strip, at what's in view. ←/→ in a strip: the programme before or after. ↑/↓: the
@@ -401,6 +447,7 @@
     $('#pvMeta').textContent = [started ? `Started at ${hm(x.at)}` : `${x.end <= t ? 'Was on' : `${x.at - t < 864e5 && ukDay(x.at) === today ? 'On' : dayName(ukDay(x.at), { weekday: 'long' })}`} at ${hm(x.at)}`,
       x.s && x.n ? `S${x.s} E${x.n}` : '', length(x.end - x.at), started ? `${minsLeft(x, t)} min left` : ''].filter(Boolean).join('  ·  ');
     const img = $('#pvImg'), src = x.wide || x.poster;
+    ambient(src);
     $('#pv').classList.toggle('poster', !x.wide && !!x.poster);
     if (!src) { img.hidden = true; img.removeAttribute('src'); return; }
     if (img.getAttribute('src') === src) return;
@@ -409,7 +456,19 @@
     img.onerror = () => { img.hidden = true; };
     img.src = src;
   }
-  const over = (e) => { const b = e.target.closest?.('.blk, .pick'); if (b) preview(shown.get(b.dataset.p)); };
+  // the preview's artwork, blurred into the top of the page (and on under the sidebar): two layers that cross-fade,
+  // changed only once the pointer has settled, and never more than every 700ms, so it stays calm
+  let ambT = 0, ambAt = 0, ambSrc = '';
+  function ambient(src) {
+    if (!src || src === ambSrc) return;
+    clearTimeout(ambT); const wait = Math.max(0, 700 - (Date.now() - ambAt));
+    ambT = setTimeout(() => {
+      const [a, b] = document.querySelectorAll('.amb img'), back = a.classList.contains('on') ? b : a, front = back === a ? b : a;
+      back.onload = () => { if (ambSrc !== src) return; back.classList.add('on'); front.classList.remove('on'); };
+      ambSrc = src; ambAt = Date.now(); back.src = src;
+    }, wait);
+  }
+  const over = (e) => { const b = e.target.closest?.('.blk, .pick, .tile'); if (b) preview(shown.get(b.dataset.p)); };
   document.addEventListener('pointerover', (e) => { if (e.pointerType === 'mouse') over(e); });
   document.addEventListener('focusin', over);
 
@@ -427,31 +486,79 @@
     const picks = list.sort((a, b) => b.score - a.score).filter(({ x }) => !seen.has(x.show || x.t) && seen.add(x.show || x.t)).slice(0, 10).sort((a, b) => a.x.at - b.x.at);
     $('#picksSec').hidden = picks.length < 3;
     $('#picksH').textContent = d === today ? 'Tonight’s picks' : d === days[1] ? 'Tomorrow’s picks' : `${dayName(d, { weekday: 'long' })}’s picks`;
-    $('#picks').innerHTML = picks.map(({ x, c, next }) => `<li><button type="button" class="pick" ${reg(x, c, next)}>
-      <span class="pick-art">${art(x)}<span class="chip">${hm(x.at)} · ${esc(c)}</span></span>
-      <b>${esc(x.t)}</b><small>${esc(epLine(x) || (x.g || []).join(', ') || c)}</small></button></li>`).join('');
+    $('#picks').innerHTML = picks.map(({ x, c, next }) => card(x, c, next, epLine(x) || (x.g || []).join(', ') || c, true)).join('');
+  }
+  // a card: wide artwork with the time on a frosted chip, the title and a grey line (the same in every shelf)
+  const card = (x, c, next, sub, sameDay) => `<li><button type="button" class="pick" ${reg(x, c, next)}>
+      <span class="pick-art">${art(x)}<span class="chip">${sameDay ? '' : `${esc(shortDay(ukDay(x.at)))} `}${hm(x.at)} · ${esc(c)}</span>${rem.has(x.id) ? `<span class="chip-bell" aria-label="Reminder on">${BELL}</span>` : ''}</span>
+      <b>${esc(x.t)}</b><small>${esc(sub)}</small></button></li>`;
+  const shortDay = (d) => (d === today ? 'Today' : d === days[1] ? 'Tmrw' : dayName(d, { weekday: 'short' }));
+
+  // ---------- the week's shelves: films, new series, and (signed in) your Watchlist. From every day fetched ----------
+  const FILM_CH = /^(Film4|GREAT! movies|Talking Pictures TV|Sky Cinema.*)$/;
+  const yearOf = (x) => (x.sum || '').match(/^\((\d{4})\)|\[((?:19|20)\d\d)\]\s*$|^((?:19|20)\d\d)\.\s|\b(?:film|movie)\b[^.]*?,\s((?:19|20)\d\d)\./i)?.slice(1).find(Boolean);
+  const notProg = /teleshop|shopping|\bnews\b|^live\b|live:|highlights|programmes start|^this is |closedown|^\.\./i;
+  const isFilm = (x, c) => !x.s && !x.n && x.rt >= 70 && !notProg.test(x.t) && (!!yearOf(x) || FILM_CH.test(c));
+  function weekItems() {   // every programme still to come (or just begun), on the days fetched so far
+    const now = Date.now(), out = [];
+    for (const [, day] of allDays()) for (const c of day.channels) c.items.forEach((x, j) => { if (x.at > now - 20 * 60e3) out.push({ x, c: c.name, next: c.items[j + 1] }); });
+    return out.sort((a, b) => a.x.at - b.x.at);
+  }
+  const once = (l, key = (o) => fold(o.x.t)) => { const seen = new Set(); return l.filter((o) => !seen.has(key(o)) && seen.add(key(o))); };
+  let shelfT = 0;
+  function drawShelves() {
+    clearTimeout(shelfT);
+    shelfT = setTimeout(() => {
+      const all = weekItems();
+      const films = once(all.filter(({ x, c }) => isFilm(x, c))).slice(0, 40);
+      $('#filmsSec').hidden = films.length < 3;
+      $('#films').innerHTML = films.map(({ x, c, next }) => card(x, c, next, [yearOf(x), length(ends(x, next) - x.at)].filter(Boolean).join(' · '))).join('');
+      const series = once(all.filter(({ x }) => x.isNew && x.n === 1)).slice(0, 30);
+      $('#seriesSec').hidden = series.length < 2;
+      $('#series').innerHTML = series.map(({ x, c, next }) => card(x, c, next, x.s ? `Series ${x.s} starts` : 'New series')).join('');
+      const wl = new Map(acct.watchlist().map((w) => [fold(w.title).replace(/^the /, ''), w]));
+      const mine = wl.size ? once(all.filter(({ x }) => wl.has(fold(x.t).replace(/^the /, '')))).slice(0, 30) : [];
+      $('#mineSec').hidden = !mine.length;
+      $('#mine').innerHTML = mine.map(({ x, c, next }) => card(x, c, next, epLine(x) || 'On your Watchlist')).join('');
+    }, 60);
   }
 
   // ---------- the sheet: what a programme's about. Esc, ×, a tap outside or (on phones) a swipe down closes it ----------
   const sheet = $('#sheet'), shIn = $('#shIn');
+  const X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+  const BELL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.6 2H4.4z" fill="currentColor"/><path d="M10 21h4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
+  const BELL_O = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.6 2H4.4z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M10 21h4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
+  const CAL = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M12 13v4.5M9.75 15.25h4.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
+  const SHARE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M8 7.2l4-3.7 4 3.7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 10.5H7a2.5 2.5 0 0 0-2.5 2.5v5A2.5 2.5 0 0 0 7 20.5h10a2.5 2.5 0 0 0 2.5-2.5v-5a2.5 2.5 0 0 0-2.5-2.5h-1.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
+  const closeAll = () => { for (const d of document.querySelectorAll('dialog[open]')) d.close(); };
   document.addEventListener('click', (e) => {
     const b = e.target.closest('[data-p]'); if (!b || sheet.contains(b)) return;
-    const x = shown.get(b.dataset.p); if (!x) return;
-    if (find.open) find.close();
-    preview(x, true);
+    const x = shown.get(b.dataset.p); if (x) openProgramme(x);
+  });
+  function remBtn(x) { const on = rem.has(x.id); return `<button type="button" class="act${on ? ' on' : ''}" id="shRem" aria-pressed="${on}">${on ? BELL : BELL_O}<span>${on ? 'Reminder on' : 'Remind me'}</span></button>`; }
+  function openProgramme(x) {
+    closeAll(); preview(x, true);
+    const now = Date.now(), soon = x.at > now, src = x.wide || x.poster;
     const when = `${esc(x.ch)} · ${esc(dayName(ukDay(x.at), { weekday: 'long', day: 'numeric', month: 'long' }))} · ${hm(x.at)}–${hm(x.end)} · ${length(x.end - x.at)}`;
-    shIn.innerHTML = `<div class="sh-grab" aria-hidden="true"></div><div class="sh-art${!x.wide && x.poster ? ' sh-poster' : ''}">${x.wide || x.poster ? art(x) : ''}
-        <button type="button" class="sh-x" id="shX" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></div>
+    shIn.innerHTML = `${src ? `<div class="sh-bg" aria-hidden="true"><img src="${esc(src)}" alt=""></div>` : ''}<div class="sh-grab" aria-hidden="true"></div><div class="sh-art${!x.wide && x.poster ? ' sh-poster' : ''}">${src ? art(x) : ''}
+        <button type="button" class="sh-x" id="shX" aria-label="Close">${X}</button></div>
       <div class="sh-body"><p class="sh-when">${when}</p>
         <h2 id="shT">${x.isNew ? '<i class="new">New</i>' : ''}${esc(x.t)}</h2>${epLine(x) ? `<p class="sh-ep">${esc(epLine(x))}</p>` : ''}
+        ${isLive(x, now) ? `<div class="sh-prog" aria-label="${minsLeft(x, now)} minutes left"><i style="width:${Math.round(((now - x.at) / (x.end - x.at)) * 100)}%"></i></div>` : ''}
+        <div class="sh-acts">${liveBtn(x)}${soon ? remBtn(x) : ''}${soon ? `<button type="button" class="act" id="shCal">${CAL}<span>Add to Calendar</span></button>` : ''}<button type="button" class="act" id="shShare">${SHARE}<span>Share</span></button></div>
         ${x.sum ? `<p class="sh-sum">${esc(x.sum)}</p>` : '<p class="sh-sum sh-none">No description yet.</p>'}
         ${x.g?.length ? `<ul class="sh-tags">${x.g.map((g) => `<li>${esc(g)}</li>`).join('')}${x.r ? `<li>★ ${x.r.toFixed(1)}</li>` : ''}</ul>` : ''}
-        <div class="sh-acts">${liveBtn(x)}${x.url ? `<a class="sh-link" href="${esc(x.url)}" target="_blank" rel="noopener">More on TVmaze</a>` : ''}</div>
-        ${liveBtn(x) ? '<p class="sh-note">Opens the channel’s own player. You need a TV licence to watch live TV in the UK.</p>' : ''}</div>`;
+        <p class="sh-more"><button type="button" class="sh-link" id="shCh">${esc(x.ch)}’s week</button>${x.url ? `<a class="sh-link" href="${esc(x.url)}" target="_blank" rel="noopener">More on TVmaze</a>` : ''}</p>
+        ${liveBtn(x) ? '<p class="sh-note">Watch live opens the channel’s own player. You need a TV licence to watch live TV in the UK.</p>' : ''}</div>`;
     shIn.scrollTop = 0; sheet.style.removeProperty('transform');
-    if (!sheet.open) sheet.showModal();
+    sheet.showModal();
     $('#shX').focus({ preventScroll: true });
-  });
+    const onRem = async () => { await toggleRem(x); const b = $('#shRem'); if (!b) return; b.outerHTML = remBtn(x); $('#shRem').addEventListener('click', onRem); $('#shRem').focus({ preventScroll: true }); };
+    $('#shRem')?.addEventListener('click', onRem);
+    $('#shCal')?.addEventListener('click', () => { calendar([remOf(x)]); });
+    $('#shShare').addEventListener('click', () => share(x));
+    $('#shCh').addEventListener('click', () => openChannel(x.ch));
+  }
   sheet.addEventListener('click', (e) => { if (e.target === sheet || e.target.closest('#shX')) closeSheet(); });
   sheet.addEventListener('cancel', (e) => { e.preventDefault(); closeSheet(); });   // Esc: the same gentle close
   function closeSheet() {
@@ -503,9 +610,16 @@
   function openFind() {
     if (!state.data || find.open) return;
     find.showModal(); fq.focus(); fq.select(); search();
-    for (const d of days) if (!state.loaded.has(d) && !extra.has(d)) {   // the rest of the week, quietly
+    wholeWeek(searchAgain);
+  }
+  const searchAgain = () => { if (find.open && fq.value.trim()) search(); };
+  // the rest of the week, quietly (for search, the shelves and channel pages): each day once, then onDay with it
+  const weekWait = new Set();
+  function wholeWeek(onDay) {
+    if (onDay) weekWait.add(onDay);
+    for (const d of days) if (!state.loaded.has(d) && !extra.has(d)) {
       const p = fetchDay(d); extra.set(d, p);
-      p.then((v) => { p.done = v; if (find.open && fq.value.trim()) search(); }, () => extra.delete(d));
+      p.then((v) => { p.done = v; for (const f of weekWait) f(d); drawShelves(); }, () => extra.delete(d));
     }
   }
   let fqT = 0;
@@ -561,6 +675,254 @@
     else if (e.key === 'Enter' && e.target === fq) { e.preventDefault(); rows[0]?.click(); }
   });
 
+
+  // ---------- the views: the guide, or On now (every channel at a glance, at the moment chosen) ----------
+  let view = 'guide';
+  $('#view').addEventListener('click', (e) => { const b = e.target.closest('[data-view]'); if (b && b.dataset.view !== view) setView(b.dataset.view); });
+  $('#view').addEventListener('keydown', (e) => { if (['ArrowLeft', 'ArrowRight'].includes(e.key)) { e.preventDefault(); setView(view === 'guide' ? 'now' : 'guide'); $(`[data-view="${view}"]`).focus(); } });
+  function setView(v) {
+    view = v; buzz();
+    for (const b of document.querySelectorAll('#view [data-view]')) { const on = b.dataset.view === v; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; }
+    thumb($('#view'), '[aria-selected="true"]');
+    $('#epg').hidden = v !== 'guide'; $('#epgHint').hidden = v !== 'guide'; $('#onnow').hidden = v !== 'now';
+    if (v === 'now') drawOnNow(true); else for (const st of near) edges(st);
+  }
+  // one channel's programmes across the days fetched, each with its end
+  function chItems(n) {
+    const l = [];
+    for (const [, day] of [...state.loaded].sort()) { const c = day.channels.find((k) => k.name === n); if (c) l.push(...c.items); }
+    return l.map((x, j) => ({ x, end: ends(x, l[j + 1]), next: l[j + 1] }));
+  }
+  function drawOnNow(rise) {
+    if (!state.data) return;
+    const d = state.day || state.base, at = momentOf(d), live = state.time === 'now' && d === today, mine = favs.all(), re = CATS.find(([k]) => k === cat)?.[2];
+    const names = state.data.channels.map((c) => c.name).filter((n) => (cat === 'mine' ? mine.includes(n) : re.test(n)))
+      .sort((a, b) => (mine.includes(b) ? 1 : 0) - (mine.includes(a) ? 1 : 0));
+    $('#onH').textContent = live ? 'On now' : `On ${d === today ? 'today' : word(d) === 'tomorrow' ? 'tomorrow' : dayName(d, { weekday: 'long' })} at ${timeLabel().toLowerCase()}`;
+    $('#tiles').innerHTML = names.map((n) => {
+      const l = chItems(n), i = l.findIndex((o) => o.x.at <= at && at < o.end); if (i < 0) return '';
+      const { x, end, next } = l[i], p = Math.round(((at - x.at) / (end - x.at)) * 100);
+      return `<li><button type="button" class="tile${live ? ' live' : ''}" ${reg(x, n, next)} aria-label="${esc(`${n}: ${x.t}, ${hm(x.at)} to ${hm(end)}${next ? `. Then ${next.t}` : ''}`)}">
+        <span class="tile-art">${art(x)}<span class="tile-ch">${badge(n)}</span>${rem.has(x.id) ? `<span class="chip-bell">${BELL}</span>` : ''}</span>
+        <span class="tile-copy"><b>${x.isNew ? '<i class="new">New</i>' : ''}${esc(x.t)}</b>
+          <small>${hm(x.at)}–${hm(end)}${live ? ` · ${minsLeft({ end }, at)} min left` : ''}</small>
+          <span class="tile-bar"><i style="width:${p}%"></i></span>
+          ${next ? `<small class="tile-next">Next · ${hm(next.at)} ${esc(next.t)}</small>` : ''}</span></button></li>`;
+    }).join('') || '<li class="empty"><h3>Nothing on at this time</h3><p>Try another time, or All channels.</p></li>';
+    if (rise && !reduce) [...$('#tiles').children].slice(0, 16).forEach((li, i) => li.animate([{ opacity: 0, transform: 'translateY(12px) scale(.98)' }, { opacity: 1, transform: 'none' }], { duration: 460, delay: i * 24, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' }));
+  }
+
+  // ---------- reminders: kept on the device (and in your account, if signed in); 5 minutes before, an alert here and a
+  // notification (if allowed). Add to Calendar works even with the page closed: an event with its own 5-minute alarm ----------
+  const REM = 'tenner-tv-rem', GONE = 'tenner-tv-gone', FIRED = 'tenner-tv-fired';
+  const remOf = (x) => ({ id: String(x.id), t: x.t, ch: x.ch, ep: epLine(x) || undefined, at: x.at, end: x.end, add: Date.now() });
+  const rem = {
+    all() { const l = store.get(REM, []), now = Date.now(); return Array.isArray(l) ? l.filter((r) => r?.id && r.end > now) : []; },
+    has(id) { return rem.all().some((r) => r.id === String(id)); },
+    add(x) { const r = remOf(x), g = store.get(GONE, {}); delete g[r.id]; store.set(GONE, g); store.set(REM, [...rem.all().filter((o) => o.id !== r.id), r].sort((a, b) => a.at - b.at)); remChanged(); },
+    drop(id) { const g = store.get(GONE, {}); g[id] = Date.now(); store.set(GONE, g); store.set(REM, rem.all().filter((r) => r.id !== id)); remChanged(); },
+  };
+  function remChanged(quiet) {
+    const l = rem.all(), ids = remIds = new Set(l.map((r) => r.id));
+    $('#remN').hidden = !l.length; $('#remN').textContent = l.length;
+    $('#remBtn').setAttribute('aria-label', l.length ? `Reminders: ${l.length}` : 'Reminders');
+    for (const b of document.querySelectorAll('.blk[data-p]')) b.classList.toggle('rem', ids.has(b.dataset.p));
+    if (remSheet.open) drawRems();
+    if (!quiet) acct.soon();
+  }
+  async function toggleRem(x) {
+    buzz(12);
+    if (rem.has(x.id)) { rem.drop(String(x.id)); toast('Reminder removed'); return; }
+    rem.add(x);
+    if ('Notification' in window && Notification.permission === 'default') { try { await Notification.requestPermission(); } catch {} }
+    const can = 'Notification' in window && Notification.permission === 'granted';
+    toast(`<span><b>Reminder set</b> for ${esc(clock(x.at))} ${esc(onDay(x.at))}. ${can ? 'You’ll get a notification 5 minutes before.' : 'With Tenner TV open, you’ll get an alert 5 minutes before.'}</span><button type="button" class="toast-act" data-cal="${esc(x.id)}">Add to Calendar</button>`);
+  }
+  $('#toast').addEventListener('click', (e) => { const b = e.target.closest('[data-cal]'); if (!b) return; const r = rem.all().find((o) => o.id === b.dataset.cal); if (r) calendar([r]); $('#toast').classList.remove('in'); });
+  // a calendar file: the programme as an event, with an alarm 5 minutes before. iPhone, iPad and Mac open it in Calendar
+  const icsT = (t) => new Date(t).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const icsS = (v) => String(v || '').replace(/[\;,]/g, (c) => `\\${c}`).replace(/\n/g, '\\n');
+  function calendar(list) {
+    if (!list.length) return;
+    const ev = list.map((r) => ['BEGIN:VEVENT', `UID:${r.id}@tv.tenner.stream`, `DTSTAMP:${icsT(Date.now())}`, `DTSTART:${icsT(r.at)}`, `DTEND:${icsT(r.end)}`,
+      `SUMMARY:${icsS(`${r.t} (${r.ch})`)}`, r.ep ? `DESCRIPTION:${icsS(r.ep)}` : '', `LOCATION:${icsS(r.ch)}`, `URL:${location.origin}/?d=${ukDay(r.at)}&p=${encodeURIComponent(r.id)}`,
+      'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsS(r.t)}`, 'TRIGGER:-PT5M', 'END:VALARM', 'END:VEVENT'].filter(Boolean).join('\r\n'));
+    const body = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Tenner//Tenner TV//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', ...ev, 'END:VCALENDAR'].join('\r\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([body], { type: 'text/calendar' }));
+    a.download = list.length === 1 ? `${list[0].t.replace(/[^\w\s-]/g, '').trim().slice(0, 40) || 'Programme'}.ics` : 'Tenner TV reminders.ics';
+    document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    buzz(); toast(list.length === 1 ? 'Opening in your calendar' : `${list.length} programmes going to your calendar`);
+  }
+  // when one comes round: a banner at the top, and a notification. Each reminder alerts once
+  function checkRems() {
+    const now = Date.now(), fired = store.get(FIRED, []);
+    for (const r of rem.all()) {
+      if (fired.includes(r.id) || r.at - 5 * 60e3 > now || now > r.at + 10 * 60e3) continue;
+      fired.push(r.id); store.set(FIRED, fired.slice(-60)); alertRem(r);
+    }
+  }
+  function alertRem(r) {
+    const mins = Math.round((r.at - Date.now()) / 60e3), head = mins > 0 ? `Starting in ${mins} minute${mins === 1 ? '' : 's'}` : 'Starting now';
+    const b = $('#banner'), live = LIVE[r.ch];
+    b.innerHTML = `<span class="bn-ic">${BELL}</span><span class="bn-copy"><small>${esc(head)} · ${esc(r.ch)}</small><b>${esc(r.t)}</b></span>
+      ${live ? `<a class="bn-act" href="${esc(live[1])}" target="_blank" rel="noopener">Watch live</a>` : ''}<button type="button" class="bn-x" aria-label="Close">${X}</button>`;
+    b.classList.remove('in'); try { b.hidePopover(); b.showPopover(); } catch {} void b.offsetWidth; b.classList.add('in'); buzz([12, 60, 12]);
+    b.querySelector('.bn-x').onclick = () => { b.classList.remove('in'); setTimeout(() => { try { b.hidePopover(); } catch {} }, reduce ? 0 : 300); };
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const o = { body: `${head} on ${r.ch}`, tag: `rem-${r.id}`, icon: '/icon-192.png', badge: '/icon-192.png', data: { url: `/?d=${ukDay(r.at)}&p=${encodeURIComponent(r.id)}` } };
+      (navigator.serviceWorker?.ready || Promise.reject()).then((reg) => reg.showNotification(r.t, o)).catch(() => { try { new Notification(r.t, o); } catch {} });
+    }
+  }
+  // the list of them
+  const remSheet = $('#remSheet');
+  function drawRems() {
+    const l = rem.all(), by = new Map();
+    for (const r of l) { const d = ukDay(r.at); if (!by.has(d)) by.set(d, []); by.get(d).push(r); }
+    $('#remIn').innerHTML = `<div class="sh-grab" aria-hidden="true"></div><header class="sh-hd"><h2 id="remT">Reminders</h2><button type="button" class="sh-x" id="remX" aria-label="Close">${X}</button></header>
+      ${l.length ? [...by].map(([d, rs]) => `<h3 class="list-h">${esc(d === today ? 'Today' : d === days[1] ? 'Tomorrow' : dayName(d, { weekday: 'long', day: 'numeric', month: 'long' }))}</h3>
+        <ul class="list">${rs.map((r) => `<li><span class="li-row">${badge(r.ch)}<span class="fd-t"><b>${esc(r.t)}</b><small>${esc(`${hm(r.at)} · ${r.ch}${r.ep ? ` · ${r.ep}` : ''}`)}</small></span>
+          <button type="button" class="li-x" data-drop="${esc(r.id)}" aria-label="${esc(`Remove the reminder for ${r.t}`)}">${X}</button></span></li>`).join('')}</ul>`).join('')
+        + `<div class="sh-foot"><button type="button" class="act wide" id="remCal">${CAL}<span>Add all to Calendar</span></button></div>`
+      : `<div class="none">${BELL_O}<h3>No reminders yet</h3><p>Tap any programme that’s still to come, then Remind me. You’ll get an alert 5 minutes before it starts.</p></div>`}
+      <p class="sh-note sync-note">${acct.token() ? 'Kept in step with your Tenner account.' : '<button type="button" class="sh-link" data-acct>Sign in with Tenner</button> to keep reminders on all your devices.'}</p>`;
+  }
+  $('#remBtn').addEventListener('click', () => { closeAll(); drawRems(); remSheet.showModal(); $('#remX').focus({ preventScroll: true }); });
+  remSheet.addEventListener('click', (e) => {
+    if (e.target === remSheet || e.target.closest('#remX')) return remSheet.close();
+    const d = e.target.closest('[data-drop]'); if (d) { const li = d.closest('li'); buzz(); const go = () => rem.drop(d.dataset.drop);
+      if (reduce) go(); else li.animate([{ opacity: 1 }, { opacity: 0, transform: 'translateX(24px)' }], { duration: 220, easing: 'ease-in' }).onfinish = go; }
+    if (e.target.closest('#remCal')) calendar(rem.all());
+  });
+
+  // ---------- a channel's page: its whole week, day by day, in Tenner's list style (pin it to the top from here) ----------
+  const chSheet = $('#chSheet');
+  let chOpen = null;
+  function openChannel(n) {
+    closeAll(); chOpen = n;
+    const pin = favs.all().includes(n), live = LIVE[n];
+    $('#chIn').innerHTML = `<div class="sh-grab" aria-hidden="true"></div><header class="sh-hd chs-hd">${badge(n)}<span><h2 id="chT">${esc(n)}</h2><small>The week ahead</small></span><button type="button" class="sh-x" id="chX" aria-label="Close">${X}</button></header>
+      <div class="sh-acts chs-acts"><button type="button" class="act${pin ? ' on' : ''}" id="chPin" aria-pressed="${pin}">${star(pin)}<span>${pin ? 'Pinned to the top' : 'Pin to the top'}</span></button>
+        ${live ? `<a class="live-btn" href="${esc(live[1])}" target="_blank" rel="noopener"><i aria-hidden="true"></i>Watch live on ${esc(live[0])}</a>` : ''}</div>
+      <div id="chDays"></div>`;
+    drawChannel();
+    chSheet.showModal(); $('#chX').focus({ preventScroll: true });
+    wholeWeek(chMore);
+  }
+  const chMore = () => { if (chSheet.open) drawChannel(); };
+  function drawChannel() {
+    const n = chOpen, now = Date.now(), box = $('#chDays'); if (!box) return;
+    const keep = $('#chIn').scrollTop;
+    box.innerHTML = days.map((d) => {
+      const day = state.loaded.get(d) || extra.get(d)?.done;
+      const head = `<h3 class="list-h">${esc(d === today ? 'Today' : d === days[1] ? 'Tomorrow' : dayName(d, { weekday: 'long', day: 'numeric', month: 'long' }))}</h3>`;
+      if (!day) return extra.has(d) ? `${head}<div class="skel sm" aria-hidden="true"><i></i><i></i><i></i></div>` : '';
+      const items = day.channels.find((c) => c.name === n)?.items || [];
+      const rows = items.map((x, j) => ({ x, next: items[j + 1], end: ends(x, items[j + 1]) })).filter((o) => o.end > now);
+      if (!rows.length) return '';
+      return `${head}<ul class="list">${rows.map(({ x, next, end }) => { const on = x.at <= now; return `<li><button type="button" class="li-row prog${on ? ' live' : ''}" ${reg(x, n, next)}>
+        <time>${on ? '<i class="now">Now</i>' : hm(x.at)}</time><span class="fd-t"><b>${x.isNew ? '<i class="new">New</i>' : ''}${esc(x.t)}</b><small>${esc(epLine(x) || x.sum || length(end - x.at))}</small>
+        ${on ? `<span class="tile-bar"><i style="width:${Math.round(((now - x.at) / (end - x.at)) * 100)}%"></i></span>` : ''}</span>${rem.has(x.id) ? `<span class="li-bell" aria-label="Reminder on">${BELL}</span>` : ''}</button></li>`; }).join('')}</ul>`;
+    }).join('') || '<div class="none"><h3>Nothing listed</h3><p>This channel has nothing coming up in the listings yet.</p></div>';
+    $('#chIn').scrollTop = keep;
+  }
+  chSheet.addEventListener('click', (e) => {
+    if (e.target === chSheet || e.target.closest('#chX')) return chSheet.close();
+    const p = e.target.closest('#chPin'); if (!p) return;
+    const on = togglePin(chOpen); p.classList.toggle('on', on); p.setAttribute('aria-pressed', on); p.innerHTML = `${star(on)}<span>${on ? 'Pinned to the top' : 'Pin to the top'}</span>`;
+    if (!reduce) p.firstElementChild.animate([{ transform: 'scale(.6)' }, { transform: 'scale(1.25)' }, { transform: 'none' }], { duration: 420, easing: 'ease-out' });
+    toast(on ? `${esc(chOpen)} is pinned to the top of the guide` : `${esc(chOpen)} is back in its usual place`);
+  });
+  // every sheet: a swipe down closes it on phones (the programme sheet has its own, gentler close)
+  for (const dlg of [chSheet, remSheet, $('#acSheet')]) {
+    let y0 = null;
+    dlg.addEventListener('touchstart', (e) => { y0 = dlg.firstElementChild.scrollTop <= 0 && e.touches.length === 1 && !e.target.closest('a, button') ? e.touches[0].clientY : null; }, { passive: true });
+    dlg.addEventListener('touchend', (e) => { if (y0 != null && e.changedTouches[0].clientY - y0 > 110) dlg.close(); y0 = null; });
+  }
+
+  // ---------- share a programme: the share sheet (or the link copied), opening that programme's sheet here ----------
+  async function share(x) {
+    const url = `${location.origin}/?d=${ukDay(x.at)}&p=${encodeURIComponent(x.id)}`, text = `${x.t}: ${x.ch}, ${dayName(ukDay(x.at), { weekday: 'long' })} at ${hm(x.at)}`;
+    if (navigator.share) { try { await navigator.share({ title: x.t, text, url }); } catch {} return; }
+    try { await navigator.clipboard.writeText(url); toast('Link copied'); } catch { toast(esc(url)); }
+  }
+
+  // ---------- accounts: sign in with your Tenner account (on tenner.stream, which hands this page a session of its own),
+  // and your reminders and pinned channels are kept in step on every device; your Watchlist's titles show up here when
+  // they're on TV (worker/src/auth.js: /me/handoff, /me/data) ----------
+  const SESS = 'tenner-tv-session', ACU = 'tenner-tv-user', AWL = 'tenner-tv-wl';
+  let acctT = 0, syncing = null;
+  const acct = {
+    token: () => store.get(SESS, null),
+    user: () => store.get(ACU, null),
+    watchlist: () => (acct.token() ? store.get(AWL, []) : []),
+    async call(method, path, body) {
+      const t = acct.token();
+      const r = await fetch(`${API}${path}`, { method, headers: { 'content-type': 'application/json', ...(t ? { authorization: `Bearer ${t}` } : {}) }, body: body ? JSON.stringify(body) : undefined });
+      const d = await r.json().catch(() => ({}));
+      if (r.status === 401 && t) acct.forget();
+      if (!r.ok) throw new Error(d.error || 'Something went wrong');
+      return d;
+    },
+    local: () => ({ tv: { pins: favs.all(), pat: store.get('tenner-tv-pat', 0), rem: rem.all(), gone: store.get(GONE, {}) } }),
+    sync() {
+      if (!acct.token()) return Promise.resolve(null);
+      return (syncing ||= acct.call('PUT', '/me/data', { data: acct.local() }).then(({ data }) => acct.apply(data)).catch(() => null).finally(() => { syncing = null; }));
+    },
+    apply(d) {
+      if (!d) return;
+      if (d.tv) {
+        if ((d.tv.pat || 0) >= store.get('tenner-tv-pat', 0)) { favs.set(d.tv.pins || [], true); store.set('tenner-tv-pat', d.tv.pat || 0); }
+        store.set(REM, d.tv.rem || []); store.set(GONE, d.tv.gone || {});
+      }
+      store.set(AWL, (d.watchlist || []).map((w) => ({ title: w.title, type: w.type })).filter((w) => w.title).slice(0, 500));
+      if (state.data) { drawCats(); arrange(); if (view === 'now') drawOnNow(); }
+      remChanged(true); drawShelves();
+    },
+    soon() { if (!acct.token()) return; clearTimeout(acctT); acctT = setTimeout(acct.sync, 1200); },
+    forget() { [SESS, ACU, AWL].forEach((k) => store.set(k, null)); drawAcct(); drawShelves(); },
+  };
+  const avatar = (u) => (u?.picture ? `<img class="av" src="${esc(u.picture)}" alt="" referrerpolicy="no-referrer">`
+    : `<span class="av" style="--h:${u ? +u.hue || 210 : 210}" aria-hidden="true">${u ? esc((u.name || '?').trim()[0]?.toUpperCase() || '?') : '<svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4" fill="currentColor"/><path d="M4.5 20c1-4 4-6 7.5-6s6.5 2 7.5 6z" fill="currentColor"/></svg>'}</span>`);
+  function drawAcct() {
+    const u = acct.token() ? acct.user() : null;
+    $('#acctSide').innerHTML = `${avatar(u)}<span><b>${u ? esc(u.name || 'You') : 'Sign in'}</b><small>${u ? 'Your account' : 'Sync your reminders'}</small></span>`;
+    $('#acctBar').innerHTML = avatar(u); $('#acctBar').setAttribute('aria-label', u ? `Your account: ${u.name || 'signed in'}` : 'Sign in');
+  }
+  const acSheet = $('#acSheet');
+  function openAcct() {
+    closeAll();
+    const u = acct.token() ? acct.user() : null, n = rem.all().length, w = acct.watchlist().length;
+    $('#acIn').innerHTML = `<div class="sh-grab" aria-hidden="true"></div><button type="button" class="sh-x" id="acX" aria-label="Close">${X}</button>
+      <div class="ac-top">${avatar(u)}<h2 id="acT">${u ? esc(u.name || 'Your account') : 'Your Tenner account'}</h2>
+      <p>${u ? 'You’re signed in. Your reminders and pinned channels are kept in step on every device you use.' : 'Sign in with the account you use on tenner.stream to keep your reminders and pinned channels on all your devices, and to see when the titles on your Watchlist are on TV.'}</p></div>
+      ${u ? `<ul class="list ac-list"><li><span class="li-row"><span class="tile-ic">${BELL}</span><span class="fd-t"><b>Reminders</b><small>${n ? `${n} coming up` : 'None yet'}</small></span></span></li>
+        <li><span class="li-row"><span class="tile-ic star">${star(true)}</span><span class="fd-t"><b>Pinned channels</b><small>${favs.all().length || 'None yet'}</small></span></span></li>
+        <li><span class="li-row"><span class="tile-ic wl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h11v17L12 16.6 6.5 20.5z" fill="currentColor"/></svg></span><span class="fd-t"><b>Your Watchlist</b><small>${w ? `${w} title${w === 1 ? '' : 's'}, shown here when they’re on TV` : 'Add titles on tenner.stream'}</small></span></span></li></ul>
+        <div class="ac-acts"><a class="act" href="https://tenner.stream/account.html">Manage account</a><button type="button" class="act" id="acOut">Sign out</button></div>`
+      : `<div class="ac-acts"><a class="act primary" href="https://tenner.stream/account.html?to=tv">Sign in with Tenner</a></div><p class="sh-note">Don’t have one? You can make one there in a moment. It’s free, and Tenner TV works just the same without.</p>`}`;
+    acSheet.showModal(); $('#acX').focus({ preventScroll: true });
+  }
+  for (const b of ['#acctSide', '#acctBar']) $(b).addEventListener('click', openAcct);
+  document.addEventListener('click', (e) => { if (e.target.closest('[data-acct]')) openAcct(); });
+  acSheet.addEventListener('click', async (e) => {
+    if (e.target === acSheet || e.target.closest('#acX')) return acSheet.close();
+    if (e.target.closest('#acOut')) { try { await acct.call('POST', '/auth/logout'); } catch {} acct.forget(); acSheet.close(); toast('Signed out. Your reminders stay on this device'); }
+  });
+  // arriving from tenner.stream with a session (#signin=…): kept, the address tidied, then your things merged in
+  (async () => {
+    const m = location.hash.match(/^#signin=([\w-]{20,80})$/);
+    if (m) {
+      history.replaceState(null, '', location.pathname + location.search); store.set(SESS, m[1]);
+      try { const me = await acct.call('GET', '/me'); store.set(ACU, me.user); drawAcct(); await acct.sync(); toast(`<b>Signed in</b> as ${esc(me.user?.name || 'you')}. Your reminders and pins are in step`); }
+      catch { acct.forget(); toast('That sign-in didn’t work. Please try again'); }
+    } else if (acct.token()) acct.sync();
+  })();
+  drawAcct(); remChanged(true); checkRems();
+  // the selectors' thumbs: placed once the type has loaded, and again when the window changes size
+  const thumbs = () => { thumb($('#view'), '[aria-selected="true"]'); thumb($('#days'), '[aria-current]'); };
+  thumbs(); document.fonts?.ready.then(thumbs); addEventListener('resize', () => requestAnimationFrame(thumbs));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { acct.sync(); checkRems(); } });
+
   // ---------- start, and keep "now" moving ----------
   // the days the Freeview listings cover (a week or so); the strips run through all of them
   (early?.meta || fetch('/data/meta.json').then((r) => (r.ok ? r.json() : null))).then((m) => {
@@ -570,6 +932,8 @@
   // every minute: today's programmes move on (live, past, minutes left); past midnight, a new day
   setInterval(() => {
     if (ukDay() !== today) { location.reload(); return; }
+    checkRems();
+    if (view === 'now' && !document.hidden) drawOnNow();
     if (!state.loaded.has(today) || document.hidden) return;
     const now = Date.now();
     for (const b of $('#epg').querySelectorAll(`.blk[data-day="${today}"]`)) {
