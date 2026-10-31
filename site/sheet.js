@@ -167,14 +167,35 @@
     const dir = m[1] === '▼' || m[2] === 'Down' ? 'down' : 'up', rest = m[4].replace(/^No\./, 'Now No.');
     return `<p class="sh-eye"><span class="sh-mv ${dir}" aria-label="${dir === 'up' ? 'Up' : 'Down'} ${m[3]} place${m[3] === '1' ? '' : 's'}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="${ARROW[dir]}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>${m[3]}</span>${esc(rest)}</p>`;
   }
-  // the actions, the Apple TV way: one wide filled button for the main thing (the trailer, or Netflix), then the rest
-  // side by side in equal widths
-  function btnsHtml(info, x) {
-    const nf = info.netflix || (x.ln?.nf ? `https://www.netflix.com/title/${x.ln.nf}` : '');
+  // the one service to send people to: the first UK subscription (then free) service TMDB lists for it, the one whose
+  // chart it's on first. Before the details arrive, only what the chart itself says (the Netflix UK chart's own link, or
+  // the chart's service). Never from Wikidata alone: a Netflix ID there can be for another country (Supernatural is on
+  // Netflix in the US but HBO Max here).
+  function watchOn(info, d) {
+    const x = d?.items?.[info.k];
+    if (!x) {
+      if (info.netflix) return { name: 'Netflix', href: info.netflix };
+      const s = info.services?.[0]; if (!s) return null;
+      const href = linkFor(s.label, info.title, {}, info);
+      return href && href !== info.watch && href !== '#' ? { name: brand(s.label), href } : null;
+    }
+    const mine = new Set((info.services || []).map((s) => brand(s.label)));
+    const names = [...(x.f || []), ...(x.fr || [])].map((id) => d.providers[id]?.[0]).filter(Boolean);
+    const ordered = [...names.filter((n) => mine.has(brand(n))), ...names];
+    for (const n of ordered) {
+      const href = linkFor(n, info.title, x.ln || {}, info);
+      if (href && href !== info.watch && href !== '#') return { name: brand(n), href };
+    }
+    return null;
+  }
+  // the actions, the Apple TV way: one wide filled button for the main thing (watching it where it's on, or the
+  // trailer), then the rest side by side in equal widths
+  function btnsHtml(info, x, d) {
+    const on = watchOn(info, d);
     const trailer = x.tr ? `<button type="button" class="btn btn-tinted" data-act="trailer" aria-keyshortcuts="T"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>Trailer</button>` : '';
-    const netflix = nf ? `<a class="btn btn-tinted" href="${esc(nf)}" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>Watch on Netflix</a>` : '';
+    const watch = on ? `<a class="btn btn-tinted" href="${esc(on.href)}" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>Watch on ${esc(on.name)}</a>` : '';
     const share = `<button type="button" class="btn btn-tinted" data-act="share" aria-keyshortcuts="S"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M6 11v8.5h12V11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Share</button>`;
-    const main = netflix || trailer, rest = [netflix ? trailer : '', info.k ? saveBtn(saved.has(info.k)) : '', info.k ? starBtn(window.tn.stars.has(info.k)) : '', share].filter(Boolean);
+    const main = watch || trailer, rest = [watch ? trailer : '', info.k ? saveBtn(saved.has(info.k)) : '', info.k ? starBtn(window.tn.stars.has(info.k)) : '', share].filter(Boolean);
     return `<div class="sh-btns">${main ? `<div class="sh-main">${main}</div>` : ''}<div class="sh-more">${rest.join('')}</div><p class="sh-thanks" id="shThanks" role="status"></p></div>`;
   }
   // Cast & Crew: round faces in a row, each opening that person's page (people.html), from the search API
@@ -231,7 +252,7 @@
         <p class="sh-meta">${meta.map(String).map((m) => (m.startsWith('<b') ? m : esc(m))).join('<span aria-hidden="true"> · </span>')}</p>
         ${genres ? `<p class="sh-genres">${esc(genres)}</p>` : ''}
         ${nextHtml(info, x)}
-        ${btnsHtml(info, x)}
+        ${btnsHtml(info, x, d)}
         ${x.tl ? `<p class="sh-tl">${esc(x.tl)}</p>` : ''}
         ${ovHtml(info)}
         <section class="sh-where" aria-labelledby="shW"><h3 id="shW">Where to Watch</h3>${whereHtml(info, d)}</section>

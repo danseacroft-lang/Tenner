@@ -43,7 +43,7 @@
   // channels you watch inside Prime Video or the Apple TV app open that app's search
   const link = (raw, title, ln, info) => {
     const b = brand(raw);
-    return DIRECT[b]?.(ln) || (b === 'Netflix' && info.netflix)
+    return (b === 'Netflix' && info.netflix) || DIRECT[b]?.(ln)
       || (/amazon channel$/i.test(raw) ? amazon(title) : /apple tv channel$/i.test(raw) ? apple(title) : null)
       || SEARCH[b]?.(title) || HOME[b] || info.watch;   // 4. otherwise the title's TMDB page, which lists every service
   };
