@@ -60,6 +60,18 @@
 .ac-ok { color: var(--accent); }
 .ac-pwform:not([hidden]) { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
 .ac-pwform input { min-width: 0; height: 38px; padding: 0 12px; border: 0; border-radius: 10px; background: var(--fill); color: var(--label); font: 400 15px/1 var(--font); }
+/* show password: the eye sits inside the box, at its end */
+.ac-pw { position: relative; display: grid; min-width: 0; }
+.ac-pw input { width: 100%; padding-right: 48px; }
+.ac-pw input::-ms-reveal { display: none; }
+.ac-eye { position: absolute; top: 50%; right: 0; display: grid; place-items: center; width: 44px; height: 44px; margin-top: -22px; padding: 0; border: 0; border-radius: 10px; background: none; color: var(--label3); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: color .2s, transform .25s cubic-bezier(.34, 1.56, .64, 1); }
+.ac-eye:hover, .ac-eye[aria-pressed="true"] { color: var(--label2); }
+.ac-eye:active { transform: scale(.88); }
+.ac-eye:focus-visible { outline: 2px solid var(--accent); outline-offset: -6px; }
+.ac-eye svg { width: 22px; height: 22px; }
+.ac-eye-off { opacity: 0; transition: opacity .2s; }
+.ac-eye[aria-pressed="true"] .ac-eye-off { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .ac-eye, .ac-eye-off { transition: none; } }
 @media (max-width: 560px) { .ac-pwform:not([hidden]) { grid-template-columns: 1fr; } }
 /* "Check your inbox" */
 .ac-check:not([hidden]) { display: grid; justify-items: center; gap: 10px; width: 100%; }

@@ -10,6 +10,19 @@
   const unb64u = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), (c) => c.charCodeAt(0));
   const say = (el, t, bad) => { const n = $(el); n.textContent = t; n.classList.toggle('bad', !!bad); clearTimeout(n.t); if (!bad) n.t = setTimeout(() => (n.textContent = ''), 3500); };
   const passkeys = !!window.PublicKeyCredential;
+  // Show password: an eye inside each password box, so you can check what you've typed
+  const EYE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path class="ac-eye-off" d="M4 4l16 16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
+  function eyes(root) {
+    root.querySelectorAll('input[type=password]').forEach((i) => {
+      const w = document.createElement('span'); w.className = 'ac-pw'; i.replaceWith(w); w.append(i);
+      w.insertAdjacentHTML('beforeend', `<button type="button" class="ac-eye" aria-label="Show password" aria-pressed="false">${EYE}</button>`);
+      const b = w.lastChild;
+      b.addEventListener('pointerdown', (e) => e.preventDefault());   // keeps the keyboard up and the caret where it was
+      b.addEventListener('click', () => { const on = i.type === 'password'; i.type = on ? 'text' : 'password'; b.setAttribute('aria-pressed', on); b.setAttribute('aria-label', on ? 'Hide password' : 'Show password'); });
+      i.form?.addEventListener('submit', () => { if (i.type === 'text') b.click(); });   // hidden again before the browser offers to save it
+    });
+  }
+  eyes(document);
 
   // ---------- signed out ----------
   async function signIn() {
@@ -160,6 +173,7 @@
       + `<button type="button" class="set-row set-link" id="acAddPk"><span class="set-l">Add a passkey<small>For another device, or a password manager</small></span><span class="set-chev" aria-hidden="true"></span></button>`
       + (!u.google && GOOGLE_CLIENT_ID ? '<div class="set-row ac-glink"><span class="set-l">Link Google</span><div id="acGLink"></div></div>' : '');
     if (!u.google && GOOGLE_CLIENT_ID) google($('#acGLink'), true);
+    eyes($('#acWays'));
     $('#acDevices').innerHTML = me.sessions.map((x) => `<div class="set-row"><span class="set-l"><span>${esc(x.label)}${x.here ? ' <em class="ac-here">This device</em>' : ''}</span><small>Signed in ${esc(when(x.created).toLowerCase())}${x.here ? '' : ` · seen ${esc(when(x.seen).toLowerCase())}`}</small></span>${x.here || !x.id ? '' : `<button type="button" class="ac-x" data-ses="${+x.id}" aria-label="Sign out ${esc(x.label)}">Remove</button>`}</div>`).join('')
       + (me.sessions.length > 1 ? '<button type="button" class="set-row set-link" id="acOthers"><span class="set-l">Sign out everywhere else</span></button>' : '');
     syncLine();
