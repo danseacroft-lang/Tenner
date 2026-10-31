@@ -212,8 +212,12 @@
     delDlg.returnValue = ''; delDlg.showModal();
   }
   delDlg.addEventListener('click', (e) => { if (e.target === delDlg) delDlg.close(); });   // a tap outside keeps it, as on iPhone
-  delDlg.addEventListener('close', async () => {
-    if (delDlg.returnValue !== 'delete') return;
+  delDlg.addEventListener('close', () => { if (delDlg.returnValue === 'delete') { del2Dlg.returnValue = ''; del2Dlg.showModal(); } });
+  // the last word: are you sure? No (or a tap outside) heads back to Tenner; Yes deletes it
+  const del2Dlg = $('#acDel2Dlg');
+  del2Dlg.addEventListener('click', (e) => { if (e.target === del2Dlg) del2Dlg.close(); });
+  del2Dlg.addEventListener('close', async () => {
+    if (del2Dlg.returnValue !== 'delete') { location.href = '/'; return; }
     try { await account.call('DELETE', '/me'); account.forget(); show(); say('#acMsg', 'Your account has been deleted'); }
     catch (err) { say('#acNote', friendly(err), true); }
   });

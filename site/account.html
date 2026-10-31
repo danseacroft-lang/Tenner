@@ -198,6 +198,14 @@
         <p class="ac-del-alt">Just need a break? Sign out instead and it’ll all be here when you’re back.</p>
         <div class="ac-del-acts"><button class="btn ac-del-keep" value="keep" autofocus>Keep my account</button><button class="btn ac-del-go" value="delete">Delete account</button></div>
       </form></dialog>
+    <!-- then one last, plain warning: No (the default) takes them back to Tenner, Yes deletes it -->
+    <dialog class="mine-dlg ac-del-dlg" id="acDel2Dlg" aria-labelledby="acDel2H" aria-describedby="acDel2P">
+      <form method="dialog">
+        <span class="ac-del-ic ac-del-warn" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.3 4.2a2 2 0 0 1 3.4 0l7.4 12.8a2 2 0 0 1-1.7 3H4.6a2 2 0 0 1-1.7-3z" fill="currentColor"/><path d="M12 9.5v4.2" stroke="#ff3b30" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="16.8" r="1.25" fill="#ff3b30"/></svg></span>
+        <h2 id="acDel2H">Are you sure?</h2>
+        <p id="acDel2P">Your account and everything in it will be deleted forever. There’s no getting it back.</p>
+        <div class="ac-del-acts"><button class="btn ac-del-keep" value="keep" autofocus>No, back to Tenner</button><button class="btn ac-del-go" value="delete">Yes, delete my account</button></div>
+      </form></dialog>
   </main>
 
 

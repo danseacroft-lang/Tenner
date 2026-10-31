@@ -103,6 +103,7 @@
 .ac-del-ic { display: inline-grid; place-items: center; width: 52px; height: 52px; margin-bottom: 12px; border-radius: 15px; color: #fff;
   background: linear-gradient(160deg, #ff7a6b, #ff375f 60%, #e0245e); box-shadow: 0 8px 22px rgba(255, 55, 95, .35); }
 .ac-del-ic svg { width: 26px; height: 26px; }
+.ac-del-warn { background: linear-gradient(160deg, #ff6b5e, #ff3b30 60%, #d70015); box-shadow: 0 8px 22px rgba(255, 59, 48, .35); }
 .ac-del-dlg h2 { margin: 0 0 6px; font: 700 21px/1.2 var(--font); letter-spacing: -.02em; text-wrap: balance; }
 .ac-del-dlg p { margin: 0 auto 12px; max-width: 32ch; font-size: 15px; line-height: 1.45; text-wrap: pretty; }
 .ac-del-dlg p.ac-del-alt { margin-bottom: 18px; font-size: 14px; }
