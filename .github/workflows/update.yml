@@ -2,7 +2,9 @@ name: Update and deploy
 
 on:
   schedule:
-    - cron: '7 * * * *'   # every hour at :07 (GitHub can run scheduled jobs a few minutes late)
+    # GitHub drops many scheduled runs when it's busy (in practice "hourly" ran every five to seven hours), so it's asked
+    # three times an hour; a run that finds the live chart under 40 minutes old stops straight away, so it still builds hourly
+    - cron: '7,27,47 * * * *'
   push:
     branches: [main]
   workflow_dispatch:
@@ -13,25 +15,39 @@ permissions:
   id-token: write
   actions: write   # only for the keepalive step below
 
-concurrency:
-  group: pages
-  cancel-in-progress: false
-
 jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 15   # a normal run takes about a minute; never let a stuck one hold the queue
+    outputs:
+      go: ${{ steps.gate.outputs.go }}
     steps:
+      # only the timetable's spare tries are skipped: a push or a run by hand (or by the watchdog) always builds, and a chart
+      # that couldn't be read, or was kept from an earlier hour because TMDB had a bad moment, is tried again
+      - name: Is the live chart already fresh?
+        id: gate
+        run: |
+          go=yes
+          if [ "${{ github.event_name }}" = schedule ]; then
+            mins=$(curl -s -m 20 "https://tenner.stream/data/trending.json?v=$(date +%s)" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(Math.round((Date.now()-Date.parse(JSON.parse(s).generatedAt))/60000))}catch{console.log(99999)}})')
+            if [ "$mins" -lt 40 ] 2>/dev/null; then go=no; echo "The live chart is $mins minutes old, so this try isn't needed"; fi
+          fi
+          echo "go=$go" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v5
+        if: steps.gate.outputs.go == 'yes'
 
       - uses: actions/setup-node@v5
+        if: steps.gate.outputs.go == 'yes'
         with:
           node-version: 22
 
       - id: pages
+        if: steps.gate.outputs.go == 'yes'
         uses: actions/configure-pages@v5
 
       - name: Fetch latest charts
+        if: steps.gate.outputs.go == 'yes'
         run: node scripts/fetch-data.mjs
         env:
           TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
@@ -39,6 +55,7 @@ jobs:
           SITE_URL: ${{ steps.pages.outputs.base_url }}
 
       - uses: actions/upload-pages-artifact@v4
+        if: steps.gate.outputs.go == 'yes'
         with:
           path: site
 
@@ -53,6 +70,12 @@ jobs:
 
   deploy:
     needs: build
+    if: needs.build.outputs.go == 'yes'
+    # only the deploys queue up (one at a time, the newest waiting): a spare scheduled try that turns out not to be needed
+    # never takes the place of a push that's waiting to go live
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:

@@ -108,6 +108,9 @@ Mac. When in doubt, ask "would this look at home in Apple TV, Apple Music or the
 
 ## Runs by itself (keep it that way)
 - **Hourly** (`update.yml`): charts, Browse, New, cinema and title details rebuilt and deployed; keeps its own schedule alive.
+  GitHub skips many scheduled runs, so it's asked three times an hour and a try that finds the live chart under 40 minutes
+  old stops at once (pushes and runs by hand always build). Only the deploy job queues on `pages`, so a spare try never
+  takes a waiting push's place.
   It also writes a small page per title (`site/t/<key>/`, not in git) whose tags give shared links that title's artwork and
   name; the sheet's Share uses it, and it sends people on to `/?t=<key>`.
 - **On every push**: the site (`update.yml`), the search/accounts Worker (`api.yml`) and Tenner TV (`tv.yml`) deploy themselves.
@@ -126,9 +129,10 @@ Mac. When in doubt, ask "would this look at home in Apple TV, Apple Music or the
   the opt-in Sunday email through Resend, with a signed unsubscribe link (`digest.js`).
 - **On TV this week**: `scripts/fetch-tv.mjs` also writes `onair.json` (title → next showings); tenner.stream's title sheet
   reads it from tenner-tv's workers.dev address at `/api/onair` (the Worker adds the cross-site header; a file in `public/` is served without the Worker running), and the line opens Tenner TV's search with `?q=`.
-- **Watchdog** (`watchdog.yml`, every 3 hours): checks the site, the charts' age, the search service and Tenner TV; re-runs
+- **Watchdog** (`watchdog.yml`, hourly): checks the site, the charts' age, the search service and Tenner TV; re-runs
   whatever's behind, re-checks after 7 minutes, and only then fails (GitHub emails the owner). It also checks the Watch live
-  links still open. tv.tenner.stream is behind Cloudflare's bot check, so it checks Tenner TV at its workers.dev address.
+  links still open, and fails a fortnight before tenner.stream's registration runs out (from its public RDAP record).
+  `tv.yml` likewise fails a fortnight before the Cloudflare token's end date, if it has one. tv.tenner.stream is behind Cloudflare's bot check, so it checks Tenner TV at its workers.dev address.
 - Anything new should follow the same pattern: no step that needs a person, a fallback when a source is down, and a check
   in the watchdog.
 
