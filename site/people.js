@@ -21,7 +21,7 @@
     fetch(`data/trending.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
   ]).then(([c, t]) => {
     const on = new Map(); for (const x of c?.items || []) if (x.s?.length) on.set(`${x.t[0]}${x.i}`, x.s);
-    const svc = {}; for (const s of t?.services || []) if (!s.store) svc[s.key] = { label: s.label, logo: s.logo };
+    const svc = {}; for (const s of t?.services || []) svc[s.key] = { label: s.label, logo: s.logo };
     return { on, svc, chart: t };
   }));
 

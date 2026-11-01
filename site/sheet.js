@@ -10,7 +10,7 @@
   // the chart history (data/trail.json: each charted title's recent ranks), loaded with the first sheet
   let trailP = null;
   const trail = () => (trailP ||= fetch(`data/trail.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
-  // what it costs to rent or buy (data/prices.json, the buy-or-rent chart's titles), loaded with the first sheet too
+  // what it costs to rent or buy (data/prices.json: popular new films to buy or rent), loaded with the first sheet too
   let priceP = null, priceD = null;
   const prices = () => (priceP ||= fetch(`data/prices.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
   // On TV this week: Freeview showings from Tenner TV's listings (rebuilt every three hours), loaded with the first sheet

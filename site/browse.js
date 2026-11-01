@@ -17,7 +17,6 @@
     { key: 'gems', label: 'Hidden gems', sort: 'rating', test: (x) => x.s.length && x.r >= 7.2 && x.v >= 30 && x.v < 600 },
     { key: 'acclaimed', label: 'Acclaimed', sort: 'rating', test: (x) => x.s.length && x.r >= 8 && x.v >= 1500 },
     { key: 'leaving', label: 'Leaving soon', extra: true, order: (a, b) => a._gone.localeCompare(b._gone) || b.p - a.p, test: (x) => x._gone },
-    { key: 'store', label: 'Buy or rent', sort: 'pop', test: (x) => x.b, films: true },
   ];
   // Filters beyond genre and rating: age rating (UK certificates), length (minutes; episodes for shows) and release years.
   // Certificates and lengths come from the title details (data/titles.json), loaded the first time either is used.
@@ -35,7 +34,6 @@
   ];
 
   let cat = null, logos = {}, labels = {}, shown = 0, list = [];
-  const shops = new Set();   // stores (Sky Store): in the Where to watch filter, not in My services
   const state = { c: 'popular', k: 'tv', s: [], g: [], sort: null, r: 0, q: '', y: null, a: '', rt: '' };
 
   // ---------- URL <-> state ----------
@@ -54,7 +52,6 @@
     state.y = y.length === 2 && y.every((n) => n >= 1900 && n <= THIS_YEAR) && y[0] <= y[1] ? y : null;
     state.a = AGES.some(([v]) => v && v === q.get('a')) ? q.get('a') : '';
     state.rt = LENS.some(([v]) => v && v === q.get('rt')) ? q.get('rt') : '';
-    if (collection().films) state.k = 'movie';
   }
   function writeHash() {
     const q = new URLSearchParams();
@@ -85,7 +82,7 @@
     fetch('data/new.json').then((r) => (r.ok ? r.json() : null)).catch(() => null),
   ]).then(([c, t, d, f]) => {
     cat = c; certs = d; fresh = f; mergeFresh();
-    for (const s of t?.services || []) if (!s.store) { logos[s.key] = s.logo; labels[s.key] = s.label; if (s.shop) shops.add(s.key); }
+    for (const s of t?.services || []) { logos[s.key] = s.logo; labels[s.key] = s.label; }
     if (!Object.keys(labels).length) Object.assign(labels, { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+', appletv: 'Apple TV' });
     const wantSearch = location.hash === '#search';
     if (wantSearch) history.replaceState(null, '', location.pathname);
@@ -143,7 +140,7 @@
     $('#coll').insertAdjacentHTML('beforeend', COLLECTIONS.map((c) =>
       `<button type="button" role="radio" class="coll-b" data-c="${c.key}" aria-checked="false">${esc(c.label)}</button>`).join(''));
     $('#coll').addEventListener('click', (e) => { const b = e.target.closest('.coll-b'); if (!b) return;
-      state.c = b.dataset.c; state.sort = null; if (collection().films) state.k = 'movie'; apply(true); });
+      state.c = b.dataset.c; state.sort = null; apply(true); });
     // the words as big as they can be with every collection on one line (22px down to 14px); on phones they scroll sideways
     const track = $('#coll'), fitColl = () => {
       const bs = [...track.querySelectorAll('.coll-b')]; if (!bs.length || !track.clientWidth) return;
@@ -155,7 +152,6 @@
     new ResizeObserver(fitColl).observe(track); document.fonts?.ready.then(fitColl);
 
     const setKind = (k) => {
-      if (collection().films && k !== 'movie') state.c = 'popular';
       state.k = k; state.g = state.g.filter((g) => genreSet().has(g)); apply(true);
     };
     document.querySelectorAll('[data-kind]').forEach((b) => b.addEventListener('click', () => setKind(b.dataset.kind)));
@@ -170,7 +166,7 @@
 
     $('#where').innerHTML = Object.keys(labels).map((k) => `<button type="button" class="w-b" data-s="${k}" aria-pressed="false" title="${esc(labels[k])}">
       <span class="w-ic">${logos[k] ? `<img src="${esc(logos[k])}" alt="">` : esc(labels[k][0])}</span><span>${esc(labels[k])}</span></button>`).join('');
-    $('#mineLink').addEventListener('click', () => window.tn.pickMine(Object.keys(labels).filter((k) => !shops.has(k)).map((k) => ({ key: k, label: labels[k], logo: logos[k] }))));
+    $('#mineLink').addEventListener('click', () => window.tn.pickMine(Object.keys(labels).map((k) => ({ key: k, label: labels[k], logo: logos[k] }))));
     addEventListener('tn:mine', () => { readHash(); apply(false); });
     $('#where').addEventListener('click', (e) => { const b = e.target.closest('.w-b'); if (!b) return;
       const k = b.dataset.s; state.s = state.s.includes(k) ? state.s.filter((x) => x !== k) : [...state.s, k]; apply(true); });
@@ -275,7 +271,7 @@
         && (!state.r || x.r >= state.r))
         .sort((a, b) => (state.sort ? sortFn(a[0], b[0]) : (b[1] - a[1] || b[0].p - a[0].p))).map(([x]) => x);
     } else list = cat.items.filter((x) => kindOk(x) && (col.extra || !x._x) && col.test(x) && ok18(x) && okMore(x)
-      && (!state.s.length || col.key === 'store' || x.s.some((k) => state.s.includes(k)))
+      && (!state.s.length || x.s.some((k) => state.s.includes(k)))
       && (!state.g.length || x.g.some((g) => state.g.includes(g)))
       && (!state.r || x.r >= state.r)).sort(sortFn);
 
@@ -285,7 +281,6 @@
       if (on && tr.scrollWidth > tr.clientWidth + 1) tr.scrollTo({ left: Math.max(0, on.offsetLeft - tr.clientWidth / 2 + on.offsetWidth / 2), behavior: reduce ? 'auto' : 'smooth' }); }
     document.querySelectorAll('[data-kind]').forEach((b) => b.setAttribute('aria-checked', b.dataset.kind === state.k));
     document.querySelectorAll('.w-b').forEach((b) => b.setAttribute('aria-pressed', state.s.includes(b.dataset.s)));
-    $('#pWhere').hidden = col.key === 'store';
     document.querySelectorAll('.s-b').forEach((b) => b.setAttribute('aria-checked', b.dataset.sort === (q && !state.sort ? '' : sortKey())));   // searching: best match first unless you pick a sort
     const gs = [...genreSet()].filter((g) => cat.genres[g]).sort((a, b) => cat.genres[a].localeCompare(cat.genres[b]));
     $('#genres').innerHTML = gs.map((g) => `<button type="button" class="g-b" data-g="${g}" aria-pressed="${state.g.includes(g)}">${esc(cat.genres[g])}</button>`).join('');
@@ -326,7 +321,7 @@
   const kindWord = () => (state.k === 'movie' ? 'Films' : state.k === 'both' ? 'Shows and films' : 'Shows');
   async function spotlight() {
     const col = collection();
-    $('#spotEye').textContent = `${col.label} · ${col.films ? 'Films' : kindWord()}${state.s.length && col.key !== 'store' ? ` · ${state.s.length === 1 ? labels[state.s[0]] : `${state.s.length} services`}` : ''}`;
+    $('#spotEye').textContent = `${col.label} · ${kindWord()}${state.s.length ? ` · ${state.s.length === 1 ? labels[state.s[0]] : `${state.s.length} services`}` : ''}`;
     const m = await moreData(); if (!m?.items) return;
     // five of the top 24 with wide artwork, led by the ones you haven't seen in the spotlight lately (each title once)
     const pool = list.slice(0, 24).filter((x) => m.items[fk(x)]?.[1]), key = pool.map(fk).join(',');
@@ -358,7 +353,7 @@
   // ---------- explore by genre: a tile for each of the biggest genres, three of its best posters fanned out ----------
   function moods() {
     const box = $('#moods');
-    if (state.g.length || collection().key === 'store') { box.hidden = true; return; }
+    if (state.g.length) { box.hidden = true; return; }
     const pool = cat.items.filter((x) => !x._x && kindOk(x) && x.img && x.s.length && ok18(x) && (!state.s.length || x.s.some((k) => state.s.includes(k))));
     const count = new Map(); for (const x of pool) for (const g of new Set(x.g)) count.set(g, (count.get(g) || 0) + 1);
     // Animation is left out; Sci-Fi (TV's "Sci-Fi & Fantasy", films' "Science Fiction") always gets a tile if there's enough of it
@@ -580,7 +575,7 @@
         <span class="art">${art}${x.r ? `<span class="score" aria-label="Rated ${x.r} out of 10"><b>${x.r.toFixed(1)}</b></span>` : ''}</span>
         <span class="t">${esc(x.n)}</span>
         <span class="kind-l">${x.t === 'tv' ? 'Show' : 'Film'}</span>
-        <span class="m"><span>${esc(state.c === 'week' && x._new ? `Arrived ${day(x._new)}` : state.c === 'leaving' && x._gone ? `Leaves ${day(x._gone)}` : fmt(x.d))}</span>${where ? `<span class="on">${where}</span>` : x.b ? '<span class="buy">Buy or rent</span>' : ''}</span>
+        <span class="m"><span>${esc(state.c === 'week' && x._new ? `Arrived ${day(x._new)}` : state.c === 'leaving' && x._gone ? `Leaves ${day(x._gone)}` : fmt(x.d))}</span>${where ? `<span class="on">${where}</span>` : ''}</span>
         ${x.r ? `<span class="l-r">★ ${x.r.toFixed(1)}</span>` : ''}
       </a>${saveBtn(`${x.t[0]}${x.i}`, x.n)}</li>`;
   }

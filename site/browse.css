@@ -192,7 +192,6 @@ body.browse { overflow-x: clip; }
 .on { display: inline-flex; flex: none; }
 .on img { width: 20px; height: 20px; border-radius: 5px; box-shadow: 0 0 0 1.5px var(--bg); }
 .on img + img { margin-left: -5px; }
-.buy { flex: none; font-size: 12px; font-weight: 600; color: var(--accent); }
 .none { grid-column: 1 / -1; text-align: center; padding: 56px 20px; border-radius: 24px; background: var(--bg2); }
 .sheet-head h2 { margin: 0; font: 700 24px/1.15 var(--font); letter-spacing: .004em; }
 .none h2 { margin: 0 0 6px; font: 700 24px/1.15 var(--font); letter-spacing: .004em; }

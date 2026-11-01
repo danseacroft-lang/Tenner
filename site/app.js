@@ -1,5 +1,5 @@
 // Tenner's chart pages. Reads data/trending.json and data/new.json (rebuilt hourly by GitHub Actions).
-// Routes: #top (all services), #netflix, #disney … (one service), #store (buy or rent), #new (new releases).
+// Routes: #top (all services), #netflix, #disney … (one service), #new (new releases).
 // Shared helpers (esc, hue) come from shell.js, which loads first.
 
 const { esc, hue, reduce: reduceMotion } = window.tn;
@@ -61,7 +61,7 @@ function mineScope() {
 }
 
 // ---------- the services: "Choose your services" opens the picker; once you've chosen, it reads "Your Services" ----------
-const pickMine = () => window.tn.pickMine(services().filter((s) => !s.store && !s.shop).map((s) => ({ key: s.key, label: s.label, logo: s.logo })));
+const pickMine = () => window.tn.pickMine(services().map((s) => ({ key: s.key, label: s.label, logo: s.logo })));
 const svcLink = $('#svcLink');
 svcLink.addEventListener('click', pickMine);
 function markSvcLink() {
@@ -116,14 +116,14 @@ $('#shareChart').addEventListener('click', () => {
   const kind = state.kind === 'both' ? 'tv' : state.kind;
   const list = ((s ? s[kind] : state.trending.overall[kind]) || []).slice(0, 10);
   if (!list.length) return;
-  const title = s?.store ? 'Top 10 to buy or rent' : `Top 10 ${words(kind)}`;
-  const where = s?.mine ? 'On my services' : s?.store ? 'Apple TV, Sky Store and others' : s ? `On ${s.label}` : 'In the UK, on all six services';
+  const title = `Top 10 ${words(kind)}`;
+  const where = s?.mine ? 'On my services' : s ? `On ${s.label}` : 'In the UK, on all six services';
   const url = new URL(location.href); url.search = ''; url.hash = s && !s.mine ? s.key : '';
   const top3 = list.slice(0, 3).map((it, i) => `${i + 1}. ${it.title}`).join(', ');
   window.tn.share({
     heading: `Share this ${title} with someone looking for something to watch`,
     title: 'Tenner', url: url.toString(),
-    text: `${title} ${s && !s.mine && !s.store ? `on ${s.label}` : 'in the UK'} right now: ${top3}`,
+    text: `${title} ${s && !s.mine ? `on ${s.label}` : 'in the UK'} right now: ${top3}`,
     picture: async () => ({ blob: await chartImage(list, title, where), name: `tenner-${(s?.key || 'uk')}-${kind}.png` }),
   });
 });
@@ -182,7 +182,6 @@ function route() {
   const first = !h ? (start === 'auto' || start === 'mine' ? (mine.length ? 'mine' : 'top') : start) : h;
   if (first === 'week') { history.replaceState(null, '', '#new'); return route(); }   // This Week now lives on New
   state.route = ['new', 'watchlist'].includes(first) || (first !== 'mine' && svc(first)) ? first : first === 'mine' && mine.length ? 'mine' : 'top';
-  if (svc(state.route)?.store) state.kind = 'movie';
   if (!['new', 'watchlist'].includes(state.route)) state.lastChart = state.route;
   render();
 }
@@ -220,12 +219,9 @@ function draw() {
   const picks = state.kind === 'both' ? zip(ranked('tv'), ranked('movie')) : ranked(state.kind);
   const list = picks.map((p) => p.it);
   const where = s ? s.label : 'UK streaming';
-  $('#heading').innerHTML = `Top 10 <em class="grad">${esc(words())}</em>${s?.store || s?.shop ? ' to buy or rent' : ''}`;
-  // a store's chart is about paying per title, not a subscription: no service picker, and the menu shows the store chosen, not Top 10
-  svcLink.hidden = !!s?.shop; document.documentElement.classList.toggle('on-shop', !!s?.shop);
+  $('#heading').innerHTML = `Top 10 <em class="grad">${esc(words())}</em>`;
   $('#lede').innerHTML = s?.mine ? `On your services: ${esc(s.names)}`
-    : s?.store ? 'New releases from Apple TV, Sky Store and others'
-    : s ? `On ${s.logo ? `<img class="sub-logo" src="${esc(s.logo)}" alt="">` : ''}${esc(s.label)}${s.shop ? ' · Pay per title, no subscription' : ''}${s.official ? ` · ${esc(officialLine(s.official))}` : ''}` : 'On all six services in the UK';
+    : s ? `On ${s.logo ? `<img class="sub-logo" src="${esc(s.logo)}" alt="">` : ''}${esc(s.label)}${s.official ? ` · ${esc(officialLine(s.official))}` : ''}` : 'On all six services in the UK';
   document.title = s?.mine ? 'My Top 10 | Tenner' : s ? `${s.label} Top 10 | Tenner` : 'Tenner';
 
   const feat = s ? picks : withEvery(picks, kinds);
@@ -234,10 +230,10 @@ function draw() {
     ? `${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up. Add your TMDB key and run the workflow to see the real chart.</p>` : ''}
        ${hero(feat, s)}
        ${kinds.map((k, r) => `${kinds.length > 1 ? `<h2 class="row-h kind-h">Top 10 ${words(k)}</h2>` : ''}${posterRow(listOf(k), k, r === 0)}`).join('')}
-       ${s?.store ? '' : tonightCard()}
-       ${s?.store ? '' : features(s)}
+       ${tonightCard()}
+       ${features(s)}
        ${kinds.map((k) => chartList(s, k)).join('')}
-       ${s?.store ? '' : savedRow()}${s && !s.mine ? '' : weekRow()}${s?.store ? '' : newRow(s)}`
+       ${savedRow()}${s && !s.mine ? '' : weekRow()}${newRow(s)}`
     : `<div class="empty"><h2>Nothing here right now</h2><p>The chart for ${esc(where)} will be back after the next hourly update.</p><a class="btn btn-tinted" href="#top">See all six services</a></div>`;
   view.innerHTML = `<div class="wrap chart">${chart}</div>`;
   openFromUrl();
@@ -263,7 +259,7 @@ const TICK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 12.5l4.2
 // service that isn't in it adds its own No. 1, badged with that service; the hero and the banners always show those
 function withEvery(picks, kinds) {
   const have = new Set(picks.map((p) => heroKey(p.it))), extra = [];
-  for (const k of kinds) for (const sv of services().filter((x) => !x.store && !x.shop)) {
+  for (const k of kinds) for (const sv of services()) {
     if (picks.some((p) => p.it.type === k && (p.it.on || []).includes(sv.key))) continue;
     const i = adult(sv[k] || [], k).findIndex((it) => it.backdrop && !have.has(heroKey(it)));
     if (i < 0) continue;
@@ -280,11 +276,11 @@ function pickFeatured(pool, n) {
 function heroCopy({ it, n, sv }) {
   // on a service's page it's that service's chart; on All it's the UK-wide chart, and the details say where to find it
   const s = sv || heroScope, kind = it.type === 'tv' ? 'show' : 'film', k = wlKey(it, it.type), x = (k && det(k)) || {};
-  const badge = s?.store ? `No. ${n} to buy or rent` : s?.shop ? `No. ${n} ${kind} to buy or rent on ${s.label}` : s ? `No. ${n} ${kind} on ${s.label}` : `No. ${n} ${kind} in the UK`;
+  const badge = s ? `No. ${n} ${kind} on ${s.label}` : `No. ${n} ${kind} in the UK`;
   const on = s && !s.mine ? s : svc((it.on || [])[0]);
   const bits = [it.type === 'tv' ? (it.season || 'Series') : 'Film', ...(x.g || []).slice(0, 2), it.year,
     it.rating && window.tn.prefs.get().ratings ? `★ ${it.rating.toFixed(1)}` : '', n === 1 ? topText(it) : weeksText(it)].filter(Boolean);
-  const info = infoFor(it, it.type, badge, s && !s.store && !s.mine ? [s] : null), mark = window.tn.saved.has(k);
+  const info = infoFor(it, it.type, badge, s && !s.mine ? [s] : null), mark = window.tn.saved.has(k);
   return `<p class="h-badge">${esc(badge)}</p>
     <h2 class="h-title">${esc(it.title)}</h2>
     <p class="h-meta">${on?.logo ? `<img class="h-svc" src="${esc(on.logo)}" alt="${esc(on.label)}" data-tip="${esc(on.label)}">` : ''}<span>${bits.map(esc).join(' · ')}</span>${x.c ? `<b class="h-cert" data-c="${esc(String(x.c).toUpperCase())}" title="Rated ${esc(x.c)}">${esc(x.c)}</b>` : ''}</p>
@@ -398,10 +394,10 @@ function banners(picks, scope) {
   const byKey = new Map(picks.map((p) => [heroKey(p.it), p])), list = banKeys.map((k) => byKey.get(k)), wide = (u) => u && u.replace('/w1280/', '/w780/');
   mountBanners(list.map(({ it, n, sv }, i) => {
     const s = sv || scope;   // a service's own No. 1 (on All) is badged and linked as that service's
-    const kind = it.type === 'tv' ? 'show' : 'film', badge = s?.store ? `No. ${n} to buy or rent` : s?.shop ? `No. ${n} to buy or rent on ${s.label}` : s ? `No. ${n} on ${s.label}` : `No. ${n} ${kind} in the UK`;
+    const kind = it.type === 'tv' ? 'show' : 'film', badge = s ? `No. ${n} on ${s.label}` : `No. ${n} ${kind} in the UK`;
     const art = it.backdrop ? `<img src="${esc(wide(it.backdrop))}" alt="" ${i ? 'loading="lazy"' : 'fetchpriority="high"'} decoding="async">`
       : it.poster ? `<img class="soft" src="${esc(it.poster)}" alt="" loading="lazy">` : `<span class="mb-ph" style="--h:${hue(it.title)}"></span>`;
-    return `<a class="mb-card" href="${esc(it.url)}" target="_blank" rel="noopener" aria-label="${esc(`${badge}: ${it.title}`)}" ${reg(infoFor(it, it.type, badge, s && !s.store && !s.mine ? [s] : null))}>
+    return `<a class="mb-card" href="${esc(it.url)}" target="_blank" rel="noopener" aria-label="${esc(`${badge}: ${it.title}`)}" ${reg(infoFor(it, it.type, badge, s && !s.mine ? [s] : null))}>
       ${art}<span class="mb-copy"><span class="mb-badge">${esc(badge)}</span><b class="mb-title">${esc(it.title)}</b><span class="mb-meta">${esc([it.type === 'tv' ? (it.season || 'Series') : 'Film', it.year].filter(Boolean).join(' · '))}</span></span></a>`;
   }));
 }
@@ -524,8 +520,8 @@ function rankSvg(i, row = '') {
 
 const scope = () => (state.route === 'top' ? null : svc(state.route));
 const eyeFor = (n, type) => { const s = scope(), what = type === 'tv' ? 'show' : 'film';
-  return s?.store ? `No. ${n} to buy or rent` : s?.shop ? `No. ${n} ${what} to buy or rent on ${s.label}` : s ? `No. ${n} ${what} on ${s.label}` : `No. ${n} ${what} in the UK`; };
-const chartInfo = (it, i, type) => infoFor(it, type, [eyeFor(i + 1, type), i === 0 ? topText(it) : ''].filter(Boolean).join(' · '), scope() && !scope().store && !scope().mine ? [scope()] : null);
+  return s ? `No. ${n} ${what} on ${s.label}` : `No. ${n} ${what} in the UK`; };
+const chartInfo = (it, i, type) => infoFor(it, type, [eyeFor(i + 1, type), i === 0 ? topText(it) : ''].filter(Boolean).join(' · '), scope() && !scope().mine ? [scope()] : null);
 function posterRow(list, kind = state.kind, first = true) {
   const edge = (side) => `<div class="edge ${side}" aria-hidden="true">${'<i></i>'.repeat(6)}</div>`;
   return `<div class="row-wrap at-start">
@@ -660,7 +656,7 @@ const tnPicksScene = () => tnScene([[tonight.len === 'any' ? 'any' : tonight.len
 async function tonightPicks() {
   tnCat ||= state.cat ? Promise.resolve(state.cat) : fetch('data/browse.json').then((r) => (r.ok ? r.json() : null)).catch(() => null);   // the page has it already, usually
   const cat = await tnCat; if (!cat?.items) return `<h2 id="tnH">Couldn’t load the picks</h2><p class="tn-sub">Try again in a moment.</p><div class="tn-acts"><button type="button" class="btn btn-tinted" data-tn="again">Start again</button></div>`;
-  const mineSvcs = window.tn.mine.get(), want = new Set(mineSvcs.length ? mineSvcs : services().filter((x) => !x.store && !x.shop).map((x) => x.key));
+  const mineSvcs = window.tn.mine.get(), want = new Set(mineSvcs.length ? mineSvcs : services().map((x) => x.key));
   const genres = new Set(MOODS.find((m) => m[0] === tonight.mood)?.[3] || []), no18 = window.tn.prefs.get().no18;
   const pool = cat.items.filter((x) => (tonight.len === 'any' || x.t === tonight.len) && x.s?.some((k) => want.has(k)) && x.g?.some((g) => genres.has(g))
       && (tonight.who !== 'family' || !x.g.some((g) => DARK.includes(g))) && (x.r || 0) >= 6.4 && (x.v || 0) >= 40 && !(no18 && state.titles?.items?.[`${x.t === 'movie' ? 'm' : 't'}${x.i}`]?.c === '18'))
@@ -695,12 +691,11 @@ view.addEventListener('click', (e) => {
 // Three wide feature cards (eyebrow, title, subtitle, then the artwork with a caption and the poster in the corner).
 function features(s) {
   const shows = s ? s.tv : state.trending.overall.tv, films = s ? s.movie : state.trending.overall.movie;
-  const store = services().find((x) => x.store)?.movie || [];
-  // Elsewhere on the charts: what the chart you're looking at doesn't already show (the other kind's No. 1, the No. 1 to
-  // buy or rent, this week's biggest climber), never the No. 1 that's already in the hero and the posters
+  // Elsewhere on the charts: what the chart you're looking at doesn't already show (the other kind's No. 1, this week's
+  // biggest climber, what's new), never the No. 1 that's already in the hero and the posters
   const showing = state.kind === 'both' ? ['tv', 'movie'] : [state.kind];
   // this week's biggest climber, in the UK chart if there's one there, else on any service (with its full details)
-  const lists = [...['tv', 'movie'].map((t) => state.trending.overall[t] || []), ...services().filter((x) => !x.store).flatMap((x) => [x.tv || [], x.movie || []])];
+  const lists = [...['tv', 'movie'].map((t) => state.trending.overall[t] || []), ...services().flatMap((x) => [x.tv || [], x.movie || []])];
   const findIt = (k) => lists.flat().find((it) => wlKey(it, it.type) === k);
   const climbs = (state.week?.climbers || []).filter((x) => !s || s.mine ? true : x.c.startsWith(`${s.key}:`)).sort((a, b) => b.c.startsWith('all:') - a.c.startsWith('all:'));
   const climb = climbs.find((x) => findIt(x.k)), climbIt = climb && findIt(climb.k);
@@ -711,7 +706,6 @@ function features(s) {
   const cands = [
     !showing.includes('tv') && shows[0] && { eye: `No. 1 show ${where}`, it: shows[0], type: 'tv', sub: s ? `${shows[0].year || ''}` : `On ${onText(shows[0], 'UK streaming')}` },
     !showing.includes('movie') && films[0] && { eye: `No. 1 film ${where}`, it: films[0], type: 'movie', sub: s ? `${films[0].year || ''}` : `On ${onText(films[0], 'UK streaming')}` },
-    !s && store[0] && { eye: 'No. 1 to buy or rent', it: store[0], type: 'movie', sub: 'Apple TV, Sky Store and others', href: '#store' },
     climbIt && { eye: 'Biggest climber this week', it: climbIt, type: climbIt.type, sub: `Up ${climb.by} to No. ${climb.to} ${chartName(climb.c).replace(/^(show|film) /, '')}` },
     fresh && { eye: `New on ${svc(fresh.service)?.label || 'streaming'}`, it: fresh, type: fresh.type, sub: [fresh.type === 'movie' ? 'Film' : fresh.season ? `Season ${fresh.season}` : 'Series', fresh.date === todayIso() ? 'Today' : ''].filter(Boolean).join(' · '), svcs: svc(fresh.service) ? [svc(fresh.service)] : [] },
     showing.includes('tv') && shows[1] && { eye: `No. 2 show ${where}`, it: shows[1], type: 'tv', sub: s ? `${shows[1].year || ''}` : `On ${onText(shows[1], 'UK streaming')}` },
@@ -723,7 +717,7 @@ function features(s) {
   if (!picks.length) return '';
   return `<section class="feats" aria-label="Highlights"><div class="feat-row">${picks.map((p) => {
     const it = p.it, wide = it.backdrop ? it.backdrop.replace('/w1280/', '/w780/') : null;
-    return `<a class="feat" href="${esc(p.href || it.url || "#new")}" ${p.href ? '' : `target="_blank" rel="noopener" ${reg(infoFor(it, p.type, p.eye, p.svcs || (s && !s.mine ? [s] : null)))}`}>
+    return `<a class="feat" href="${esc(it.url || "#new")}" target="_blank" rel="noopener" ${reg(infoFor(it, p.type, p.eye, p.svcs || (s && !s.mine ? [s] : null)))}>
       <span class="f-eye">${esc(p.eye)}</span>
       <span class="f-title">${esc(it.title)}</span>
       <span class="f-sub">${esc(p.sub)}</span>
@@ -738,10 +732,9 @@ function features(s) {
 // The best-rated ten on the service (or all six), as a tidy list in columns like "Best New Songs": rank, a small
 // poster, title and where it's on. The posters above already show the chart, so this list shows something else:
 // the catalogue's highest-rated titles with enough votes to trust (the same test as Browse's Top rated).
-// The buy-or-rent chart has no catalogue behind it, so there it stays a list of that chart.
 function topRated(k, s) {
   const c = state.cat; if (!c?.items) return [];
-  const pass = (min) => c.items.filter((x) => x.t === k && x.r && x.v >= min && (s?.store ? x.b : s?.mine ? x.s.some((k) => s.keys.includes(k)) : s ? x.s.includes(s.key) : x.s.length));
+  const pass = (min) => c.items.filter((x) => x.t === k && x.r && x.v >= min && (s?.mine ? x.s.some((k) => s.keys.includes(k)) : s ? x.s.includes(s.key) : x.s.length));
   let l = pass(300); if (l.length < 10) l = pass(100);   // a smaller service may need a lower bar to fill ten
   return l.sort((a, b) => b.r - a.r || b.v - a.v).slice(0, 10).map((x) => ({
     id: x.i, title: x.n, year: (x.d || '').slice(0, 4), rating: x.r, on: x.s, url: tmdbUrl(k, x.i),
@@ -749,16 +742,15 @@ function topRated(k, s) {
   }));
 }
 function chartList(s, k = state.kind) {
-  // the buy-or-rent chart's list is the best-rated films to buy or rent; if the catalogue has too few, it's left out
-  // rather than repeating the posters above
+  // if the catalogue has too few, it's left out rather than repeating the posters above
   const list = topRated(k, s);
   if (!list.length) return '';
-  const q = s?.store ? { c: 'store', k: 'movie', sort: 'rating' } : { c: 'top', ...(k === 'movie' ? { k: 'movie' } : {}), ...(s ? { s: s.mine ? s.keys.join(',') : s.key } : {}) };
+  const q = { c: 'top', ...(k === 'movie' ? { k: 'movie' } : {}), ...(s ? { s: s.mine ? s.keys.join(',') : s.key } : {}) };
   const browse = `browse.html#${new URLSearchParams(q)}`;
   return `<section class="clist" aria-labelledby="cl-h-${k}">
-    <div class="row-hd"><h2 class="row-h" id="cl-h-${k}">${s?.store ? 'Top rated to buy or rent' : `Top rated ${words(k).toLowerCase()} at a glance`}</h2>
+    <div class="row-hd"><h2 class="row-h" id="cl-h-${k}">Top rated ${words(k).toLowerCase()} at a glance</h2>
       <a class="see-all" href="${esc(browse)}">See more in Browse<span class="chev" aria-hidden="true"></span></a></div>
-    <ol class="cl">${list.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(infoFor(it, k, `No. ${i + 1} top rated${s?.store ? ' to buy or rent' : s ? ` on ${s.label}` : ''}`))}>
+    <ol class="cl">${list.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(infoFor(it, k, `No. ${i + 1} top rated${s ? ` on ${s.label}` : ''}`))}>
       <span class="cl-n">${i + 1}</span>
       ${it.poster ? `<img src="${esc(thumb(it.poster))}" alt="" loading="lazy" decoding="async">` : `<span class="cl-ph" style="background:hsl(${hue(it.title)} 45% 35%)"></span>`}
       <span class="cl-t"><b>${esc(it.title)}</b><small>${esc([s && !s.mine ? '' : onText(it), it.season, it.year].filter(Boolean).join(' · '))}</small></span>
@@ -794,7 +786,7 @@ function chartSpots() {
   const spots = new Map(), t = state.trending; if (!t) return spots;
   const add = (list, type, where) => (list || []).forEach((it, i) => { const k = wlKey(it, type); if (k && !spots.has(k)) spots.set(k, `No. ${i + 1} ${where}`); });
   ['tv', 'movie'].forEach((type) => add(t.overall?.[type], type, 'in the UK'));
-  services().filter((s) => !s.store).forEach((s) => ['tv', 'movie'].forEach((type) => add(s[type], type, `on ${s.label}`)));
+  services().forEach((s) => ['tv', 'movie'].forEach((type) => add(s[type], type, `on ${s.label}`)));
   return spots;
 }
 const wlInfo = (x, eye) => ({ k: x.k, type: x.type, eye, title: x.title, year: x.year, poster: x.poster, tmdb: tmdbUrl(x.type, x.k.slice(1)), services: [] });
@@ -1128,8 +1120,6 @@ function setKind(k) {
   if (k === state.kind) return;
   state.kind = k;
   try { localStorage.setItem('tenner-kind', k); } catch {}
-  // Buy or rent is films only, so switching to shows takes you back to all services
-  if (k !== 'movie' && svc(state.route)?.store) { location.hash = 'top'; return; }
   render();
 }
 $('#kindSel').addEventListener('change', (e) => setKind(e.target.value));

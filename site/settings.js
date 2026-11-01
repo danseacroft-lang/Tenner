@@ -25,7 +25,7 @@
     say('Saved');
   });
 
-  fetch('data/trending.json').then((r) => (r.ok ? r.json() : null)).then((t) => { for (const s of t?.services || []) if (!s.store) logos[s.key] = s.logo; }).catch(() => {});
+  fetch('data/trending.json').then((r) => (r.ok ? r.json() : null)).then((t) => { for (const s of t?.services || []) logos[s.key] = s.logo; }).catch(() => {});
   document.getElementById('setMine').addEventListener('click', () => window.tn.pickMine(Object.keys(LABELS).map((k) => ({ key: k, label: LABELS[k], logo: logos[k] }))));
   addEventListener('tn:mine', show);
 

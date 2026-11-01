@@ -102,7 +102,7 @@ export async function pushMorning(env, force = false) {
     else await morningBatch(env, batch, fresh);
   }
 }
-// Cheaper to rent or buy: the site's prices (data/prices.json, the buy-or-rent chart's films and shows) against the
+// Cheaper to rent or buy: the site's prices (data/prices.json: popular new films to buy or rent) against the
 // day before's. A drop of a tenth or more is kept for the day's batches (meta:drops); today's prices are remembered.
 async function priceDrops(env, day) {
   const r = await fetch(`${SITE}/data/prices.json?v=${Date.now()}`, { cf: { cacheTtl: 0 } });

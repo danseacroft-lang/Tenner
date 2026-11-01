@@ -35,13 +35,6 @@ export const SERVICES = [
   // TMDB's 350 is the subscription (Apple TV+ until Apple renamed it "Apple TV"); its 2, also "Apple TV", is the store
   { key: 'appletv',   label: 'Apple TV',    match: /^apple ?tv plus/, ids: [350] },
 ];
-// Stores: services where you buy or rent one title at a time. Each gets its own chart of shows and films (shop: true),
-// stays out of the combined chart and My services, and can be picked in Browse.
-export const SHOPS = [
-  { key: 'skystore', label: 'Sky Store', match: /^sky store/ },
-  { key: 'rakuten', label: 'Rakuten TV', match: /^rakuten tv/ },
-];
-const SHOP_MIN = 10;   // a store with fewer titles than this to buy or rent in the UK gets no chart of its own
 const RESELLER = /\b(amazon|apple tv|roku premium|roku) channel\b/;
 
 const norm = (s) => s.toLowerCase().replace(/\+/g, ' plus').replace(/[^a-z0-9]+/g, ' ').trim();
@@ -83,7 +76,7 @@ const hoursOld = (json) => (Date.now() - Date.parse(json?.generatedAt)) / 3600e3
 
 // A chart is only published if it looks right: most services have a full top 10 of shows and of films.
 function checkTrending(d) {
-  const full = d.services.filter((s) => !s.store && !s.shop && s.tv.length >= 5 && s.movie.length >= 5).length;
+  const full = d.services.filter((s) => s.tv.length >= 5 && s.movie.length >= 5).length;
   if (full < 3 || d.overall.tv.length < 5 || d.overall.movie.length < 5) throw new Error(`only ${full} of ${SERVICES.length} services came back with a chart`);
 }
 
@@ -126,9 +119,8 @@ async function buildTrending() {
   const ids = Object.fromEntries(SERVICES.map((s) => [s.key, new Set()]));
   const logos = {}; // the service's main plan has the best (lowest) display priority
   const seen = {};
-  for (const s of SHOPS) ids[s.key] = new Set();
   for (const p of [...pm.results, ...pt.results]) {
-    const s = serviceFor(p.provider_name, p.provider_id) || SHOPS.find((x) => x.match.test(norm(p.provider_name)));
+    const s = serviceFor(p.provider_name, p.provider_id);
     if (!s) continue;
     ids[s.key].add(p.provider_id); seen[p.provider_id] = p.provider_name;
     const prio = p.display_priorities?.[REGION] ?? p.display_priority ?? 999;
@@ -159,33 +151,15 @@ async function buildTrending() {
     };
   }));
 
-  // 3. Buy or rent: the most popular new releases you pay for one at a time (Apple TV, Prime Video Store, Sky Store…).
-  //    Films with a UK digital release in the last six months.
+  // 3. Films to buy or rent: the most popular with a UK digital release in the last six months. Tenner sticks to streaming,
+  //    so these aren't a chart; they're the titles priced for the title sheet and the cheaper-to-rent alerts.
   const ago = (d) => new Date(Date.now() - d * 864e5).toISOString().slice(0, 10);
-  const shop = { watch_region: REGION, with_watch_monetization_types: 'rent|buy', sort_by: 'popularity.desc', include_adult: 'false', language: 'en-GB' };
-  // Films only: almost every show is on a subscription, so a TV buy-or-rent chart would just repeat the others.
-  const sm = await tmdb('/discover/movie', { ...shop, region: REGION, with_release_type: '4', 'release_date.gte': ago(180), 'release_date.lte': ago(-1) });
-  const store = {
-    key: 'store', label: 'Buy or rent', store: true, logo: null, providerIds: [],
-    movie: sm.results.slice(0, PER_LIST).map((r) => toItem(r, 'movie')),
-    tv: [],
-  };
-
-  // 4. Each store (Sky Store, Rakuten TV): its most popular shows and films to buy or rent
-  const shops = await Promise.all(SHOPS.map(async (s) => {
-    const providerIds = [...ids[s.key]];
-    if (!providerIds.length) { warn('Stores', `no TMDB provider matched ${s.label}`); return null; }
-    const q = { ...shop, with_watch_providers: providerIds.join('|'), 'vote_count.gte': '5' };
-    const [m, t] = await Promise.all([tmdb('/discover/movie', q), tmdb('/discover/tv', q)]);
-    console.log(`${s.label}: ${m.total_results} films and ${t.total_results} shows to buy or rent in the UK`);
-    if (m.total_results + t.total_results < SHOP_MIN) { warn('Stores', `${s.label} has only ${m.total_results + t.total_results} titles on TMDB, so no chart`); return null; }
-    return { key: s.key, label: s.label, shop: true, logo: logos[s.key]?.url || null, providerIds,
-      movie: m.results.slice(0, PER_LIST).map((r) => toItem(r, 'movie')), tv: t.results.slice(0, PER_LIST).map((r) => toItem(r, 'tv')) };
-  }));
+  const sm = await tmdb('/discover/movie', { watch_region: REGION, with_watch_monetization_types: 'rent|buy', sort_by: 'popularity.desc', include_adult: 'false',
+    language: 'en-GB', region: REGION, with_release_type: '4', 'release_date.gte': ago(180), 'release_date.lte': ago(-1) });
 
   return {
-    // the combined chart stays subscription-only; Buy or rent and the stores are charts of their own
-    data: { generatedAt: new Date().toISOString(), region: REGION, sample: false, services: [...services, ...shops.filter(Boolean), store], overall: overall(services) },
+    data: { generatedAt: new Date().toISOString(), region: REGION, sample: false, services, overall: overall(services) },
+    buyRent: sm.results.slice(0, PER_LIST).map((r) => toItem(r, 'movie')),
     providers: Object.fromEntries(SERVICES.map((s) => [s.label, [...ids[s.key]].map((id) => `${id} ${seen[id]}`)])),
     ids,
   };
@@ -351,7 +325,7 @@ export function addMovement(data, prev, now = new Date()) {
 
 // ---------- Each title's life on the charts: kept for a year after it was last in one ----------
 // life[k] = { f: first day in a chart, l: last day, n: days in a chart, u: best UK rank, b: [best rank, service] on a
-// service's own chart, o: days at No. 1 }. Streaming charts only (not buy or rent). The first time, it's filled in from
+// service's own chart, o: days at No. 1 }. The first time, it's filled in from
 // the days already kept.
 function lifeDay(life, snap, day, svcs) {
   const seen = new Map();   // key -> { u, b: [rank, svc] }
@@ -371,7 +345,7 @@ function lifeDay(life, snap, day, svcs) {
   }
 }
 function trackLife(h, data, day, keyOf) {
-  const svcs = new Set((data.services || []).filter((s) => !s.store && !s.shop).map((s) => s.key));
+  const svcs = new Set((data.services || []).map((s) => s.key));
   if (!h.life) { h.life = {}; for (const d of Object.keys(h.days).sort()) if (d !== day) lifeDay(h.life, h.days[d], d, svcs); }
   lifeDay(h.life, h.days[day], day, svcs);
   const cut = new Date(Date.parse(`${day}T12:00:00Z`) - 400 * 864e5).toISOString().slice(0, 10);
@@ -389,7 +363,7 @@ export function buildTrackers(data, h, now = new Date()) {
   const days = Object.keys(h.days).sort(), hours = Object.keys(h.hours).sort().slice(-24);
   const label = Object.fromEntries((data.services || []).map((s) => [s.key, s.label]));
   const charts = {}, info = {};
-  for (const sv of data.services || []) if (!sv.store) for (const t of ['tv', 'movie']) if (sv[t]?.length) charts[`${sv.key}:${t}`] = sv[t];   // streaming charts (not buy or rent)
+  for (const sv of data.services || []) for (const t of ['tv', 'movie']) if (sv[t]?.length) charts[`${sv.key}:${t}`] = sv[t];
   for (const t of ['tv', 'movie']) if (data.overall?.[t]?.length) charts[`all:${t}`] = data.overall[t];
   for (const list of Object.values(charts)) for (const it of list) {
     const k = keyOf(it); if (info[k] || k[0] === 'x') continue;
@@ -592,15 +566,15 @@ async function buildLeaving(key) {
   } catch (err) { console.log('Leaving soon skipped:', err.message); return []; }
 }
 
-// ---------- What it costs to rent or buy: the buy-or-rent chart's films and shows, from Watchmode ----------
+// ---------- What it costs to rent or buy: new films to buy or rent, from Watchmode ----------
 // Watchmode lists each title's rental and purchase offers with prices. Each title costs two credits (one to look it up by
-// its TMDB number), so prices are kept for three days and only the buy-or-rent chart is priced: about 15 credits a day,
+// its TMDB number), so prices are kept for three days and only the new films to buy or rent are priced: about 15 credits a day,
 // well inside the free 2,500 a month. prices.json: { k: { at, o: [[service, 'rent'|'buy', price, quality, link]] } }.
-export async function buildPrices(data, prev) {
+export async function buildPrices(films, prev) {
   const key = process.env.WATCHMODE_API_KEY; if (!key) return null;
   const out = { generatedAt: new Date().toISOString(), items: {} }, now = Date.now();
   const want = new Map();
-  for (const sv of data.services || []) if (sv.store || sv.shop) for (const t of ['tv', 'movie']) for (const it of sv[t] || []) if (/^\d+$/.test(String(it.id))) want.set(`${t === 'movie' ? 'm' : 't'}${it.id}`, t);
+  for (const it of films || []) if (/^\d+$/.test(String(it.id))) want.set(`m${it.id}`, 'movie');
   let asked = 0;
   for (const [k, t] of want) {
     const old = prev?.items?.[k];
@@ -619,10 +593,10 @@ export async function buildPrices(data, prev) {
 }
 
 // ---------- Browse catalogue ----------
-// The most popular ~100 shows and ~100 films on each service, plus new films to buy or rent, merged into one
+// The most popular ~100 shows and ~100 films on each service, merged into one
 // compact list the Browse page filters and sorts in the browser. Short keys keep the file small:
 // i id, t 'tv'|'movie', n title, d first date, r rating (when 20+ votes), v votes, p popularity, img poster path,
-// g genre ids, s services it was found on, b 1 if it's a buy-or-rent title.
+// g genre ids, s services it was found on.
 const PAGES = 5;
 async function pool(tasks, limit = 8) {
   const out = []; let next = 0;
@@ -637,14 +611,6 @@ export async function buildCatalogue(ids) {
     for (const type of ['tv', 'movie']) for (let page = 1; page <= PAGES; page++)
       jobs.push(async () => ({ type, key: s.key, res: await tmdb(`/discover/${type}`, { ...base, page, with_watch_providers: providerIds.join('|'), with_watch_monetization_types: 'flatrate|free|ads' }) }));
   }
-  for (const s of SHOPS) {   // the stores' catalogues, so Browse can filter to them
-    const providerIds = [...(ids[s.key] || [])]; if (!providerIds.length) continue;
-    for (const type of ['tv', 'movie']) for (let page = 1; page <= 3; page++)
-      jobs.push(async () => ({ type, key: s.key, res: await tmdb(`/discover/${type}`, { ...base, page, with_watch_providers: providerIds.join('|'), with_watch_monetization_types: 'rent|buy' }) }));
-  }
-  const since = new Date(Date.now() - 180 * 864e5).toISOString().slice(0, 10);
-  for (let page = 1; page <= 3; page++)
-    jobs.push(async () => ({ type: 'movie', key: 'store', res: await tmdb('/discover/movie', { ...base, page, with_watch_monetization_types: 'rent|buy', region: REGION, with_release_type: '4', 'release_date.gte': since }) }));
   const [results, gm, gt] = await Promise.all([pool(jobs), tmdb('/genre/movie/list', { language: 'en-GB' }), tmdb('/genre/tv/list', { language: 'en-GB' })]);
 
   const byId = new Map(), more = {};
@@ -660,7 +626,7 @@ export async function buildCatalogue(ids) {
         r: r.vote_count >= 20 ? Math.round(r.vote_average * 10) / 10 : 0, v: r.vote_count, p: Math.round(r.popularity), img: r.poster_path, g: r.genre_ids || [], s: [] };
       byId.set(id, it);
     }
-    if (key === 'store') it.b = 1; else if (!it.s.includes(key)) it.s.push(key);
+    if (!it.s.includes(key)) it.s.push(key);
   }
   const genres = {};
   for (const g of [...gm.genres, ...gt.genres]) genres[g.id] = g.name;
@@ -699,10 +665,6 @@ function sample() {
     tv: Array.from({ length: PER_LIST }, (_, i) => make('tv', i, si)),
     movie: Array.from({ length: PER_LIST }, (_, i) => make('movie', i, si)),
   }));
-  const storeChart = { key: 'store', label: 'Buy or rent', store: true, logo: null, providerIds: [],
-    tv: [], movie: Array.from({ length: PER_LIST }, (_, i) => make('movie', i, 7)) };
-  const shopCharts = SHOPS.map((s, si) => ({ key: s.key, label: s.label, shop: true, logo: null, providerIds: [],
-    tv: Array.from({ length: PER_LIST }, (_, i) => make('tv', i, 9 + si)), movie: Array.from({ length: PER_LIST }, (_, i) => make('movie', i, 9 + si)) }));
   const today = new Date();
   const iso = (d) => new Date(+today + d * 864e5).toISOString().slice(0, 10);
   const fresh = {
@@ -715,7 +677,7 @@ function sample() {
       service: SERVICES[(i * 2 + 1) % SERVICES.length].key, poster: null, id: null, url: null })),
   };
   return {
-    trending: { generatedAt: today.toISOString(), region: REGION, sample: true, services: [...services, ...shopCharts, storeChart], overall: overall(services) },
+    trending: { generatedAt: today.toISOString(), region: REGION, sample: true, services, overall: overall(services) },
     fresh,
   };
 }
@@ -728,7 +690,7 @@ function sampleCatalogue() {
     const type = k % 2 ? 'movie' : 'tv', y = 2026 - (k % 9), m = String(1 + (k * 5) % 12).padStart(2, '0');
     return { i: 9000 + k, t: type, n: `The ${words[k % words.length]}${k > 21 ? ' ' + (Math.floor(k / 22) + 1) : ''}`, d: `${y}-${m}-1${k % 9}`,
       r: Math.round((5.5 + ((k * 37) % 40) / 10) * 10) / 10, v: 30 + (k * 97) % 4000, p: 900 - k * 4, img: null,
-      g: [gids[k % gids.length], gids[(k * 3) % gids.length]], s: SERVICES.filter((_, j) => (k + j) % 4 === 0).map((s) => s.key), ...(k % 11 === 0 ? { b: 1 } : {}) };
+      g: [gids[k % gids.length], gids[(k * 3) % gids.length]], s: SERVICES.filter((_, j) => (k + j) % 4 === 0).map((s) => s.key) };
   });
   return { generatedAt: new Date().toISOString(), region: REGION, img: '', genres, items, sample: true };
 }
@@ -839,7 +801,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     for (const sv of trending.services) for (const t of ['tv', 'movie']) for (const it of sv[t] || []) {
       const n = it.id; sItems[`${t[0]}${n}`] = { at: Date.now(), rt: t === 'movie' ? 88 + (n * 7) % 60 : 40 + (n * 3) % 25, se: t === 'tv' ? 1 + n % 4 : undefined,
         c: ['U', 'PG', '12', '15', '18'][n % 5], g: ['Drama', 'Comedy', 'Crime'].slice(0, 1 + n % 3), tl: n % 2 ? 'A fictional tagline for a sample title.' : undefined,
-        f: sv.store ? [] : [[8, 337, 9, 1899][n % 4]], fr: n % 5 === 0 ? [9] : [], re: [2, 130].slice(0, 1 + n % 2), bu: [2], tr: undefined,
+        f: [[8, 337, 9, 1899][n % 4]], fr: n % 5 === 0 ? [9] : [], re: [2, 130].slice(0, 1 + n % 2), bu: [2], tr: undefined,
         nx: t === 'tv' && n % 3 === 0 ? [new Date(Date.now() + (1 + n % 9) * 864e5).toISOString().slice(0, 10), 1 + n % 4, 3 + n % 6] : undefined,
         sz: t === 'tv' ? Array.from({ length: 1 + n % 4 }, (_, s) => 6 + ((n + s) % 5)) : undefined,
         ln: n % 2 ? { at: Date.now(), nf: String(80000000 + n), ap: `${t === 'movie' ? 'movie' : 'show'}/umc.cmc.sample${n}` } : undefined };
@@ -860,8 +822,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const st = buildTrackers(trending, sh);
     await write('trending.json', trending); await write('trail.json', st.trail); await write('week.json', st.week);
     await write('titles.json', { v: 1, generatedAt: trending.generatedAt, logo: '', providers: sp, items: sItems, sample: true });
-    const pItems = {};   // sample prices for the buy-or-rent chart
-    for (const it of trending.services.find((x) => x.store).movie) pItems[`m${it.id}`] = { at: Date.now(), o: [['Apple TV', 'rent', 3.99 + (it.id % 3), 'HD', ''], ['Sky Store', 'rent', 4.99, 'HD', ''], ['Apple TV', 'buy', 9.99 + (it.id % 5), '4K', '']].sort((x, y) => x[2] - y[2]) };
+    const pItems = {};   // sample prices, for a few of the chart's films
+    for (const it of trending.overall.movie.slice(0, 5)) pItems[`m${it.id}`] = { at: Date.now(), o: [['Apple TV', 'rent', 3.99 + (it.id % 3), 'HD', ''], ['Sky Store', 'rent', 4.99, 'HD', ''], ['Apple TV', 'buy', 9.99 + (it.id % 5), '4K', '']].sort((x, y) => x[2] - y[2]) };
     await write('prices.json', { generatedAt: trending.generatedAt, items: pItems, sample: true });
     const sc = sampleCatalogue();
     await write('browse.json', sc);
@@ -959,10 +921,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       if (prev && hoursOld(prev) < 72) await write('cinema.json', prev);
     }
 
-    // 3b. Rent and buy prices for the buy-or-rent chart (Watchmode); the live copy carries on if it fails.
+    // 3b. Rent and buy prices for new films to buy or rent (Watchmode); the live copy carries on if it fails.
     if (built) {
       const prevP = await liveCopy('prices.json');
-      try { const pr = await buildPrices(data, prevP); if (pr) await write('prices.json', pr); else if (prevP) await write('prices.json', prevP); }
+      try { const pr = await buildPrices(built.buyRent, prevP); if (pr) await write('prices.json', pr); else if (prevP) await write('prices.json', prevP); }
       catch (err) { warn('Prices', err.message); if (prevP) await write('prices.json', prevP); }
     }
 

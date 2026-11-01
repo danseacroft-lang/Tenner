@@ -1,4 +1,4 @@
-// Tenner Discover: a deck of shows and films from Tenner's whole catalogue (every service, and to buy or rent), one card at a time. Swipe right to add it to
+// Tenner Discover: a deck of shows and films from Tenner's whole catalogue (all six services), one card at a time. Swipe right to add it to
 // your Watchlist, left to skip it, down (or tap) for the details sheet. The buttons and arrow keys do the same.
 // Skipped titles are remembered on this device so they don't come round again; Undo takes back the last swipe.
 (() => {
@@ -30,26 +30,22 @@
     window.tn.prefs.get().no18 ? window.tnSheet?.details() : null,   // Settings: "Hide titles rated 18"
   ]).then(([c, t, d]) => {
     cat = c; certs = d;
-    for (const s of t?.services || []) if (!s.store) { logos[s.key] = s.logo; labels[s.key] = s.label; }
+    for (const s of t?.services || []) { logos[s.key] = s.logo; labels[s.key] = s.label; }
     if (!Object.keys(labels).length) Object.assign(labels, { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+', appletv: 'Apple TV' });
     build();
     // the overviews and wide artwork come a moment later, for the cards' blurb and the sheet
     fetch('data/browse-more.json').then((r) => (r.ok ? r.json() : null)).then((m) => { more = m; cards.forEach((el) => fillBlurb(el)); }).catch(() => {});
   }).catch(() => { stage.innerHTML = '<div class="d-end"><h2>The titles didn’t load</h2><p>They’re rebuilt every hour, so try again shortly.</p></div>'; });
 
-  // the deck: mostly the six big services, with the rest of the catalogue (other services, and to buy or rent) mixed in about
-  // one card in five; not already saved or skipped, popular first but shuffled a little in small batches so it feels fresh
-  const BIG = new Set(['netflix', 'disney', 'prime', 'hbomax', 'paramount', 'appletv']);
+  // the deck: everything on the six services not already saved or skipped, popular first but shuffled a little in small
+  // batches so it feels fresh
   function build() {
     const skip = skipped.all(), withArt = cat.items.some((x) => x.img);
-    const pool = cat.items.filter((x) => (kind === 'both' || x.t === kind) && (x.s.length || x.b) && (!withArt || x.img)
+    const pool = cat.items.filter((x) => (kind === 'both' || x.t === kind) && x.s.length && (!withArt || x.img)
       && !skip[keyOf(x)] && !saved.has(keyOf(x)) && (!certs || certs.items?.[keyOf(x)]?.c !== '18'))
       .sort((a, b) => (b.p * (0.6 + (b.r || 6) / 20)) - (a.p * (0.6 + (a.r || 6) / 20)));
-    const five = pool.filter((x) => x.s.some((k) => BIG.has(k))), rest = pool.filter((x) => !x.s.some((k) => BIG.has(k)));
-    const mixed = [];
-    while (five.length || rest.length) { mixed.push(...five.splice(0, 4)); if (rest.length) mixed.push(rest.shift()); }
     deck = [];
-    for (let i = 0; i < mixed.length; i += 10) deck.push(...mixed.slice(i, i + 10).sort(() => Math.random() - 0.5));
+    for (let i = 0; i < pool.length; i += 10) deck.push(...pool.slice(i, i + 10).sort(() => Math.random() - 0.5));
     hist = []; $('#dUndo').disabled = true;
     stage.replaceChildren(); cards = [];
     fill(); hint();
@@ -63,8 +59,7 @@
     el.className = 'dc'; el.dataset.k = keyOf(x); el._x = x;
     const genres = [...new Set(x.g.map((g) => cat.genres[g]).filter(Boolean))].slice(0, 2);
     const meta = [x.t === 'movie' ? 'Film' : 'Series', year(x), ...genres].filter(Boolean).map(esc).join(' · ');
-    const svc = x.s.filter((s) => labels[s]).slice(0, 3).map((s) => (logos[s] ? `<img src="${esc(logos[s])}" alt="${esc(labels[s])}" data-tip="${esc(labels[s])}">` : `<span>${esc(labels[s])}</span>`)).join('')
-      + (x.b && !x.s.length ? '<span>Buy or rent</span>' : '');
+    const svc = x.s.filter((s) => labels[s]).slice(0, 3).map((s) => (logos[s] ? `<img src="${esc(logos[s])}" alt="${esc(labels[s])}" data-tip="${esc(labels[s])}">` : `<span>${esc(labels[s])}</span>`)).join('');
     el.innerHTML = `${src ? `<img class="dc-img" src="${esc(src)}" srcset="${esc(src)} 500w, ${esc(img(x, 'w780'))} 780w" sizes="380px" alt="" decoding="async" draggable="false">`
       : `<span class="dc-img dc-ph" style="background:linear-gradient(160deg,hsl(${h} 50% 42%),hsl(${(h + 40) % 360} 55% 16%))"></span>`}
       <span class="dc-tag dc-tag-yes" aria-hidden="true">${SAVE}Watchlist</span><span class="dc-tag dc-tag-no" aria-hidden="true">${X}Skip</span>
