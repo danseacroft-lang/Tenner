@@ -1540,6 +1540,8 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .
   :root:not(.still) .f-img > img:first-child:not(.blur) { scale: 1.14; animation: pxPan linear both; animation-timeline: view(); animation-range: cover; }
   /* each section rises gently into place as it comes on screen */
   :root:not(.still) .chart > :is(.feats, .tn-card, .clist, .nrow) { animation: pxRise linear both; animation-timeline: view(); animation-range: entry 0% entry 45%; }
+  /* New This Week and the Watchlist: each section, and each day's list, settles in the same way */
+  :root:not(.still) #view .wrap:not(.chart) :is(.wk-hd, .wk > .nr, .group, .nrow) { animation: pxRise linear both; animation-timeline: view(); animation-range: entry 0% entry 40%; }
   /* phones: the banners' pictures drift the other way as you swipe them */
   @media (max-width: 560px) {
     :root:not(.still) .mb-card > img:not(.mb-poster):not(.mb-glow):not(.soft) { scale: 1.16; animation: pxSwipe linear both; animation-timeline: view(inline); }
@@ -1580,3 +1582,9 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .
 :root:not(.still) .tip { transition: opacity .18s ease, transform .3s var(--ease-spring); }
 [data-tip] { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 @media (prefers-reduced-transparency: reduce) { .tip { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--card); } }
+
+/* comfortable taps: small round controls keep their look but answer to a 44pt area around them (Apple's minimum) */
+.wl-x, .svc-link { position: relative; }
+.wl-x::before, .svc-link::before { content: ""; position: absolute; inset: -7px; }
+.svc-link::before { inset: -7px -4px; }
+

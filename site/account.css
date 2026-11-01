@@ -116,3 +116,5 @@ div.set-tile { cursor: default; }
 :root:not(.still) .ac-del-dlg[open]::backdrop { animation: acDelFade .3s ease; }
 @keyframes acDelIn { from { opacity: 0; scale: .9; } }
 @keyframes acDelFade { from { opacity: 0; } }
+.ac-link { position: relative; }
+.ac-link::before { content: ""; position: absolute; inset: -7px 0; }

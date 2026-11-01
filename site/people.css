@@ -229,3 +229,10 @@ body.people { overflow-x: clip; }
   .pp-fh .segmented { width: 100%; }
 }
 @media (prefers-reduced-transparency: reduce) { .p-cmd, .pp-back, .pp-now, .pp-chips span { background: var(--bg2); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+
+/* depth as you scroll: the wall of faces sinks behind the page a little slower than the words above it (Animations on,
+   never with Reduce Motion; scroll-driven, so off the main thread) */
+@supports (animation-timeline: scroll()) {
+  :root:not(.still) .pc-wall { animation: pcSink linear both; animation-timeline: scroll(root); animation-range: 0 60vh; }
+}
+@keyframes pcSink { to { translate: 0 70px; scale: 1.04; } }

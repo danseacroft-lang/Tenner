@@ -41,18 +41,13 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=1.65.0">
-  <link rel="stylesheet" href="about.css?v=1.65.0">
+  <link rel="stylesheet" href="styles.css?v=2.0.0">
+  <link rel="stylesheet" href="about.css?v=2.0.0">
   <link rel="preload" href="fonts/caveat-latin.woff2" as="font" type="font/woff2" crossorigin>
 
 </head>
 <body class="about">
   <a class="skip" href="#main">Skip to the page</a>
-  <svg class="defs" aria-hidden="true" focusable="false"><defs>
-    <linearGradient id="rb" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff375f"/><stop offset=".22" stop-color="#ff9f0a"/><stop offset=".42" stop-color="#ffd60a"/><stop offset=".6" stop-color="#30d158"/><stop offset=".8" stop-color="#0a84ff"/><stop offset="1" stop-color="#bf5af2"/></linearGradient>
-    <filter id="fSoft" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="var(--a-shadow)" flood-opacity="1"/></filter>
-    <filter id="fNeon" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="2.4" result="t"/><feGaussianBlur stdDeviation="9" result="w"/><feMerge><feMergeNode in="w"/><feMergeNode in="t"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-  </defs></svg>
 
   <!-- the bar at the top: the logo, the tabs (a floating bar at the bottom on phones) and the round button -->
   <div class="top-row">
@@ -100,7 +95,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 1.65.0</span>
+      <span class="side-ver">Tenner 2.0.0</span>
     </div>
   </div>
 
@@ -166,95 +161,105 @@
   <main id="main" class="awrap" tabindex="-1">
 
 
-    <section class="sec" aria-labelledby="h-stages">
+    <!-- six services, ranked together: their own icons (from the hour's chart), drifting at slightly different speeds -->
+    <section class="sec svc-band" aria-labelledby="h-six">
       <div class="sec-h">
-        <h2 id="h-stages">Made for watching.</h2>
-        <p>Four things worth knowing about Tenner.</p>
+        <p class="eyebrow">One chart</p>
+        <h2 id="h-six">Six services. <span class="dim">One top ten.</span></h2>
+        <p>Netflix, Disney+, Prime Video, HBO Max, Paramount+ and Apple TV, ranked side by side, so you never have to open six apps to find something good.</p>
       </div>
-      <ol class="steps">
-        <li class="step reveal">
-          <div class="art"><svg viewBox="0 0 320 190" aria-hidden="true">
-            <defs>
-              <linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bf5af2" stop-opacity=".35"/><stop offset="1" stop-color="#bf5af2" stop-opacity="0"/></linearGradient>
-            </defs>
-            <g filter="url(#fSoft)"><rect x="70" y="40" width="196" height="128" rx="18" fill="var(--a-paper)"/></g>
-            <rect x="88" y="58" width="66" height="8" rx="4" fill="var(--a-ink)" opacity=".85"/>
-            <rect x="88" y="72" width="42" height="6" rx="3" fill="var(--a-ink2)" opacity=".55"/>
-            <g stroke="var(--a-line)" stroke-width="1"><path d="M88 150h160M88 128h160M88 106h160"/></g>
-            <path d="M90 148 C112 145 124 136 140 132 S172 118 190 110 S222 88 244 80 V150 H90 Z" fill="url(#area)"/>
-            <path class="draw" d="M90 148 C112 145 124 136 140 132 S172 118 190 110 S222 88 244 80" fill="none" stroke="url(#rb)" stroke-width="4.5" stroke-linecap="round"/>
-            <circle cx="244" cy="80" r="6.5" fill="var(--a-paper)" stroke="#bf5af2" stroke-width="3" class="pop"/>
-          </svg><span class="tag" style="left:6%;top:9%"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 11.5l4-4 3 2.5 5-5.5M10.5 4.5H14V8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Trending</span></div>
-          <div class="txt"><h3>Popular right now</h3>
-            <p>Tenner measures what <strong>millions of people</strong> are watching, searching for and adding to their lists, and turns it into a popularity score for every film and show.</p></div>
-        </li>
-        <li class="step reveal">
-          <div class="art"><svg viewBox="0 0 320 190" aria-hidden="true">
-            <g class="fan">
-              <g class="f3" filter="url(#fSoft)"><rect x="92" y="40" width="150" height="104" rx="18" fill="var(--a-paper)" opacity=".55"/></g>
-              <g class="f2" filter="url(#fSoft)"><rect x="86" y="44" width="150" height="104" rx="18" fill="var(--a-paper)" opacity=".8"/></g>
-              <g class="f1" filter="url(#fSoft)">
-                <rect x="80" y="48" width="160" height="108" rx="18" fill="var(--a-paper)"/>
-                <rect x="98" y="66" width="40" height="40" rx="11" fill="url(#rb)"/>
-                <path d="M118 74l2.6 6.8 6.8 2.6-6.8 2.6-2.6 6.8-2.6-6.8-6.8-2.6 6.8-2.6z" fill="#fff"/>
-                <rect x="148" y="72" width="72" height="9" rx="4.5" fill="var(--a-ink)" opacity=".85"/>
-                <rect x="148" y="88" width="50" height="7" rx="3.5" fill="var(--a-ink2)" opacity=".6"/>
-                <rect x="98" y="120" width="122" height="7" rx="3.5" fill="var(--a-line)"/>
-                <rect x="98" y="134" width="84" height="7" rx="3.5" fill="var(--a-line)"/>
-              </g>
-            </g>
-            <g class="spark"><path d="M58 52l2.2 5.6 5.6 2.2-5.6 2.2-2.2 5.6-2.2-5.6-5.6-2.2 5.6-2.2z" fill="#ffd60a"/><path d="M262 150l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z" fill="#bf5af2"/></g>
-          </svg><span class="tag" style="right:6%;top:11%"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7 1.8l1.5 3.9 3.9 1.5-3.9 1.5L7 12.6 5.5 8.7 1.6 7.2l3.9-1.5zM12.6 10.4l.7 1.7 1.7.7-1.7.7-.7 1.7-.7-1.7-1.7-.7 1.7-.7z" fill="currentColor"/></svg>Every week</span></div>
-          <div class="txt"><h3>New features every week</h3>
-            <p>Tenner is in its <strong>early days</strong>, and we're busy adding something new <strong>every week</strong>. Keep checking back to see what's arrived.</p></div>
-        </li>
-        <li class="step reveal">
-          <div class="art"><svg viewBox="0 0 320 190" aria-hidden="true">
-            <defs>
-              <radialGradient id="dialFace" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="var(--a-paper)"/><stop offset="1" stop-color="var(--a-tile2)"/></radialGradient>
-              <linearGradient id="bezel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".5" stop-color="#fff" stop-opacity=".05"/><stop offset="1" stop-color="#fff" stop-opacity=".25"/></linearGradient>
-            </defs>
-            <!-- the hour as a rainbow ring, sweeping round as the card arrives -->
-            <circle cx="160" cy="96" r="79" fill="none" stroke="var(--a-line)" stroke-width="7"/>
-            <circle cx="160" cy="96" r="79" fill="none" stroke="url(#rb)" stroke-width="7" stroke-linecap="round" pathLength="100" class="ring-h" transform="rotate(-90 160 96)" filter="url(#fNeon)"/>
-            <g filter="url(#fSoft)"><circle cx="160" cy="96" r="70" fill="url(#dialFace)"/></g>
-            <circle cx="160" cy="96" r="69.5" fill="none" stroke="url(#bezel)" stroke-width="1"/>
-            <line x1="160.0" y1="41.0" x2="160.0" y2="32.0" stroke="var(--a-ink)" stroke-opacity="0.85" stroke-width="2.4" stroke-linecap="round"/><line x1="166.3" y1="36.3" x2="166.7" y2="32.4" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="172.5" y1="37.3" x2="173.3" y2="33.4" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="178.5" y1="38.9" x2="179.8" y2="35.1" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="184.4" y1="41.2" x2="186.0" y2="37.5" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="187.5" y1="48.4" x2="192.0" y2="40.6" stroke="var(--a-ink)" stroke-opacity="0.85" stroke-width="2.4" stroke-linecap="round"/><line x1="195.3" y1="47.5" x2="197.6" y2="44.2" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="200.1" y1="51.4" x2="202.8" y2="48.4" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="204.6" y1="55.9" x2="207.6" y2="53.2" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="208.5" y1="60.7" x2="211.8" y2="58.4" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="207.6" y1="68.5" x2="215.4" y2="64.0" stroke="var(--a-ink)" stroke-opacity="0.85" stroke-width="2.4" stroke-linecap="round"/><line x1="214.8" y1="71.6" x2="218.5" y2="70.0" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="217.1" y1="77.5" x2="220.9" y2="76.2" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="218.7" y1="83.5" x2="222.6" y2="82.7" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="219.7" y1="89.7" x2="223.6" y2="89.3" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="215.0" y1="96.0" x2="224.0" y2="96.0" stroke="var(--a-ink)" stroke-opacity="0.85" stroke-width="2.4" stroke-linecap="round"/><line x1="219.7" y1="102.3" x2="223.6" y2="102.7" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="218.7" y1="108.5" x2="222.6" y2="109.3" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="217.1" y1="114.5" x2="220.9" y2="115.8" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="214.8" y1="120.4" x2="218.5" y2="122.0" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="207.6" y1="123.5" x2="215.4" y2="128.0" stroke="var(--a-ink)" stroke-opacity="0.85" stroke-width="2.4" stroke-linecap="round"/><line x1="208.5" y1="131.3" x2="211.8" y2="133.6" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="204.6" y1="136.1" x2="207.6" y2="138.8" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="200.1" y1="140.6" x2="202.8" y2="143.6" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="195.3" y1="144.5" x2="197.6" y2="147.8" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="187.5" y1="143.6" x2="192.0" y2="151.4" stroke="var(--a-ink)" stroke-opacity="0.85" stroke-width="2.4" stroke-linecap="round"/><line x1="184.4" y1="150.8" x2="186.0" y2="154.5" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="178.5" y1="153.1" x2="179.8" y2="156.9" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="172.5" y1="154.7" x2="173.3" y2="158.6" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="166.3" y1="155.7" x2="166.7" y2="159.6" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="160.0" y1="151.0" x2="160.0" y2="160.0" stroke="var(--a-ink)" stroke-opacity="0.85" stroke-width="2.4" stroke-linecap="round"/><line x1="153.7" y1="155.7" x2="153.3" y2="159.6" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="147.5" y1="154.7" x2="146.7" y2="158.6" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="141.5" y1="153.1" x2="140.2" y2="156.9" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="135.6" y1="150.8" x2="134.0" y2="154.5" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="132.5" y1="143.6" x2="128.0" y2="151.4" stroke="var(--a-ink)" stroke-opacity="0.85" stroke-width="2.4" stroke-linecap="round"/><line x1="124.7" y1="144.5" x2="122.4" y2="147.8" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="119.9" y1="140.6" x2="117.2" y2="143.6" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="115.4" y1="136.1" x2="112.4" y2="138.8" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="111.5" y1="131.3" x2="108.2" y2="133.6" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="112.4" y1="123.5" x2="104.6" y2="128.0" stroke="var(--a-ink)" stroke-opacity="0.85" stroke-width="2.4" stroke-linecap="round"/><line x1="105.2" y1="120.4" x2="101.5" y2="122.0" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="102.9" y1="114.5" x2="99.1" y2="115.8" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="101.3" y1="108.5" x2="97.4" y2="109.3" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="100.3" y1="102.3" x2="96.4" y2="102.7" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="105.0" y1="96.0" x2="96.0" y2="96.0" stroke="var(--a-ink)" stroke-opacity="0.85" stroke-width="2.4" stroke-linecap="round"/><line x1="100.3" y1="89.7" x2="96.4" y2="89.3" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="101.3" y1="83.5" x2="97.4" y2="82.7" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="102.9" y1="77.5" x2="99.1" y2="76.2" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="105.2" y1="71.6" x2="101.5" y2="70.0" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="112.4" y1="68.5" x2="104.6" y2="64.0" stroke="var(--a-ink)" stroke-opacity="0.85" stroke-width="2.4" stroke-linecap="round"/><line x1="111.5" y1="60.7" x2="108.2" y2="58.4" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="115.4" y1="55.9" x2="112.4" y2="53.2" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="119.9" y1="51.4" x2="117.2" y2="48.4" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="124.7" y1="47.5" x2="122.4" y2="44.2" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="132.5" y1="48.4" x2="128.0" y2="40.6" stroke="var(--a-ink)" stroke-opacity="0.85" stroke-width="2.4" stroke-linecap="round"/><line x1="135.6" y1="41.2" x2="134.0" y2="37.5" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="141.5" y1="38.9" x2="140.2" y2="35.1" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="147.5" y1="37.3" x2="146.7" y2="33.4" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/><line x1="153.7" y1="36.3" x2="153.3" y2="32.4" stroke="var(--a-ink)" stroke-opacity="0.3" stroke-width="1.2" stroke-linecap="round"/>
-            <text x="160.0" y="57.0" text-anchor="middle" class="dialnum">12</text><text x="204.0" y="101.0" text-anchor="middle" class="dialnum">3</text><text x="160.0" y="145.0" text-anchor="middle" class="dialnum">6</text><text x="116.0" y="101.0" text-anchor="middle" class="dialnum">9</text>
-            <g class="hands">
-              <path d="M160 96 L188 76" stroke="var(--a-ink)" stroke-width="6" stroke-linecap="round"/>
-              <path d="M160 96 L160 46" stroke="var(--a-ink)" stroke-width="3.6" stroke-linecap="round" class="hand-m"/>
-              <path d="M160 108 L160 40" stroke="#ff9f0a" stroke-width="1.6" stroke-linecap="round" class="hand"/>
-              <circle cx="160" cy="96" r="5" fill="#ff9f0a"/><circle cx="160" cy="96" r="2" fill="var(--a-paper)"/>
-            </g>
-          </svg><span class="tag" style="left:4%;top:9%"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.6M11.8 1.6l-.2 3 3 .2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Every hour</span><span class="tag" style="right:4%;bottom:9%"><i class="dot" aria-hidden="true"></i><span id="lastUpd">On the hour</span></span></div>
-          <div class="txt"><h3>Updated every hour</h3>
-            <p>Every hour, Tenner checks in with <strong>TMDB</strong> and <strong>JustWatch</strong> for the latest numbers, so you always see what the UK is <strong>watching and rating right now</strong>.</p></div>
-        </li>
-        <li class="step reveal">
-          <div class="art"><svg viewBox="0 0 320 190" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-            <!-- a tablet behind, then the phone in front: the same chart on any screen -->
-            <g filter="url(#fSoft)" opacity=".9"><rect x="40" y="34" width="150" height="190" rx="16" fill="var(--a-bezel)"/></g>
-            <rect x="47" y="41" width="136" height="176" rx="10" fill="var(--a-screen)"/>
-            <g opacity=".75"><rect x="58" y="78" width="34" height="50" rx="5" fill="#5e5ce6"/><rect x="98" y="78" width="34" height="50" rx="5" fill="#ff9f0a"/><rect x="138" y="78" width="34" height="50" rx="5" fill="#30d158"/>
-              <rect x="58" y="56" width="58" height="7" rx="3.5" fill="#fff" opacity=".85"/></g>
-            <g filter="url(#fSoft)"><rect x="176" y="22" width="92" height="186" rx="20" fill="var(--a-bezel)"/></g>
-            <rect x="182" y="28" width="80" height="174" rx="15" fill="var(--a-screen)"/>
-            <rect x="207" y="33" width="30" height="8" rx="4" fill="var(--a-bezel)"/>
-            <!-- the phone's own Tenner: a neon 01 over the No. 1 poster, and the floating tab bar -->
-            <rect x="190" y="50" width="40" height="6" rx="3" fill="#fff" opacity=".85"/>
-            <rect x="196" y="78" width="48" height="70" rx="7" fill="#ff375f"/>
-            <text x="190" y="88" class="neon01s" fill="none" stroke="url(#rb)" stroke-width="1.6">01</text>
-            <rect x="196" y="154" width="36" height="4" rx="2" fill="#fff" opacity=".7"/>
-            <g filter="url(#fSoft)"><rect x="188" y="176" width="68" height="18" rx="9" fill="#2c2c30" stroke="rgba(255,255,255,.18)"/></g>
-            <circle cx="203" cy="185" r="3" fill="#0a84ff"/><circle cx="216" cy="185" r="3" fill="#8e8e93"/><circle cx="229" cy="185" r="3" fill="#8e8e93"/><circle cx="242" cy="185" r="3" fill="#8e8e93"/>
-          </svg><span class="tag" style="left:6%;top:8%"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="4.5" y="1.6" width="7" height="12.8" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 12h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Any screen</span></div>
-          <div class="txt"><h3>Made for your phone</h3>
-            <p>Tenner is designed <strong>phone first</strong>, so the best trending films and shows are always a tap away, wherever you are.</p></div>
-        </li>
-      </ol>
+      <ul class="svc-icons" id="svcIcons" aria-label="The six services">
+        <li style="--i:0"><span class="si-tile">Netflix</span><small>Netflix</small></li>
+        <li style="--i:1"><span class="si-tile">Disney+</span><small>Disney+</small></li>
+        <li style="--i:2"><span class="si-tile">Prime Video</span><small>Prime Video</small></li>
+        <li style="--i:3"><span class="si-tile">HBO Max</span><small>HBO Max</small></li>
+        <li style="--i:4"><span class="si-tile">Paramount+</span><small>Paramount+</small></li>
+        <li style="--i:5"><span class="si-tile">Apple TV</span><small>Apple TV</small></li>
+      </ul>
     </section>
 
+    <!-- the numbers, the Apple keynote way -->
+    <section class="sec stats" aria-label="Tenner in numbers">
+      <dl class="stat-row">
+        <div><dt>Services</dt><dd class="stat-n">6</dd><p>in one chart</p></div>
+        <div><dt>Updates a day</dt><dd class="stat-n">24</dd><p>one every hour, on the hour</p></div>
+        <div><dt>Titles to browse</dt><dd class="stat-n" id="statTitles">1,000s</dd><p>across every service</p></div>
+        <div><dt>Adverts</dt><dd class="stat-n">0</dd><p>and no tracking either</p></div>
+      </dl>
+    </section>
+
+    <!-- everything Tenner does, as a bento of tiles, each one a way in -->
+    <section class="sec" aria-labelledby="h-all">
+      <div class="sec-h">
+        <p class="eyebrow">What's inside</p>
+        <h2 id="h-all">Everything for <span class="grad">tonight's</span> telly.</h2>
+        <p>Find something to watch, see where it's on, and keep track of what's next. All in one calm place.</p>
+      </div>
+      <ul class="bento">
+        <li class="bt bt-big bt-top"><a href="./">
+          <span class="bt-vis" aria-hidden="true"><span class="bt-ten">10</span><span class="bt-live"><i></i><span id="lastUpd">Updated every hour</span></span></span>
+          <span class="bt-txt"><b>The Top 10, live</b><small>The UK's most popular shows and films right now, with what's climbing, what's new and how long the No. 1 has held on.</small></span></a></li>
+        <li class="bt bt-big bt-tonight"><a href="./">
+          <span class="bt-vis" aria-hidden="true">
+            <span class="ab-ic bt-f1" style="--a:#64d2ff;--b:#0a84ff"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="12.5" rx="3"/><path d="M8.5 20.5h7"/><path d="M10.3 8.3v5.4l4.5-2.7z" fill="currentColor"/></svg></span>
+            <span class="ab-ic bt-f2" style="--a:#ff8fab;--b:#ff375f"><svg viewBox="0 0 24 24"><path d="M12 20.3s-8-4.7-8-10.6a4.4 4.4 0 0 1 8-2.6 4.4 4.4 0 0 1 8 2.6c0 5.9-8 10.6-8 10.6z" fill="currentColor"/></svg></span>
+            <span class="ab-ic bt-f3" style="--a:#ff6b6b;--b:#ff375f"><svg viewBox="0 0 24 24"><path d="M5.6 9.2h12.8l-1.7 11.1a1.5 1.5 0 0 1-1.5 1.3H8.8a1.5 1.5 0 0 1-1.5-1.3z"/><path d="M10 9.6l.5 11.9M14 9.6l-.5 11.9"/><path d="M6.2 9a2.6 2.6 0 0 1 2.1-4.1 2.9 2.9 0 0 1 5.1-1 2.6 2.6 0 0 1 4.1 2.6A2 2 0 0 1 17.8 9"/></svg></span>
+          </span>
+          <span class="bt-txt"><b>What should I watch tonight?</b><small>Three quick taps (how long, the mood, who's watching) and Tenner picks three from your services.</small></span></a></li>
+        <li class="bt"><a href="browse.html">
+          <span class="ab-ic" style="--a:#da8fff;--b:#5e5ce6" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg></span>
+          <span class="bt-txt"><b>Browse and search</b><small>Collections, genres and filters, and search every film and show there is.</small></span></a></li>
+        <li class="bt"><a href="./#watchlist">
+          <span class="ab-ic" style="--a:#ffd60a;--b:#ff9f0a" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 3.5h11v17L12 16.6 6.5 20.5z" fill="currentColor"/></svg></span>
+          <span class="bt-txt"><b>Watchlist and alerts</b><small>Save anything, track your episodes, and hear when it arrives.</small></span></a></li>
+        <li class="bt"><a href="./#new">
+          <span class="ab-ic" style="--a:#66e08a;--b:#00b5a8" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.5 3.5l1.8 4.9 4.9 1.8-4.9 1.8-1.8 4.9-1.8-4.9-4.9-1.8 4.9-1.8z" fill="currentColor"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z" fill="currentColor"/></svg></span>
+          <span class="bt-txt"><b>New this week</b><small>What's just landed, what's coming and what's leaving soon.</small></span></a></li>
+        <li class="bt"><a href="discover.html">
+          <span class="ab-ic" style="--a:#ff8fab;--b:#bf5af2" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="8.6" y="3" width="10.5" height="15" rx="2.6" transform="rotate(12 13.85 10.5)"/><rect x="4.5" y="5.8" width="10.5" height="15" rx="2.6" fill="currentColor"/></svg></span>
+          <span class="bt-txt"><b>Discover</b><small>Swipe through ideas: right to save, left to skip.</small></span></a></li>
+        <li class="bt"><a href="people.html">
+          <span class="ab-ic" style="--a:#a78bfa;--b:#5e5ce6" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 19.5c.8-3.4 3.3-5.3 6.2-5.3s5.4 1.9 6.2 5.3"/><circle cx="17" cy="9.5" r="2.6"/><path d="M16.2 14.4c2.4.1 4.3 1.7 5 4.6"/></svg></span>
+          <span class="bt-txt"><b>Cast and crew</b><small>Every actor, director and writer, and where to watch their work.</small></span></a></li>
+        <li class="bt"><a href="https://tv.tenner.stream/">
+          <span class="ab-ic" style="--a:#64d2ff;--b:#5e5ce6" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="2.8" y="5.5" width="18.4" height="12.5" rx="2.6"/><path d="M8.5 21h7M9 2.8l3 2.7 3-2.7"/></svg></span>
+          <span class="bt-txt"><b>TV Guide</b><small>What's on Freeview, with reminders for your Watchlist.</small></span></a></li>
+        <li class="bt"><a href="settings.html">
+          <span class="ab-ic" style="--a:#ff7a45;--b:#ff2d55" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg></span>
+          <span class="bt-txt"><b>Made to measure</b><small>Pick the services you pay for and get a Top 10 of just those.</small></span></a></li>
+        <li class="bt"><a href="account.html">
+          <span class="ab-ic" style="--a:#8e8e93;--b:#48484a" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7.5 18.5a4.5 4.5 0 0 1-.4-9 6 6 0 0 1 11.5 1.6 3.7 3.7 0 0 1-.6 7.4z"/><path d="M9.5 14l2 2 3.5-3.8"/></svg></span>
+          <span class="bt-txt"><b>On all your devices</b><small>Sign in, with a passkey if you like, and everything stays in step.</small></span></a></li>
+      </ul>
+    </section>
+
+    <!-- privacy: what isn't there -->
+    <section class="sec" aria-labelledby="h-priv">
+      <div class="priv">
+        <span class="priv-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.8 4.5 5.6v5.9c0 4.6 3.1 8.6 7.5 9.7 4.4-1.1 7.5-5.1 7.5-9.7V5.6z" fill="currentColor"/><path d="M9 12.2l2.1 2.1 4-4.4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <div class="priv-copy">
+          <h2 id="h-priv">Private by design.</h2>
+          <p>Tenner has nothing to sell you and nobody to sell you to. Your Watchlist and settings stay on this device unless you choose to sign in.</p>
+          <ul class="priv-list">
+            <li><b>No cookies</b><span>Not one, of any kind.</span></li>
+            <li><b>No tracking</b><span>No analytics, no profiles.</span></li>
+            <li><b>No adverts</b><span>Just the shows and films.</span></li>
+          </ul>
+          <a class="priv-link" href="legal.html#privacy">Read the Privacy Policy<span class="chev" aria-hidden="true"></span></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- the small things -->
+    <section class="sec" aria-labelledby="h-touch">
+      <div class="sec-h"><h2 id="h-touch">The little things.</h2></div>
+      <ul class="touches">
+        <li><span class="t-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="3"/><path d="M10.5 18.5h3"/></svg></span><b>Made for your phone</b><span>Add it to your Home Screen and it opens full screen, like an app.</span></li>
+        <li><span class="t-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.4a9.5 9.5 0 0 1 13 0M8.7 15.7a5 5 0 0 1 6.6 0"/><circle cx="12" cy="19" r="1.2" fill="currentColor"/></svg></span><b>Works offline</b><span>Your Watchlist and the last chart are there with no signal.</span></li>
+        <li><span class="t-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6 10h.01M9 10h.01M12 10h.01M15 10h.01M18 10h.01M7.5 14h9"/></svg></span><b>Keyboard shortcuts</b><span>Press / or ⌘K anywhere to search.</span></li>
+        <li><span class="t-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M12 3.4a8.6 8.6 0 0 1 0 17.2z" fill="currentColor"/></svg></span><b>Day and night</b><span>Light, dark, or follow your device. Your call.</span></li>
+      </ul>
+    </section>
 
     <section class="sec faq" aria-labelledby="h-faq">
       <div class="sec-h"><h2 id="h-faq">Questions and answers.</h2></div>
@@ -266,37 +271,44 @@
         <details><summary>How often is it updated?</summary>
           <div class="a"><p>Every hour. The time of the last update is shown at the top of the Top 10 page, and you can tap it to check for a newer chart.</p></div></details>
         <details><summary>Why isn't a film I'm watching on the list?</summary>
-          <div class="a"><p>The Top 10 only counts titles included with a subscription. Brand-new films are often only available to buy or rent at first; you'll find those under Films, then Buy or rent.</p></div></details>
+          <div class="a"><p>The Top 10 only counts titles included with a subscription. Brand-new films are often only available to buy or rent at first; you'll find those on the Top 10 under Films, then Buy or rent, or in Browse's Buy or rent collection.</p></div></details>
         <details><summary>Is Tenner free?</summary>
-          <div class="a"><p>Yes. There's nothing to sign up for and no adverts.</p></div></details>
+          <div class="a"><p>Yes, completely. There are no adverts and nothing to pay for.</p></div></details>
+        <details><summary>Do I need an account?</summary>
+          <div class="a"><p>No. Everything works without one, and your Watchlist and settings are kept on your device. An account is optional: sign in (with a passkey, Google or an email and password) and your Watchlist, progress and settings stay in step on every phone and computer you use.</p></div></details>
+        <details><summary>How do Watchlist alerts work?</summary>
+          <div class="a"><p>Turn them on from your Watchlist or in Settings, and Tenner sends a notification when something you've saved arrives on a service, gets a new episode, or is about to leave. On an iPhone or iPad, add Tenner to your Home Screen first (Share, then Add to Home Screen) and open it from there.</p></div></details>
         <details><summary>Is Tenner part of Netflix, Disney+ or the other services?</summary>
-          <div class="a"><p>No. Tenner is independent. The services' names and logos belong to them, and the data comes from TMDB and JustWatch.</p></div></details>
+          <div class="a"><p>No. Tenner is independent. The services' names and logos belong to them. Popularity, artwork and where-to-watch details come from TMDB and JustWatch, and new releases from Watchmode.</p></div></details>
         <details><summary>Can I suggest a feature?</summary>
-          <div class="a"><p>We're adding something new every week and would love to hear what you'd like to see. A way to get in touch is coming soon.</p></div></details>
+          <div class="a"><p>Please do. We read everything, and plenty of Tenner started as someone's idea. <a href="contact.html?about=Feedback">Send us a message</a>.</p></div></details>
       </div>
     </section>
 
     <nav class="more-links" aria-label="Site information">
       <a href="contact.html">Contact</a><a href="legal.html#privacy">Privacy Policy</a><a href="legal.html#terms">Terms of Service</a><a href="legal.html#cookies">Cookies</a>
     </nav>
-    <p class="more-ver side-ver-text">Tenner 1.65.0</p>
+    <p class="more-ver side-ver-text">Tenner 2.0.0</p>
     </main>
 
 
-  <script>/* each card performs once as it arrives on screen; nothing is hidden unless this runs */
+  <script>/* the live bits: each service's own icon, the hour the chart was made, and how many titles there are to browse */
   (function(){
-    if (document.documentElement.classList.contains('still') || !('IntersectionObserver' in window)) return;
-    document.documentElement.classList.add('js-reveal');
-    var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { rootMargin: '0px 0px -12% 0px' });
-    document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
-  })();</script>
-  <script>/* the "Updated" label on the hourly card: this hour's real time */
-  (function(){
-    function load(bust){ fetch('data/browse.json'+(bust?'?v='+Date.now():''),bust?{cache:'no-store'}:{}).then(function(r){return r.ok?r.json():null}).then(function(d){
-      if(d&&d.generatedAt&&!d.sample){ var t=new Date(d.generatedAt); document.getElementById('lastUpd').textContent='Updated '+t.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
-    }).catch(function(){});}
+    function get(u,bust){return fetch(u+(bust?'?v='+Date.now():''),bust?{cache:'no-store'}:{}).then(function(r){return r.ok?r.json():null}).catch(function(){return null})}
+    function load(bust){
+      get('data/trending.json',bust).then(function(d){ if(!d) return;
+        var tiles=document.querySelectorAll('#svcIcons li');
+        (d.services||[]).filter(function(s){return !s.store&&!s.shop}).slice(0,6).forEach(function(s,i){ var li=tiles[i]; if(!li) return;
+          var t=li.querySelector('.si-tile'), name=String(s.label||'');
+          li.querySelector('small').textContent=name;
+          if(s.logo){ var im=new Image(); im.alt=''; im.decoding='async'; im.onload=function(){t.textContent='';t.appendChild(im);t.classList.add('has-logo')}; im.src=s.logo; } else t.textContent=name;
+        });
+        if(d.generatedAt&&!d.sample) document.getElementById('lastUpd').textContent='Updated '+new Date(d.generatedAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+      });
+      get('data/browse.json',bust).then(function(d){ var n=d&&d.items&&d.items.length; if(n>=100) document.getElementById('statTitles').textContent=(Math.floor(n/100)*100).toLocaleString('en-GB')+'+'; });
+    }
     load(false); addEventListener('tn:check', function(){ load(true); });
   })();</script>
-  <script src="shell.js?v=1.65.0" defer></script>
+  <script src="shell.js?v=2.0.0" defer></script>
 </body>
 </html>

@@ -340,23 +340,6 @@ body.browse { overflow-x: clip; }
 .cmd .segmented button { min-width: 64px; }
 
 
-/* the one-time note on Browse: an iOS alert, glass, centred, a sparkle tile, one button and a link */
-.bn-dlg { width: min(340px, calc(100vw - 48px)); border-radius: 22px; text-align: center; }
-.bn-dlg form { padding: 26px 22px 20px; }
-.bn-ic { display: inline-grid; place-items: center; width: 52px; height: 52px; margin-bottom: 12px; border-radius: 15px; color: #fff;
-  background: linear-gradient(135deg, #ff375f, #bf5af2 55%, #0a84ff); box-shadow: 0 8px 22px rgba(191, 90, 242, .35); }
-.bn-ic svg { width: 26px; height: 26px; }
-.bn-dlg h2 { margin: 0 0 6px; font: 700 21px/1.2 var(--font); letter-spacing: -.02em; }
-.bn-dlg p { margin: 0 auto 18px; max-width: 30ch; font-size: 15px; line-height: 1.45; text-wrap: balance; }
-.bn-acts { display: grid; gap: 10px; }
-.bn-ok { width: 100%; height: 46px; border-radius: 14px; font-size: 16px; color: #fff; background: var(--accent); }
-@media (hover: hover) { .bn-ok:hover { filter: brightness(1.08); } }
-.bn-fb { padding: 6px; font-size: 15px; font-weight: 500; color: var(--accent); }
-.bn-fb::after { content: " ›"; }
-:root:not(.still) .bn-dlg[open] { animation: bnIn .42s cubic-bezier(.2, 1.2, .3, 1); }
-:root:not(.still) .bn-dlg[open]::backdrop { animation: bnFade .3s ease; }
-@keyframes bnIn { from { opacity: 0; scale: .9; } }
-@keyframes bnFade { from { opacity: 0; } }
 
 /* ---------- + on a poster: into the Watchlist without opening it (on hover with a mouse; always there on touch) ---------- */
 .tile { position: relative; }
@@ -517,3 +500,20 @@ body.browse { overflow-x: clip; }
 @keyframes ahsReel { 0% { transform: translateX(0); opacity: .16; } 33% { transform: translateX(-18px); opacity: .08; } 66% { transform: translateX(34px); opacity: .2; } }
 @keyframes ahsFlick { 0%, 100% { opacity: 1; } 47% { opacity: 1; } 48% { opacity: .4; } 49% { opacity: .9; } 51% { opacity: .3; } 53% { opacity: 1; } }
 @keyframes ahsJolt { 20% { translate: -3px 1px; filter: brightness(1.5) saturate(1.4); } 45% { translate: 3px -1px; } 70% { translate: -1px 0; filter: none; } 100% { translate: 0; } }
+
+/* ---------- depth as you scroll (Animations on, never with Reduce Motion): scroll-driven, so off the main thread.
+   The spotlight's picture slowly zooms (pinned to the top, never leaving a gap) while its words lift away; each genre
+   tile's posters fan out as it arrives. */
+@supports (animation-timeline: view()) {
+  :root:not(.still) .spot-art { transform-origin: 60% 0; animation: pxZoom linear both; animation-timeline: scroll(root); animation-range: 0 70vh; }
+  :root:not(.still) .spot-copy { animation: spLift linear both; animation-timeline: scroll(root); animation-range: 0 55vh; }
+  :root:not(.still) .mood-fan { animation: moodFan linear both; animation-timeline: view(inline); animation-range: entry 0% contain 30%; }
+}
+@keyframes spLift { to { translate: 0 -40px; opacity: .2; } }
+@keyframes moodFan { from { translate: 26px 14px; opacity: .4; } }
+
+/* comfortable taps: the small round + and the Posters/List switch answer to a 44pt area around them */
+.t-add::before { content: ""; position: absolute; inset: -8px; border-radius: 50%; }
+.as-list .t-add { position: relative; }
+.view-sw button { position: relative; }
+.view-sw button::before { content: ""; position: absolute; inset: -8px -1px; }
