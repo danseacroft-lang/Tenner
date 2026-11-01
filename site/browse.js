@@ -198,14 +198,29 @@
     let view = 'grid'; try { view = localStorage.getItem('tenner-browse-view') === 'list' ? 'list' : 'grid'; } catch {}
     setView(view);
 
-    $('#surprise').addEventListener('click', surprise);
+    document.querySelectorAll('.b-dice').forEach((b) => b.addEventListener('click', surprise));
 
     // search: results as you type; / or ⌘K jumps to the box (shell.js); Escape clears it
     const qi = $('#q');
-    if (matchMedia('(max-width: 400px)').matches) qi.placeholder = 'Search';   // the smallest phones: the short word, never cut off
     qi.addEventListener('input', () => { state.q = qi.value; apply(true, true); if (scrollY > 300) scrollTo({ top: 0, behavior: 'auto' }); });
     qi.addEventListener('keydown', (e) => { if (e.key === 'Escape' && qi.value) { e.preventDefault(); state.q = ''; apply(true); } if (e.key === 'Enter') qi.blur(); });
     $('#qClear').addEventListener('click', () => { state.q = ''; apply(true); qi.focus(); });
+
+    // the hint in the box: "Search shows and films", then, now and then, one of what's popular right now gliding up in its place
+    const hint = $('#qHint'); let hintAt = 0;
+    const base = matchMedia('(max-width: 560px)').matches ? 'Search' : 'Search shows and films';   // phones: the short word
+    hint.firstElementChild.textContent = base;
+    const sayHint = (text) => {
+      const old = hint.lastElementChild, nu = document.createElement('span');
+      nu.className = 'hs-hint-t in'; nu.textContent = text; hint.append(nu);
+      old?.classList.add('out'); setTimeout(() => old?.remove(), 700);
+    };
+    if (!document.documentElement.classList.contains('still')) setInterval(() => {
+      if (document.hidden || qi.value || window.tnSheet?.isOpen()) return;
+      const picks = list.filter((x) => !x._x).slice(0, 12);
+      hintAt = (hintAt + 1) % (picks.length + 1);
+      sayHint(hintAt && picks[hintAt - 1] ? `Try “${picks[hintAt - 1].n}”` : base);
+    }, 4200);
 
     // phones: the filters open as a sheet from the bottom
     const sheet = $('#filters'), scrim = $('#scrim'), openBtn = $('#openFilters');
@@ -366,7 +381,7 @@
   });
 
   // ---------- the collections bar: glass that firms up once it's holding on at the top ----------
-  new IntersectionObserver(([e]) => $('.coll').classList.toggle('stuck', !e.isIntersecting && e.boundingClientRect.top < 200), { rootMargin: '-90px 0px 0px 0px' }).observe($('#cmdMark'));
+  new IntersectionObserver(([e]) => $('#cmd').classList.toggle('stuck', !e.isIntersecting && e.boundingClientRect.top < 200), { rootMargin: '-90px 0px 0px 0px' }).observe($('#cmdMark'));
 
   // ---------- posters lean towards the pointer, with a sheen of light across them (computers) ----------
   const tiltOk = () => fine.matches && !still();
@@ -494,12 +509,12 @@
   }));
 
   // ---------- Surprise me: a good one at random from whatever you're looking at ----------
-  async function surprise() {
+  async function surprise(e) {
     const good = list.filter((x) => x.img && x.r >= 6.8 && !x._x);
     const pool = (good.length >= 5 ? good : list).slice(0, 80);
     if (!pool.length) return;
     const x = pool[Math.floor(Math.pow(Math.random(), 1.4) * pool.length)];   // the better ones a little more often
-    const b = $('#surprise'); if (!reduce && b.animate) b.querySelector('svg').animate([{ rotate: '0deg' }, { rotate: '360deg' }], { duration: 500, easing: 'cubic-bezier(.3,.9,.3,1)' });
+    const b = e?.currentTarget || $('.b-dice'); if (!reduce && b.animate) b.querySelector('svg').animate([{ rotate: '0deg' }, { rotate: '360deg' }], { duration: 500, easing: 'cubic-bezier(.3,.9,.3,1)' });
     window.tnSheet?.open({ ...(await sheetFor(x)), eye: 'Tenner’s surprise pick' });
   }
 
