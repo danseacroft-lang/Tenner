@@ -1095,6 +1095,23 @@ main { padding-bottom: 40px; }   /* breathing room at the end of every page */
 .sh-art img.soft { filter: blur(30px) saturate(1.4); opacity: .85; }   /* only while the wide artwork is on its way */
 .sh-art.playing { background: #000; }
 .sh-art.playing .sh-poster { display: none; }
+/* the trailer that starts by itself on computers: the artwork stays until the player is ready, then it fades in over it,
+   and the poster gently gives way; a glass sound button sits beside Close */
+.sh-art:not(.playing) iframe { opacity: 0; pointer-events: none; transition: opacity .8s ease; }
+.sh-art.auto iframe { opacity: 1; pointer-events: auto; }
+.sh-art .sh-poster { transition: filter .6s ease; }
+.sh-art.auto .sh-poster { filter: opacity(0); pointer-events: none; }
+.sh-sound {
+  position: absolute; z-index: 3; top: 12px; right: 52px; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%;
+  color: #fff; background: rgba(0, 0, 0, .38); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); cursor: pointer;
+  opacity: 0; pointer-events: none; transition: opacity .4s ease, background-color .2s ease;
+}
+.sh-art.auto .sh-sound { opacity: 1; pointer-events: auto; }
+.sh-sound:hover { background: rgba(0, 0, 0, .55); }
+.sh-sound:active { filter: var(--press); }
+.sh-sound svg { width: 18px; height: 18px; }
+.sh-sound[aria-pressed="true"] .off, .sh-sound[aria-pressed="false"] .on { display: none; }
+@media (prefers-reduced-transparency: reduce) { .sh-sound { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0, 0, 0, .7); } }
 .sh-poster { position: absolute; z-index: 1; left: 24px; bottom: -1px; width: 92px; aspect-ratio: 2 / 3; height: auto; object-fit: cover; border-radius: 10px;
   box-shadow: 0 0 0 .5px rgba(255, 255, 255, .25), 0 12px 30px rgba(0, 0, 0, .45); translate: 0 30%; }
 /* the poster glides up and away as you scroll, so nothing sits on top of the words, and comes back at the top: tied to the

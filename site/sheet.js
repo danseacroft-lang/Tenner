@@ -289,7 +289,7 @@
       if (current !== info) return;
       if (a) { for (const [f, v] of Object.entries(a.info || {})) if (v && !info[f]) info[f] = v; d = a; }
     }
-    shown = d; render(info, d);
+    shown = d; render(info, d); autoplay(info, d?.items?.[info.k]);
     // no wide artwork in the hourly data (This Week, the Watchlist, search): the search API has it; swap it in softly
     if (!info.backdrop && info.k && window.tn.api) {
       const a = await fromApi(info.k), bd = a?.info?.backdrop;
@@ -310,7 +310,7 @@
   }
   function close(fromHistory) {
     if (!current) return;
-    current = null; sheet.classList.remove('in');
+    current = null; clearTimeout(autoT); $('#shArt iframe')?.remove(); sheet.classList.remove('in');
     document.documentElement.classList.remove('sheet-up');
     const done = () => { if (!current) { sheet.close(); body.innerHTML = ''; } };
     reduce ? done() : setTimeout(done, 320);
@@ -332,6 +332,33 @@
   sheet.addEventListener('cancel', (e) => { e.preventDefault(); close(); });
 
   // ---------- trailer and share ----------
+  const embed = (key, muted) => `https://www.youtube-nocookie.com/embed/${encodeURIComponent(key)}?autoplay=1&rel=0&playsinline=1${muted ? `&mute=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}` : ''}`;
+  // on computers the trailer starts by itself a moment after a title opens, with the sound off (browsers only allow that),
+  // as the Apple TV app does; never on phones, with Reduce Motion, Data Saver, or Settings → Start trailers by themselves off
+  const desk = matchMedia('(hover: hover) and (pointer: fine) and (min-width: 720px)'), still = matchMedia('(prefers-reduced-motion: reduce)');
+  let autoT = 0;
+  function autoplay(info, x) {
+    clearTimeout(autoT);
+    const p = window.tn.prefs.get();
+    if (!x?.tr || !desk.matches || still.matches || navigator.connection?.saveData || p.trailers !== 'here' || p.autoplay === false) return;
+    autoT = setTimeout(() => {
+      const art = $('#shArt'); if (current !== info || !art || art.classList.contains('playing') || art.classList.contains('auto')) return;
+      const f = document.createElement('iframe');
+      f.src = embed(x.tr, true); f.title = `Trailer: ${info.title}`; f.tabIndex = -1;
+      f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen'; f.allowFullscreen = true;
+      // the artwork stays until the player is ready, then the trailer fades in over it
+      f.addEventListener('load', () => setTimeout(() => { if (f.isConnected) art.classList.add('auto'); }, 600), { once: true });
+      art.append(f);
+      art.insertAdjacentHTML('beforeend', '<button type="button" class="sh-sound" data-act="sound" aria-pressed="false" aria-label="Turn the trailer\'s sound on"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path class="off" d="m16 9.5 5 5m0-5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path class="on" d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.7 7.7 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>');
+    }, 1200);
+  }
+  // the sound button talks to YouTube's player (its JavaScript API, by message)
+  function sound(on) {
+    const f = $('#shArt iframe'), b = $('#shArt .sh-sound'); if (!f || !b) return;
+    f.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: on ? 'unMute' : 'mute', args: [] }), 'https://www.youtube-nocookie.com');
+    if (on) f.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [100] }), 'https://www.youtube-nocookie.com');
+    b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', on ? 'Turn the trailer\'s sound off' : 'Turn the trailer\'s sound on');
+  }
   let thanksT = 0;
   sheet.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-act]'); if (!b || !current) return;
@@ -339,10 +366,13 @@
     if (b.dataset.act === 'trailer') {
       const key = (shown || await details())?.items?.[current.k]?.tr; if (!key) return;
       if (window.tn.prefs.get().trailers === 'youtube') { window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(key)}`, '_blank', 'noopener'); return; }   // Settings: "Play trailers"
-      // played in place, from YouTube's privacy-enhanced player, only when asked
-      $('#shArt').innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(key)}?autoplay=1&rel=0&playsinline=1" title="Trailer: ${esc(current.title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+      // already playing by itself with the sound off: Trailer just turns the sound on
+      if ($('#shArt').classList.contains('auto')) { sound(true); body.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); return; }
+      // played in place, from YouTube's privacy-enhanced player
+      $('#shArt').innerHTML = `<iframe src="${embed(key)}" title="Trailer: ${esc(current.title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
       $('#shArt').classList.add('playing'); body.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
     }
+    if (b.dataset.act === 'sound') sound(b.getAttribute('aria-pressed') !== 'true');
     if (b.dataset.act === 'save') {
       const on = saved.toggle(current);
       b.outerHTML = saveBtn(on); sheet.querySelector('.sh-save')?.focus({ preventScroll: true });

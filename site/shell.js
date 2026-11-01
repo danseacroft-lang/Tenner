@@ -12,7 +12,7 @@
     edit(fn) { const m = meta.get(); fn(m); try { localStorage.setItem(SYNC, JSON.stringify(m)); } catch {} },
   };
   // ---------- settings (settings.html), on this device (and in your account, if you sign in) ----------
-  const PREFS = 'tenner-settings', DEF = { start: 'auto', anim: false, moves: true, ratings: true, hero: true, trailers: 'here', no18: false, digest: false };
+  const PREFS = 'tenner-settings', DEF = { start: 'auto', anim: false, moves: true, ratings: true, hero: true, trailers: 'here', autoplay: true, no18: false, digest: false };
   const prefs = {
     get() { try { const { still, ...p } = JSON.parse(localStorage.getItem(PREFS) || '{}'); return { ...DEF, ...p }; } catch { return { ...DEF }; } },   // still: the old Reduce motion setting, gone
     set(k, v) { const p = prefs.get(); p[k] = v; try { localStorage.setItem(PREFS, JSON.stringify(p)); } catch {} meta.edit((m) => { m.pfat = Date.now(); }); apply(); dispatchEvent(new Event('tn:prefs')); },
@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '2.0.0';
+  const version = '2.1.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------

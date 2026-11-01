@@ -40,8 +40,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=2.0.0">
-  <link rel="stylesheet" href="legal.css?v=2.0.0">
+  <link rel="stylesheet" href="styles.css?v=2.1.0">
+  <link rel="stylesheet" href="legal.css?v=2.1.0">
 </head>
 <body class="legal">
   <a class="skip" href="#main">Skip to the page</a>
@@ -92,7 +92,7 @@
       <a class="side-link" href="legal.html#privacy" aria-current="page">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies" aria-current="page">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 2.0.0</span>
+      <span class="side-ver">Tenner 2.1.0</span>
     </div>
   </div>
 
@@ -163,7 +163,7 @@
         <li><strong>Cloudflare</strong> runs Tenner’s search service. When you search all films and shows, search Cast &amp; Crew or open a cast list, what you typed or opened is passed to TMDB to find the answer. It also passes on messages from the Contact page to our inbox, keeps the push address and Watchlist of anyone who turns on alerts, and holds accounts for anyone who makes one (see section 2). Nothing else is stored against you. See <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare’s Privacy Policy</a>.</li>
         <li><strong>Google</strong> provides Sign in with Google. Its button loads from Google only on the Account page, and only Google’s sign-in is involved: if you use it, Google tells us your account number, name, email address and picture. See <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google’s Privacy Policy</a>.</li>
         <li><strong>Resend</strong> sends our account emails (the link to confirm your email address when you sign up with a password, and the link to reset your password): it receives your email address and that email. See <a href="https://resend.com/legal/privacy-policy" target="_blank" rel="noopener">Resend’s Privacy Policy</a>.</li>
-        <li><strong>YouTube</strong> plays trailers, but only when you press Trailer on a title. Tenner uses YouTube’s privacy-enhanced mode (youtube-nocookie.com), and nothing loads from YouTube until you press play. See <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google’s Privacy Policy</a>.</li>
+        <li><strong>YouTube</strong> plays trailers. On a computer, a title’s trailer starts by itself (with the sound off) a moment after you open it; on phones, and if you turn off “Start trailers by themselves” in Settings, only when you press Trailer. Tenner uses YouTube’s privacy-enhanced mode (youtube-nocookie.com), and nothing loads from YouTube until a trailer plays. See <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google’s Privacy Policy</a>.</li>
       </ul>
       <p>The charts and where-to-watch details are gathered every hour by our own automated process from TMDB (with where-to-watch data from JustWatch), Netflix’s published Top 10 and Watchmode. Your browser doesn’t contact JustWatch, Netflix or Watchmode while you use Tenner. Watchmode also supplies the Coming soon and Leaving soon dates and the rent and buy prices. If you follow a link to Netflix, TMDB or another site, that site’s own policies apply.</p>
 
@@ -230,6 +230,6 @@
   </main>
 
 
-  <script src="shell.js?v=2.0.0" defer></script>
+  <script src="shell.js?v=2.1.0" defer></script>
 </body>
 </html>
