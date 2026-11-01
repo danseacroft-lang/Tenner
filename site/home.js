@@ -3,16 +3,16 @@
 // services as a rail of app icons that filter everything below, rows of what's trending, top rated and newest, and a
 // side column of your own things: shows you're watching, genres to narrow the rows, and this week's biggest climbers.
 // Reads data/trending.json, browse.json and week.json (rebuilt hourly), and titles.json through the title sheet.
-// The charts (Top 10, New and Watchlist) live on charts.html; old links to them here (./#new, ./#watchlist …) are sent on.
+// The Top 10 lives here (its own page is gone); New and Watchlist live on charts.html, and old links to them here are sent on.
 
 (() => {
   // links from before the charts had their own page (bookmarks, alerts, emails, the Home Screen) and Settings' "Open
   // Tenner on" go straight to the charts
   {
     const h = location.hash.slice(1), start = window.tn.prefs.get().start;
-    const chart = /^(top|new|watchlist|week|mine|netflix|disney|prime|hbomax|paramount|appletv|skystore|store)$/.test(h);
+    const chart = /^(new|watchlist|week)$/.test(h);
     let first = true; try { first = !sessionStorage.getItem('tenner-opened'); sessionStorage.setItem('tenner-opened', '1'); } catch {}
-    const opener = first && !h && !location.search && start && !['auto', 'home'].includes(start);
+    const opener = first && !h && !location.search && ['new', 'watchlist'].includes(start);
     if (chart || opener) { location.replace(`charts.html${location.search}#${chart ? h : start}`); return; }
   }
   const { esc, hue, reduce } = window.tn;
@@ -408,24 +408,34 @@
     morph(() => { drawRows(); drawSide(); markSaved(); });
     $(`#bxSide [data-genre="${state.genre ?? ''}"]`)?.focus({ preventScroll: true });
   });
-  // the Top 10 itself, numbered, for the kind and service you've picked; with both, the shows then the films
+  // the Top 10 itself, numbered and compact, for the kind and service you've picked (with both, the shows then the films):
+  // all ten for shows or films; with both, the first five of each, and See more opens the box out to show six to ten
+  let ttOpen = false;
   function topTen() {
     const s = state.svc === 'all' ? state.data.overall : svcOf(state.svc); if (!s) return '';
-    const ks = kinds(), many = ks.length > 1 ? 5 : 10;
+    const ks = kinds();
     const part = (k) => {
-      const l = (s[k] || []).slice(0, many); if (!l.length) return '';
+      const l = (s[k] || []).slice(0, 10); if (!l.length) return '';
       const word = k === 'movie' ? 'film' : 'show';
       return `${ks.length > 1 ? `<h3 class="bx-tt-sub">${k === 'movie' ? 'Films' : 'Shows'}</h3>` : ''}<ol class="bx-ups bx-tt">${l.map((it0, i) => {
         const it = { ...it0, type: it0.type || k, on: it0.on || (s.key ? [s.key] : undefined) }, info = infoFor(it, `No. ${i + 1} ${word} ${where()}`);
         const sub = [it.type === 'movie' ? 'Film' : 'Series', it.year].filter(Boolean).join(' · ');
-        return `<li><a href="${esc(it.url || '#')}" target="_blank" rel="noopener" ${reg(info)}><span class="bx-tt-n">${i + 1}</span><span class="bx-up-art">${poster(it)}</span>
-          <span class="bx-up-copy"><b>${esc(it.title)}</b><small>${esc(sub)}${it.weeks > 1 ? ` · ${it.weeks} weeks` : ''}</small></span></a></li>`;
+        return `<li${i >= 5 && ks.length > 1 ? ' class="bx-tt-x"' : ''}><a href="${esc(it.url || '#')}" target="_blank" rel="noopener" ${reg(info)}><span class="bx-tt-n">${i + 1}</span><span class="bx-up-art">${poster(it)}</span>
+          <span class="bx-up-copy"><b>${esc(it.title)}</b><small>${esc(sub)}</small></span></a></li>`;
       }).join('')}</ol>`;
     };
     const body = ks.map(part).join(''); if (!body) return '';
+    const more = ks.length > 1 && ks.some((k) => (s[k] || []).length > 5);
     const words = { both: 'Top 10', tv: 'Top 10 shows', movie: 'Top 10 films' }[state.kind];
-    return `<section class="bx-panel panel" aria-labelledby="bxTt"><header class="bx-panel-hd"><h2 id="bxTt">${words} ${esc(where())}</h2><a class="bx-more" href="charts.html">See all</a></header>${body}</section>`;
+    return `<section class="bx-panel panel bx-tt-box${ttOpen ? ' open' : ''}" aria-labelledby="bxTt"><header class="bx-panel-hd"><h2 id="bxTt">${words} ${esc(where())}</h2></header>${body}
+      ${more ? `<button type="button" class="bx-more bx-tt-more" data-tt aria-expanded="${ttOpen}">${ttOpen ? 'Show less' : 'See more'}</button>` : ''}</section>`;
   }
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-tt]'); if (!b) return;
+    ttOpen = !ttOpen; const box = b.closest('.bx-tt-box');
+    box.classList.toggle('open', ttOpen); b.setAttribute('aria-expanded', ttOpen); b.textContent = ttOpen ? 'Show less' : 'See more';
+    if (!ttOpen && box.getBoundingClientRect().top < 0) box.scrollIntoView({ block: 'start', behavior: still() ? 'auto' : 'smooth' });
+  });
   // this week's biggest climbers, as a list (the third reference's activity panel)
   function climbers() {
     const w = state.week; if (!w?.climbers?.length) return '';

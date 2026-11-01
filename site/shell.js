@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '2.20.0';
+  const version = '2.21.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -783,7 +783,7 @@
     if (name === cur) { scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); return; }
     if (name === 'about') { location.href = 'about.html'; return; }
     if (name === 'browse') { location.href = 'browse.html'; return; }
-    if (name === 'top') { location.href = 'charts.html'; return; }
+    if (name === 'top') { location.href = './'; return; }   // the Top 10 lives on Home now
     if (name === 'new') { location.href = 'charts.html#new'; return; }
     if (name === 'watchlist') { location.href = 'charts.html#watchlist'; return; }
     if (name === 'people') { location.href = 'people.html'; return; }

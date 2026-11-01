@@ -1,15 +1,12 @@
-// Tenner's chart pages. Reads data/trending.json and data/new.json (rebuilt hourly by GitHub Actions).
-// Routes: #top (all services), #netflix, #disney … (one service), #new (new releases).
+// Tenner's New This Week (#new) and Watchlist (#watchlist) pages. The Top 10 lives on the home page (home.js), and
+// anything else here goes there. Reads data/trending.json and data/new.json (rebuilt hourly by GitHub Actions).
 // Shared helpers (esc, hue) come from shell.js, which loads first.
 
 const { esc, hue, reduce: reduceMotion } = window.tn;
-const state = { trending: null, fresh: null, kind: 'tv', route: 'top' };
+const state = { trending: null, fresh: null, route: 'new' };
 const $ = (s, el = document) => el.querySelector(s);
 const view = $('#view');
-const KIND_WORDS = { tv: 'Shows', movie: 'Films', both: 'Shows and Films' };
-const words = (k = state.kind) => KIND_WORDS[k] || 'Shows';
 const fmtDate = (d, opts) => d.toLocaleDateString('en-GB', opts);
-const fmtTime = (d) => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 const pad = (n) => String(n).padStart(2, '0');
 const todayIso = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };   // today's date where you are
 
@@ -35,155 +32,37 @@ async function load() {
       <p class="lede">${esc(err.message)}. If you've just set the site up, run the "Update and deploy" workflow once, then refresh.</p></div>`;
     return;
   }
-  try { const k = localStorage.getItem('tenner-kind'); if (k in KIND_WORDS) state.kind = k; } catch {}
   if (window.tn.prefs.get().no18) state.titles = await window.tnSheet?.details();   // certificates, before the first chart
   addEventListener('tn:prefs', () => { if (window.tn.prefs.get().no18 && !state.titles) window.tnSheet?.details().then((d) => { state.titles = d; render(); }); else render(); });
 
-  showUpdated();
   route();
 }
 
 const services = () => state.trending.services;
 window.tnTonight?.use({ cat: () => state.cat, services: () => state.trending?.services, titles: () => state.titles });   // tonight.js borrows what's loaded
-const svc = (k) => (k === 'mine' ? mineScope() : services().find((s) => s.key === k));
-// My services as a chart of its own: the UK chart kept to titles on your services, topped up from your services' own
-// charts (best ranks first) until there are ten. Movement arrows are left off, since it isn't a chart anyone else sees.
-function mineScope() {
-  const keys = window.tn.mine.get(); if (!keys.length) return null;
-  const mine = services().filter((s) => keys.includes(s.key));
-  const build = (k) => {
-    const out = [], seen = new Set(), add = (it) => { const id = `${it.type}${it.id}`; if (!seen.has(id) && out.length < 10) { seen.add(id); out.push({ ...it, mv: undefined, top: undefined }); } };
-    (state.trending.overall[k] || []).filter((it) => (it.on || []).some((s) => keys.includes(s))).forEach(add);
-    for (let i = 0; i < 10 && out.length < 10; i++) mine.forEach((s) => s[k]?.[i] && add(s[k][i]));
-    return out;
-  };
-  const names = mine.map((s) => s.label);
-  return { key: 'mine', mine: true, keys, label: 'your services', names: names.length > 2 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names.join(' and '), tv: build('tv'), movie: build('movie') };
-}
-
-// ---------- the services: "Choose your services" opens the picker; once you've chosen, it reads "Your Services" ----------
-const pickMine = () => window.tn.pickMine(services().map((s) => ({ key: s.key, label: s.label, logo: s.logo })));
-const svcLink = $('#svcLink');
-svcLink.addEventListener('click', pickMine);
-function markSvcLink() {
-  svcLink.firstChild.textContent = window.tn.mine.get().length ? 'Your Services' : 'Choose your services';
-}
-
-// ---------- "Updated … ago" ----------
-const narrow = matchMedia('(max-width: 560px)');
-function agoText(iso) {
-  const mins = Math.floor((Date.now() - Date.parse(iso)) / 60000), h = Math.floor(mins / 60);
-  if (narrow.matches) { // phones: the short form, so the line stays on one row
-    if (mins < 3) return 'Just updated';
-    return mins < 60 ? `${mins} min ago` : h < 48 ? `${h} hr ago` : `${Math.floor(h / 24)} days ago`;
-  }
-  if (mins < 3) return 'Updated a few moments ago';
-  if (mins < 60) return `Updated ${mins} minutes ago`;
-  return h < 48 ? `Updated ${h} hour${h === 1 ? '' : 's'} ago` : `Updated ${Math.floor(h / 24)} days ago`;   // a long outage reads plainly
-}
-narrow.addEventListener('change', () => state.trending && showUpdated());
-function showUpdated() {
-  const d = new Date(state.trending.generatedAt);
-  const ago = $('#ago'), txt = agoText(state.trending.generatedAt);
-  if (ago.textContent !== txt) { ago.textContent = txt; ago.classList.remove('swap'); void ago.offsetWidth; ago.classList.add('swap'); }
-  $('#refresh').title = `Last update ${fmtTime(d)}. Tap to check for a newer chart.`;
-}
-setInterval(() => state.trending && showUpdated(), 30000);
+const svc = (k) => services().find((s) => s.key === k);
 
 // Fetch the latest data and, if it's new, redraw in place (with the usual crossfade), keeping your scroll position.
-// Tapping "Updated …" does it with a word of feedback; the background check (from shell.js) does it quietly, and holds
-// back while a menu is open or a row is being dragged, trying again next time.
-async function refresh(quiet) {
-  const btn = $('#refresh');
-  if (!state.trending || btn.classList.contains('busy')) return;
-  if (quiet && ($('.posters.dragging'))) return;
-  if (!quiet) { btn.classList.add('busy'); $('#ago').textContent = 'Checking…'; }
+// The background check (from shell.js) does it quietly, and holds back while a menu is open, trying again next time.
+async function refresh() {
+  if (!state.trending || refreshing) return;
+  refreshing = true;
   try {
     const d = await fetchData(true);
     const changed = d.trending.generatedAt !== state.trending.generatedAt || d.fresh?.generatedAt !== state.fresh?.generatedAt;
     if (changed) { const y = scrollY; Object.assign(state, d, { cat: d.cat || state.cat, week: d.week || state.week }); render(); requestAnimationFrame(() => scrollTo(0, y)); }
-    if (!quiet) toast(changed ? 'New chart loaded' : "You're up to date");
-  } catch {
-    if (!quiet) toast("Couldn't check right now. Try again in a moment.");   // quietly: the next check catches up
-  }
-  btn.classList.remove('busy'); showUpdated();
+  } catch {}   // quietly: the next check catches up
+  refreshing = false;
 }
-$('#refresh').addEventListener('click', () => refresh(false));
-
-// ---------- share a chart: the phone's share sheet, or the share card on computers (shell.js), with this Top 10 as a
-// picture (made here, in the browser) as well as a link back ----------
-$('#shareChart').addEventListener('click', () => {
-  const s = state.route === 'top' ? null : svc(state.route);
-  const kind = state.kind === 'both' ? 'tv' : state.kind;
-  const list = ((s ? s[kind] : state.trending.overall[kind]) || []).slice(0, 10);
-  if (!list.length) return;
-  const title = `Top 10 ${words(kind)}`;
-  const where = s?.mine ? 'On my services' : s ? `On ${s.label}` : 'In the UK, on all six services';
-  const url = new URL(location.href); url.search = ''; url.hash = s && !s.mine ? s.key : '';
-  const top3 = list.slice(0, 3).map((it, i) => `${i + 1}. ${it.title}`).join(', ');
-  window.tn.share({
-    heading: `Share this ${title} with someone looking for something to watch`,
-    title: 'Tenner', url: url.toString(),
-    text: `${title} ${s && !s.mine ? `on ${s.label}` : 'in the UK'} right now: ${top3}`,
-    picture: async () => ({ blob: await chartImage(list, title, where), name: `tenner-${(s?.key || 'uk')}-${kind}.png` }),
-  });
-});
-// The picture: 1080×1350 (a portrait post), night colours, ranks, posters where they'll load, titles and where they're on
-async function chartImage(list, title, where) {
-  const W = 1080, H = 1350, c = Object.assign(document.createElement('canvas'), { width: W, height: H }), g = c.getContext('2d');
-  await document.fonts?.ready;
-  const font = (w, px, fam = 'Inter') => `${w} ${px}px "${fam}", -apple-system, system-ui, sans-serif`;
-  g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
-  [['#0a84ff', 180, 120, 620], ['#bf5af2', 960, 200, 560], ['#ff375f', 860, 1300, 520]].forEach(([col, x, y, r]) => {
-    const rg = g.createRadialGradient(x, y, 0, x, y, r); rg.addColorStop(0, col + '55'); rg.addColorStop(1, col + '00'); g.fillStyle = rg; g.fillRect(0, 0, W, H); });
-  const logo = await loadImg('logo.svg'); if (logo) g.drawImage(logo, 72, 64, 64, 64);
-  g.fillStyle = '#fff'; g.font = font(700, 40, 'Inter Tight'); g.textBaseline = 'middle'; g.fillText('Tenner', 152, 98);
-  g.font = font(500, 26); g.fillStyle = 'rgba(235,235,245,.6)'; g.textAlign = 'right';
-  g.fillText(new Date(state.trending.generatedAt).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'long' }), W - 72, 98); g.textAlign = 'left';
-  g.fillStyle = '#fff'; g.font = font(800, 76, 'Inter Tight'); g.fillText(title, 72, 210);
-  g.font = font(500, 30); g.fillStyle = 'rgba(235,235,245,.7)'; g.fillText(where, 72, 272);
-  const grad = g.createLinearGradient(0, 0, 160, 0); ['#ff375f', '#ff9f0a', '#ffd60a', '#30d158', '#0a84ff', '#bf5af2'].forEach((col, i) => grad.addColorStop(i / 5, col));
-  const posters = await Promise.all(list.map((it) => (it.poster ? loadImg(it.poster.replace('/w342/', '/w154/'), true) : null)));
-  const top = 330, rowH = 92;
-  list.forEach((it, i) => {
-    const y = top + i * rowH;
-    g.font = font(800, 54, 'Inter Tight'); g.lineWidth = 2.4; g.strokeStyle = grad; g.textBaseline = 'middle';
-    g.strokeText(String(i + 1).padStart(2, '0'), 72, y + rowH / 2 - 4);
-    const px = 190;
-    if (posters[i]) { g.save(); roundRect(g, px, y + 6, 52, 78, 8); g.clip(); g.drawImage(posters[i], px, y + 6, 52, 78); g.restore(); }
-    else { g.fillStyle = `hsl(${hue(it.title)} 45% 35%)`; roundRect(g, px, y + 6, 52, 78, 8); g.fill(); }
-    g.fillStyle = '#fff'; g.font = font(600, 34); g.fillText(clip(g, it.title, W - 72 - (px + 76)), px + 76, y + 32);
-    g.fillStyle = 'rgba(235,235,245,.6)'; g.font = font(500, 24);
-    g.fillText([onText(it), it.season, it.year].filter(Boolean).join(' · '), px + 76, y + 66);
-    if (i < list.length - 1) { g.fillStyle = 'rgba(84,84,88,.6)'; g.fillRect(px + 76, y + rowH - 1, W - 72 - px - 76, 1); }
-  });
-  g.font = font(500, 24); g.fillStyle = 'rgba(235,235,245,.55)'; g.textBaseline = 'alphabetic';
-  g.fillText('Updated every hour · ' + location.host + location.pathname.replace(/index\.html$/, ''), 72, H - 56);
-  return new Promise((res) => { try { c.toBlob((b) => res(b), 'image/png'); } catch { res(null); } });   // a poster that blocks the picture: no picture, just the link
-}
-function loadImg(src, cors) {
-  return new Promise((res) => { const im = new Image(); if (cors) im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = () => res(null); im.src = src; setTimeout(() => res(null), 4000); });
-}
-function roundRect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
-function clip(g, t, max) { if (g.measureText(t).width <= max) return t; while (t.length > 1 && g.measureText(t + '…').width > max) t = t.slice(0, -1); return t.trimEnd() + '…'; }
-// choosing your services: rebuild the bar and show your own chart (or the UK's, if you went back to all six)
-addEventListener('tn:mine', () => {
-  if (!state.trending) return;
-  const has = window.tn.mine.get().length;
-  if (has && location.hash !== '#mine') location.hash = 'mine';
-  else if (!has && state.route === 'mine') location.hash = 'top';
-  else route();
-});
-addEventListener('tn:check', () => refresh(true));
+let refreshing = false;
+addEventListener('tn:check', () => refresh());
 
 // ---------- routing ----------
 function route() {
-  const h = location.hash.slice(1);
-  const mine = window.tn.mine.get(), start = window.tn.prefs.get().start;   // Settings: "Open Tenner on"
-  const first = !h ? (start === 'auto' || start === 'mine' ? (mine.length ? 'mine' : 'top') : start) : h;
+  const first = location.hash.slice(1);
   if (first === 'week') { history.replaceState(null, '', '#new'); return route(); }   // This Week now lives on New
-  state.route = ['new', 'watchlist'].includes(first) || (first !== 'mine' && svc(first)) ? first : first === 'mine' && mine.length ? 'mine' : 'top';
-  if (!['new', 'watchlist'].includes(state.route)) state.lastChart = state.route;
+  if (!['new', 'watchlist'].includes(first)) { location.replace(`./${location.search}`); return; }   // the Top 10 lives on Home now
+  state.route = first;
   render();
 }
 
@@ -195,213 +74,17 @@ function morph(fn) {
   if (!document.startViewTransition || reduceMotion || !view.firstElementChild || view.querySelector('.loading')) { fn(); return; }
   document.startViewTransition(fn).ready.catch(() => {});   // a newer change can cut one short: that's fine
 }
-// Settings: "Hide titles rated 18" (UK certificates come from the title details)
-function adult(list, k) {
-  if (!window.tn.prefs.get().no18 || !state.titles) return list;
-  return list.filter((it) => det(wlKey(it, it.type || k))?.c !== '18');
-}
 function draw() {
-  selectTab(state.route === 'new' || state.route === 'watchlist' ? state.route : 'top');
-  $('#kindSel').value = state.kind; $('#kindL').textContent = { tv: 'Shows', movie: 'Films', both: 'Shows and films' }[state.kind];
-  const isNew = state.route === 'new';
-  $('#controls').hidden = isNew || state.route === 'watchlist';
-  if (state.route === 'watchlist') { shown = new Map(); banners([]); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageWatchlist()}</div>`; document.title = 'Watchlist | Tenner'; wlKindInit(); openFromUrl(); wantTitles(); alertCard(); return; }
-  if (isNew) { shown = new Map(); setBackdrop(null); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; newBanners((state.fresh?.items || []).filter((x) => x.date <= todayIso())); document.title = 'New This Week | Tenner'; openFromUrl(); return; }
-
-  markSvcLink();
-  shown = new Map();
-
-  const s = state.route === 'top' ? null : svc(state.route);
-  const listOf = (k) => adult((s ? s[k] : state.trending.overall[k]) || [], k);
-  // "Both" shows the two charts one after the other; the hero takes turns between them
-  const kinds = state.kind === 'both' ? ['tv', 'movie'] : [state.kind];
-  const zip = (a, b) => Array.from({ length: Math.max(a.length, b.length) }, (_, i) => [a[i], b[i]]).flat().filter(Boolean);
-  const ranked = (k) => listOf(k).map((it, i) => ({ it, n: i + 1 }));
-  const picks = state.kind === 'both' ? zip(ranked('tv'), ranked('movie')) : ranked(state.kind);
-  const list = picks.map((p) => p.it);
-  const where = s ? s.label : 'UK streaming';
-  $('#heading').innerHTML = `Top 10 <em class="grad">${esc(words())}</em>`;
-  $('#lede').innerHTML = s?.mine ? `On your services: ${esc(s.names)}`
-    : s ? `On ${s.logo ? `<img class="sub-logo" src="${esc(s.logo)}" alt="">` : ''}${esc(s.label)}${s.official ? ` · ${esc(officialLine(s.official))}` : ''}` : 'On all six services in the UK';
-  document.title = s?.mine ? 'My Top 10 | Tenner' : s ? `${s.label} Top 10 | Tenner` : 'Tenner';
-
-  const feat = s ? picks : withEvery(picks, kinds);
-  banners(feat, s);
-  const chart = list.length
-    ? `${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up. Add your TMDB key and run the workflow to see the real chart.</p>` : ''}
-       ${hero(feat, s)}
-       ${kinds.map((k, r) => `${kinds.length > 1 ? `<h2 class="row-h kind-h">Top 10 ${words(k)}</h2>` : ''}${posterRow(listOf(k), k, r === 0)}`).join('')}
-       ${window.tnTonight?.card() || ''}
-       ${features(s)}
-       ${kinds.map((k) => chartList(s, k)).join('')}
-       ${savedRow()}${s && !s.mine ? '' : weekRow()}${newRow(s)}`
-    : `<div class="empty"><h2>Nothing here right now</h2><p>The chart for ${esc(where)} will be back after the next hourly update.</p><a class="btn btn-tinted" href="#top">See all six services</a></div>`;
-  view.innerHTML = `<div class="wrap chart">${chart}</div>`;
-  openFromUrl();
-  setBackdrop(heroOn() && list.length ? heroList[heroAt]?.it || list[0] : null);   // the hero's pick
-  wireScroller();
+  selectTab(state.route);
+  if (state.route === 'watchlist') { shown = new Map(); hideBanners(); view.innerHTML = `<div class="wrap">${pageWatchlist()}</div>`; document.title = 'Watchlist | Tenner'; wlKindInit(); openFromUrl(); wantTitles(); alertCard(); return; }
+  shown = new Map(); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; newBanners((state.fresh?.items || []).filter((x) => x.date <= todayIso())); document.title = 'New This Week | Tenner'; openFromUrl();
 }
 
-// ---------- computers: the hero, the Apple TV way ----------
-// The chart's top titles take turns as a big backdrop on the right that melts into the page on its left and bottom
-// (the fade is the backdrop's own mask, below). Over the faded part: a badge, the title, a line of details with the
-// service and age rating, a sentence about it, Where to watch and + (Watchlist), with arrows either side, dots and a
-// pause button. It moves on by itself every few seconds, the TV way, unless Animations are off, it's paused, or you're
-// pointing at it or tabbing through it. Phones and tablets skip it (and never download the artwork).
-const wide = matchMedia('(min-width: 1000px)');
-wide.addEventListener('change', () => state.trending && state.route !== 'new' && render());
-const heroOn = () => wide.matches && window.tn.prefs.get().hero;   // Settings: "Featured artwork"
-const HERO_N = 8, HERO_MS = 8000;
-let heroList = [], heroAt = 0, heroScope = null, heroSig = '';
-const heroKey = (it) => wlKey(it, it.type) || `${it.type}:${it.title}`;
-const PLUS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
-const TICK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 12.5l4.2 4.2 8.8-9.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-// On All, the UK-wide chart can miss a service altogether (Apple TV's titles are rarely the UK's most popular), so each
-// service that isn't in it adds its own No. 1, badged with that service; the hero and the banners always show those
-function withEvery(picks, kinds) {
-  const have = new Set(picks.map((p) => heroKey(p.it))), extra = [];
-  for (const k of kinds) for (const sv of services()) {
-    if (picks.some((p) => p.it.type === k && (p.it.on || []).includes(sv.key))) continue;
-    const i = adult(sv[k] || [], k).findIndex((it) => it.backdrop && !have.has(heroKey(it)));
-    if (i < 0) continue;
-    const it = sv[k][i]; have.add(heroKey(it)); extra.push({ it: { ...it, type: it.type || k }, n: i + 1, sv });
-  }
-  return [...picks, ...extra];
-}
-// featured.pick chooses n of the pool; a service's own No. 1 always gets a place, spread through the line-up
-function pickFeatured(pool, n) {
-  const own = pool.filter((p) => p.sv), list = window.tn.featured.pick(pool.filter((p) => !p.sv), (p) => heroKey(p.it), Math.max(1, n - own.length), (p) => p.it.backdrop);
-  own.forEach((p, i) => list.splice(Math.min(list.length, i * 2 + 1), 0, p));
-  return list.slice(0, Math.max(n, own.length + 1));
-}
-function heroCopy({ it, n, sv }) {
-  // on a service's page it's that service's chart; on All it's the UK-wide chart, and the details say where to find it
-  const s = sv || heroScope, kind = it.type === 'tv' ? 'show' : 'film', k = wlKey(it, it.type), x = (k && det(k)) || {};
-  const badge = s ? `No. ${n} ${kind} on ${s.label}` : `No. ${n} ${kind} in the UK`;
-  const on = s && !s.mine ? s : svc((it.on || [])[0]);
-  const bits = [it.type === 'tv' ? (it.season || 'Series') : 'Film', ...(x.g || []).slice(0, 2), it.year,
-    it.rating && window.tn.prefs.get().ratings ? `★ ${it.rating.toFixed(1)}` : '', n === 1 ? topText(it) : weeksText(it)].filter(Boolean);
-  const info = infoFor(it, it.type, badge, s && !s.mine ? [s] : null), mark = window.tn.saved.has(k);
-  return `<p class="h-badge">${esc(badge)}</p>
-    <h2 class="h-title">${esc(it.title)}</h2>
-    <p class="h-meta">${on?.logo ? `<img class="h-svc" src="${esc(on.logo)}" alt="${esc(on.label)}" data-tip="${esc(on.label)}">` : ''}<span>${bits.map(esc).join(' · ')}</span>${x.c ? `<b class="h-cert" data-c="${esc(String(x.c).toUpperCase())}" title="Rated ${esc(x.c)}">${esc(x.c)}</b>` : ''}</p>
-    ${it.overview ? `<p class="h-blurb">${esc(firstSentence(it.overview))}</p>` : ''}
-    <div class="h-btns">
-      <a class="h-cta" href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(info)}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.6v10.8L13.2 8z" fill="currentColor"/></svg>Where to watch</a>
-      ${k ? `<button type="button" class="h-add" data-hero-save="${esc(k)}" aria-pressed="${mark}" aria-label="${mark ? 'Saved to' : 'Add to'} Watchlist" title="${mark ? 'In your Watchlist' : 'Add to Watchlist'}">${mark ? TICK : PLUS}</button>` : ''}
-    </div>`;
-}
-function hero(picks, s) {   // picks: [{ it, n }] where n is the title's rank in its own chart
-  if (!heroOn() || !picks.length) { stopHero(); return ''; }
-  // the whole chart takes turns, led by the ones you haven't seen up here lately (not the same No. 1 every visit);
-  // a redraw (a new hour, a save to the Watchlist) keeps the line-up and the title that's showing, if it's still in the chart
-  const sig = `${s?.key}|${picks.map((p) => heroKey(p.it)).join(',')}`, was = heroScope?.key === s?.key && heroList[heroAt]?.it;
-  const byKey = new Map(picks.map((p) => [heroKey(p.it), p]));
-  let list = sig === heroSig ? heroList.map((p) => byKey.get(heroKey(p.it))).filter(Boolean)
-    : pickFeatured(picks, HERO_N);
-  const now = was && byKey.get(heroKey(was));
-  if (now && !list.includes(now)) list = [now, ...list].slice(0, HERO_N);
-  heroList = list; heroAt = Math.max(0, now ? list.indexOf(now) : 0); heroScope = s; heroSig = sig;
-  window.tn.featured.saw(heroKey(heroList[heroAt].it));
-  if (!state.titles) window.tnSheet?.details().then((d) => { if (d && !state.titles) { state.titles = d; redrawHeroCopy(); } });   // genres and age ratings
-  const many = heroList.length > 1, arrow = (dir, d) => `<button type="button" class="h-arrow ${dir}" data-hero-step="${dir === 'prev' ? -1 : 1}" aria-label="${dir === 'prev' ? 'Previous' : 'Next'} title"><svg viewBox="0 0 24 40" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
-  queueMicrotask(startHero);
-  return `<section class="hero" id="hero" aria-roledescription="carousel" aria-label="Top of the chart">
-    ${many ? arrow('prev', 'M16 6 6 20l10 14') : ''}
-    <div class="h-copy" id="heroCopy" aria-live="polite">${heroCopy(heroList[heroAt])}</div>
-    ${many ? `<div class="h-dots">${heroList.map((p, i) => `<button type="button" data-hero="${i}" aria-label="Number ${p.n}${p.sv ? ` on ${esc(p.sv.label)}` : ''}: ${esc(p.it.title)}" title="${esc(p.it.title)}" aria-current="${i === heroAt}"></button>`).join('')}</div>
-    <button type="button" class="h-pause" id="heroPause" aria-pressed="${heroPaused}" aria-label="${heroPaused ? 'Play' : 'Pause'}" title="${heroPaused ? 'Play' : 'Pause'}"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="i-pause" d="M8.5 6.5v11M15.5 6.5v11" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path class="i-play" d="M8.5 5.8v12.4L18.6 12z" fill="currentColor"/></svg></button>` : ''}
-    ${many ? arrow('next', 'M8 6l10 14L8 34') : ''}
-  </section>`;
-}
-function redrawHeroCopy() { const c = $('#heroCopy'); if (c && heroList[heroAt]) c.innerHTML = heroCopy(heroList[heroAt]); }
-addEventListener('tn:saved', () => $('#heroCopy') && redrawHeroCopy());
-// The backdrop crossfades: the new picture decodes first, then fades in over the old one, which is then dropped.
-let bdKey = null;
-function setBackdrop(it) {
-  const bd = $('#backdrop'), key = it ? it.backdrop || `ph:${it.title}` : null;
-  if (key === bdKey) return; bdKey = key;
-  if (!it) { bd.replaceChildren(); $('#bdExt')?.replaceChildren(); return; }
-  let layer;
-  if (it.backdrop) { layer = new Image(); layer.alt = ''; layer.src = it.backdrop.replace('/w1280/', '/original/'); layer.srcset = `${it.backdrop} 1280w, ${it.backdrop.replace('/w1280/', '/original/')} 1920w`; layer.sizes = '80vw'; }
-  else { const h = hue(it.title); layer = document.createElement('span'); layer.style.background = `linear-gradient(120deg,hsl(${h} 45% 30%),hsl(${(h + 40) % 360} 55% 12%))`; }
-  layer.className = 'bd-l';
-  const show = () => {
-    if (bdKey !== key) return;   // a newer one was asked for meanwhile
-    // the sidebar picks up the artwork's colours through its glass: a mirrored copy sits beneath it
-    const ext = $('#bdExt'), mirror = layer.cloneNode(true); mirror.classList.add('in'); ext?.replaceChildren(mirror);
-    bd.append(layer);
-    if (reduceMotion || bd.children.length === 1) { layer.classList.add('in'); [...bd.children].slice(0, -1).forEach((c) => c.remove()); return; }
-    requestAnimationFrame(() => layer.classList.add('in'));
-    setTimeout(() => [...bd.children].slice(0, -1).forEach((c) => c.remove()), 900);
-  };
-  layer.decode ? layer.decode().then(show, show) : show();
-  // the next one's artwork loads quietly in the background, so it's ready when its turn comes
-  const nx = heroList[(heroList.findIndex((p) => p.it === it) + 1) % (heroList.length || 1)]?.it;
-  if (nx?.backdrop && nx !== it) { const pre = new Image(); pre.srcset = `${nx.backdrop} 1280w, ${nx.backdrop.replace('/w1280/', '/original/')} 1920w`; pre.sizes = '80vw'; }
-}
-function showHero(i) {
-  if (i === heroAt || !heroList[i]) return;
-  heroAt = i; window.tn.featured.saw(heroKey(heroList[i].it));
-  document.querySelectorAll('[data-hero]').forEach((b) => b.setAttribute('aria-current', String(Number(b.dataset.hero) === i)));
-  const copy = $('#heroCopy');
-  const swap = () => { copy.innerHTML = heroCopy(heroList[i]); copy.classList.remove('out'); };
-  if (reduceMotion) swap(); else { copy.classList.add('out'); setTimeout(swap, 220); }
-  setBackdrop(heroList[i].it);
-  startHero();   // a fresh count after every change, by hand or by itself
-}
-// the turns: paused by the button, while you point at it or tab through it, while a sheet is open or the tab is hidden
-let heroTimer = 0, heroPaused = false;
-const heroHeld = () => heroPaused || document.hidden || window.tnSheet?.isOpen() || $('#hero')?.matches(':hover, :focus-within') || document.documentElement.classList.contains('still') || reduceMotion;
-function stopHero() { clearTimeout(heroTimer); heroTimer = 0; }
-function startHero() {
-  stopHero();
-  const h = $('#hero'); if (!h || heroList.length < 2) return;
-  h.classList.toggle('auto', !document.documentElement.classList.contains('still') && !reduceMotion);
-  heroTimer = setTimeout(function tick() {
-    if (!$('#hero')) return;
-    if (heroHeld()) { heroTimer = setTimeout(tick, 1500); return; }
-    showHero((heroAt + 1) % heroList.length);
-  }, HERO_MS);
-}
-document.addEventListener('visibilitychange', () => document.hidden || startHero());
-view.addEventListener('click', (e) => {
-  const d = e.target.closest('[data-hero]'); if (d) { showHero(Number(d.dataset.hero)); return; }
-  const st = e.target.closest('[data-hero-step]'); if (st) { showHero((heroAt + Number(st.dataset.heroStep) + heroList.length) % heroList.length); return; }
-  if (e.target.closest('#heroPause')) {
-    heroPaused = !heroPaused; const b = $('#heroPause');
-    b.setAttribute('aria-pressed', heroPaused); b.setAttribute('aria-label', heroPaused ? 'Play' : 'Pause'); b.title = heroPaused ? 'Play' : 'Pause';
-    if (!heroPaused) startHero(); return;
-  }
-  const add = e.target.closest('[data-hero-save]');
-  if (add) { const it = heroList[heroAt].it; window.tn.saved.toggle(infoFor(it, it.type)); $('[data-hero-save]')?.focus({ preventScroll: true }); }
-});
-view.addEventListener('keydown', (e) => {   // ← → move between the hero's titles when a dot or arrow has focus
-  const d = e.target.closest?.('[data-hero], [data-hero-step]'); if (!d || !['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
-  e.preventDefault(); const i = (heroAt + (e.key === 'ArrowRight' ? 1 : -1) + heroList.length) % heroList.length;
-  showHero(i); if (d.dataset.hero) $(`[data-hero="${i}"]`)?.focus();
-});
-
-// ---------- phones: the top titles as wide artwork banners, swiped one at a time, neighbours peeking in at the sides ----------
+// ---------- phones: New This Week's arrivals as wide banners, swiped one at a time, neighbours peeking in at the sides ----------
 const phone = matchMedia('(max-width: 560px)');
 phone.addEventListener('change', () => state.trending && render());
 const mBan = $('#mBan');
-let banSig = '', banKeys = [];
-function banners(picks, scope) {
-  if (!phone.matches || !picks.length) { mBan.hidden = true; mBan.innerHTML = ''; return; }
-  // six of the chart, led by the ones you haven't seen up top lately; the same line-up while the chart's the same
-  const sig = `${scope?.key}|${picks.map((p) => heroKey(p.it)).join(',')}`;
-  if (sig !== banSig) { banSig = sig; banKeys = pickFeatured(picks, 6).map((p) => heroKey(p.it)); window.tn.featured.saw(banKeys[0]); }
-  const byKey = new Map(picks.map((p) => [heroKey(p.it), p])), list = banKeys.map((k) => byKey.get(k)), wide = (u) => u && u.replace('/w1280/', '/w780/');
-  mountBanners(list.map(({ it, n, sv }, i) => {
-    const s = sv || scope;   // a service's own No. 1 (on All) is badged and linked as that service's
-    const kind = it.type === 'tv' ? 'show' : 'film', badge = s ? `No. ${n} on ${s.label}` : `No. ${n} ${kind} in the UK`;
-    const art = it.backdrop ? `<img src="${esc(wide(it.backdrop))}" alt="" ${i ? 'loading="lazy"' : 'fetchpriority="high"'} decoding="async">`
-      : it.poster ? `<img class="soft" src="${esc(it.poster)}" alt="" loading="lazy">` : `<span class="mb-ph" style="--h:${hue(it.title)}"></span>`;
-    return `<a class="mb-card" href="${esc(it.url)}" target="_blank" rel="noopener" aria-label="${esc(`${badge}: ${it.title}`)}" ${reg(infoFor(it, it.type, badge, s && !s.mine ? [s] : null))}>
-      ${art}<span class="mb-copy"><span class="mb-badge">${esc(badge)}</span><b class="mb-title">${esc(it.title)}</b><span class="mb-meta">${esc([it.type === 'tv' ? (it.season || 'Series') : 'Film', it.year].filter(Boolean).join(' · '))}</span></span></a>`;
-  }));
-}
+const hideBanners = () => { mBan.hidden = true; mBan.innerHTML = ''; };
 // New This Week on phones: the new arrivals as banners too. Watchmode gives a poster but no wide artwork, so each is laid
 // out like Rakuten's own: the words on the left, the poster crisp on the right, its colours blurred behind
 function newBanners(items) {
@@ -434,13 +117,6 @@ mBan.addEventListener('click', (e) => {
   e.preventDefault(); window.tnSheet?.open(shown.get(a.dataset.sheet));
 });
 
-// Netflix's own chart is weekly (Monday to Sunday); "week" is the Sunday it ends on.
-function officialLine(o) {
-  const end = new Date(o.week + 'T12:00:00Z'), start = new Date(+end - 6 * 864e5);
-  const d = (x, m) => x.toLocaleDateString('en-GB', m ? { day: 'numeric', month: 'short' } : { day: 'numeric' });
-  return `Official UK Top 10, ${start.getMonth() === end.getMonth() ? d(start) : d(start, 1)}–${d(end, 1)}`;
-}
-const weeksText = (it) => it.weeks > 1 ? `${it.weeks} weeks in the Top 10` : it.weeks === 1 ? 'New to the Top 10' : '';
 
 // ---------- the title sheet (sheet.js): every title on the page opens where-to-watch in Tenner ----------
 // Each drawn title is registered with what the sheet needs; links carry data-sheet="<n>" and keep their TMDB href,
@@ -473,20 +149,6 @@ function openFromUrl() {
   else window.tnSheet.openKey?.(k);   // something Tenner doesn't follow: the search API has it
 }
 
-// ---------- chart movement: ▲ up, ▼ down or NEW since about a day ago (worked out hourly, see fetch-data.mjs) ----------
-function since() {
-  const t = state.trending?.moveSince; if (!t) return '';
-  const h = (Date.now() - Date.parse(t)) / 3600e3;
-  return h >= 20 ? 'since yesterday' : `since ${new Date(t).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit' })}`;
-}
-function moveBadge(it, quietSame) {
-  const m = it.mv; if (m === undefined || m === null) return '';
-  if (m === 'new') return `<span class="mv new" title="New to this chart ${since()}">NEW</span>`;
-  if (m === 0) return quietSame ? '' : `<span class="mv same" title="No change ${since()}" aria-label="No change">–</span>`;
-  const up = m > 0, n = Math.abs(m);
-  return `<span class="mv ${up ? 'up' : 'down'}" title="${up ? 'Up' : 'Down'} ${n} place${n === 1 ? '' : 's'} ${since()}" aria-label="${up ? 'Up' : 'Down'} ${n}">${up ? '▲' : '▼'}${n}</span>`;
-}
-const topText = (it) => (it.top > 1 ? `No. 1 for ${it.top} days` : '');
 
 // ---------- pieces ----------
 const thumb = (u) => String(u).replace('/t/p/w342/', '/t/p/w154/');   // small spots (lists) take TMDB's smaller poster
@@ -494,149 +156,12 @@ function placeholder(it) {
   const h = hue(it.title);
   return `<span class="ph" style="background:linear-gradient(160deg,hsl(${h} 45% 42%),hsl(${(h + 40) % 360} 55% 18%))">${esc(it.title)}</span>`;
 }
-const meta = (it) => [
-  moveBadge(it, true),
-  it.season ? `<span>${esc(it.season)}</span>` : '',
-  it.year ? `<span>${esc(it.year)}</span>` : '',
-  it.rating ? `<span class="star" aria-label="Rated ${it.rating} out of 10">★ ${it.rating.toFixed(1)}</span>` : '',
-].join('');
-
-const RAINBOW = ['#ff375f', '#ff9f0a', '#ffd60a', '#30d158', '#40c8e0', '#5e5ce6', '#bf5af2', '#ff375f'];
-const RB_STOPS = RAINBOW.map((c, k) => `<stop offset="${(k / (RAINBOW.length - 1)).toFixed(3)}" stop-color="${c}"/>`).join('');
-// Each rank is a neon tube, drawn in four layers: a soft aura, a tinted glass body (lighter at the top),
-// the rainbow tube with a two-step bloom, and a white-hot core that fades towards the bottom like a lit tube.
-// The number is drawn once and stays still: no shine or colour turn (styles.css says why).
-function rankSvg(i, row = '') {
-  const id = `rk${row}${i}`, n = pad(i + 1);
-  const t = (cls, extra = '') => `<text class="${cls}" x="0" y="80" ${extra}>${n}</text>`;
-  return `<svg class="num" viewBox="-16 -14 156 112" aria-hidden="true">
-    <defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="-30" y1="0" x2="150" y2="30" spreadMethod="repeat">${RB_STOPS}</linearGradient></defs>
-    ${t('aura', `fill="url(#${id})" filter="url(#aura)"`)}
-    ${t('glass')}
-    ${t('tube', `stroke="url(#${id})" filter="url(#bloom)"`)}
-    ${t('core')}
-  </svg>`;
-}
 
 
-const scope = () => (state.route === 'top' ? null : svc(state.route));
-const eyeFor = (n, type) => { const s = scope(), what = type === 'tv' ? 'show' : 'film';
-  return s ? `No. ${n} ${what} on ${s.label}` : `No. ${n} ${what} in the UK`; };
-const chartInfo = (it, i, type) => infoFor(it, type, [eyeFor(i + 1, type), i === 0 ? topText(it) : ''].filter(Boolean).join(' · '), scope() && !scope().mine ? [scope()] : null);
-function posterRow(list, kind = state.kind, first = true) {
-  const edge = (side) => `<div class="edge ${side}" aria-hidden="true">${'<i></i>'.repeat(6)}</div>`;
-  return `<div class="row-wrap at-start">
-    ${edge('l')}${edge('r')}
-    <button type="button" class="btn btn-icon scroller prev" aria-label="Previous titles" title="Previous" disabled>
-      <svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><path d="M8 2L2 8l6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    <ol class="posters" aria-label="Top 10 ${words(kind)}">
-      ${list.map((it, i) => { const sh = reg(chartInfo(it, i, kind)); return `<li class="pcard" style="--d:${i}">
-        ${rankSvg(i, kind)}
-        <a class="cover" href="${esc(it.url)}" target="_blank" rel="noopener" ${sh} aria-label="Number ${i + 1}: ${esc(it.title)}, where to watch">
-          ${it.poster ? `<img src="${esc(it.poster)}" alt="" ${first && i < 4 ? `loading="eager"${i === 0 ? ' fetchpriority="high"' : ''}` : 'loading="lazy"'} decoding="async" width="342" height="513">` : placeholder(it)}
-        </a>
-        <h3><a href="${esc(it.url)}" target="_blank" rel="noopener" tabindex="-1" ${sh}>${esc(it.title)}</a></h3>
-        <p class="sub">${meta(it)}</p>
-      </li>`; }).join('')}
-    </ol>
-    <button type="button" class="btn btn-icon scroller next" aria-label="Next titles" title="Next">
-      <svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><path d="M2 2l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-  </div>`;
-}
 
-const firstSentence = (t) => { const m = String(t || '').match(/^.{20,140}?[.!?](\s|$)/); return m ? m[0].trim() : String(t || '').slice(0, 120); };
-const onText = (it, fallback) => (it.on || []).map((k) => svc(k)?.label).filter(Boolean).slice(0, 2).join(', ') || fallback || '';
-// ---------- the Apple Music "New" layout ----------
-// Three wide feature cards (eyebrow, title, subtitle, then the artwork with a caption and the poster in the corner).
-function features(s) {
-  const shows = s ? s.tv : state.trending.overall.tv, films = s ? s.movie : state.trending.overall.movie;
-  // Elsewhere on the charts: what the chart you're looking at doesn't already show (the other kind's No. 1, this week's
-  // biggest climber, what's new), never the No. 1 that's already in the hero and the posters
-  const showing = state.kind === 'both' ? ['tv', 'movie'] : [state.kind];
-  // this week's biggest climber, in the UK chart if there's one there, else on any service (with its full details)
-  const lists = [...['tv', 'movie'].map((t) => state.trending.overall[t] || []), ...services().flatMap((x) => [x.tv || [], x.movie || []])];
-  const findIt = (k) => lists.flat().find((it) => wlKey(it, it.type) === k);
-  const climbs = (state.week?.climbers || []).filter((x) => !s || s.mine ? true : x.c.startsWith(`${s.key}:`)).sort((a, b) => b.c.startsWith('all:') - a.c.startsWith('all:'));
-  const climb = climbs.find((x) => findIt(x.k)), climbIt = climb && findIt(climb.k);
-  const fresh = (state.fresh?.items || []).filter((x) => !s || (s.mine ? s.keys.includes(x.service) : x.service === s.key))
-    .filter((x) => x.date <= todayIso()).reverse()[0];
-  const where = s ? `on ${s.label}` : 'in the UK';
-  // always three: the best of these, never one that's already the No. 1 above
-  const cands = [
-    !showing.includes('tv') && shows[0] && { eye: `No. 1 show ${where}`, it: shows[0], type: 'tv', sub: s ? `${shows[0].year || ''}` : `On ${onText(shows[0], 'UK streaming')}` },
-    !showing.includes('movie') && films[0] && { eye: `No. 1 film ${where}`, it: films[0], type: 'movie', sub: s ? `${films[0].year || ''}` : `On ${onText(films[0], 'UK streaming')}` },
-    climbIt && { eye: 'Biggest climber this week', it: climbIt, type: climbIt.type, sub: `Up ${climb.by} to No. ${climb.to} ${chartName(climb.c).replace(/^(show|film) /, '')}` },
-    fresh && { eye: `New on ${svc(fresh.service)?.label || 'streaming'}`, it: fresh, type: fresh.type, sub: [fresh.type === 'movie' ? 'Film' : fresh.season ? `Season ${fresh.season}` : 'Series', fresh.date === todayIso() ? 'Today' : ''].filter(Boolean).join(' · '), svcs: svc(fresh.service) ? [svc(fresh.service)] : [] },
-    showing.includes('tv') && shows[1] && { eye: `No. 2 show ${where}`, it: shows[1], type: 'tv', sub: s ? `${shows[1].year || ''}` : `On ${onText(shows[1], 'UK streaming')}` },
-    showing.includes('movie') && films[1] && { eye: `No. 2 film ${where}`, it: films[1], type: 'movie', sub: s ? `${films[1].year || ''}` : `On ${onText(films[1], 'UK streaming')}` },
-    shows[2] && { eye: `No. 3 show ${where}`, it: shows[2], type: 'tv', sub: s ? `${shows[2].year || ''}` : `On ${onText(shows[2], 'UK streaming')}` },
-  ].filter(Boolean);
-  const seen = new Set(), picks = [];
-  for (const p of cands) { const id = p.it.title.toLowerCase(); if (!seen.has(id) && picks.length < 3) { seen.add(id); picks.push(p); } }
-  if (!picks.length) return '';
-  return `<section class="feats" aria-label="Highlights"><div class="feat-row">${picks.map((p) => {
-    const it = p.it, wide = it.backdrop ? it.backdrop.replace('/w1280/', '/w780/') : null;
-    return `<a class="feat" href="${esc(it.url || "#new")}" target="_blank" rel="noopener" ${reg(infoFor(it, p.type, p.eye, p.svcs || (s && !s.mine ? [s] : null)))}>
-      <span class="f-eye">${esc(p.eye)}</span>
-      <span class="f-title">${esc(it.title)}</span>
-      <span class="f-sub">${esc(p.sub)}</span>
-      <span class="f-img">
-        ${wide ? `<img src="${esc(wide)}" alt="" loading="lazy" decoding="async">` : it.poster ? `<img class="blur" src="${esc(it.poster)}" alt="" loading="lazy">` : placeholder(it)}
-        ${it.overview ? `<span class="f-cap">${esc(firstSentence(it.overview))}</span>` : ''}
-        ${it.poster ? `<img class="f-thumb" src="${esc(it.poster)}" alt="" loading="lazy">` : ''}
-      </span></a>`;
-  }).join('')}</div></section>`;
-}
 
-// The best-rated ten on the service (or all six), as a tidy list in columns like "Best New Songs": rank, a small
-// poster, title and where it's on. The posters above already show the chart, so this list shows something else:
-// the catalogue's highest-rated titles with enough votes to trust (the same test as Browse's Top rated).
-function topRated(k, s) {
-  const c = state.cat; if (!c?.items) return [];
-  const pass = (min) => c.items.filter((x) => x.t === k && x.r && x.v >= min && (s?.mine ? x.s.some((k) => s.keys.includes(k)) : s ? x.s.includes(s.key) : x.s.length));
-  let l = pass(300); if (l.length < 10) l = pass(100);   // a smaller service may need a lower bar to fill ten
-  return l.sort((a, b) => b.r - a.r || b.v - a.v).slice(0, 10).map((x) => ({
-    id: x.i, title: x.n, year: (x.d || '').slice(0, 4), rating: x.r, on: x.s, url: tmdbUrl(k, x.i),
-    poster: x.img ? (x.img.startsWith('/') ? c.img + x.img : x.img) : null,
-  }));
-}
-function chartList(s, k = state.kind) {
-  // if the catalogue has too few, it's left out rather than repeating the posters above
-  const list = topRated(k, s);
-  if (!list.length) return '';
-  const q = { c: 'top', ...(k === 'movie' ? { k: 'movie' } : {}), ...(s ? { s: s.mine ? s.keys.join(',') : s.key } : {}) };
-  const browse = `browse.html#${new URLSearchParams(q)}`;
-  return `<section class="clist" aria-labelledby="cl-h-${k}">
-    <div class="row-hd"><h2 class="row-h" id="cl-h-${k}">Top rated ${words(k).toLowerCase()} at a glance</h2>
-      <a class="see-all" href="${esc(browse)}">See more in Browse<span class="chev" aria-hidden="true"></span></a></div>
-    <ol class="cl">${list.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(infoFor(it, k, `No. ${i + 1} top rated${s ? ` on ${s.label}` : ''}`))}>
-      <span class="cl-n">${i + 1}</span>
-      ${it.poster ? `<img src="${esc(thumb(it.poster))}" alt="" loading="lazy" decoding="async">` : `<span class="cl-ph" style="background:hsl(${hue(it.title)} 45% 35%)"></span>`}
-      <span class="cl-t"><b>${esc(it.title)}</b><small>${esc([s && !s.mine ? '' : onText(it), it.season, it.year].filter(Boolean).join(' · '))}</small></span>
-      ${it.rating ? `<span class="cl-r">★ ${it.rating.toFixed(1)}</span>` : ''}
-    </a></li>`).join('')}</ol>
-  </section>`;
-}
 
-// New this week, as a row of posters (from Watchmode), filtered to the service you're looking at.
-function newRow(s) {
-  const f = state.fresh; if (!f?.items?.length) return '';
-  const today = todayIso();
-  let items = f.items.filter((x) => !s || (s.mine ? s.keys.includes(x.service) : x.service === s.key));
-  const wk = new Date(Date.parse(today + 'T12:00:00Z') + 7 * 864e5).toISOString().slice(0, 10);   // the next week's arrivals after them (the rest are in Coming soon)
-  items = [...items.filter((x) => x.date <= today).reverse(), ...items.filter((x) => x.date > today && x.date <= wk)].slice(0, 14);
-  if (!items.length) return '';
-  const when = (d) => d === today ? 'Today' : new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
-  return `<section class="nrow" aria-labelledby="nr-h">
-    <h2 class="row-h" id="nr-h"><a href="#new">New This Week<span class="chev" aria-hidden="true"></span></a></h2>
-    <ul class="nr">${items.map((x) => {
-      const sv = svc(x.service), what = x.type === 'movie' ? 'Film' : x.season ? `Season ${x.season}` : 'Series';
-      const body = `<span class="nr-art">${x.poster ? `<img src="${esc(x.poster)}" alt="" loading="lazy">` : placeholder({ title: x.title })}${sv?.logo ? `<img class="nr-svc" src="${esc(sv.logo)}" alt="${esc(sv.label)}" data-tip="${esc(sv.label)}">` : ''}</span>
-        <b>${esc(x.title)}</b><small>${esc(what)} · ${esc(when(x.date))}</small>`;
-      return `<li>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener" ${reg(infoFor(x, x.type, `New on ${sv?.label || 'streaming'}: ${when(x.date)}`, sv ? [sv] : []))}>${body}</a>` : `<span>${body}</span>`}</li>`;
-    }).join('')}</ul>
-  </section>`;
-}
+
 
 // ---------- the Watchlist: titles you've saved from a title sheet (on this device, and in your account if you sign in) ----------
 const wlKey = (it, type) => (/^\d+$/.test(String(it.id ?? '')) ? `${type === 'movie' ? 'm' : 't'}${it.id}` : null);
@@ -748,17 +273,6 @@ function comingUp(list) {
       <span class="nr-art">${x.poster ? `<img src="${esc(x.poster)}" alt="" loading="lazy">` : placeholder({ title: x.title })}<span class="cu-when">${esc(window.tn.whenText(n[0]))}</span></span>
       <b>${esc(x.title)}</b><small>Season ${n[1]}, episode ${n[2]}</small></a></li>`; }).join('')}</ul></section>`;
 }
-// On the Top 10: your saved titles as a row of posters, the way into the Watchlist on phones
-function savedRow() {
-  const list = window.tn.saved.all().slice(0, 14); if (!list.length) return '';
-  const spots = chartSpots();
-  return `<section class="nrow" aria-labelledby="wl-h">
-    <h2 class="row-h" id="wl-h"><a href="#watchlist">Your Watchlist<span class="chev" aria-hidden="true"></span></a></h2>
-    <ul class="nr">${list.map((x) => `<li><a href="${esc(tmdbUrl(x.type, x.k.slice(1)))}" target="_blank" rel="noopener" ${reg(wlInfo(x, spots.get(x.k) || 'In your Watchlist'))}>
-      <span class="nr-art">${x.poster ? `<img src="${esc(x.poster)}" alt="" loading="lazy">` : placeholder({ title: x.title })}</span>
-      <b>${esc(x.title)}</b><small>${esc(spots.get(x.k) || [x.type === 'movie' ? 'Film' : 'Series', x.year].filter(Boolean).join(' · '))}</small></a></li>`).join('')}</ul>
-  </section>`;
-}
 view.addEventListener('click', (e) => {
   const b = e.target.closest('[data-unsave]'); if (!b) return;
   const li = b.closest('li'), next = li.nextElementSibling || li.previousElementSibling, k = b.dataset.unsave;
@@ -780,14 +294,6 @@ function weekCard(x, sub) {
   return `<li><a href="${esc(tmdbUrl(it.type, it.id))}" target="_blank" rel="noopener" ${reg(weekInfo(x, sub))}>
     <span class="nr-art">${it.poster ? `<img src="${esc(it.poster)}" alt="" loading="lazy">` : placeholder(it)}</span>
     <b>${esc(it.title)}</b><small>${esc(sub)}</small></a></li>`;
-}
-// On the Top 10: a taste of the week, the way in
-function weekRow() {
-  const w = state.week; if (!w?.climbers?.length) return '';
-  return `<section class="nrow" aria-labelledby="wk-h">
-    <h2 class="row-h" id="wk-h"><a href="#new">This Week<span class="chev" aria-hidden="true"></span></a></h2>
-    <ul class="nr">${w.climbers.slice(0, 8).map((x) => weekCard(x, `▲${x.by} to No. ${x.to} ${chartName(x.c)}`)).join('')}</ul>
-  </section>`;
 }
 
 // New This Week, newest first; then Coming soon (the next month, each with Add to Calendar) and Leaving soon
@@ -890,78 +396,7 @@ function toast(text) {
   clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.hidden = true), 2600);
 }
 
-// ---------- poster row arrows ----------
-let rowAbort; // each render gets fresh listeners; the old row's are dropped with it
-function wireScroller() {
-  rowAbort?.abort(); rowAbort = new AbortController();
-  const sig = { signal: rowAbort.signal, passive: true };
-  document.querySelectorAll('.row-wrap').forEach((wrap) => wireRow(wrap, sig));
-}
-function wireRow(wrap, sig) {   // one poster row: its arrows, its frosted edges and dragging
-  const row = wrap.querySelector('.posters'), prev = wrap.querySelector('.scroller.prev'), next = wrap.querySelector('.scroller.next');
-  const update = () => {
-    const start = row.scrollLeft < 8, end = row.scrollLeft + row.clientWidth >= row.scrollWidth - 8;
-    prev.disabled = start; next.disabled = end;
-    wrap.classList.toggle('at-start', start); wrap.classList.toggle('at-end', end); // each frosted edge glides away at its end
-  };
-  const by = (dir) => row.scrollBy({ left: dir * row.clientWidth * 0.75, behavior: reduceMotion ? 'auto' : 'smooth' });
-  prev.addEventListener('click', () => by(-1), sig);
-  next.addEventListener('click', () => by(1), sig);
-  row.addEventListener('scroll', update, sig);
-  addEventListener('resize', update, sig);
-  update();
-  wireDrag(row, sig);
-}
-
-// Drag the row with a mouse: it follows the hand, keeps the fling's momentum, then settles onto the nearest card.
-// Mouse only; touch screens scroll the row natively.
-const finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
-function wireDrag(row, sig) {
-  if (!finePointer) return;
-  let down = false, dragging = false, startX = 0, startLeft = 0, lastX = 0, lastT = 0, v = 0, raf = 0, moved = 0;
-  const snapStops = () => [...row.children].map((li) => li.offsetLeft - parseFloat(getComputedStyle(row).scrollPaddingLeft || 0));
-  const settle = () => {
-    const stops = snapStops(), at = row.scrollLeft;
-    const target = stops.reduce((best, x) => (Math.abs(x - at) < Math.abs(best - at) ? x : best), stops[0] ?? 0);
-    row.scrollTo({ left: Math.max(0, target), behavior: reduceMotion ? 'auto' : 'smooth' });
-    setTimeout(() => row.classList.remove('dragging'), reduceMotion ? 0 : 420);
-  };
-  row.addEventListener('pointerdown', (e) => {
-    if (e.pointerType !== 'mouse' || e.button !== 0) return;
-    cancelAnimationFrame(raf);
-    down = true; dragging = false; moved = 0; v = 0;
-    startX = lastX = e.clientX; startLeft = row.scrollLeft; lastT = performance.now();
-  }, sig);
-  addEventListener('pointermove', (e) => {
-    if (!down) return;
-    const dx = e.clientX - startX;
-    if (!dragging && Math.abs(dx) > 5) { dragging = true; row.classList.add('dragging'); }
-    if (!dragging) return;
-    moved = Math.abs(dx);
-    row.scrollLeft = startLeft - dx;
-    const now = performance.now(), dt = Math.max(1, now - lastT);
-    v = 0.75 * v + 0.25 * ((lastX - e.clientX) / dt); // px per ms, smoothed
-    lastX = e.clientX; lastT = now;
-  }, sig);
-  const release = () => {
-    if (!down) return; down = false;
-    if (!dragging) return;
-    if (reduceMotion) { settle(); return; }
-    let vel = v * 16; // px per frame
-    const glide = () => {
-      vel *= 0.935; row.scrollLeft += vel;
-      const atEdge = row.scrollLeft <= 0 || row.scrollLeft + row.clientWidth >= row.scrollWidth - 1;
-      if (Math.abs(vel) > 0.6 && !atEdge) raf = requestAnimationFrame(glide); else settle();
-    };
-    raf = requestAnimationFrame(glide);
-  };
-  addEventListener('pointerup', release, sig);
-  addEventListener('pointercancel', release, sig);
-  row.addEventListener('click', (e) => { if (moved > 5) { e.preventDefault(); e.stopPropagation(); moved = 0; } }, { signal: sig.signal, capture: true });
-  row.addEventListener('dragstart', (e) => e.preventDefault(), { signal: sig.signal });
-}
-
-// ---------- tabs (pages): Home, Top 10, New, Browse, Discover (phones), Cast & Crew, Watchlist, About. The bar itself lives in shell.js ----------
+// ---------- tabs (pages): Home, New, Browse, Discover (phones), Cast & Crew, Watchlist, About. The bar itself lives in shell.js ----------
 const selectTab = (name) => window.tnShell.select(name);
 function openTab(name) {
   if (name === 'home') { location.href = './'; return; }
@@ -969,20 +404,10 @@ function openTab(name) {
   if (name === 'browse') { location.href = 'browse.html'; return; }
   if (name === 'people') { location.href = 'people.html'; return; }   // Cast & Crew
   if (name === 'discover') { location.href = 'discover.html'; return; }   // Discover (phones)
-  const at = state.route === 'new' || state.route === 'watchlist' ? state.route : 'top';
-  if (name === at) { scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }); return; } // tap the open tab: back to the top
-  location.hash = name === 'new' || name === 'watchlist' ? name : (state.lastChart || 'top');
+  if (name === state.route) { scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }); return; } // tap the open tab: back to the top
+  if (name === 'new' || name === 'watchlist') location.hash = name; else location.href = './';
 }
 window.tnOnTab = openTab;
-
-// ---------- Shows, Films or both: the menu under the heading ----------
-function setKind(k) {
-  if (k === state.kind) return;
-  state.kind = k;
-  try { localStorage.setItem('tenner-kind', k); } catch {}
-  render();
-}
-$('#kindSel').addEventListener('change', (e) => setKind(e.target.value));
 
 addEventListener('hashchange', () => { route(); scrollTo(0, 0); });
 addEventListener('popstate', () => state.trending && openFromUrl());   // Forward to a title you'd closed opens it again

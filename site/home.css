@@ -258,9 +258,18 @@ body.home { overflow-x: clip; }
 .bx-tv-ic svg { width: 26px; height: 26px; }
 
 /* the Top 10, numbered */
-.bx-tt-n { flex: none; width: 22px; text-align: center; font: 700 17px/1 var(--font); font-variant-numeric: tabular-nums; color: var(--label2); }
-.bx-tt-sub { margin: 10px 0 2px; font: 600 13px/1.2 var(--font); color: var(--label2); }
-.bx-tt-sub:first-of-type { margin-top: 2px; }
+.bx-tt a { gap: 10px; padding: 4px 8px; }
+.bx-tt .bx-up-art { width: 26px; }
+.bx-tt .bx-up-copy { gap: 1px; }
+.bx-tt .bx-up-copy b { font-size: 14px; }
+.bx-tt .bx-up-copy small { font-size: 12px; }
+.bx-tt-n { flex: none; width: 18px; text-align: center; font: 600 15px/1 var(--font); font-variant-numeric: tabular-nums; color: var(--label2); }
+.bx-tt-sub { margin: 8px 0 0; font: 600 12.5px/1.2 var(--font); color: var(--label2); }
+.bx-tt-sub:first-of-type { margin-top: 0; }
+.bx-tt-box:not(.open) .bx-tt-x { display: none; }
+.bx-tt-box.open .bx-tt-x { animation: bxTtIn .35s var(--ease-out) both; }
+@keyframes bxTtIn { from { opacity: 0; translate: 0 -6px; } }
+.bx-tt-more { display: block; margin: 6px auto 0; min-height: 44px; padding: 0 12px; }
 
 /* What should I watch tonight?: the three floating icons over the question */
 .bx-tn-art .tn-fl { position: absolute; }

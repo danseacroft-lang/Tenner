@@ -12,7 +12,7 @@
     const p = prefs.get(), th = (() => { try { return localStorage.getItem('tenner-theme') || 'dark'; } catch { return 'dark'; } })();
     const kind = (() => { try { return localStorage.getItem('tenner-kind') || 'tv'; } catch { return 'tv'; } })();
     form.theme.value = ['auto', 'light', 'dark'].includes(th) ? th : 'dark';
-    form.kind.value = kind; form.start.value = p.start; form.trailers.value = p.trailers;
+    form.kind.value = kind; form.start.value = ['new', 'watchlist'].includes(p.start) ? p.start : 'auto'; form.trailers.value = p.trailers;
     for (const k of ['anim', 'moves', 'ratings', 'hero', 'autoplay', 'no18']) form[k].checked = !!p[k];
     const m = mine.get();
     document.getElementById('mineNow').textContent = m.length ? m.map((k) => LABELS[k] || k).join(', ') : 'All six';

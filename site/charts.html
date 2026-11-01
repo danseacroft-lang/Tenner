@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Top 10 · Tenner</title>
+  <title>New This Week · Tenner</title>
   <meta name="description" content="The UK's top 10 shows and films right now on Netflix, Disney+, Prime Video, HBO Max, Paramount+ and Apple TV. Updated every hour.">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
@@ -35,6 +35,8 @@
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
 
+  <script>/* the Top 10 lives on Home now: this page keeps New and Watchlist, and anything else goes home */
+  if(!/^#(new|watchlist|week)$/.test(location.hash))location.replace("./"+location.search)</script>
   <script>/* Night is the default; Day or Auto only when chosen */
   function tnTheme(t){var r=document.documentElement;if(t==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",t);
     var c=t==="auto"?null:(t==="light"?"#ffffff":"#000000");document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){if(!m.dataset.c)m.dataset.c=m.content;m.content=c||m.dataset.c;});}
@@ -42,10 +44,10 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=2.20.0">
+  <link rel="stylesheet" href="styles.css?v=2.21.0">
 </head>
 <body>
-  <a class="skip" href="#main">Skip to the chart</a>
+  <a class="skip" href="#main">Skip to the page</a>
 
   <!-- Filters for the neon rank numbers -->
   <svg class="defs" aria-hidden="true" focusable="false">
@@ -78,10 +80,6 @@
         <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.4 12 4l8 6.4V20h-5v-5.6H9V20H4z"/></svg>
         <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><path class="solid" d="M3.4 10.2 12 3.3l8.6 6.9V20.6h-5.8v-5.8H9.2v5.8H3.4z"/></svg>
         <span>Home</span></button>
-      <button type="button" role="tab" data-tab="top" aria-selected="true">
-        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4.5h8v5a4 4 0 0 1-8 0z"/><path d="M8 6.5H5.5a2.5 2.5 0 0 0 2.6 3.4M16 6.5h2.5a2.5 2.5 0 0 1-2.6 3.4M12 13.5v3.5M8.5 20h7M10 17h4"/></svg>
-        <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><path class="solid" d="M7.3 3.8h9.4v5.7a4.7 4.7 0 0 1-9.4 0z"/><path class="thick" d="M7.6 6.5H5.5a2.5 2.5 0 0 0 2.6 3.4M16.4 6.5h2.1a2.5 2.5 0 0 1-2.6 3.4M12 14v3M8.5 20h7"/></svg>
-        <span>Top 10</span></button>
       <button type="button" role="tab" data-tab="new" aria-selected="false" tabindex="-1">
         <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3.5l1.8 4.9 4.9 1.8-4.9 1.8-1.8 4.9-1.8-4.9-4.9-1.8 4.9-1.8z"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z"/></svg>
         <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><path class="solid" d="M10.5 2.5l2.1 5.4 5.4 2.1-5.4 2.1-2.1 5.4-2.1-5.4L3 10l5.4-2.1z"/><path class="solid" d="M18 13.5l1.1 2.4 2.4 1.1-2.4 1.1L18 20.5l-1.1-2.4-2.4-1.1 2.4-1.1z"/></svg>
@@ -95,7 +93,7 @@
         <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><rect class="solid" x="8.6" y="3" width="10.5" height="15" rx="2.6" transform="rotate(12 13.85 10.5)" opacity=".45"/><rect class="solid" x="4.2" y="5.5" width="11" height="15.6" rx="2.8"/></svg>
         <span>Discover</span></button>
       <button type="button" role="tab" data-tab="people" aria-selected="false" tabindex="-1">
-        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 19.5c.8-3.4 3.3-5.3 6.2-5.3s5.4 1.9 6.2 5.3"/><circle cx="17" cy="9.5" r="2.6"/><path d="M16.2 14.4c2.20.0 4.3 1.7 5 4.6"/></svg>
+        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 19.5c.8-3.4 3.3-5.3 6.2-5.3s5.4 1.9 6.2 5.3"/><circle cx="17" cy="9.5" r="2.6"/><path d="M16.2 14.4c2.21.0 4.3 1.7 5 4.6"/></svg>
         <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><circle class="solid" cx="9" cy="8.5" r="3.8"/><path class="solid" d="M2.5 20c.7-3.8 3.4-6.2 6.5-6.2s5.8 2.4 6.5 6.2z"/><circle class="solid" cx="17.2" cy="9.4" r="2.9"/><path class="solid" d="M16.6 14c2.9 0 5 2 5.6 5.4h-4.9c-.2-2-.8-3.8-1.9-5.2z"/></svg>
         <span>Cast &amp; Crew</span></button>
       <button type="button" role="tab" data-tab="watchlist" aria-selected="false" tabindex="-1">
@@ -116,7 +114,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 2.20.0</span>
+      <span class="side-ver">Tenner 2.21.0</span>
     </div>
   </div>
 
@@ -127,41 +125,18 @@
 
 
   <main id="main" tabindex="-1">
-    <!-- computers: the chart's top title as a big backdrop that fades into the page on its left and bottom -->
-    <div class="backdrop" id="backdrop" aria-hidden="true"></div>
-    <!-- the same artwork, mirrored and blurred, under the glass sidebar (Apple's "background extension" effect) -->
-    <div class="bd-ext" id="bdExt" aria-hidden="true"></div>
-    <!-- phones: the top titles as wide banners you swipe through, the Rakuten TV way -->
-    <section class="mban" id="mBan" aria-roledescription="carousel" aria-label="Top of the chart" hidden></section>
-    <section class="intro wrap" id="controls">
-      <h1 id="heading" class="large-title">Top 10</h1>
-      <p class="lede sub">
-        <span id="lede">On all six services in the UK</span>
-        <button type="button" id="refresh" class="updated" aria-live="polite" title="Check for a newer chart">
-          <span class="live-dot" aria-hidden="true"></span><span id="ago">Updated just now</span></button>
-      </p>
-      <div class="controls">
-        <!-- Shows, Films or Both: a pop-up button over the browser's own picker (a native <select>), above the services -->
-        <label class="dd dd-kind" id="kindDD"><span class="dd-l" id="kindL">Shows</span><span class="dd-chev" aria-hidden="true"></span>
-          <select id="kindSel" aria-label="Shows, films or both"><option value="tv">Shows</option><option value="movie">Films</option><option value="both">Shows and films</option></select></label>
-        <!-- the services: a link that opens the picker of the ones you pay for -->
-        <button type="button" class="svc-link" id="svcLink">Choose your services<span class="chev" aria-hidden="true"></span></button>
-        <button type="button" id="shareChart" class="share-chart" title="Share this chart" aria-label="Share this chart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M6 11v8.5h12V11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Share</button>
-      </div>
-    </section>
-
-    <!-- the heading is there from the start (no jump when the chart arrives), except on the pages that don't have one -->
-    <script>try{var h=location.hash.slice(1),s=JSON.parse(localStorage.getItem("tenner-settings")||"{}").start;if(/^(new|watchlist|week)$/.test(h||s||""))document.getElementById("controls").hidden=true}catch(e){}</script>
-    <div id="view"><div class="wrap loading" aria-busy="true"><p class="sk-say">Loading the chart…</p><div class="sk-row" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div></div>
+    <!-- phones: New This Week's arrivals as wide banners you swipe through, the Rakuten TV way -->
+    <section class="mban" id="mBan" aria-roledescription="carousel" aria-label="New this week" hidden></section>
+    <div id="view"><div class="wrap loading" aria-busy="true"><p class="sk-say">Loading…</p><div class="sk-row" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div></div>
   </main>
 
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-  <script src="shell.js?v=2.20.0" defer></script>
-  <script src="links.js?v=2.20.0" defer></script>
-  <script src="sheet.js?v=2.20.0" defer></script>
-  <script src="tonight.js?v=2.20.0" defer></script>
-  <script src="app.js?v=2.20.0" defer></script>
+  <script src="shell.js?v=2.21.0" defer></script>
+  <script src="links.js?v=2.21.0" defer></script>
+  <script src="sheet.js?v=2.21.0" defer></script>
+  <script src="tonight.js?v=2.21.0" defer></script>
+  <script src="app.js?v=2.21.0" defer></script>
 </body>
 </html>
