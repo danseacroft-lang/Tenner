@@ -223,11 +223,9 @@
         <span class="bx-wc-copy"><b>${esc(it.title)}</b><small>${[it.type === 'movie' ? 'Film' : 'Series', it.year].filter(Boolean).map(esc).join(' · ')}${rating(it.rating)}</small></span></a>
         <span class="bx-wc-acts">${svcIcon(on)}${saveBtn(info)}</span></li>`;
     });
-    // top rated: posters with their score in a chip (the first and third references)
-    const pass = (min) => cat.filter((x) => x.r && x.v >= min);
-    let best = pass(300); if (best.length < 10) best = pass(60);
-    const top = best.sort((a, b) => b.r - a.r || b.v - a.v).slice(0, 14).map(fromCat).map((it) => {
-      const info = infoFor(it, 'Top rated');
+    // most popular: posters with their score in a chip (the first and third references)
+    const top = cat.slice().sort((a, b) => b.p - a.p).slice(0, 14).map(fromCat).map((it) => {
+      const info = infoFor(it, 'Popular');
       return `<li class="bx-pc"><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(info)}><span class="bx-pc-art">${poster(it)}</span>${rating(it.rating).replace('bx-star', 'bx-star bx-chip')}
         <span class="bx-pc-copy"><b>${esc(it.title)}</b><small>${esc(it.year)}</small></span></a>${saveBtn(info, ' bx-pc-add')}</li>`;
     });
@@ -239,10 +237,31 @@
         <span class="bx-lp-copy"><b>${esc(it.title)}</b>${rating(it.rating)}</span><small>${esc(new Date(it.date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: it.year === today.slice(0, 4) ? undefined : 'numeric' }))}</small></a></li>`;
     });
     $('#bxRows').innerHTML = row('bxTrend', `Trending ${esc(where())}`, `The top ${words} this hour`, trend, 'bx-row-w', './#top')
-      + row('bxTop', `Top rated${g ? ` in ${esc(g)}` : ''}`, `The best-reviewed ${words}${state.svc === 'all' ? ' on all six' : ` ${where()}`}`, top, 'bx-row-p', 'browse.html')
+      + row('bxTop', `Most popular${g ? ` in ${esc(g)}` : ''}`, `The ${words} most people are looking at${state.svc === 'all' ? ' on all six' : ` ${where()}`}`, top, 'bx-row-p', 'browse.html')
       + row('bxNew', `Latest releases${g ? ` in ${esc(g)}` : ''}`, 'The newest arrivals, most recent first', fresh, 'bx-row-p', './#new')
+      + kinds().map(topList).join('')
       || '<p class="bx-empty">Nothing matches. Try another service or genre.</p>';
     for (const r of main.querySelectorAll('.bx-row')) edges(r);
+  }
+  // top rated at a glance: the home page's chart list (.cl in styles.css), ten each of the best-reviewed shows and films
+  // with enough votes to trust (the same test as Browse's Top rated), kept to the service and genre you've picked
+  function topList(k) {
+    const g = state.genre != null ? state.cat?.genres?.[state.genre] : null;
+    const pool = catalogue().filter((x) => x.t === k && x.r), pass = (min) => pool.filter((x) => x.v >= min);
+    let l = pass(300); if (l.length < 10) l = pass(100);
+    l = l.sort((a, b) => b.r - a.r || b.v - a.v).slice(0, 10).map(fromCat);
+    if (!l.length) return '';
+    const q = new URLSearchParams({ c: 'top', ...(k === 'movie' ? { k: 'movie' } : {}), ...(state.svc !== 'all' ? { s: state.svc } : {}) });
+    const label = (it) => (it.on || []).map((x) => svcOf(x)?.label).filter(Boolean).slice(0, 2).join(', ');
+    return `<section class="clist bx-clist" aria-labelledby="bxCl-${k}">
+      <div class="row-hd"><h2 class="row-h" id="bxCl-${k}">Top rated ${k === 'movie' ? 'films' : 'shows'}${g ? ` in ${esc(g)}` : ''} at a glance</h2>
+        <a class="see-all" href="browse.html#${esc(String(q))}">See more in Browse<span class="chev" aria-hidden="true"></span></a></div>
+      <ol class="cl">${l.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(infoFor(it, `No. ${i + 1} top rated${state.svc === 'all' ? '' : ` ${where()}`}`))}>
+        <span class="cl-n">${i + 1}</span>
+        ${it.poster ? `<img src="${esc(it.poster.replace('/t/p/w342/', '/t/p/w154/'))}" alt="" loading="lazy" decoding="async">` : `<span class="cl-ph" style="background:hsl(${hue(it.title)} 45% 35%)"></span>`}
+        <span class="cl-t"><b>${esc(it.title)}</b><small>${esc([state.svc === 'all' ? label(it) : '', it.year].filter(Boolean).join(' · '))}</small></span>
+        ${it.rating ? `<span class="cl-r">★ ${it.rating.toFixed(1)}</span>` : ''}
+      </a></li>`).join('')}</ol></section>`;
   }
   // each row's arrows, and its edges frosting away when there's more to scroll
   function edges(r) {
