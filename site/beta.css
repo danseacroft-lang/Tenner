@@ -66,16 +66,24 @@ body.beta { overflow-x: clip; }
 .bx-cta svg { width: 18px; height: 18px; }
 
 /* the next featured titles: small posters along the top right (computers), dots along the foot (phones) */
-.bx-h-next { position: absolute; z-index: 2; right: 22px; top: 22px; display: flex; gap: 10px; }
-.bx-h-next button { position: relative; display: grid; gap: 7px; padding: 0; border: 0; background: none; cursor: pointer; color: inherit; -webkit-tap-highlight-color: transparent; }
+/* five posters show at a time (four on smaller computers); the little arrows beside them scroll to the rest */
+.bx-h-next { --n: 5; position: absolute; z-index: 2; right: 18px; top: 18px; display: flex; align-items: flex-start; gap: 6px; }
+.bx-h-strip { --mfl: 18px; --mfr: 18px; display: flex; gap: 10px; max-width: calc(var(--n) * 62px + (var(--n) - 1) * 10px + 8px); padding: 4px; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x mandatory; scroll-padding-inline: 4px;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--mfl), #000 calc(100% - var(--mfr)), transparent); mask-image: linear-gradient(to right, transparent, #000 var(--mfl), #000 calc(100% - var(--mfr)), transparent); }
+.bx-h-strip::-webkit-scrollbar { display: none; }
+.bx-h-strip.at-start { --mfl: 0px; } .bx-h-strip.at-end { --mfr: 0px; }
+.bx-h-strip button { scroll-snap-align: start; flex: none; }
+.bx-h-arr { margin-top: 33px; }
+@media (max-width: 1299px) { .bx-h-next { --n: 4; } }
+.bx-h-strip button { position: relative; display: grid; gap: 7px; padding: 0; border: 0; background: none; cursor: pointer; color: inherit; -webkit-tap-highlight-color: transparent; }
 .bx-h-thumb { display: block; width: 62px; aspect-ratio: 2 / 3; overflow: hidden; border-radius: var(--r); opacity: .62; box-shadow: 0 0 0 1px rgba(255, 255, 255, .22), 0 10px 24px -10px rgba(0, 0, 0, .7); }
 .bx-h-thumb img, .bx-h-thumb .bx-ph { width: 100%; height: 100%; object-fit: cover; }
 .bx-h-bar { height: 3px; border-radius: 2px; background: rgba(255, 255, 255, .28); }
-.bx-h-next [aria-selected="true"] .bx-h-thumb { opacity: 1; box-shadow: 0 0 0 1.5px #fff, 0 12px 26px -10px rgba(0, 0, 0, .8); }
-.bx-h-next [aria-selected="true"] .bx-h-bar { background: linear-gradient(90deg, #ff375f, #ff9f0a, #ffd60a, #30d158, #40c8e0, #5e5ce6, #bf5af2); }
+.bx-h-strip [aria-selected="true"] .bx-h-thumb { opacity: 1; box-shadow: 0 0 0 1.5px #fff, 0 12px 26px -10px rgba(0, 0, 0, .8); }
+.bx-h-strip [aria-selected="true"] .bx-h-bar { background: linear-gradient(90deg, #ff375f, #ff9f0a, #ffd60a, #30d158, #40c8e0, #5e5ce6, #bf5af2); }
 :root:not(.still) .bx-h-thumb { transition: opacity .3s ease, transform .45s var(--ease-spring), box-shadow .3s ease; }
-@media (hover: hover) { .bx-h-next button:hover .bx-h-thumb { opacity: 1; transform: translateY(-3px); } }
-.bx-h-next button:focus-visible { outline: none; } .bx-h-next button:focus-visible .bx-h-thumb { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (hover: hover) { .bx-h-strip button:hover .bx-h-thumb { opacity: 1; transform: translateY(-3px); } }
+.bx-h-strip button:focus-visible { outline: none; } .bx-h-strip button:focus-visible .bx-h-thumb { outline: 2px solid var(--accent); outline-offset: 3px; }
 @media (max-width: 899px) {
   .bx-hero { min-height: 0; aspect-ratio: auto; height: clamp(500px, 128vw, 620px); }
   .bx-h-art::after { background: linear-gradient(to top, rgba(0, 0, 0, .9), rgba(0, 0, 0, .55) 42%, transparent 72%); }
@@ -85,10 +93,12 @@ body.beta { overflow-x: clip; }
   .bx-score dt { font-size: 17px; }
   .bx-h-ov { font-size: 14.5px; -webkit-line-clamp: 2; }
   .bx-h-next { top: auto; right: auto; left: 50%; bottom: 6px; translate: -50% 0; gap: 0; }
-  .bx-h-next button { padding: 10px 4px; }
+  .bx-h-strip { max-width: none; padding: 0; gap: 0; overflow: visible; -webkit-mask-image: none; mask-image: none; }
+  .bx-h-arr { display: none !important; }
+  .bx-h-strip button { padding: 10px 4px; }
   .bx-h-thumb { display: none; }
   .bx-h-bar { width: 7px; height: 7px; border-radius: 50%; background: rgba(255, 255, 255, .45); }
-  .bx-h-next [aria-selected="true"] .bx-h-bar { width: 20px; border-radius: 4px; }
+  .bx-h-strip [aria-selected="true"] .bx-h-bar { width: 20px; border-radius: 4px; }
   :root:not(.still) .bx-h-bar { transition: width .4s var(--ease-spring); }
 }
 @media (max-width: 380px) { .bx-score dd { font-size: 10.5px; } .bx-score div { padding: 0 9px; } .bx-cta { padding: 0 16px 0 14px; } }

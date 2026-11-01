@@ -138,15 +138,19 @@
   let heroList = [], heroTimer = 0;
   function drawHero() {
     const picks = chart(), withArt = picks.filter((p) => p.it.backdrop);
-    heroList = (withArt.length >= 3 ? withArt : picks).slice(0, 5);
+    heroList = (withArt.length >= 3 ? withArt : picks).slice(0, 10);
     const box = $('#bxHero'); box.classList.remove('sk');
     if (!heroList.length) { box.hidden = true; return; }
     box.hidden = false; state.hero = Math.min(state.hero, heroList.length - 1);
     box.innerHTML = `<div class="bx-h-art" id="bxArt"></div>
       <div class="bx-h-copy" id="bxCopy" aria-live="polite"></div>
-      <div class="bx-h-next" role="tablist" aria-label="Featured titles">${heroList.map((p, i) => `<button type="button" role="tab" data-hero="${i}" aria-selected="${i === state.hero}" aria-label="${esc(p.it.title)}" tabindex="${i === state.hero ? 0 : -1}">
-        <span class="bx-h-thumb">${poster(p.it)}</span><span class="bx-h-bar" aria-hidden="true"></span></button>`).join('')}</div>`;
+      <div class="bx-h-next"><button type="button" class="bx-r bx-h-arr" data-harr="-1" aria-label="Back to the first featured titles" hidden>${I.left}</button>
+        <div class="bx-h-strip" id="bxStrip" role="tablist" aria-label="Featured titles">${heroList.map((p, i) => `<button type="button" role="tab" data-hero="${i}" aria-selected="${i === state.hero}" aria-label="${esc(p.it.title)}" tabindex="${i === state.hero ? 0 : -1}">
+        <span class="bx-h-thumb">${poster(p.it)}</span><span class="bx-h-bar" aria-hidden="true"></span></button>`).join('')}</div>
+        <button type="button" class="bx-r bx-h-arr" data-harr="1" aria-label="See more featured titles" hidden>${I.right}</button></div>`;
+    $('#bxStrip').addEventListener('scroll', stripArrows, { passive: true });
     showHero(state.hero, true);
+    requestAnimationFrame(stripArrows);
   }
   function showHero(i, first) {
     state.hero = i; const { it } = heroList[i];
@@ -160,6 +164,10 @@
     ambient(it);
     drawHeroCopy();
     for (const b of $('#bxHero').querySelectorAll('[data-hero]')) { const on = +b.dataset.hero === i; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; }
+    // keep the chosen poster in view in the strip
+    const strip = $('#bxStrip'), b = strip?.querySelector(`[data-hero="${i}"]`);
+    if (b && strip.scrollWidth > strip.clientWidth + 2 && (b.offsetLeft < strip.scrollLeft || b.offsetLeft + b.offsetWidth > strip.scrollLeft + strip.clientWidth))
+      strip.scrollTo({ left: b.offsetLeft - 4, behavior: first || still() ? 'auto' : 'smooth' });
     startHero();
   }
   function drawHeroCopy() {
@@ -191,7 +199,20 @@
     if (!src) { glow.replaceChildren(); ext.replaceChildren(); return; }
     glow.innerHTML = `<img src="${esc(src)}" alt="">`; ext.innerHTML = `<img class="bd-l in" src="${esc(src)}" alt="">`;
   }
-  $('#bxHero').addEventListener('click', (e) => { const b = e.target.closest('[data-hero]'); if (b) { showHero(+b.dataset.hero); } });
+  $('#bxHero').addEventListener('click', (e) => {
+    const a = e.target.closest('[data-harr]');
+    if (a) { const s = $('#bxStrip'); s.scrollBy({ left: +a.dataset.harr * s.clientWidth, behavior: still() ? 'auto' : 'smooth' }); return; }
+    const b = e.target.closest('[data-hero]'); if (b) { showHero(+b.dataset.hero); }
+  });
+  // the little arrows beside the posters: shown only when there are more to see that way
+  function stripArrows() {
+    const s = $('#bxStrip'); if (!s) return;
+    const [back, more] = $('#bxHero').querySelectorAll('[data-harr]'), over = s.scrollWidth > s.clientWidth + 2;
+    back.hidden = !over || s.scrollLeft < 4; more.hidden = !over || s.scrollLeft + s.clientWidth > s.scrollWidth - 4;
+    s.classList.toggle('at-start', s.scrollLeft < 4); s.classList.toggle('at-end', s.scrollLeft + s.clientWidth > s.scrollWidth - 4);
+  }
+  addEventListener('resize', () => requestAnimationFrame(stripArrows));
+  const still = () => reduce || document.documentElement.classList.contains('still');
   // swipe the featured title on phones
   let sx = null;
   $('#bxHero').addEventListener('pointerdown', (e) => { if (e.pointerType !== 'mouse') sx = [e.clientX, e.clientY]; }, { passive: true });
