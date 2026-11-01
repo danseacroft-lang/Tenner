@@ -202,7 +202,7 @@
       tmdb: `https://www.themoviedb.org/${x.type}/${x.k.slice(1)}`, services: (cat?.on.get(x.k) || []).map((s) => cat.svc[s]).filter(Boolean) };
   };
   // on computers, resting the pointer on a poster opens it up into a hover card (sheet.js)
-  window.tnSheet?.hover?.('.pp-known a[data-k]', (a) => titleInfo(a.dataset.k));
+  window.tnSheet?.hover?.('a[data-k]', (a) => titleInfo(a.dataset.k));
   // Back and Forward move between the search and the people you've opened (a title sheet handles its own ?t=)
   addEventListener('popstate', () => {
     const p = new URL(location.href).searchParams.get('p');

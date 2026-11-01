@@ -453,7 +453,7 @@
   // screens a tap opens the sheet, as before. Pages say which posters get one with tnSheet.hover(selector, el → info).
   const fine = matchMedia('(hover: hover) and (pointer: fine)');
   const calm = () => reduce || document.documentElement.classList.contains('still');
-  const hovers = [];
+  const hovers = [], ART = '.nr-art, .art, .pp-art, .cover, img';   // what a card grows out of: the poster
   const hc = Object.assign(document.createElement('div'), { className: 'hc', hidden: true });
   hc.setAttribute('role', 'group'); document.body.append(hc);
   let card = null, hcT = 0, hcWait = null, hcTok = 0, hcShut = 0, hcDirty = false;
@@ -496,7 +496,7 @@
   async function showCard(el, resolve) {
     const tok = ++hcTok, info = await resolve(el);
     if (tok !== hcTok || !info || !el.isConnected || current || !el.matches(':hover')) return;
-    card = { info, el, anchor: el.querySelector('.nr-art, .art, .pp-art, img') || el, d: dataD, cast: undefined }; hcDirty = false;
+    card = { info, el, anchor: el.querySelector(ART) || el.closest('li')?.querySelector(ART) || el, d: dataD, cast: undefined }; hcDirty = false;
     hc.getAnimations().forEach((a) => a.cancel());
     hc.setAttribute('aria-label', info.title);
     hc.innerHTML = `<div class="hc-art">${cardArt(info)}</div><div class="hc-body">${cardBody(card)}</div>`;

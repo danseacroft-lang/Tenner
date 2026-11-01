@@ -465,7 +465,7 @@ view.addEventListener('click', (e) => {
   e.preventDefault(); window.tnSheet?.open(shown.get(a.dataset.sheet));
 });
 // on computers, resting the pointer on a poster opens it up into a hover card (sheet.js)
-window.tnSheet?.hover?.('.pcard a.cover, .nr a[data-sheet]', (a) => shown.get(a.dataset.sheet));
+window.tnSheet?.hover?.('a[data-sheet]:not(.h-cta, .mb-card)', (a) => shown.get(a.dataset.sheet));   // every title, bar the hero's own button
 // a shared link (?t=m123) opens that title's sheet once the chart has loaded
 function openFromUrl() {
   const k = new URL(location.href).searchParams.get('t'); if (!k || window.tnSheet?.isOpen()) return;
