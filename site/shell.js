@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '2.15.2';
+  const version = '2.16.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -475,7 +475,7 @@
       <div class="dr-body" id="drBody"></div></dialog>`);
     const drawer = $('#drawer'), drBody = $('#drBody'), menuBtn = $('#menuBtn');
     // the sidebar's own pieces move into the drawer on phones (and back again on bigger screens), listeners and all
-    const movers = ['.side-search', '.tabbar', '#sideMore', '.side-tv', '.side-about:not(.side-settings):not(.side-tv)', '.top-act', '.side-about.side-settings', '.side-links'].map((q) => $(q)).filter(Boolean);
+    const movers = ['.side-search', '.tabbar', '#sideMore', '.side-about:not(.side-settings)', '.top-act', '.side-about.side-settings', '.side-links'].map((q) => $(q)).filter(Boolean);
     const marks = movers.map((el) => { const m = document.createComment('drawer'); el.before(m); return m; });
     const place = () => {
       if (drawerQ.matches) { movers.forEach((el) => drBody.append(el)); topRow.append(right); }

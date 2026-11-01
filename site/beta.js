@@ -24,6 +24,7 @@
     right: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 5.5 6.5 6.5-6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     up: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V6M6.5 11.5 12 6l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     grid: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2" fill="currentColor"/><rect x="13.5" y="3.5" width="7" height="7" rx="2" fill="currentColor"/><rect x="3.5" y="13.5" width="7" height="7" rx="2" fill="currentColor"/><rect x="13.5" y="13.5" width="7" height="7" rx="2" fill="currentColor"/></svg>',
+    tv: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.8" y="5.5" width="18.4" height="12.5" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M8.5 21h7M9 2.8l3 2.7 3-2.7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     cards: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8.6" y="3" width="10.5" height="15" rx="2.6" transform="rotate(12 13.85 10.5)" fill="currentColor" opacity=".5"/><rect x="4.2" y="5.5" width="11" height="15.6" rx="2.8" fill="currentColor"/></svg>',
   };
 
@@ -298,8 +299,15 @@
   // ---------- the side column: yours ----------
   function drawSide() {
     if (!state.data) return;
-    $('#bxSide').innerHTML = keepWatching() + genres() + climbers();
+    $('#bxSide').innerHTML = keepWatching() + genres() + climbers() + tvGuide();
     markSaved();
+  }
+  // Tenner TV: its own box here instead of a place in the menu, while it's in beta
+  function tvGuide() {
+    return `<section class="bx-panel panel bx-tv" aria-labelledby="bxTv">
+      <div class="bx-tv-hd"><span class="bx-tv-ic" aria-hidden="true">${I.tv}</span><div><h2 id="bxTv">TV Guide</h2><span class="bx-tag">Beta</span></div></div>
+      <p class="bx-panel-say">What’s on Freeview tonight and all week, with reminders for the shows you love. It’s new, so give it a try and tell us what you think.</p>
+      <a class="btn btn-tinted bx-wide" href="https://tv.tenner.stream/">${I.tv}Try the TV Guide</a></section>`;
   }
   // shows you're part-way through (the progress you mark in a title's sheet), else your Watchlist
   function keepWatching() {

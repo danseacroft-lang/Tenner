@@ -202,6 +202,10 @@ body.beta { overflow-x: clip; }
 
 /* ---------- the side column: frosted panels ---------- */
 .bx-panel { padding: 16px 16px 14px; border-radius: var(--r); }
+/* the side boxes: lighter frost, so the page's colours glow through them */
+.bx-panel.panel { --bx-fr: color-mix(in srgb, var(--bg) 38%, transparent); background: var(--bx-fr); -webkit-backdrop-filter: blur(40px) saturate(1.8); backdrop-filter: blur(40px) saturate(1.8);
+  box-shadow: inset 0 0 0 1px var(--fr-rim), inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent); }
+.bx-panel .bx-cws a:hover, .bx-panel .bx-ups a:hover { background: color-mix(in srgb, var(--label) 8%, transparent); }
 .bx-panel h2 { margin: 0; font: 700 19px/1.2 var(--font); letter-spacing: -.02em; }
 .bx-panel-hd { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
 .bx-panel > h2 { margin-bottom: 8px; }
@@ -243,6 +247,13 @@ body.beta { overflow-x: clip; }
 .bx-up-by { display: inline-flex; align-items: center; gap: 2px; flex: none; color: var(--green); font: 600 14px/1 var(--font); font-variant-numeric: tabular-nums; }
 .bx-up-by svg { width: 15px; height: 15px; }
 
+/* Tenner TV: an invitation to try it */
+.bx-tv-hd { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.bx-tv-hd > div { display: flex; align-items: center; gap: 8px; }
+.bx-tv-ic { display: grid; place-items: center; flex: none; width: 46px; height: 46px; border-radius: 12px; color: #fff;
+  background: linear-gradient(150deg, #0a84ff, #5e5ce6 55%, #bf5af2); box-shadow: 0 8px 18px -10px rgba(10, 132, 255, .7); }
+.bx-tv-ic svg { width: 26px; height: 26px; }
+
 /* ---------- placeholders, loading and the rest ---------- */
 .bx-ph { display: grid; place-items: end start; padding: 10px; color: rgba(255, 255, 255, .9); font: 650 13px/1.2 var(--font); text-align: left; }
 .bx-ph.wide { place-items: end start; padding: 14px; font-size: 15px; }
@@ -256,4 +267,4 @@ body.beta { overflow-x: clip; }
 .bx-empty { margin: 30px 0; color: var(--label2); font-size: 15px; }
 .bx-note { margin: 40px 0 8px; text-align: center; font-size: 13px; color: var(--label3); }
 .bx-note a { color: var(--accent); }
-@media (prefers-reduced-transparency: reduce) { .bx-eye, .bx-pills span, .bx-rank, .bx-chip { background: rgba(28, 28, 30, .92); } .bx-amb { display: none; } }
+@media (prefers-reduced-transparency: reduce) { .bx-panel.panel { background: var(--bg2); } .bx-eye, .bx-pills span, .bx-rank, .bx-chip { background: rgba(28, 28, 30, .92); } .bx-amb { display: none; } }
