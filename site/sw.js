@@ -3,7 +3,7 @@
 // last copy kept for when there's no connection, or when the network is too slow to answer within a few seconds. Fonts and icons: from the cache. TMDB's posters: from the cache, the most recent
 // 60 or so. A title's details and cast from the search API, and On TV this week: the network first, the last 150 kept
 // for offline. Everything on your Watchlist (its details and poster) is kept too, so its sheets open on a plane.
-const SHELL = 'tenner-shell-2.4.1', IMGS = 'tenner-img-v1', FONTS = 'tenner-font-v1', API = 'tenner-api-v1', KEEP = 'tenner-keep-v1';   // the shell cache follows the version; fonts never change
+const SHELL = 'tenner-shell-2.5.0', IMGS = 'tenner-img-v1', FONTS = 'tenner-font-v1', API = 'tenner-api-v1', KEEP = 'tenner-keep-v1';   // the shell cache follows the version; fonts never change
 const APIS = 'https://tenner-api.danseacroft.workers.dev', ONAIR = 'https://tenner-tv.danseacroft.workers.dev/api/onair';
 // the hourly data every page reads, fetched when the app is installed (and refreshed in the background where the device
 // allows), so each page opens offline even if it's never been visited
@@ -34,7 +34,7 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(networkFirst(e)); return;
   }
   if (url.hostname === 'image.tmdb.org') { e.respondWith(caches.match(req, { cacheName: KEEP }).then((hit) => hit || cacheFirst(e, IMGS, 60))); return; }
-  if ((url.origin === APIS && /^\/(title|credits)\/[mt]\d+$/.test(url.pathname)) || url.href.startsWith(ONAIR)) e.respondWith(apiFirst(e));
+  if ((url.origin === APIS && /^\/(title|credits|more)\/[mt]\d+$|^\/season\/t\d+\/\d+$|^\/collection\/\d+$/.test(url.pathname)) || url.href.startsWith(ONAIR)) e.respondWith(apiFirst(e));
 });
 // the search API: the network first; with no connection, the copy kept from last time (or the Watchlist's own copy)
 async function apiFirst(e) {

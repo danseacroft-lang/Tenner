@@ -474,8 +474,8 @@ export async function buildLinks(keys, old) {
   return out;
 }
 
-// ---------- Title details: where to watch in the UK, runtime, age rating, trailer ----------
-// One TMDB request per title (details plus watch providers, videos and UK certification), so Tenner can show where to
+// ---------- Title details: where to watch in the UK, runtime, age rating, trailer, logo ----------
+// One TMDB request per title (details plus watch providers, videos, images and UK certification), so Tenner can show where to
 // watch without sending people elsewhere. Charted titles refresh every hour; the rest of the Browse catalogue at most
 // once a day, a slice per run, reusing the live copy in between. Providers are stored once in a shared table.
 const TITLE_V = 1;
@@ -489,7 +489,7 @@ export async function buildTitles(chartKeys, catalogueKeys, prev) {
   const order = due.sort((a, b) => (chartKeys.has(b) - chartKeys.has(a)) || ((old?.items?.[a]?.at || 0) - (old?.items?.[b]?.at || 0))).slice(0, 350);
   const fetched = await pool(order.map((k) => async () => {
     const type = k[0] === 'm' ? 'movie' : 'tv', id = k.slice(1);
-    try { return [k, await tmdb(`/${type}/${id}`, { language: 'en-GB', append_to_response: `watch/providers,videos,${type === 'movie' ? 'release_dates' : 'content_ratings'}` })]; }
+    try { return [k, await tmdb(`/${type}/${id}`, { language: 'en-GB', append_to_response: `watch/providers,videos,images,${type === 'movie' ? 'release_dates' : 'content_ratings'}`, include_image_language: 'en,null' })]; }
     catch { return [k, null]; }
   }));
   for (const [k, d] of fetched) {
@@ -504,13 +504,16 @@ export async function buildTitles(chartKeys, catalogueKeys, prev) {
     const trailer = (vids.find((v) => v.type === 'Trailer' && v.official) || vids.find((v) => v.type === 'Trailer') || vids[0])?.key;
     const runtime = type === 'movie' ? d.runtime : (d.episode_run_time?.[0] || d.last_episode_to_air?.runtime || null);
     const nx = d.next_episode_to_air;   // shows: the next episode's date, for the countdown
+    // its logo, shown over the artwork in place of the name (English or wordless, the best liked; the file name only)
+    const logo = (d.images?.logos || []).filter((x) => x.file_path && (x.iso_639_1 === 'en' || !x.iso_639_1) && x.aspect_ratio >= 1)
+      .sort((a, b) => (b.iso_639_1 === 'en') - (a.iso_639_1 === 'en') || b.vote_average - a.vote_average)[0]?.file_path?.replace(/\.svg$/, '.png');
     items[k] = Object.fromEntries(Object.entries({
       nx: type === 'tv' && nx?.air_date ? [nx.air_date, nx.season_number, nx.episode_number] : undefined,
       sz: type === 'tv' ? (d.seasons || []).filter((s) => s.season_number > 0 && s.episode_count > 0).map((s) => s.episode_count) : undefined,
       en: type === 'tv' && /Ended|Canceled/.test(d.status || '') ? 1 : undefined,
       at: Date.now(), rt: runtime || undefined, se: type === 'tv' ? d.number_of_seasons || undefined : undefined, c: cert || undefined,
       g: (d.genres || []).map((g) => g.name).slice(0, 3), tl: d.tagline || undefined,
-      f: ids(gb.flatrate), fr: ids([...(gb.free || []), ...(gb.ads || [])]), re: ids(gb.rent), bu: ids(gb.buy), tr: trailer,
+      f: ids(gb.flatrate), fr: ids([...(gb.free || []), ...(gb.ads || [])]), re: ids(gb.rent), bu: ids(gb.buy), tr: trailer, lg: logo,
     }).filter(([, v]) => v !== undefined && !(Array.isArray(v) && !v.length)));
   }
   // everything else we still want and already had carries over untouched

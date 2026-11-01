@@ -6,6 +6,10 @@
 //   GET /person/123   one person: biography, and everything they've been in or made
 //   GET /credits/m123 a title's main cast and key crew
 //   GET /find/tt123   the film or show with that IMDb number (for imports and links shared from IMDb)
+//   GET /more/m123    the rest of TMDB's page for a title, for the sheet: its logo, More Like This, trailers and extras,
+//                     seasons, the film series it's part of, reviews, the Information section and its IMDb number
+//   GET /season/t123/2  one season's episodes (name, date, running time, still, description)
+//   GET /collection/123 a film series, in order
 //   /push/…           Watchlist alerts (push.js)
 //   /auth/…, /me…, /share/…  accounts: passkeys, Google, sync, shared lists (auth.js)
 //   /digest/off       the Sunday email's unsubscribe link (digest.js)
@@ -59,16 +63,25 @@ export default {
       path = `/${type}/${k.slice(1)}/${type === 'tv' ? 'aggregate_credits' : 'credits'}`; params = { language: 'en-GB' }; shape = (d) => creditsShape(d, type); ttl = 86400;
     } else if (/^\/find\/tt\d{1,10}$/.test(url.pathname)) {
       path = url.pathname; params = { external_source: 'imdb_id', language: 'en-GB' }; shape = findShape; ttl = 604800;
+    } else if (/^\/more\/[mt]\d{1,9}$/.test(url.pathname)) {
+      const k = url.pathname.split('/')[2], type = k[0] === 'm' ? 'movie' : 'tv';
+      path = `/${type}/${k.slice(1)}`; ttl = 86400; shape = (d) => moreShape(d, type);
+      params = { language: 'en-GB', append_to_response: 'recommendations,similar,external_ids,videos,images,reviews', include_image_language: 'en,null', include_video_language: 'en,null' };
+    } else if (/^\/season\/t\d{1,9}\/\d{1,3}$/.test(url.pathname)) {
+      const [, , k, n] = url.pathname.split('/');
+      path = `/tv/${k.slice(1)}/season/${n}`; params = { language: 'en-GB' }; shape = seasonShape; ttl = 21600;
+    } else if (/^\/collection\/\d{1,9}$/.test(url.pathname)) {
+      path = url.pathname; params = { language: 'en-GB' }; shape = collectionShape; ttl = 604800;
     } else {
       const m = url.pathname.match(/^\/title\/([mt])(\d{1,9})$/);
       if (!m) return json({ error: 'Not found' }, 404, cors);
       const type = m[1] === 'm' ? 'movie' : 'tv';
-      path = `/${type}/${m[2]}`; params = { language: 'en-GB', append_to_response: `watch/providers,videos,${type === 'movie' ? 'release_dates' : 'content_ratings'}` };
+      path = `/${type}/${m[2]}`; params = { language: 'en-GB', append_to_response: `watch/providers,videos,images,${type === 'movie' ? 'release_dates' : 'content_ratings'}`, include_image_language: 'en,null' };
       shape = (d) => titleShape(d, type, m[1] + m[2]); ttl = 21600;
     }
 
     // the edge cache, keyed on the request without its origin
-    const cache = caches.default, key = new Request(`https://tenner-cache/v3${url.pathname}?${new URLSearchParams(params)}`);   // bump v when a shape changes
+    const cache = caches.default, key = new Request(`https://tenner-cache/v4${url.pathname}?${new URLSearchParams(params)}`);   // bump v when a shape changes
     let hit = await cache.match(key);
     if (!hit) {
       const r = await fetch(`${TMDB}${path}?${new URLSearchParams(params)}`, { headers: { authorization: `Bearer ${env.TMDB_TOKEN}`, accept: 'application/json' } });
@@ -121,7 +134,7 @@ function titleShape(d, type, k) {
     en: type === 'tv' && /Ended|Canceled/.test(d.status || '') ? 1 : undefined,
     at: Date.now(), rt: runtime || undefined, se: type === 'tv' ? d.number_of_seasons || undefined : undefined, c: cert || undefined,
     g: (d.genres || []).map((g) => g.name).slice(0, 3), tl: d.tagline || undefined,
-    f: ids(gb.flatrate), fr: ids([...(gb.free || []), ...(gb.ads || [])]), re: ids(gb.rent), bu: ids(gb.buy), tr: trailer,
+    f: ids(gb.flatrate), fr: ids([...(gb.free || []), ...(gb.ads || [])]), re: ids(gb.rent), bu: ids(gb.buy), tr: trailer, lg: logoOf(d),
   }).filter(([, v]) => v !== undefined && !(Array.isArray(v) && !v.length)));
   return {
     logo: `${IMG}/w92`, providers, items: { [k]: item },
@@ -131,6 +144,68 @@ function titleShape(d, type, k) {
   };
 }
 
+// the title's own logo (the Apple TV app shows one over the artwork in place of the name): English or wordless, the
+// best liked; just its file name, as data/titles.json keeps it (shown from TMDB's w500 size)
+function logoOf(d) {
+  const l = (d.images?.logos || []).filter((x) => x.file_path && (x.iso_639_1 === 'en' || !x.iso_639_1) && x.aspect_ratio >= 1)
+    .sort((a, b) => (b.iso_639_1 === 'en') - (a.iso_639_1 === 'en') || b.vote_average - a.vote_average)[0];
+  return l ? l.file_path.replace(/\.svg$/, '.png') : undefined;
+}
+// ---------- the rest of a title's page (the sheet's lower half) ----------
+const cardOf = (x, type) => ({ k: `${type === 'movie' ? 'm' : 't'}${x.id}`, type, title: x.title || x.name, year: yearOf(x),
+  poster: x.poster_path ? `${IMG}/w342${x.poster_path}` : null, rating: x.vote_count >= 20 ? Math.round(x.vote_average * 10) / 10 : null });
+const VIDEO_ORDER = ['Trailer', 'Teaser', 'Clip', 'Featurette', 'Behind the Scenes', 'Bloopers'];
+function moreShape(d, type) {
+  // More Like This: TMDB's recommendations, topped up from its similar titles; nothing adult, and only ones with a poster
+  const seen = new Set([d.id]);
+  const like = [...(d.recommendations?.results || []).map((x) => [x, x.media_type || type]), ...(d.similar?.results || []).map((x) => [x, type])]
+    .filter(([x, t]) => !x.adult && x.poster_path && (t === 'movie' || t === 'tv') && (x.vote_count || 0) >= 10 && !seen.has(`${t}${x.id}`) && seen.add(`${t}${x.id}`))
+    .slice(0, 16).map(([x, t]) => cardOf(x, t));
+  // Trailers & Extras: YouTube only (the player the sheet already uses), official ones first, trailers before clips
+  const vids = (d.videos?.results || []).filter((v) => v.site === 'YouTube' && /^[\w-]{6,20}$/.test(v.key) && VIDEO_ORDER.includes(v.type))
+    .sort((a, b) => (b.official - a.official) || VIDEO_ORDER.indexOf(a.type) - VIDEO_ORDER.indexOf(b.type) || String(b.published_at).localeCompare(String(a.published_at)))
+    .slice(0, 12).map((v) => ({ key: v.key, name: v.name, type: v.type }));
+  // reviews: the first few lines of up to four, newest first, each linking to the whole thing on TMDB
+  const reviews = (d.reviews?.results || []).filter((r) => (r.content || '').trim().length > 60)
+    .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).slice(0, 4).map((r) => ({
+      by: r.author_details?.name || r.author || r.author_details?.username || 'TMDB member', stars: r.author_details?.rating ?? null,
+      text: r.content.replace(/\r/g, '').replace(/[*_#>`]+/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/\s+/g, ' ').trim().slice(0, 600),
+      at: (r.created_at || '').slice(0, 10), url: /^https:\/\/www\.themoviedb\.org\//.test(r.url || '') ? r.url : null }));
+  const names = (l, n = 3) => (l || []).map((x) => x.name || x.english_name).filter(Boolean).slice(0, n);
+  const lang = (d.spoken_languages || []).find((l) => l.iso_639_1 === d.original_language)?.english_name || null;
+  const x = d.external_ids || {};
+  const out = {
+    logo: logoOf(d) ? `${IMG}/w500${logoOf(d)}` : null, like, vids, reviews,
+    imdb: /^tt\d+$/.test(x.imdb_id || d.imdb_id || '') ? x.imdb_id || d.imdb_id : null,
+    home: /^https?:\/\//.test(d.homepage || '') ? d.homepage : null,
+    info: Object.fromEntries(Object.entries({
+      lang, countries: names(d.production_countries, 3).length ? names(d.production_countries, 3) : (d.origin_country || []).slice(0, 3),
+      status: d.status || null, studios: names(d.production_companies, 3),
+      ...(type === 'movie' ? {
+        released: d.release_date || null, budget: d.budget > 0 ? d.budget : null, revenue: d.revenue > 0 ? d.revenue : null,
+      } : {
+        first: d.first_air_date || null, last: d.status !== 'Returning Series' ? d.last_air_date || null : null,
+        networks: names(d.networks, 3), creators: names(d.created_by, 3), eps: d.number_of_episodes || null, kind: d.type || null,
+      }),
+    }).filter(([, v]) => v !== null && !(Array.isArray(v) && !v.length))),
+  };
+  if (type === 'movie' && d.belongs_to_collection?.id) out.col = { id: d.belongs_to_collection.id, name: d.belongs_to_collection.name };
+  if (type === 'tv') out.seasons = (d.seasons || []).filter((s) => s.episode_count > 0)
+    .sort((a, b) => (a.season_number === 0) - (b.season_number === 0) || a.season_number - b.season_number)
+    .map((s) => ({ n: s.season_number, name: s.name || (s.season_number ? `Season ${s.season_number}` : 'Specials'), eps: s.episode_count, year: (s.air_date || '').slice(0, 4) || null }));
+  return out;
+}
+function seasonShape(d) {
+  return {
+    n: d.season_number, name: d.name || null, overview: (d.overview || '').trim(),
+    eps: (d.episodes || []).map((e) => ({ n: e.episode_number, name: e.name || `Episode ${e.episode_number}`, date: e.air_date || null, rt: e.runtime || null,
+      still: e.still_path ? `${IMG}/w300${e.still_path}` : null, ov: (e.overview || '').trim().slice(0, 500), rating: e.vote_count >= 5 ? Math.round(e.vote_average * 10) / 10 : null })),
+  };
+}
+function collectionShape(d) {
+  return { id: d.id, name: d.name, overview: (d.overview || '').trim(),
+    parts: (d.parts || []).filter((x) => !x.adult).sort((a, b) => (a.release_date || '9999').localeCompare(b.release_date || '9999')).map((x) => cardOf(x, 'movie')) };
+}
 // Each title's own page on Netflix, Disney+, Prime Video, HBO Max and Apple TV, from Wikidata (as the hourly job does)
 async function addLinks(body) {
   const k = Object.keys(body.items)[0], type = k[0] === 'm' ? 'movie' : 'tv', id = k.slice(1);

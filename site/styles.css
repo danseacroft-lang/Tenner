@@ -906,8 +906,8 @@ a.tb-btn:hover { text-decoration: none; }
 .sh-next b { font-weight: 600; color: var(--accent); }
 .sh-next span { color: var(--label2); font-size: 14px; }
 .sh-next.done { background: var(--fill); } .sh-next.done b { color: var(--label2); }
-.sh-prog, .sh-track, .sh-cast { margin-top: 22px; padding-top: 18px; border-top: .5px solid var(--sep); }
-.sh-prog h3, .sh-track h3, .sh-cast h3 { margin: 0 0 10px; font: 700 20px/1.2 var(--font); letter-spacing: .004em; }
+.sh-prog, .sh-track, .sh-cast, .sh-sec { margin-top: 22px; padding-top: 18px; border-top: .5px solid var(--sep); }
+.sh-prog h3, .sh-track h3, .sh-cast h3, .sh-sec h3 { margin: 0 0 10px; font: 700 20px/1.2 var(--font); letter-spacing: .004em; }
 /* Cast & Crew in the sheet: a row of round faces, Apple TV style */
 .sh-faces { display: grid; grid-auto-flow: column; grid-auto-columns: 88px; gap: 14px; margin: 0 -24px; padding: 4px 24px 6px; list-style: none;
   overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding-left: 24px; scrollbar-width: none; }
@@ -1183,6 +1183,82 @@ a.sh-prov:hover { text-decoration: none; }
 .sh-none { margin: 0; color: var(--label2); font-size: 15px; }
 .sh-foot { margin: 20px 0 0; font-size: 12px; color: var(--label3); }
 .sh-foot a { color: var(--label2); }
+.sh-foot a + a::before { content: "·"; display: inline-block; margin-right: 4px; color: var(--label3); }
+
+/* the title's logo over the artwork in place of its name (the Apple TV way), above the poster, where the picture is
+   still strong; it gives way to a trailer as the poster does. Only light or colourful logos are used (sheet.js checks) */
+.sh-logo { position: absolute; z-index: 1; left: 24px; bottom: 112px; max-width: min(58%, 340px); max-height: 92px; width: auto; height: auto;
+  object-fit: contain; object-position: left bottom; pointer-events: none; opacity: 0; transition: opacity .5s ease;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .35)) drop-shadow(0 4px 18px rgba(0, 0, 0, .35)); }
+.sh-art:not(:has(.sh-poster)) .sh-logo { bottom: 22%; }
+.sh-logo.on { opacity: 1; }
+.sh-art.auto .sh-logo { opacity: 0; }
+.sh-vh { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.sh-sec.sh-in, .sh-eps.sh-in { animation: fadeOnly .35s ease-out; }
+/* rows that scroll sideways in the sheet: episodes, extras, the film series, More Like This, reviews */
+.sh-eps, .sh-vids, .sh-revs, .sheet .nr { list-style: none; display: grid; grid-auto-flow: column; gap: 14px; margin: 0 -24px; padding: 2px 24px 6px;
+  overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding-left: 24px; scrollbar-width: none; }
+.sh-eps::-webkit-scrollbar, .sh-vids::-webkit-scrollbar, .sh-revs::-webkit-scrollbar { display: none; }
+.sh-eps li, .sh-vids li, .sh-revs li { scroll-snap-align: start; min-width: 0; }
+.sheet .nr { grid-auto-columns: 112px; gap: 12px; }
+.sheet .nr .ph { display: grid; place-items: end start; color: #fff; font: 600 13px/1.2 var(--font); }
+.sheet .nr li > span[aria-current] .nr-art { box-shadow: 0 0 0 2px var(--accent); }
+.sheet .nr li > span[aria-current] small { color: var(--accent); }
+/* Episodes: the season menu beside the heading, then each episode's picture, number, name and description */
+.sh-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.sheet .sh-h h3 { margin: 0; }
+.sh-seas select { height: 36px; max-width: 200px; padding: 0 28px 0 12px; border-radius: var(--r-ctl); border: 0; font: 500 15px/1 var(--font); color: var(--label);
+  appearance: none; cursor: pointer; background: var(--frost) var(--pop-chev) no-repeat right 11px center / 8px 13px; box-shadow: var(--frost-line);
+  text-overflow: ellipsis; -webkit-font-smoothing: antialiased; }
+.sh-seas select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sh-seas1 { font-size: 15px; color: var(--label2); }
+.sh-eps { grid-auto-columns: 232px; }
+.sh-eps li { display: grid; align-content: start; gap: 3px; }
+.sh-still { position: relative; display: block; aspect-ratio: 16 / 9; margin-bottom: 6px; border-radius: 10px; overflow: hidden; background: var(--fill); box-shadow: 0 0 0 .5px var(--sep); }
+.sh-still img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.sh-tick { position: absolute; right: 7px; bottom: 7px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; color: #fff;
+  background: rgba(20, 20, 24, .55); -webkit-backdrop-filter: blur(12px) saturate(160%); backdrop-filter: blur(12px) saturate(160%); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .25); }
+.sh-tick svg { width: 14px; height: 14px; }
+.sh-epn { font: 600 12px/1.3 var(--font); letter-spacing: .04em; text-transform: uppercase; color: var(--label2); }
+.sh-eps [data-up] .sh-epn { color: var(--accent); }
+.sh-eps b { font: 600 15px/1.25 var(--font); letter-spacing: -.012em; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.sh-eps p { margin: 2px 0 0; font-size: 13px; line-height: 1.4; color: var(--label2); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.sh-eps small:last-child { margin-top: 2px; font-size: 12px; color: var(--label3); font-variant-numeric: tabular-nums; }
+.sh-eps .soon .sh-still { opacity: .55; }
+.sh-eps .sk b, .sh-eps .sk small { height: 12px; border-radius: 6px; background: var(--fill); }
+.sh-eps .sk b { width: 80%; margin-top: 4px; } .sh-eps .sk small { width: 50%; }
+@media (prefers-reduced-transparency: reduce) { .sh-tick { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(20, 20, 24, .85); } }
+/* Trailers & Extras: YouTube's picture for each, a glass play button on it */
+.sh-vids { grid-auto-columns: 208px; }
+.sh-vids button { display: grid; gap: 2px; width: 100%; padding: 0; border: 0; border-radius: 10px; color: inherit; background: none; font: inherit; text-align: left; cursor: pointer; }
+.sh-vimg { position: relative; display: block; aspect-ratio: 16 / 9; margin-bottom: 6px; border-radius: 10px; overflow: hidden; background: var(--fill);
+  box-shadow: 0 0 0 .5px var(--sep), 0 6px 16px -8px rgba(0, 0, 0, .5); transition: translate .35s var(--ease-out); }
+.sh-vimg img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.sh-vimg i { position: absolute; left: 50%; top: 50%; display: grid; place-items: center; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; color: #fff;
+  background: rgba(20, 20, 24, .45); -webkit-backdrop-filter: blur(12px) saturate(160%); backdrop-filter: blur(12px) saturate(160%); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .3); }
+.sh-vimg i svg { width: 16px; height: 16px; margin-left: 2px; }
+.sh-vids b { font: 500 14px/1.25 var(--font); letter-spacing: -.012em; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.sh-vids small { font-size: 12px; color: var(--label2); }
+.sh-vids button:focus-visible { outline: none; } .sh-vids button:focus-visible .sh-vimg { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
+@media (hover: hover) { .sh-vids button:hover .sh-vimg { translate: 0 -3px; } }
+@media (prefers-reduced-transparency: reduce) { .sh-vimg i { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(20, 20, 24, .8); } }
+/* Reviews: soft cards, the start of each review */
+.sh-revs { grid-auto-columns: min(300px, 78vw); }
+.sh-revs li > * { display: grid; align-content: start; gap: 6px; height: 100%; box-sizing: border-box; padding: 14px 16px; border-radius: 16px; color: inherit; background: var(--fill); text-decoration: none; transition: background-color .2s ease; }
+.sh-revs a:hover { text-decoration: none; }
+@media (hover: hover) { .sh-revs a:hover { background: var(--gl-hover, var(--fill)); } }
+.sh-revs a:active { filter: var(--press); }
+.sh-revs a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sh-rby { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.sh-rby b { font: 600 15px/1.25 var(--font); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.sh-rst { flex: none; font-size: 13px; font-weight: 600; color: var(--label2); font-variant-numeric: tabular-nums; }
+.sh-revs p { margin: 0; font-size: 14px; line-height: 1.45; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; overflow: hidden; }
+.sh-revs small { font-size: 12px; color: var(--label2); }
+/* Information: label above value, two columns */
+.sh-info { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 20px; margin: 0; }
+.sh-info dt { font-size: 13px; color: var(--label2); }
+.sh-info dd { margin: 2px 0 0; font-size: 15px; line-height: 1.35; overflow-wrap: anywhere; }
+@media (max-width: 340px) { .sh-info { grid-template-columns: minmax(0, 1fr); } }
 
 /* phones: a bottom sheet that slides up, with a handle; swipe it down to close */
 @media (max-width: 719px) {
@@ -1192,7 +1268,9 @@ a.sh-prov:hover { text-decoration: none; }
   .sh-grab { display: block; position: absolute; z-index: 3; top: 6px; left: 50%; width: 38px; height: 5px; margin-left: -19px; border-radius: 3px;
     background: rgba(255, 255, 255, .7); box-shadow: 0 0 0 .5px rgba(0, 0, 0, .15); touch-action: none; }
   .sh-body { padding: 16px 18px 24px; }
-  .sh-faces { margin: 0 -18px; padding-inline: 18px; scroll-padding-left: 18px; }
+  .sh-faces, .sh-eps, .sh-vids, .sh-revs, .sheet .nr { margin: 0 -18px; padding-inline: 18px; scroll-padding-left: 18px; }
+  .sh-logo { left: 18px; bottom: 92px; max-height: 64px; }
+  .sh-eps { grid-auto-columns: 216px; } .sh-vids { grid-auto-columns: 184px; } .sheet .nr { grid-auto-columns: 104px; }
   .sh-art:has(.sh-poster) + .sh-body { padding-top: 40px; }
   .sh-poster { left: 18px; width: 76px; }
   .sheet h2 { font-size: 24px; }

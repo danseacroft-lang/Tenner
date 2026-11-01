@@ -2,7 +2,9 @@
 // app way. Artwork, title, year, running time, age rating, star rating, genres, the description, a trailer, and where
 // to watch grouped as Included with, Free, Rent and Buy. A bottom sheet on phones (swipe it down to close), a centred
 // card on computers. The address gains ?t=… so a title can be shared, and Back closes it.
-// Details come from data/titles.json (rebuilt hourly), fetched the first time a sheet opens.
+// Details come from data/titles.json (rebuilt hourly), fetched the first time a sheet opens. The rest of TMDB's page for a
+// title (its logo, episodes, trailers and extras, the film series, More Like This, reviews and Information) comes from the
+// search API as the sheet opens, and fills in below.
 (() => {
   const { esc, hue, reduce, saved, progress, nextUp, whenText } = window.tn;
   // the chart history (data/trail.json: each charted title's recent ranks), loaded with the first sheet
@@ -108,7 +110,7 @@
   // and closes it with Escape (or the back gesture on Android); the dimmed page behind is its ::backdrop
   const sheet = $('#sheet'), body = $('#shScroll');
   body.addEventListener('scroll', () => sheet.classList.toggle('sh-scrolled', body.scrollTop > 30), { passive: true });   // the poster steps aside
-  let current = null, opener = null, pushed = false, pageTitle = document.title;
+  let current = null, opener = null, pushed = 0, pageTitle = document.title;   // pushed: titles opened from here, one history step each
 
   const runtime = (m) => !m ? '' : m < 60 ? `${m}m` : `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}`;
   const { brand, link: linkFor } = window.tnLinks;   // links.js: every service's tested link
@@ -205,6 +207,17 @@
     if (!castCache.has(k)) castCache.set(k, fetch(`${window.tn.api}/credits/${k}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
     return castCache.get(k);
   };
+  // the rest of TMDB's page for a title, a season's episodes, and a film series, each fetched once from the search API
+  const getOnce = (cache, path) => {
+    if (!window.tn.api) return Promise.resolve(null);
+    if (!cache.has(path)) cache.set(path, fetch(`${window.tn.api}${path}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
+    return cache.get(path);
+  };
+  const moreC = new Map(), moreD = new Map();
+  const moreFor = (k) => (/^[mt]\d+$/.test(k || '') ? getOnce(moreC, `/more/${k}`).then((m) => { if (m) moreD.set(k, m); return m; }) : Promise.resolve(null));
+  const seasonFor = (k, n) => getOnce(moreC, `/season/${k}/${n}`);
+  const seriesFor = (id) => getOnce(moreC, `/collection/${id}`);
+  const LOGO = 'https://image.tmdb.org/t/p/w500';
   // the description: from wherever the title was opened, or the search API when that had none (the Watchlist, a shared
   // link, Cast & Crew) or only a shortened one; a few grey placeholder lines hold its place meanwhile. Four lines, then More.
   const ovLive = (info) => (!info.overview || info.overview.endsWith('…')) && !info.ovDone && window.tn.api && /^[mt]\d+$/.test(info.k || '');
@@ -236,8 +249,134 @@
       <b>${esc(p.name)}</b><small>${esc(p.role)}</small></a></li>`).join('')}</ul>`;
     sec.hidden = false;
   }
+  // ---------- the lower half: episodes, trailers and extras, the film series, More Like This, reviews, Information ----------
+  const longDate = (iso) => (iso ? new Date(iso + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '');
+  const shortDate = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', ...(iso.slice(0, 4) !== String(new Date().getFullYear()) ? { year: 'numeric' } : {}) });
+  const today = () => new Date().toISOString().slice(0, 10);
+  // a row of posters (More Like This, the film series), each opening its own sheet
+  function postersHtml(list, here) {
+    return `<ul class="nr sh-nr">${list.map((t) => {
+      const ph = `<span class="ph" style="background:linear-gradient(160deg,hsl(${hue(t.title)} 45% 42%),hsl(${(hue(t.title) + 40) % 360} 55% 18%))">${esc(t.title)}</span>`;
+      const inner = `<span class="nr-art">${t.poster ? `<img src="${esc(t.poster)}" alt="" loading="lazy" decoding="async">` : ph}</span><b>${esc(t.title)}</b><small>${esc(t.k === here ? 'You’re here' : [t.year, t.rating ? `★ ${t.rating.toFixed(1)}` : ''].filter(Boolean).join(' · '))}</small>`;
+      return `<li>${t.k === here ? `<span aria-current="page">${inner}</span>` : `<a href="?t=${esc(t.k)}" data-open="${esc(t.k)}">${inner}</a>`}</li>`;
+    }).join('')}</ul>`;
+  }
+  const rowInfo = new Map();   // what each poster in those rows knows, for opening its sheet
+  const remember = (list) => { for (const t of list) rowInfo.set(t.k, { ...t, tmdb: `https://www.themoviedb.org/${t.type}/${t.k.slice(1)}` }); return list; };
+  // Episodes: the season menu, then the season's episodes side by side (Apple TV style), ticked off up to where you are
+  function episodesSkel() { return `<ul class="sh-eps" aria-hidden="true">${'<li class="sk"><span class="sh-still"></span><b></b><small></small></li>'.repeat(3)}</ul>`; }
+  function episodesHtml(info, m, n) {
+    const ss = m?.seasons || []; if (!ss.length) return '';
+    const opts = ss.map((s) => `<option value="${s.n}"${s.n === n ? ' selected' : ''}>${esc(s.name)}</option>`).join('');
+    return `<section class="sh-sec sh-epsec" aria-labelledby="shE"><div class="sh-h"><h3 id="shE">Episodes</h3>
+      ${ss.length > 1 ? `<label class="sh-seas"><span class="sh-vh">Season</span><select data-season>${opts}</select></label>` : `<span class="sh-seas1">${esc(ss[0].name)}</span>`}</div>
+      <div id="shEps">${episodesSkel()}</div></section>`;
+  }
+  async function fillEpisodes(info, n) {
+    const box = $('#shEps'); if (!box) return;
+    const se = await seasonFor(info.k, n), el = $('#shEps');
+    if (current !== info || !el || +($('[data-season]')?.value ?? n) !== n) return;
+    if (!se?.eps?.length) { el.innerHTML = '<p class="sh-none">No episode details for this season yet.</p>'; return; }
+    const p = progress.get(info.k), done = (e) => n > 0 && p && (n < p[0] || (n === p[0] && e <= p[1])), up = nextUp(p, shown?.items?.[info.k]?.sz);
+    const now = today();
+    el.innerHTML = `<ul class="sh-eps">${se.eps.map((e) => {
+      const soon = e.date && e.date > now, when = e.date ? (soon ? `Out ${shortDate(e.date)}` : shortDate(e.date)) : '';
+      const nextOne = up && up[0] === n && up[1] === e.n;
+      return `<li${nextOne ? ' data-up' : ''}${soon ? ' class="soon"' : ''}><span class="sh-still">${e.still ? `<img src="${esc(e.still)}" alt="" loading="lazy" decoding="async">` : ''}${done(e.n) ? '<i class="sh-tick" aria-label="Watched"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 8.4 2.6 2.6L12 5.4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></i>' : ''}</span>
+        <small class="sh-epn">${nextOne ? 'Up next · ' : ''}Episode ${e.n}</small><b>${esc(e.name)}</b>${e.ov ? `<p>${esc(e.ov)}</p>` : ''}<small>${esc([when, runtime(e.rt)].filter(Boolean).join(' · '))}</small></li>`;
+    }).join('')}</ul>`;
+    if (!reduce) el.firstChild.classList.add('sh-in');
+    // the row starts at the episode you're up to
+    const row = el.firstChild, at = row.querySelector('[data-up]');
+    if (at) row.scrollLeft = at.offsetLeft - row.firstChild.offsetLeft;
+  }
+  // Trailers & Extras: YouTube's pictures for each, playing in the artwork like the Trailer button
+  const VTYPE = { Trailer: 'Trailer', Teaser: 'Teaser', Clip: 'Clip', Featurette: 'Featurette', 'Behind the Scenes': 'Behind the scenes', Bloopers: 'Bloopers' };
+  const vidsHtml = (m) => (m?.vids?.length > (m.vids.length === 1 && m.vids[0].key === shown?.items?.[current?.k]?.tr ? 1 : 0) ? `<section class="sh-sec" aria-labelledby="shV"><h3 id="shV">Trailers &amp; Extras</h3>
+    <ul class="sh-vids">${m.vids.map((v) => `<li><button type="button" data-vid="${esc(v.key)}" data-vname="${esc(v.name)}"><span class="sh-vimg"><img src="https://i.ytimg.com/vi/${esc(v.key)}/mqdefault.jpg" alt="" loading="lazy" decoding="async"><i aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 3.2v9.6L12.6 8z" fill="currentColor"/></svg></i></span>
+      <b>${esc(v.name)}</b><small>${esc(VTYPE[v.type] || v.type)}</small></button></li>`).join('')}</ul></section>` : '');
+  // reviews: the start of each, the whole thing on TMDB
+  const revsHtml = (m) => (m?.reviews?.length ? `<section class="sh-sec" aria-labelledby="shR"><h3 id="shR">Reviews</h3><ul class="sh-revs">${m.reviews.map((r) => {
+    const inner = `<span class="sh-rby"><b>${esc(r.by)}</b>${r.stars ? `<span class="sh-rst" aria-label="${r.stars} out of 10">★ ${esc(String(r.stars))}/10</span>` : ''}</span><p>${esc(r.text)}</p><small>${esc(r.at ? shortDate(r.at) : '')}${r.url ? ' · Read on TMDB' : ''}</small>`;
+    return `<li>${r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${inner}</a>` : `<div>${inner}</div>`}</li>`;
+  }).join('')}</ul></section>` : '');
+  // Information, as at the foot of the Apple TV app's pages
+  const usd = (n) => (n >= 1e9 ? `$${(n / 1e9).toFixed(2).replace(/\.?0+$/, '')} billion` : n >= 1e6 ? `$${Math.round(n / 1e6)} million` : `$${n.toLocaleString('en-GB')}`);
+  const STATUS = { 'Returning Series': 'Returning series', Ended: 'Ended', Canceled: 'Cancelled', 'In Production': 'In production', Planned: 'Planned', Pilot: 'Pilot',
+    Released: '', 'Post Production': 'Coming soon', Rumored: 'Rumoured' };
+  let regionName = null; try { regionName = new Intl.DisplayNames(['en-GB'], { type: 'region' }); } catch {}
+  const country = (c) => { try { return (c.length === 2 && regionName?.of(c)) || c; } catch { return c; } };
+  function infoHtml(info, x, m) {
+    const i = m?.info; if (!i) return '';
+    const tv = info.type === 'tv', list = (l) => (l || []).join(', ');
+    const rows = (tv ? [
+      ['First shown', longDate(i.first)], ['Last shown', longDate(i.last)], ['On', list(i.networks)], ['Created by', list(i.creators)],
+      ['Episodes', i.eps ? `${i.eps} across ${x.se || (m.seasons || []).filter((s) => s.n > 0).length} season${(x.se || 0) === 1 ? '' : 's'}` : ''],
+      ['Status', STATUS[i.status] ?? i.status],
+    ] : [
+      ['Released', longDate(i.released)], ['Running time', runtime(x.rt)], ['Rated', x.c || ''], ['Studio', list(i.studios)],
+      ['Budget', i.budget ? usd(i.budget) : ''], ['Box office', i.revenue ? usd(i.revenue) : ''], ['Status', STATUS[i.status] ?? ''],
+    ]).concat([['Original language', i.lang || ''], [(i.countries || []).length > 1 ? 'Countries' : 'Country', list((i.countries || []).map(country))]]).filter(([, v]) => v);
+    if (tv && i.studios?.length) rows.splice(4, 0, ['Studio', list(i.studios)]);
+    return rows.length ? `<section class="sh-sec" aria-labelledby="shI"><h3 id="shI">Information</h3><dl class="sh-info">${rows.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl></section>` : '';
+  }
+  let gen = 0;   // which drawing of the sheet is on screen, so a late answer only fills the drawing it was meant for
+  async function fillMore(info) {
+    const g = gen, m = await moreFor(info.k);
+    if (g !== gen) return;
+    if (current !== info || !m) { if (current === info) $('#shEpsWrap')?.remove(); return; }
+    const x = shown?.items?.[info.k] || {};
+    // the logo, where the hourly details didn't have one
+    if (!x.lg && m.logo) showLogo(info, m.logo);
+    // episodes, at the season you're up to
+    const wrap = $('#shEpsWrap');
+    if (wrap && info.type === 'tv') {
+      const p = progress.get(info.k), up = nextUp(p, x.sz), ns = (m.seasons || []).map((s) => s.n);
+      const n = [up?.[0], p?.[0], 1].find((v) => ns.includes(v)) ?? ns[0];
+      wrap.outerHTML = episodesHtml(info, m, n); if (ns.length) fillEpisodes(info, n);
+    }
+    const series = m.col ? await seriesFor(m.col.id) : null;
+    if (current !== info || g !== gen) return;
+    remember(m.like || []); if (series?.parts) remember(series.parts);
+    const vids = $('#shVidsWrap'), lower = $('#shLower');
+    if (vids) vids.outerHTML = vidsHtml(m);
+    if (lower) {
+      lower.innerHTML = [
+        series?.parts?.length > 1 ? `<section class="sh-sec" aria-labelledby="shS"><h3 id="shS">${esc(series.name)}</h3>${postersHtml(series.parts, info.k)}</section>` : '',
+        m.like?.length ? `<section class="sh-sec" aria-labelledby="shL"><h3 id="shL">More Like This</h3>${postersHtml(m.like)}</section>` : '',
+        revsHtml(m), infoHtml(info, x, m),
+      ].join('');
+      if (!reduce) for (const s of lower.children) s.classList.add('sh-in');
+    }
+    const foot = $('#shFoot');
+    if (foot) foot.insertAdjacentHTML('beforeend', [m.imdb ? ` <a href="https://www.imdb.com/title/${esc(m.imdb)}/" target="_blank" rel="noopener">IMDb</a>` : '',
+      m.home ? ` <a href="${esc(m.home)}" target="_blank" rel="noopener">Official site</a>` : ''].join(''));
+  }
+  // the logo over the artwork in place of the name, the Apple TV way: only once it has loaded, and only a light or colourful
+  // one (a dark logo would vanish on the artwork's dark edge), so the name is never lost
+  const okLogo = new Set();   // logos already checked: drawn straight away next time
+  const logoTag = (info, src) => `<img class="sh-logo on" src="${esc(src)}" alt="${esc(info.title)}" crossorigin="anonymous">`;
+  function showLogo(info, src) {
+    const art = $('#shArt'); if (!art || art.querySelector('.sh-logo') || okLogo.has(src)) return;
+    const img = new Image(); img.crossOrigin = 'anonymous'; img.alt = info.title; img.className = 'sh-logo'; img.decoding = 'async';
+    img.onload = () => {
+      if (current !== info || !art.isConnected) return;
+      try {
+        const c = document.createElement('canvas'), w = (c.width = 60), h = (c.height = Math.max(8, Math.round(60 * img.naturalHeight / img.naturalWidth)));
+        const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0, w, h);
+        const px = g.getImageData(0, 0, w, h).data; let lum = 0, n = 0;
+        for (let i = 0; i < px.length; i += 4) if (px[i + 3] > 128) { lum += 0.2126 * px[i] + 0.7152 * px[i + 1] + 0.0722 * px[i + 2]; n++; }
+        if (!n || lum / n < 110) return;   // too dark to read: the name stays
+      } catch { return; }
+      okLogo.add(src); art.append(img); $('#shT')?.classList.add('sh-vh'); art.classList.add('has-logo');
+      requestAnimationFrame(() => img.classList.add('on'));
+    };
+    img.src = src;
+  }
   function render(info, d) {
+    gen++;
     const x = d?.items?.[info.k] || {};
+    const lg = x.lg ? LOGO + x.lg : moreD.get(info.k)?.logo, lgOk = lg && okLogo.has(lg);
     const meta = [info.type === 'tv' ? (x.se ? `${x.se} season${x.se === 1 ? '' : 's'}` : 'Series') : 'Film', info.year, runtime(x.rt),
       x.c ? `<b class="sh-cert">${esc(x.c)}</b>` : '', info.rating ? `★ ${Number(info.rating).toFixed(1)}` : ''].filter(Boolean);
     const genres = (x.g?.length ? x.g : info.genres || []).join(' · ');
@@ -245,10 +384,10 @@
       : info.poster ? `<img class="soft" src="${esc(info.poster)}" alt="" decoding="async">`
       : `<span class="ph" style="background:linear-gradient(160deg,hsl(${hue(info.title)} 45% 42%),hsl(${(hue(info.title) + 40) % 360} 55% 18%))"></span>`;
     body.innerHTML = `
-      <div class="sh-art" id="shArt">${art}${info.poster ? `<img class="sh-poster" src="${esc(info.poster)}" alt="">` : ''}</div>
+      <div class="sh-art${lgOk ? ' has-logo' : ''}" id="shArt">${art}${info.poster ? `<img class="sh-poster" src="${esc(info.poster)}" alt="">` : ''}${lgOk ? logoTag(info, lg) : ''}</div>
       <div class="sh-body">
         ${eyeHtml(info.eye)}
-        <h2 id="shT">${esc(info.title)}</h2>
+        <h2 id="shT"${lgOk ? ' class="sh-vh"' : ''}>${esc(info.title)}</h2>
         <p class="sh-meta">${meta.map(String).map((m) => (m.startsWith('<b') ? m : esc(m))).join('<span aria-hidden="true"> · </span>')}</p>
         ${genres ? `<p class="sh-genres">${esc(genres)}</p>` : ''}
         ${nextHtml(info, x)}
@@ -257,20 +396,28 @@
         ${ovHtml(info)}
         <section class="sh-where" aria-labelledby="shW"><h3 id="shW">Where to Watch</h3>${whereHtml(info, d)}</section>
         ${progressHtml(info, x)}
+        ${info.type === 'tv' && d ? `<section class="sh-sec sh-epsec" id="shEpsWrap" aria-label="Episodes"><div class="sh-h"><h3>Episodes</h3></div>${episodesSkel()}</section>` : ''}
         ${chartHtml(info)}
+        <div id="shVidsWrap"></div>
         <section class="sh-cast" id="shCast" aria-labelledby="shCC" hidden></section>
-        <p class="sh-foot">Where-to-watch information from JustWatch, via TMDB.${info.tmdb ? ` <a href="${esc(info.tmdb)}" target="_blank" rel="noopener">More on TMDB</a>` : ''}</p>
+        <div id="shLower"></div>
+        <p class="sh-foot" id="shFoot">Where-to-watch information from JustWatch, via TMDB.${info.tmdb ? ` <a href="${esc(info.tmdb)}" target="_blank" rel="noopener">More on TMDB</a>` : ''}</p>
       </div>`;
     fillCast(info); fillOv(info);
+    if (lg && !lgOk) showLogo(info, lg);
+    if (d) fillMore(info);
   }
 
   // ---------- open and close ----------
+  const seenInfo = new Map();   // each title opened this visit, for Back inside the sheet
   async function open(info, fromUrl, opts) {
     if (!info) return;
     hideCard(true, true);
+    if (info.k) seenInfo.set(info.k, info);
     info.watch ||= info.tmdb ? `${info.tmdb}/watch?locale=GB` : info.netflix || '#';
     if (!current) pageTitle = document.title;
-    current = info; opener = fromUrl ? null : document.activeElement;
+    if (!sheet.open) { opener = fromUrl ? null : document.activeElement; firstPushed = !fromUrl; }
+    current = info; moreFor(info.k);   // start on the lower half straight away
     render(info, null);
     sheet.style.translate = '';
     if (!sheet.open) sheet.showModal();
@@ -279,7 +426,7 @@
     body.scrollTop = 0; $('#shX').focus({ preventScroll: true });
     if (!fromUrl && info.k) {
       const u = new URL(location.href); u.searchParams.set('t', info.k);
-      history.pushState({ sheet: info.k }, '', u); pushed = true;
+      history.pushState({ sheet: info.k }, '', u); pushed++;
     }
     document.title = `${info.title} | Tenner`;
     let [d] = await Promise.all([details(), trail().then((t) => { trailD = t; }), prices().then((p) => { priceD = p; }), Promise.race([onAir().then((a) => { airD = a; }), new Promise((r) => setTimeout(r, 1500))])]);   // another site: never a reason to wait long
@@ -317,14 +464,22 @@
     document.documentElement.classList.remove('sheet-up');
     const done = () => { if (!current) { sheet.close(); body.innerHTML = ''; } };
     reduce ? done() : setTimeout(done, 320);
-    if (!fromHistory && pushed) { pushed = false; history.back(); }
+    if (!fromHistory && pushed) { tidy = !firstPushed; history.go(-pushed); pushed = 0; }
     else if (!fromHistory) { const u = new URL(location.href); u.searchParams.delete('t'); history.replaceState(null, '', u); }
-    pushed = fromHistory ? false : pushed;
+    if (fromHistory) pushed = 0;
     document.title = pageTitle;
     opener?.focus?.({ preventScroll: true });
     dispatchEvent(new Event('tn:sheet-closed'));
   }
-  addEventListener('popstate', () => { if (current && !new URL(location.href).searchParams.get('t')) close(true); });
+  let tidy = false, firstPushed = false;   // a sheet opened from a link, then others from it: once back, the link's ?t= goes too
+  addEventListener('popstate', () => {
+    if (tidy) { tidy = false; const u = new URL(location.href); u.searchParams.delete('t'); history.replaceState(null, '', u); }
+    if (!current) return;
+    const t = new URL(location.href).searchParams.get('t');
+    if (!t) { close(true); return; }
+    // Back from a title opened in the sheet (More Like This, the film series): the one before it
+    if (t !== current.k && seenInfo.has(t)) { pushed = Math.max(0, pushed - 1); open(seenInfo.get(t), true); }
+  });
   $('#shX').addEventListener('click', () => close());
   // a tap on the dimmed page closes it; Escape (the dialog's own "cancel") too, with the slide-away
   sheet.addEventListener('click', (e) => {
@@ -362,18 +517,30 @@
     if (on) f.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [100] }), 'https://www.youtube-nocookie.com');
     b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', on ? 'Turn the trailer\'s sound off' : 'Turn the trailer\'s sound on');
   }
+  // played in place, at the top, from YouTube's privacy-enhanced player (or on YouTube, if Settings says so)
+  function play(key, title) {
+    if (window.tn.prefs.get().trailers === 'youtube') { window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(key)}`, '_blank', 'noopener'); return; }
+    clearTimeout(autoT);
+    $('#shArt').innerHTML = `<iframe src="${embed(key)}" title="${esc(title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+    $('#shArt').classList.remove('auto', 'has-logo'); $('#shArt').classList.add('playing'); $('#shT')?.classList.remove('sh-vh');
+    body.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+  }
   let thanksT = 0;
+  sheet.addEventListener('click', (e) => {
+    // a poster in More Like This or the film series: its own sheet, in place (Back returns here)
+    const o = e.target.closest('[data-open]');
+    if (o && current && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); const t = rowInfo.get(o.dataset.open); if (t) open({ ...t }); return; }
+    const v = e.target.closest('[data-vid]');
+    if (v && current) play(v.dataset.vid, v.dataset.vname || current.title);
+  });
   sheet.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-act]'); if (!b || !current) return;
     if (b.dataset.act === 'more') { b.parentElement.classList.add('open'); b.remove(); return; }
     if (b.dataset.act === 'trailer') {
       const key = (shown || await details())?.items?.[current.k]?.tr; if (!key) return;
-      if (window.tn.prefs.get().trailers === 'youtube') { window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(key)}`, '_blank', 'noopener'); return; }   // Settings: "Play trailers"
       // already playing by itself with the sound off: Trailer just turns the sound on
       if ($('#shArt').classList.contains('auto')) { sound(true); body.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); return; }
-      // played in place, from YouTube's privacy-enhanced player
-      $('#shArt').innerHTML = `<iframe src="${embed(key)}" title="Trailer: ${esc(current.title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
-      $('#shArt').classList.add('playing'); body.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+      play(key, `Trailer: ${current.title}`);
     }
     if (b.dataset.act === 'sound') sound(b.getAttribute('aria-pressed') !== 'true');
     if (b.dataset.act === 'save') {
@@ -416,9 +583,12 @@
     const sec = sheet.querySelector('.sh-prog'), x = shown?.items?.[current?.k]; if (!sec || !x) return;
     sec.outerHTML = progressHtml(current, x);
     const save = sheet.querySelector('.sh-save'); if (save) save.outerHTML = saveBtn(saved.has(current.k));
+    const ss = sheet.querySelector('[data-season]'); if (ss || $('#shEps .sh-eps:not([aria-hidden])')) fillEpisodes(current, ss ? +ss.value : (moreD.get(current.k)?.seasons?.[0]?.n ?? 1));
     sheet.querySelector(focus === 'watched' ? '[data-act="watched"], [data-pr="e"]' : focus === 'reset' ? '[data-pr="s"]' : `[data-pr="${focus}"]`)?.focus({ preventScroll: true });
   }
   sheet.addEventListener('change', (e) => {
+    const ss = e.target.closest('[data-season]');
+    if (ss && current) { $('#shEps').innerHTML = episodesSkel(); fillEpisodes(current, +ss.value); return; }
     const sel = e.target.closest('[data-pr]'); if (!sel || !current) return;
     const x = shown?.items?.[current.k]; if (!x?.sz) return;
     const p = progress.get(current.k);
