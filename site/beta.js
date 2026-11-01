@@ -25,7 +25,9 @@
     up: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V6M6.5 11.5 12 6l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     grid: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2" fill="currentColor"/><rect x="13.5" y="3.5" width="7" height="7" rx="2" fill="currentColor"/><rect x="3.5" y="13.5" width="7" height="7" rx="2" fill="currentColor"/><rect x="13.5" y="13.5" width="7" height="7" rx="2" fill="currentColor"/></svg>',
     tv: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.8" y="5.5" width="18.4" height="12.5" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M8.5 21h7M9 2.8l3 2.7 3-2.7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    cards: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8.6" y="3" width="10.5" height="15" rx="2.6" transform="rotate(12 13.85 10.5)" fill="currentColor" opacity=".5"/><rect x="4.2" y="5.5" width="11" height="15.6" rx="2.8" fill="currentColor"/></svg>',
+    cross: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>',
+    info: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 10.5v7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="6.4" r="1.6" fill="currentColor"/></svg>',
+    mark: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18.4l-6-4.2-6 4.2z" fill="currentColor"/></svg>',
   };
 
   // ---------- data ----------
@@ -299,7 +301,7 @@
   // ---------- the side column: yours ----------
   function drawSide() {
     if (!state.data) return;
-    $('#bxSide').innerHTML = keepWatching() + genres() + climbers() + tvGuide();
+    $('#bxSide').innerHTML = discover() + genres() + climbers() + tvGuide();
     markSaved();
   }
   // Tenner TV: its own box here instead of a place in the menu, while it's in beta
@@ -309,34 +311,83 @@
       <p class="bx-panel-say">What’s on Freeview tonight and all week, with reminders for the shows you love. It’s new, so give it a try and tell us what you think.</p>
       <a class="btn btn-tinted bx-wide" href="https://tv.tenner.stream/">${I.tv}Try the TV Guide</a></section>`;
   }
-  // shows you're part-way through (the progress you mark in a title's sheet), else your Watchlist
-  function keepWatching() {
-    const saved = window.tn.saved.all(), prog = window.tn.progress.all();
-    const byKey = new Map(saved.map((x) => [x.k, x]));
-    const watching = Object.keys(prog).map((k) => byKey.get(k)).filter(Boolean).slice(0, 4);
-    const card = (x, line, pc) => {
-      const info = { k: x.k, type: x.type, title: x.title, year: x.year, poster: x.poster, tmdb: tmdbUrl(x.type, x.k.slice(1)) };
-      return `<li><a class="bx-cw" href="${esc(info.tmdb)}" target="_blank" rel="noopener" ${reg(info)}>
-        <span class="bx-cw-art">${poster(x)}<span class="bx-cw-play" aria-hidden="true">${I.play}</span></span>
-        <span class="bx-cw-copy"><b>${esc(x.title)}</b><small>${esc(line)}</small>${pc != null ? `<span class="bx-prog" role="img" aria-label="${pc}% watched"><i style="width:${pc}%"></i></span>` : ''}</span></a></li>`;
-    };
-    let body, title = 'Keep watching';
-    if (watching.length) {
-      body = watching.map((x) => {
-        const p = prog[x.k], sz = det(x.k)?.sz, up = window.tn.nextUp(p, sz);
-        const done = sz ? sz.slice(0, p[0] - 1).reduce((a, n) => a + n, 0) + p[1] : null, all = sz ? sz.reduce((a, n) => a + n, 0) : null;
-        return card(x, up ? `Up next: S${up[0]} E${up[1]}` : 'All caught up', all ? Math.round((done / all) * 100) : null);
-      }).join('');
-    } else if (saved.length) {
-      title = 'From your Watchlist';
-      body = saved.slice(0, 4).map((x) => card(x, [x.type === 'movie' ? 'Film' : 'Series', x.year].filter(Boolean).join(' · '))).join('');
-    } else {
-      return `<section class="bx-panel panel" aria-labelledby="bxKw"><h2 id="bxKw">Keep watching</h2>
-        <p class="bx-panel-say">Save titles with ${I.plus.replace('<svg', '<svg class="bx-inline"')} and mark where you’re up to in a show, and they’ll wait for you here.</p>
-        <a class="btn btn-tinted bx-wide" href="discover.html">${I.cards}Find something on Discover</a></section>`;
+  // Discover, in a box: Tenner's swipe deck from Discover, one card at a time. Swipe right (or the bookmark) to add it to
+  // your Watchlist, left (or the cross) to skip it, tap for its details. Skips are shared with the Discover page.
+  const SKIP = 'tenner-skipped';
+  const skips = { all() { try { return JSON.parse(localStorage.getItem(SKIP) || '{}') || {}; } catch { return {}; } },
+    add(k) { const o = skips.all(); o[k] = Date.now(); try { localStorage.setItem(SKIP, JSON.stringify(o)); } catch {} } };
+  let dk = { sig: '', list: [], at: 0 };
+  function deck() {
+    const sig = [state.kind, state.svc, state.genre, state.cat?.generatedAt].join('|');
+    if (sig !== dk.sig) {
+      const skip = skips.all(), have = new Set(window.tn.saved.all().map((x) => x.k));
+      const pool = catalogue().filter((x) => x.img && !skip[`${x.t[0]}${x.i}`] && !have.has(`${x.t[0]}${x.i}`)).sort((a, b) => b.p - a.p).slice(0, 120);
+      for (let i = pool.length - 1; i > 0; i--) { const j = Math.max(0, i - 1 - Math.floor(Math.random() * 6)); [pool[i], pool[j]] = [pool[j], pool[i]]; }   // popular first, shuffled a little
+      dk = { sig, list: pool, at: 0 };
     }
-    return `<section class="bx-panel panel" aria-labelledby="bxKw"><header class="bx-panel-hd"><h2 id="bxKw">${title}</h2><a class="bx-more" href="./#watchlist">See all</a></header><ul class="bx-cws">${body}</ul></section>`;
+    return dk.list[dk.at] ? fromCat(dk.list[dk.at]) : null;
   }
+  function discover() {
+    const it = deck();
+    const head = `<header class="bx-panel-hd"><h2 id="bxDc">Discover</h2><a class="bx-more" href="discover.html">Open</a></header>`;
+    if (!it) return `<section class="bx-panel panel" aria-labelledby="bxDc">${head}<p class="bx-panel-say">You’ve seen everything here for now. Try another service or genre, or come back after the next update.</p></section>`;
+    const info = infoFor(it, 'Discover'), labels = (it.on || []).map((k) => svcOf(k)?.label).filter(Boolean).slice(0, 2).join(', ');
+    return `<section class="bx-panel panel bx-dc" aria-labelledby="bxDc">${head}
+      <p class="bx-panel-say bx-dc-say">Right to save, left to skip</p>
+      <a class="bx-dc-card" id="bxDcCard" href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(info)} draggable="false">
+        <span class="bx-dc-art">${it.poster ? `<img src="${esc(it.poster.replace('/t/p/w342/', '/t/p/w500/'))}" alt="" draggable="false">` : ph(it.title)}</span>
+        <span class="bx-dc-stamp yes" aria-hidden="true">Save</span><span class="bx-dc-stamp no" aria-hidden="true">Skip</span>
+        <span class="bx-dc-copy"><b>${esc(it.title)}</b><small>${[it.type === 'movie' ? 'Film' : 'Series', it.year, labels].filter(Boolean).map(esc).join(' · ')}${rating(it.rating)}</small></span></a>
+      <div class="bx-dc-acts">
+        <button type="button" class="bx-r bx-r-l bx-dc-no" data-dc="no" aria-label="Skip ${esc(it.title)}">${I.cross}</button>
+        <button type="button" class="bx-r bx-dc-info" data-dc="info" aria-label="Details">${I.info}</button>
+        <button type="button" class="bx-r bx-r-l bx-dc-yes" data-dc="yes" aria-label="Add ${esc(it.title)} to your Watchlist">${I.mark}</button>
+      </div></section>`;
+  }
+  // a choice: the card flies off that way, then the next one comes up
+  function decide(yes) {
+    const it = dk.list[dk.at] ? fromCat(dk.list[dk.at]) : null; if (!it) return;
+    const card = $('#bxDcCard'), k = keyOf(it);
+    dk.at++;
+    // the choice lands once the card has gone (a save redraws the side column itself)
+    const next = () => {
+      if (yes) { if (!window.tn.saved.has(k)) window.tn.saved.toggle(infoFor(it)); toast(`${it.title} is on your Watchlist`); } else skips.add(k);
+      const box = $('#bxSide [aria-labelledby="bxDc"]'); if (box && !yes) box.outerHTML = discover();
+    };
+    if (card && !still()) { card.style.transition = 'transform .35s cubic-bezier(.3,.7,.4,1), opacity .35s ease'; card.style.transform = `translateX(${yes ? 130 : -130}%) rotate(${yes ? 14 : -14}deg)`; card.style.opacity = '0'; setTimeout(next, 300); } else next();
+  }
+  $('#bxSide').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-dc]'); if (!b) return;
+    if (b.dataset.dc === 'info') { const a = $('#bxDcCard'); if (a) window.tnSheet?.open(shown.get(a.dataset.sheet)); return; }
+    decide(b.dataset.dc === 'yes');
+  });
+  // swiping the card: it follows your finger (or mouse), tilting a little; let go far enough and it's decided
+  let drag = null;
+  $('#bxSide').addEventListener('pointerdown', (e) => {
+    const card = e.target.closest('#bxDcCard'); if (!card || e.button) return;
+    drag = { card, x: e.clientX, y: e.clientY, dx: 0, moved: false, id: e.pointerId };
+  });
+  addEventListener('pointermove', (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    drag.dx = e.clientX - drag.x; const dy = e.clientY - drag.y;
+    if (!drag.moved && Math.abs(drag.dx) > 8 && Math.abs(drag.dx) > Math.abs(dy)) { drag.moved = true; drag.card.setPointerCapture?.(e.pointerId); drag.card.classList.add('held'); }
+    if (!drag.moved) return;
+    drag.card.style.transform = `translateX(${drag.dx}px) rotate(${drag.dx / 18}deg)`;
+    drag.card.style.setProperty('--yes', Math.max(0, Math.min(1, drag.dx / 90))); drag.card.style.setProperty('--no', Math.max(0, Math.min(1, -drag.dx / 90)));
+  });
+  addEventListener('pointerup', (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const { card, dx, moved } = drag; drag = null; card.classList.remove('held');
+    if (!moved) return;
+    card.addEventListener('click', (c) => { c.preventDefault(); c.stopPropagation(); }, { once: true, capture: true });   // a swipe isn't a tap
+    if (Math.abs(dx) > 90) decide(dx > 0);
+    else { card.style.transform = ''; card.style.setProperty('--yes', 0); card.style.setProperty('--no', 0); }
+  });
+  $('#bxSide').addEventListener('keydown', (e) => {
+    if (!e.target.closest?.('.bx-dc')) return;
+    if (e.key === 'ArrowRight') { e.preventDefault(); decide(true); $('#bxSide [data-dc="yes"]')?.focus(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); decide(false); $('#bxSide [data-dc="no"]')?.focus(); }
+  });
   // genres: pills that narrow the rows (the first reference's genre panel); the chosen one gets Tenner's rainbow underline
   function genres() {
     const c = state.cat; if (!c?.genres) return '';

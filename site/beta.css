@@ -205,29 +205,22 @@ body.beta { overflow-x: clip; }
 /* the side boxes: lighter frost, so the page's colours glow through them */
 .bx-panel.panel { --bx-fr: color-mix(in srgb, var(--bg) 38%, transparent); background: var(--bx-fr); -webkit-backdrop-filter: blur(40px) saturate(1.8); backdrop-filter: blur(40px) saturate(1.8);
   box-shadow: inset 0 0 0 1px var(--fr-rim), inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent); }
-.bx-panel .bx-cws a:hover, .bx-panel .bx-ups a:hover { background: color-mix(in srgb, var(--label) 8%, transparent); }
+.bx-panel .bx-ups a:hover { background: color-mix(in srgb, var(--label) 8%, transparent); }
 .bx-panel h2 { margin: 0; font: 700 19px/1.2 var(--font); letter-spacing: -.02em; }
 .bx-panel-hd { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
 .bx-panel > h2 { margin-bottom: 8px; }
 .bx-panel-say { margin: 0 0 14px; font-size: 14.5px; line-height: 1.45; color: var(--label2); }
-.bx-inline { display: inline-block; width: 15px; height: 15px; vertical-align: -2px; }
 .bx-wide { width: 100%; height: 44px; }
 .bx-wide svg { width: 18px; height: 18px; }
-.bx-cws, .bx-ups { display: grid; margin: 0 -8px; padding: 0; list-style: none; }
-.bx-cws li + li, .bx-ups li + li { border-top: .5px solid var(--fr-rim); }
-.bx-cws a, .bx-ups a { display: flex; align-items: center; gap: 12px; padding: 9px 8px; border-radius: var(--r); color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
-@media (hover: hover) { .bx-cws a:hover, .bx-ups a:hover { background: var(--fr-in); } }
-.bx-cws li:has(a:hover) + li, .bx-ups li:has(a:hover) + li { border-top-color: transparent; }
-.bx-cws a:focus-visible, .bx-ups a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.bx-cw-art { position: relative; flex: none; width: 92px; aspect-ratio: 16 / 10; overflow: hidden; border-radius: var(--r); background: var(--fill); }
-.bx-cw-art img, .bx-cw-art .bx-ph { width: 100%; height: 100%; object-fit: cover; object-position: center 30%; }
-.bx-cw-play { position: absolute; inset: 0; display: grid; place-items: center; }
-.bx-cw-play svg { width: 30px; height: 30px; padding: 7px 6px 7px 8px; border-radius: 50%; color: #fff; background: rgba(34, 34, 38, .62); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
-.bx-cw-copy, .bx-up-copy { display: grid; gap: 3px; flex: 1; min-width: 0; }
-.bx-cw-copy b, .bx-up-copy b { font: 600 15px/1.25 var(--font); letter-spacing: -.012em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bx-cw-copy small, .bx-up-copy small { font-size: 13px; color: var(--label2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bx-prog { display: block; height: 4px; margin-top: 4px; border-radius: 2px; overflow: hidden; background: var(--fr-in); }
-.bx-prog i { display: block; height: 100%; border-radius: inherit; background: #0a84ff; }
+.bx-ups { display: grid; margin: 0 -8px; padding: 0; list-style: none; }
+.bx-ups li + li { border-top: .5px solid var(--fr-rim); }
+.bx-ups a { display: flex; align-items: center; gap: 12px; padding: 9px 8px; border-radius: var(--r); color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+@media (hover: hover) { .bx-ups a:hover { background: var(--fr-in); } }
+.bx-ups li:has(a:hover) + li { border-top-color: transparent; }
+.bx-ups a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.bx-up-copy { display: grid; gap: 3px; flex: 1; min-width: 0; }
+.bx-up-copy b { font: 600 15px/1.25 var(--font); letter-spacing: -.012em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bx-up-copy small { font-size: 13px; color: var(--label2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .bx-gens { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .bx-gen { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; height: 44px; padding: 0 12px 0 14px; border: 0; border-radius: var(--r); cursor: pointer;
@@ -246,6 +239,28 @@ body.beta { overflow-x: clip; }
 .bx-up-art img, .bx-up-art .bx-ph { width: 100%; height: 100%; object-fit: cover; }
 .bx-up-by { display: inline-flex; align-items: center; gap: 2px; flex: none; color: var(--green); font: 600 14px/1 var(--font); font-variant-numeric: tabular-nums; }
 .bx-up-by svg { width: 15px; height: 15px; }
+
+/* Discover in a box: one poster card to swipe, with skip, details and save beneath (the Discover page's deck) */
+.bx-dc { overflow: hidden; }
+.bx-dc-say { margin: -4px 0 12px; font-size: 13px; }
+.bx-dc-card { position: relative; display: block; aspect-ratio: 4 / 5; overflow: hidden; border-radius: var(--r); color: #fff; text-decoration: none; touch-action: pan-y; user-select: none; -webkit-user-select: none;
+  background: var(--fill); box-shadow: 0 0 0 .5px rgba(255, 255, 255, .14), 0 22px 44px -22px rgba(0, 0, 0, .7); cursor: grab; transition: transform .45s var(--ease-spring); -webkit-tap-highlight-color: transparent; }
+.bx-dc-card.held { cursor: grabbing; transition: none; }
+.bx-dc-card:hover { text-decoration: none; }
+.bx-dc-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.bx-dc-art img, .bx-dc-art .bx-ph { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 18%; pointer-events: none; }
+.bx-dc-card::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0, 0, 0, .85), rgba(0, 0, 0, .3) 40%, transparent 62%); }
+.bx-dc-copy { position: absolute; z-index: 1; left: 14px; right: 14px; bottom: 13px; display: grid; gap: 4px; }
+.bx-dc-copy b { font: 700 20px/1.15 var(--font); letter-spacing: -.02em; text-wrap: balance; }
+.bx-dc-copy small { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 13px; color: rgba(255, 255, 255, .8); }
+/* the stamps that fade in as you swipe */
+.bx-dc-stamp { position: absolute; z-index: 2; top: 16px; padding: 6px 12px; border-radius: var(--r); font: 700 16px/1 var(--font); letter-spacing: .02em; text-transform: uppercase; opacity: 0;
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.bx-dc-stamp.yes { left: 14px; color: #30d158; box-shadow: inset 0 0 0 2px #30d158; background: rgba(0, 0, 0, .35); opacity: var(--yes, 0); rotate: -10deg; }
+.bx-dc-stamp.no { right: 14px; color: #ff375f; box-shadow: inset 0 0 0 2px #ff375f; background: rgba(0, 0, 0, .35); opacity: var(--no, 0); rotate: 10deg; }
+.bx-dc-acts { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 14px; }
+.bx-dc-acts .bx-r-l { width: 52px; height: 52px; } .bx-dc-acts .bx-r-l svg { width: 22px; height: 22px; }
+.bx-dc-no { color: #ff375f; } .bx-dc-yes { color: #30d158; }
 
 /* Tenner TV: an invitation to try it */
 .bx-tv-hd { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
