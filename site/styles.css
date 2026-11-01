@@ -1167,7 +1167,7 @@ a.sh-prov:hover { text-decoration: none; }
    so the browser has no motion to set up and every change lands at once */
 .still, .still *, .still *::before, .still *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 .no-moves .mv { display: none !important; }
-.no-ratings .star, .no-ratings .cl-r, .no-ratings .score { display: none !important; }
+.no-ratings .star, .no-ratings .cl-r, .no-ratings .score, .no-ratings .bx-star { display: none !important; }
 
 /* ============================================================ the share card (shell.js), as on Channel Crossings
    Computers: a black card in the middle of the screen (a native modal <dialog>), white pill buttons for each place to

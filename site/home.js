@@ -1,7 +1,8 @@
 // Tenner's home page: a streaming dashboard built from Tenner's own data.
-// A big featured title (its scores in a frosted box, its genres as pills, where to watch and a Watchlist button), the six
-// services as a rail of app icons that filter everything below, rows of what's trending, top rated and newest, and a
-// side column of your own things: shows you're watching, genres to narrow the rows, and this week's biggest climbers.
+// The six services as a rail of app icons that filter everything (with Shows, films or both beside them), a big featured
+// title from what's popular (its scores in a frosted box, its genres as pills, where to watch and a Watchlist button),
+// rows of the most popular and newest, and the top rated at a glance; beside them a column of boxes: Discover's swipe deck,
+// the Top 10 itself, What should I watch tonight?, genres to narrow the rows, this week's biggest climbers and Tenner TV.
 // Reads data/trending.json, browse.json and week.json (rebuilt hourly), and titles.json through the title sheet.
 // The Top 10 lives here (its own page is gone); New and Watchlist live on charts.html, and old links to them here are sent on.
 
@@ -20,7 +21,8 @@
   const LOGO = 'https://image.tmdb.org/t/p/w500';
   const KINDS = { both: 'Shows and films', tv: 'Shows', movie: 'Films' };
   const state = { kind: 'both', svc: 'all', genre: null, hero: 0, data: null, cat: null, week: null, titles: null };
-  try { const k = sessionStorage.getItem('tenner-home-kind'); if (KINDS[k]) state.kind = k; } catch {}
+  // this visit's choice, or else Settings' "Show"
+  try { const k = sessionStorage.getItem('tenner-home-kind') || localStorage.getItem('tenner-kind'); if (KINDS[k]) state.kind = k; } catch {}
 
   // ---------- icons ----------
   const I = {
@@ -265,7 +267,7 @@
       return `<li class="bx-lp"><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(info)}><span class="bx-lp-art">${poster(it)}</span>
         <span class="bx-lp-copy"><b>${esc(it.title)}</b>${rating(it.rating)}</span><small>${esc(new Date(it.date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: it.year === today.slice(0, 4) ? undefined : 'numeric' }))}</small></a></li>`;
     });
-    $('#bxRows').innerHTML = row('bxTop', `Most popular${g ? ` in ${esc(g)}` : ''}`, `The ${words} most people are looking at${state.svc === 'all' ? ' on all six' : ` ${where()}`}`, top, 'bx-row-p', 'browse.html')
+    $('#bxRows').innerHTML = row('bxTop', `Most popular${g ? ` in ${esc(g)}` : ''}`, `The ${words} everyone’s looking at${state.svc === 'all' ? '' : ` ${where()}`}`, top, 'bx-row-p', 'browse.html')
       + row('bxNew', `Latest releases${g ? ` in ${esc(g)}` : ''}`, 'The newest arrivals, most recent first', fresh, 'bx-row-p', 'charts.html#new')
       + kinds().map(topList).join('')
       || '<p class="bx-empty">Nothing matches. Try another service or genre.</p>';
@@ -407,7 +409,10 @@
     state.genre = b.dataset.genre === '' || b.dataset.genre === String(state.genre) ? null : b.dataset.genre;
     morph(() => { drawRows(); drawSide(); markSaved(); });
     $(`#bxSide [data-genre="${state.genre ?? ''}"]`)?.focus({ preventScroll: true });
+    // one column (phones, tablets): the rows that changed are above the boxes, so glide back up to them
+    if (oneCol.matches) requestAnimationFrame(() => $('#bxRows')?.firstElementChild?.scrollIntoView({ block: 'start', behavior: still() ? 'auto' : 'smooth' }));
   });
+  const oneCol = matchMedia('(max-width: 1299px)');
   // the Top 10 itself, numbered and compact, for the kind and service you've picked (with both, the shows then the films):
   // all ten for shows or films; with both, the first five of each, and See more opens the box out to show six to ten
   let ttOpen = false;

@@ -25,7 +25,6 @@
 .set-row:focus-visible, .set-row:has(.set-file:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
 .set-note { min-height: 20px; margin: 12px 4px 0; font-size: 14px; color: var(--green); }
 .set-ver { margin: 18px 0 0; color: var(--label3); font-size: 13px; }
-@media (max-width: 999px) { .set-wide { display: none; } }   /* the featured artwork is a computer thing */
 
 .set-note:empty { display: none; }   /* only takes up room when it has something to say */
 

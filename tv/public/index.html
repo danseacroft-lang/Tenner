@@ -16,7 +16,7 @@
   <meta property="og:description" content="Every UK channel, now and next, and the whole evening.">
   <meta property="og:image" content="https://tenner.stream/og.jpg">
   <link rel="preconnect" href="https://images.metadata.sky.com">
-  <link rel="stylesheet" href="tv.css?v=3.2.4">
+  <link rel="stylesheet" href="tv.css?v=3.2.5">
   <!-- the listings start downloading now, alongside the page's own files (not after them) -->
   <script>(() => { const t = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(Date.now()), q = new URLSearchParams(location.search).get('d'), d = /^\d{4}-\d\d-\d\d$/.test(q || '') && q >= t ? q : t;
     const day = fetch('/api/day?d=' + d), meta = fetch('/data/meta.json').then((r) => (r.ok ? r.json() : null)).catch(() => null); day.catch(() => {});
@@ -27,12 +27,12 @@
   <aside class="side" aria-label="Tenner">
     <a class="side-brand" href="https://tenner.stream/"><img src="logo.svg" alt="" width="34" height="34"><span>Tenner</span></a>
     <nav class="side-nav" aria-label="Pages">
-      <a class="side-row" href="https://tenner.stream/"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4.5h8v5a4 4 0 0 1-8 0z"/><path d="M8 6.5H5.5a2.5 2.5 0 0 0 2.6 3.4M16 6.5h2.5a2.5 2.5 0 0 1-2.6 3.4M12 13.5v3.5M8.5 20h7M10 17h4"/></svg><span>Top 10</span></a>
-      <a class="side-row" href="https://tenner.stream/#new"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 3.5l1.8 4.9 4.9 1.8-4.9 1.8-1.8 4.9-1.8-4.9-4.9-1.8 4.9-1.8z"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z"/></svg><span>New</span></a>
+      <a class="side-row" href="https://tenner.stream/"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.4 12 4l8 6.4V20h-5v-5.6H9V20H4z"/></svg><span>Home</span></a>
+      <a class="side-row" href="https://tenner.stream/charts.html#new"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 3.5l1.8 4.9 4.9 1.8-4.9 1.8-1.8 4.9-1.8-4.9-4.9-1.8 4.9-1.8z"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z"/></svg><span>New</span></a>
       <a class="side-row" href="https://tenner.stream/browse.html"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg><span>Browse</span></a>
       <a class="side-row" href="https://tenner.stream/discover.html"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8.6" y="3" width="10.5" height="15" rx="2.6" transform="rotate(12 13.85 10.5)"/><rect x="4.5" y="5.8" width="10.5" height="15" rx="2.6"/></svg><span>Discover</span></a>
       <a class="side-row" href="https://tenner.stream/people.html"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 19.5c.8-3.4 3.3-5.3 6.2-5.3s5.4 1.9 6.2 5.3"/><circle cx="17" cy="9.5" r="2.6"/><path d="M16.2 14.4c2.4.1 4.3 1.7 5 4.6"/></svg><span>Cast &amp; Crew</span></a>
-      <a class="side-row" href="https://tenner.stream/#watchlist"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h11v17L12 16.6 6.5 20.5z"/></svg><span>Watchlist</span></a>
+      <a class="side-row" href="https://tenner.stream/charts.html#watchlist"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h11v17L12 16.6 6.5 20.5z"/></svg><span>Watchlist</span></a>
       <a class="side-row" href="/" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="12.5" rx="2.6"/><path d="M8.5 21h7M9 2.8l3 2.7 3-2.7"/></svg><span>TV Guide</span><span class="badge-new">New</span></a>
     </nav>
     <h2 class="side-h">More</h2>
@@ -43,7 +43,7 @@
     <div class="side-links">
       <button type="button" class="side-acct" id="acctSide" aria-haspopup="dialog"></button>
       <a href="https://tenner.stream/legal.html#terms">Terms of Service</a><a href="https://tenner.stream/legal.html#privacy">Privacy Policy</a><a href="https://tenner.stream/legal.html#cookies">Cookies</a><a href="https://tenner.stream/contact.html">Contact</a>
-      <span class="side-ver">Tenner TV 3.2.4</span>
+      <span class="side-ver">Tenner TV 3.2.5</span>
     </div>
   </aside>
   <header class="bar">
@@ -145,6 +145,6 @@
   <div class="toast" id="toast" role="status" aria-live="polite" popover="manual"></div>
   <div class="banner" id="banner" role="alert" popover="manual"></div>
 
-  <script src="tv.js?v=3.2.4" defer></script>
+  <script src="tv.js?v=3.2.5" defer></script>
 </body>
 </html>
