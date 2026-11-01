@@ -1795,32 +1795,20 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .
   .ss-res { background: var(--card); }
   .ss-res, .side-search input { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; } }
 
-/* ============================================================ the sidebar (computers): one frosted pane with softly rounded
-   corners, fixed in place just inside the window, and its pages as a list: a plain icon and the name on each row, thin
-   lines between them, the page you're on a soft tile. Milky white by day, a smoky tint by night, a fine light rim. */
+/* ============================================================ the sidebar (computers): its original shape, full height against
+   the window's edge, with a lighter frost (milky white by day, a smoky tint by night), regular-weight names and plain
+   monochrome icons */
 @media (min-width: 1000px) {
-  :root { --side-bg: rgba(255, 255, 255, .62); --side-rim: rgba(255, 255, 255, .9); --side-line: rgba(60, 60, 67, .16); }
-  :root[data-theme="dark"] { --side-bg: rgba(44, 40, 48, .5); --side-rim: rgba(255, 255, 255, .22); --side-line: rgba(255, 255, 255, .12); }
-  .top-row { inset: 10px auto 10px 10px; width: calc(var(--side) - 14px); border-right: 0; border-radius: 30px;
-    padding-top: calc(env(safe-area-inset-top, 0px) + 20px); padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
-    box-shadow: inset 0 0 0 1px var(--side-rim), 0 18px 50px -24px rgba(0, 0, 0, .35); }
+  :root { --side-bg: rgba(255, 255, 255, .62); }
+  :root[data-theme="dark"] { --side-bg: rgba(44, 40, 48, .5); }
   :root:has(.bd-ext > *) { --side-bg: rgba(255, 255, 255, .5); }
   :root[data-theme="dark"]:has(.bd-ext > *) { --side-bg: rgba(44, 40, 48, .42); }
-  .tabs { gap: 0; }
-  .tabs button, .side-about, .tb-btn { position: relative; height: 42px; gap: 14px; border-radius: 12px; font-weight: 400; }
+  .tabs button, .side-about, .tb-btn { font-weight: 400; }
   .tabs button svg, .side-about svg, .tb-btn svg { color: var(--label); }
   .tabs button[aria-selected="true"], .side-about[aria-current] { font-weight: 500; }
-  .tabs button + button::before, .side-tv + .side-about::before, .top-act #thBtn::before, .top-act + .side-settings::before {
-    content: ""; position: absolute; top: 0; left: 10px; right: 10px; border-top: .5px solid var(--side-line); pointer-events: none; }
-  .tabs button:is(:hover, [aria-selected="true"])::before, .tabs button:is(:hover, [aria-selected="true"]) + button::before,
-  .side-about:is(:hover, [aria-current])::before, .side-about:is(:hover, [aria-current]) + .top-act #thBtn::before,
-  .tb-btn:is(:hover, [aria-expanded="true"])::before, .top-act:has(#thBtn:is(:hover, [aria-expanded="true"])) + .side-settings::before { opacity: 0; }
-  .side-h + .side-about { margin-top: -14px; }
-  .side-tv + .side-about, .side-about.side-settings { margin-top: -22px; }
-  .top-act { margin-top: -22px; }
 }
 @media (min-width: 1000px) and (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --side-bg: rgba(44, 40, 48, .5); --side-rim: rgba(255, 255, 255, .22); --side-line: rgba(255, 255, 255, .12); }
+  :root:not([data-theme="light"]) { --side-bg: rgba(44, 40, 48, .5); }
   :root:not([data-theme="light"]):has(.bd-ext > *) { --side-bg: rgba(44, 40, 48, .42); }
 }
 
