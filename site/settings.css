@@ -124,12 +124,3 @@
   .set-page { --sp-panel: var(--bg2) !important; --sp-group: var(--card) !important; }
   .set-page .set-note { background: var(--card); }
 }
-
-/* Liquid Glass: the panel and every group are panes of glass with a specular rim, concentric corners */
-.set-panel { border-radius: 34px; box-shadow: var(--lg-edge), var(--lg-drop); -webkit-backdrop-filter: var(--lg-blur); backdrop-filter: var(--lg-blur); }
-.set-page .set-group, .set-tile { border-radius: 22px; box-shadow: var(--lg-edge); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); }
-.set-panel .set-group, .set-panel .set-tile { -webkit-backdrop-filter: none; backdrop-filter: none; }   /* never glass on glass: inside the panel, just a lighter tint */
-.set-panel { --sp-panel: var(--lg-fill); --sp-group: var(--lg-fill); }
-.set-art, .set-hero { border-radius: 26px; }
-.set-art { box-shadow: var(--lg-rim); }
-@container (max-width: 639px) { .set-panel { box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; } .set-page .set-group, .set-tile { -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); } }

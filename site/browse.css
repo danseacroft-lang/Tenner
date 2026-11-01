@@ -500,12 +500,3 @@ body.browse { overflow-x: clip; }
 .as-list .t-add { position: relative; }
 .view-sw button { position: relative; }
 .view-sw button::before { content: ""; position: absolute; inset: -8px -1px; }
-
-/* Liquid Glass: the filters and the collections bar get the same specular rim as every pane */
-.panel { border-radius: 26px; background: var(--lg-fill); box-shadow: var(--lg-edge), var(--lg-drop); -webkit-backdrop-filter: var(--lg-blur); backdrop-filter: var(--lg-blur); }
-.w-b, .s-b { border-radius: 14px; }
-.coll { box-shadow: var(--lg-edge), var(--lg-drop); }
-.coll-b[aria-checked="true"] { background: var(--lg-fill-hi); box-shadow: var(--lg-rim), 0 2px 10px rgba(0, 0, 0, .14); }
-.view-sw { border-radius: 999px; background: var(--gl-fill); box-shadow: var(--lg-edge), var(--lg-drop); -webkit-backdrop-filter: var(--lg-blur); backdrop-filter: var(--lg-blur); }
-.view-sw button { border-radius: 999px; }
-.view-sw button[aria-checked="true"] { background: var(--lg-fill-hi); box-shadow: var(--lg-rim), 0 1px 4px rgba(0, 0, 0, .14); }
