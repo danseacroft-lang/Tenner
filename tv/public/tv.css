@@ -804,3 +804,5 @@ button.li-row:active { background: rgba(255, 255, 255, .12); }
 .wx::after { box-shadow: none; }
 #fq { background: rgba(255, 255, 255, .06); }
 @media (max-width: 760px) { #shIn .sh-acts .act { background: rgba(255, 255, 255, .05); } }
+/* the toolbar: completely see-through, with nothing behind it */
+.tools::after { display: none; }
