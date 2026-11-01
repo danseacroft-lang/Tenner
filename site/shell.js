@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '2.9.0';
+  const version = '2.11.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -150,30 +150,54 @@
     get() { try { const l = JSON.parse(localStorage.getItem(MS) || '[]'); return Array.isArray(l) ? l : []; } catch { return []; } },
     set(l) { try { if (l.length) localStorage.setItem(MS, JSON.stringify(l)); else localStorage.removeItem(MS); } catch {} meta.edit((m) => { m.sat = Date.now(); }); dispatchEvent(new Event('tn:mine')); },
   };
-  // the picker: a small sheet of switches, one per service
+  // the picker: a card in the iOS Subscriptions style. A round back button and the title, your services under Active and
+  // the rest under Inactive (a tap moves one across), each a rounded card with its logo, and a switch for all six below
+  const CHEV_L = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CHEV_R = '<svg class="mine-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 5.5 6.5 6.5-6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   function pickMine(list) {
     let dlg = document.getElementById('mineDlg');
     if (!dlg) {
-      document.body.insertAdjacentHTML('beforeend', `<dialog class="mine-dlg" id="mineDlg" aria-labelledby="mineH">
-        <form method="dialog"><h2 id="mineH">My services</h2>
-          <p>Pick the services you pay for. Tenner makes you a Top 10 of just those, and Browse starts with them. Saved on this device only.</p>
-          <div class="mine-list" id="mineList"></div>
-          <div class="mine-acts"><button type="button" class="btn btn-tinted" id="mineClear">Use all six</button><button class="btn btn-tinted mine-done" value="done">Done</button></div>
+      document.body.insertAdjacentHTML('beforeend', `<dialog class="mine-dlg mine-subs" id="mineDlg" aria-labelledby="mineH">
+        <form method="dialog">
+          <div class="mine-top"><button class="mine-back" value="done" aria-label="Done">${CHEV_L}</button><h2 id="mineH">My services</h2></div>
+          <div id="mineSecs">
+            <h3 class="mine-sec" id="mineOnH">Active</h3><div class="mine-list" id="mineOn" role="group" aria-labelledby="mineOnH"></div>
+            <h3 class="mine-sec" id="mineOffH">Inactive</h3><div class="mine-list" id="mineOff" role="group" aria-labelledby="mineOffH"></div>
+          </div>
+          <label class="mine-all"><span class="mine-l">All six services<small>Your Top 10 and Browse cover them all. Turn off to pick just yours. Saved on this device.</small></span>
+            <input type="checkbox" switch role="switch" id="mineAll"><i class="sw" aria-hidden="true"></i></label>
         </form></dialog>`);
       dlg = document.getElementById('mineDlg');
       dlg.addEventListener('close', () => {
         if (dlg.returnValue !== 'done') return;
-        const on = [...dlg.querySelectorAll('input:checked')].map((i) => i.value);
-        mine.set(on.length === dlg.querySelectorAll('input').length ? [] : on);   // all six is the same as none chosen
+        const on = [...dlg.querySelectorAll('.mine-list input:checked')].map((i) => i.value);
+        mine.set(on.length === dlg.querySelectorAll('.mine-list input').length ? [] : on);   // all six is the same as none chosen
       });
-      // "Use all six": every switch turns on (so you see it happen), then it closes; all six is the same as none chosen
-      dlg.querySelector('#mineClear').addEventListener('click', () => { dlg.querySelectorAll('input').forEach((i) => { i.checked = true; }); setTimeout(() => dlg.close('done'), 450); });
-      dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });   // a tap outside the card closes it
+      // a tap outside the card, or Escape, keeps what you've picked (the back button's job too)
+      dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close('done'); });
+      dlg.addEventListener('cancel', (e) => { e.preventDefault(); dlg.close('done'); });
+      // a row moves between Active and Inactive as you tap it
+      const place = () => {
+        const rows = [...dlg.querySelectorAll('.mine-row')], on = dlg.querySelector('#mineOn'), off = dlg.querySelector('#mineOff');
+        for (const r of rows) (r.querySelector('input').checked ? on : off).append(r);
+        dlg.querySelector('#mineOnH').hidden = !on.children.length; dlg.querySelector('#mineOffH').hidden = !off.children.length;
+        dlg.querySelector('#mineAll').checked = rows.every((r) => r.querySelector('input').checked);
+        for (const r of rows) r.querySelector('.mine-d').textContent = r.querySelector('input').checked ? 'In Top 10' : 'Add';
+      };
+      const move = () => (!reduce && document.startViewTransition ? document.startViewTransition(place) : place());
+      dlg.addEventListener('change', (e) => {
+        if (e.target.id === 'mineAll') { const v = e.target.checked; dlg.querySelectorAll('.mine-list input').forEach((i) => { i.checked = v; }); }
+        move();
+      });
+      dlg.place = place;
     }
     const cur = mine.get();
-    dlg.querySelector('#mineList').innerHTML = list.map((s) => `<label class="mine-row">
+    dlg.querySelector('#mineOn').innerHTML = list.map((s, i) => `<label class="mine-row" style="view-transition-name:mine-${i}">
       <span class="mine-ic">${s.logo ? `<img src="${esc(s.logo)}" alt="">` : esc(s.label[0])}</span><span class="mine-l">${esc(s.label)}<small class="mine-n" data-svc="${esc(s.key)}"></small></span>
-      <input type="checkbox" switch role="switch" value="${esc(s.key)}"${!cur.length || cur.includes(s.key) ? ' checked' : ''}><i class="sw" aria-hidden="true"></i></label>`).join('');
+      <span class="mine-d"></span>${CHEV_R}
+      <input type="checkbox" value="${esc(s.key)}"${!cur.length || cur.includes(s.key) ? ' checked' : ''}></label>`).join('');
+    dlg.querySelector('#mineOff').innerHTML = '';
+    dlg.place();
     dlg.classList.toggle('native-sw', 'switch' in HTMLInputElement.prototype);   // Safari 17.4+: the real iOS switch
     dlg.returnValue = ''; dlg.showModal();
     plan(dlg, list);
@@ -184,7 +208,7 @@
   let planP = null; const planOne = new Map();   // each title asked for once a visit, however often the sheet opens
   const planData = () => (planP ||= fetch(`data/titles.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
   async function plan(dlg, list) {
-    const wl = saved.all(), out = dlg.querySelector('#minePlan') || dlg.querySelector('.mine-list').insertAdjacentElement('afterend', Object.assign(document.createElement('p'), { id: 'minePlan', className: 'mine-plan' }));
+    const wl = saved.all(), out = dlg.querySelector('#minePlan') || dlg.querySelector('#mineSecs').insertAdjacentElement('afterend', Object.assign(document.createElement('p'), { id: 'minePlan', className: 'mine-plan' }));
     out.hidden = true;
     if (!wl.length) return;
     const d = await planData(), providers = { ...(d?.providers || {}) }, items = { ...(d?.items || {}) };

@@ -1566,31 +1566,27 @@ a.sh-prov:hover { text-decoration: none; }
   .group h2.today { color: var(--accent); }
 }
 
-/* ============================================================ glass buttons, everywhere
-   One look for every button and pill: a see-through fill, a thin light rim, softly rounded corners and bold words
-   (the visionOS / iOS 26 way). Round icon buttons keep their circles in the same glass. */
-.btn-tinted, .dd, .h-badge, .mb-badge, .share-chart, .pv-ok, .h-cta, .sh-main .btn, .h-add, .tb-round, .cal-add {
-  background: var(--gl-fill) !important; color: var(--label) !important;
-  box-shadow: inset 0 0 0 1px var(--gl-rim), 0 1px 2px rgba(0, 0, 0, .06) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(1.7); backdrop-filter: blur(24px) saturate(1.7);
+/* ============================================================ buttons, everywhere (the owner's chosen design: use it for every
+   new button). Solid, deep tinted fills with no glass or rim, softly rounded rectangles (circles when there's only an
+   icon), an icon beside the words where there is one, and white words and icons. The same in Day and Night. */
+:root { --bt-fill: #0b1e3c; --bt-hover: #132a52; --bt-round: #222226; --bt-round-hover: #2e2e33; --bt-on: #64d2ff; }
+.btn-tinted, .dd, .share-chart, .pv-ok, .h-cta, .sh-main .btn, .h-add, .tb-round, .cal-add, .sh-btns .btn, .set-pill {
+  background: var(--bt-fill) !important; color: #fff !important; box-shadow: none !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
 }
-.btn-tinted, .dd, .h-badge, .share-chart, .pv-ok, .h-cta, .sh-main .btn { border-radius: 12px; font-weight: 500; letter-spacing: -.012em; }
+.btn-tinted, .dd, .share-chart, .pv-ok, .sh-main .btn, .sh-btns .btn, .set-pill { border-radius: 14px !important; font-weight: 500; letter-spacing: -.012em; }
+.h-cta { border-radius: 18px !important; font-weight: 500; letter-spacing: -.012em; }
+.dd .dd-l, .dd .dd-chev, .btn-tinted svg, .h-cta svg { color: #fff; }
+/* only an icon: a circle */
+.h-add, .tb-round, .hc-r, .share-chart:not(:has(span, b)), .sh-more > .btn.sh-star { background: var(--bt-round) !important; border-radius: 50% !important; }
+@media (hover: hover) {
+  .btn-tinted:hover, .dd:hover, .share-chart:hover, .pv-ok:hover, .h-cta:hover, .sh-main .btn:hover, .cal-add:hover, .sh-btns .btn:hover, .set-pill:hover { background: var(--bt-hover) !important; }
+  .h-add:hover, .tb-round:hover, .hc-r:hover { background: var(--bt-round-hover) !important; }
+}
+.cal-add, .h-add[aria-pressed="true"], .sh-more .btn[aria-pressed="true"], .hc-r[aria-pressed="true"] { color: var(--bt-on) !important; }
 .mb-badge { border-radius: 8px; font-weight: 500; }
 .h-badge { border-radius: 12px; }
-.mine-done { color: var(--label) !important; }
-@media (hover: hover) {
-  .btn-tinted:hover, .dd:hover, .share-chart:hover, .pv-ok:hover, .h-cta:hover, .sh-main .btn:hover, .h-add:hover, .tb-round:hover, .cal-add:hover { background: var(--gl-hover) !important; }
-}
-.cal-add, .h-add[aria-pressed="true"], .sh-more .btn[aria-pressed="true"] { color: var(--accent) !important; }
-/* the title sheet's buttons: Tenner's frosting (the same faint milky frost as a list row you point at), with no rim */
-.sh-btns .btn {
-  background: color-mix(in srgb, color-mix(in srgb, var(--bg) 60%, var(--label)) 12%, transparent) !important; box-shadow: none !important;
-  -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4);
-}
-@media (hover: hover) { .sh-btns .btn:hover { background: color-mix(in srgb, color-mix(in srgb, var(--bg) 60%, var(--label)) 20%, transparent) !important; } }
-@media (prefers-reduced-transparency: reduce) {
-  .btn-tinted, .dd, .h-badge, .mb-badge, .share-chart, .pv-ok, .h-cta, .sh-main .btn, .h-add, .tb-round, .cal-add, .sh-btns .btn { background: var(--bg2) !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
-}
+.mine-done { color: #fff !important; }
 
 /* ============================================================ accounts: your picture and name at the foot of the sidebar
    (and in the phone's menu), and the round initials used wherever there's no picture */
@@ -1710,7 +1706,7 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .
 .hc-go svg { width: 13px; height: 13px; flex: none; }
 .hc-r { flex: none; width: 44px; padding: 0; border-radius: 50% !important; }
 .hc-r svg { width: 20px; height: 20px; }
-.hc-r[aria-pressed="true"] { color: var(--accent) !important; }
+.hc-r[aria-pressed="true"] { color: var(--bt-on) !important; }
 .hc-r[aria-pressed="true"] .p, .hc-r[aria-pressed="false"] .c { display: none; }
 .hc-ov { margin: 12px 0 0; font-size: 14px; line-height: 1.45; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
 .hc-ov.sh-sk { display: grid; gap: 8px; padding: 4px 0; }
@@ -1798,3 +1794,77 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .
 @media (prefers-reduced-transparency: reduce) {
   .ss-res { background: var(--card); }
   .ss-res, .side-search input { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; } }
+
+/* ============================================================ the sidebar (computers): one frosted pane with softly rounded
+   corners, fixed in place just inside the window, and its pages as a list: a plain icon and the name on each row, thin
+   lines between them, the page you're on a soft tile. Milky white by day, a smoky tint by night, a fine light rim. */
+@media (min-width: 1000px) {
+  :root { --side-bg: rgba(255, 255, 255, .62); --side-rim: rgba(255, 255, 255, .9); --side-line: rgba(60, 60, 67, .16); }
+  :root[data-theme="dark"] { --side-bg: rgba(44, 40, 48, .5); --side-rim: rgba(255, 255, 255, .22); --side-line: rgba(255, 255, 255, .12); }
+  .top-row { inset: 10px auto 10px 10px; width: calc(var(--side) - 14px); border-right: 0; border-radius: 30px;
+    padding-top: calc(env(safe-area-inset-top, 0px) + 20px); padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+    box-shadow: inset 0 0 0 1px var(--side-rim), 0 18px 50px -24px rgba(0, 0, 0, .35); }
+  :root:has(.bd-ext > *) { --side-bg: rgba(255, 255, 255, .5); }
+  :root[data-theme="dark"]:has(.bd-ext > *) { --side-bg: rgba(44, 40, 48, .42); }
+  .tabs { gap: 0; }
+  .tabs button, .side-about, .tb-btn { position: relative; height: 42px; gap: 14px; border-radius: 12px; font-weight: 400; }
+  .tabs button svg, .side-about svg, .tb-btn svg { color: var(--label); }
+  .tabs button[aria-selected="true"], .side-about[aria-current] { font-weight: 500; }
+  .tabs button + button::before, .side-tv + .side-about::before, .top-act #thBtn::before, .top-act + .side-settings::before {
+    content: ""; position: absolute; top: 0; left: 10px; right: 10px; border-top: .5px solid var(--side-line); pointer-events: none; }
+  .tabs button:is(:hover, [aria-selected="true"])::before, .tabs button:is(:hover, [aria-selected="true"]) + button::before,
+  .side-about:is(:hover, [aria-current])::before, .side-about:is(:hover, [aria-current]) + .top-act #thBtn::before,
+  .tb-btn:is(:hover, [aria-expanded="true"])::before, .top-act:has(#thBtn:is(:hover, [aria-expanded="true"])) + .side-settings::before { opacity: 0; }
+  .side-h + .side-about { margin-top: -14px; }
+  .side-tv + .side-about, .side-about.side-settings { margin-top: -22px; }
+  .top-act { margin-top: -22px; }
+}
+@media (min-width: 1000px) and (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --side-bg: rgba(44, 40, 48, .5); --side-rim: rgba(255, 255, 255, .22); --side-line: rgba(255, 255, 255, .12); }
+  :root:not([data-theme="light"]):has(.bd-ext > *) { --side-bg: rgba(44, 40, 48, .42); }
+}
+
+/* ============================================================ My services (shell.js): the iOS Subscriptions card. A pane of
+   frosted glass with a fine rim, a round back button beside the centred title, Active and Inactive as bold headings, each
+   service a rounded card (its logo as an app tile, the name, a grey line, a note on the right and a chevron), and the
+   all-six switch in a card of its own at the foot. */
+.mine-subs { width: min(440px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain; border-radius: 34px;
+  background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(40px) saturate(1.6); backdrop-filter: blur(40px) saturate(1.6);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--label) 16%, transparent), 0 30px 80px -20px rgba(0, 0, 0, .6); }
+.mine-subs form { padding: 22px 20px 20px; }
+.mine-top { position: relative; display: grid; place-items: center; min-height: 44px; margin-bottom: 12px; }
+.mine-subs h2 { margin: 0; padding: 0 52px; font: 600 22px/1.2 var(--font); letter-spacing: -.02em; text-align: center; }
+.mine-back { position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+  color: #fff; background: rgba(120, 120, 128, .55); -webkit-tap-highlight-color: transparent; transition: background-color .2s ease, transform .35s var(--ease-spring); }
+.mine-back svg { width: 22px; height: 22px; }
+.mine-back:active { transform: scale(.92); }
+@media (hover: hover) { .mine-back:hover { background: rgba(120, 120, 128, .72); } }
+.mine-back:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mine-sec { margin: 18px 2px 10px; font: 600 18px/1.2 var(--font); letter-spacing: -.016em; }
+.mine-subs .mine-list { display: grid; gap: 10px; border-radius: 0; background: none; overflow: visible; }
+.mine-subs .mine-row { gap: 14px; min-height: 76px; padding: 12px 14px 12px 12px; border-radius: 20px; border: 0;
+  background: color-mix(in srgb, var(--label) 7%, transparent); box-shadow: 0 6px 18px -10px rgba(0, 0, 0, .35); transition: background-color .2s ease; }
+.mine-subs .mine-row + .mine-row { border-top: 0; }
+@media (hover: hover) { .mine-subs .mine-row:hover { background: color-mix(in srgb, var(--label) 11%, transparent); } }
+.mine-subs .mine-row:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mine-dlg.mine-subs .mine-row input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.mine-subs .mine-ic { width: 52px; height: 52px; border-radius: 13px; font-size: 22px; box-shadow: 0 0 0 .5px var(--sep); }
+.mine-subs .mine-l { min-width: 0; padding: 0; font: 500 17px/1.25 var(--font); letter-spacing: -.016em; }
+.mine-subs .mine-n { margin-top: 3px; font: 400 14px/1.25 var(--font); }
+.mine-d { flex: none; max-width: 40%; color: var(--label2); font: 500 14px/1.25 var(--font); text-align: right; }
+.mine-row:has(input:checked) .mine-d { color: var(--label); }
+.mine-chev { flex: none; width: 18px; height: 18px; margin-left: -4px; color: var(--label2); }
+.mine-row:not(:has(input:checked)) .mine-ic { opacity: .55; filter: saturate(.4); }
+.mine-all { display: flex; align-items: center; gap: 14px; margin-top: 24px; padding: 16px 16px 16px 18px; border-radius: 22px; cursor: pointer; position: relative;
+  background: color-mix(in srgb, var(--label) 7%, transparent); }
+.mine-all .mine-l { flex: 1; font: 500 17px/1.25 var(--font); }
+.mine-all small { display: block; margin-top: 4px; color: var(--label2); font: 400 14px/1.4 var(--font); }
+.mine-all input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.mine-all input:checked + .sw { background: var(--green); }
+.mine-all input:checked + .sw::after { translate: 20px 0; }
+.mine-all input:focus-visible + .sw { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mine-subs.native-sw .mine-all input { position: static; opacity: 1; width: auto; height: auto; margin: 0; accent-color: var(--green); font-size: 17px; }
+.mine-subs.native-sw .mine-all .sw { display: none; }
+.mine-subs p.mine-plan { margin: 14px 4px 0; }
+@media (max-width: 380px) { .mine-d { display: none; } }
+@media (prefers-reduced-transparency: reduce) { .mine-subs { background: var(--bg2); -webkit-backdrop-filter: none; backdrop-filter: none; } }

@@ -74,7 +74,14 @@ Mac. When in doubt, ask "would this look at home in Apple TV, Apple Music or the
   line, hairline separators, frosted hover, two columns on computers, one on phones. New This Week, Watchlist,
   Cast & Crew Top 10 and Browse's list view all use it. Rows of posters use `.nr`.
 - **Glass tokens:** `--gl-fill`, `--gl-rim`, `--gl-hover` (defined for light, auto-dark and forced dark).
-- **Buttons and pills:** glass, regular weight (500) with font smoothing, never bold.
+- **Buttons (the owner's chosen design, use it for every button):** solid deep tinted fills (`--bt-fill` navy, `--bt-round`
+  dark grey for icon-only circles), no glass or rim, softly rounded rectangles (14px; 18px for the big hero button), circles
+  when there's only an icon, an icon beside the words where there is one, and **white words and icons**, in Day and Night.
+  Regular weight (500) with font smoothing, never bold. Pills and badges that aren't buttons stay glass.
+- **The sidebar (computers):** one frosted pane with rounded corners, fixed in place (static, never floating or moving),
+  plain monochrome icons with the page names, thin lines between rows, the current page a soft tile.
+- **My services:** the iOS Subscriptions card: round back button, centred title, Active / Inactive headings, a rounded
+  card per service (logo tile, name, grey line, note, chevron) and the all-six switch in its own card.
 - **Shows / Films / Both** is a native dropdown (`.dd` with a `<select>`) except where a segmented switch was approved
   (Browse's search bar).
 - **The chart numbers never shine:** no rainbow sweep, colour turn (`hue-rotate`) or any other moving effect on the neon

@@ -41,8 +41,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=2.9.0">
-  <link rel="stylesheet" href="about.css?v=2.9.0">
+  <link rel="stylesheet" href="styles.css?v=2.11.0">
+  <link rel="stylesheet" href="about.css?v=2.11.0">
   <link rel="preload" href="fonts/caveat-latin.woff2" as="font" type="font/woff2" crossorigin>
 
 </head>
@@ -73,7 +73,7 @@
         <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><rect class="solid" x="8.6" y="3" width="10.5" height="15" rx="2.6" transform="rotate(12 13.85 10.5)" opacity=".45"/><rect class="solid" x="4.2" y="5.5" width="11" height="15.6" rx="2.8"/></svg>
         <span>Discover</span></button>
       <button type="button" role="tab" data-tab="people" aria-selected="false" tabindex="-1">
-        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 19.5c.8-3.4 3.3-5.3 6.2-5.3s5.4 1.9 6.2 5.3"/><circle cx="17" cy="9.5" r="2.6"/><path d="M16.2 14.4c2.9.0 4.3 1.7 5 4.6"/></svg>
+        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 19.5c.8-3.4 3.3-5.3 6.2-5.3s5.4 1.9 6.2 5.3"/><circle cx="17" cy="9.5" r="2.6"/><path d="M16.2 14.4c2.11.0 4.3 1.7 5 4.6"/></svg>
         <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><circle class="solid" cx="9" cy="8.5" r="3.8"/><path class="solid" d="M2.5 20c.7-3.8 3.4-6.2 6.5-6.2s5.8 2.4 6.5 6.2z"/><circle class="solid" cx="17.2" cy="9.4" r="2.9"/><path class="solid" d="M16.6 14c2.9 0 5 2 5.6 5.4h-4.9c-.2-2-.8-3.8-1.9-5.2z"/></svg>
         <span>Cast &amp; Crew</span></button>
       <button type="button" role="tab" data-tab="watchlist" aria-selected="false" tabindex="-1">
@@ -95,7 +95,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 2.9.0</span>
+      <span class="side-ver">Tenner 2.11.0</span>
     </div>
   </div>
 
@@ -219,7 +219,7 @@
           <span class="ab-ic" style="--a:#ff8fab;--b:#bf5af2" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="8.6" y="3" width="10.5" height="15" rx="2.6" transform="rotate(12 13.85 10.5)"/><rect x="4.5" y="5.8" width="10.5" height="15" rx="2.6" fill="currentColor"/></svg></span>
           <span class="bt-txt"><b>Discover</b><small>Swipe through ideas: right to save, left to skip.</small></span></a></li>
         <li class="bt"><a href="people.html">
-          <span class="ab-ic" style="--a:#a78bfa;--b:#5e5ce6" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 19.5c.8-3.4 3.3-5.3 6.2-5.3s5.4 1.9 6.2 5.3"/><circle cx="17" cy="9.5" r="2.6"/><path d="M16.2 14.4c2.9.0 4.3 1.7 5 4.6"/></svg></span>
+          <span class="ab-ic" style="--a:#a78bfa;--b:#5e5ce6" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 19.5c.8-3.4 3.3-5.3 6.2-5.3s5.4 1.9 6.2 5.3"/><circle cx="17" cy="9.5" r="2.6"/><path d="M16.2 14.4c2.11.0 4.3 1.7 5 4.6"/></svg></span>
           <span class="bt-txt"><b>Cast and crew</b><small>Every actor, director and writer, and where to watch their work.</small></span></a></li>
         <li class="bt"><a href="https://tv.tenner.stream/">
           <span class="ab-ic" style="--a:#64d2ff;--b:#5e5ce6" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="2.8" y="5.5" width="18.4" height="12.5" rx="2.6"/><path d="M8.5 21h7M9 2.8l3 2.7 3-2.7"/></svg></span>
@@ -300,7 +300,7 @@
     <nav class="more-links" aria-label="Site information">
       <a href="contact.html">Contact</a><a href="legal.html#privacy">Privacy Policy</a><a href="legal.html#terms">Terms of Service</a><a href="legal.html#cookies">Cookies</a>
     </nav>
-    <p class="more-ver side-ver-text">Tenner 2.9.0</p>
+    <p class="more-ver side-ver-text">Tenner 2.11.0</p>
     </main>
 
 
@@ -321,6 +321,6 @@
     }
     load(false); addEventListener('tn:check', function(){ load(true); });
   })();</script>
-  <script src="shell.js?v=2.9.0" defer></script>
+  <script src="shell.js?v=2.11.0" defer></script>
 </body>
 </html>
