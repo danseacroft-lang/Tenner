@@ -39,7 +39,9 @@ export const SERVICES = [
 // stays out of the combined chart and My services, and can be picked in Browse.
 export const SHOPS = [
   { key: 'skystore', label: 'Sky Store', match: /^sky store/ },
+  { key: 'rakuten', label: 'Rakuten TV', match: /^rakuten tv/ },
 ];
+const SHOP_MIN = 10;   // a store with fewer titles than this to buy or rent in the UK gets no chart of its own
 const RESELLER = /\b(amazon|apple tv|roku premium|roku) channel\b/;
 
 const norm = (s) => s.toLowerCase().replace(/\+/g, ' plus').replace(/[^a-z0-9]+/g, ' ').trim();
@@ -169,12 +171,14 @@ async function buildTrending() {
     tv: [],
   };
 
-  // 4. Each store (Sky Store): its most popular shows and films to buy or rent
+  // 4. Each store (Sky Store, Rakuten TV): its most popular shows and films to buy or rent
   const shops = await Promise.all(SHOPS.map(async (s) => {
     const providerIds = [...ids[s.key]];
     if (!providerIds.length) { warn('Stores', `no TMDB provider matched ${s.label}`); return null; }
     const q = { ...shop, with_watch_providers: providerIds.join('|'), 'vote_count.gte': '5' };
     const [m, t] = await Promise.all([tmdb('/discover/movie', q), tmdb('/discover/tv', q)]);
+    console.log(`${s.label}: ${m.total_results} films and ${t.total_results} shows to buy or rent in the UK`);
+    if (m.total_results + t.total_results < SHOP_MIN) { warn('Stores', `${s.label} has only ${m.total_results + t.total_results} titles on TMDB, so no chart`); return null; }
     return { key: s.key, label: s.label, shop: true, logo: logos[s.key]?.url || null, providerIds,
       movie: m.results.slice(0, PER_LIST).map((r) => toItem(r, 'movie')), tv: t.results.slice(0, PER_LIST).map((r) => toItem(r, 'tv')) };
   }));
