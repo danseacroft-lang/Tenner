@@ -806,3 +806,14 @@ button.li-row:active { background: rgba(255, 255, 255, .12); }
 @media (max-width: 760px) { #shIn .sh-acts .act { background: rgba(255, 255, 255, .05); } }
 /* the toolbar: completely see-through, with nothing behind it */
 .tools::after { display: none; }
+/* the corner runs right to the edge of the screen (on wide screens the page's column stops short of it), and fades
+   gently at the bottom, so it never ends in a straight line */
+.corner { --cb: calc(var(--gutter-r) + max(0px, (100vw - var(--side, 0px) - var(--max)) / 2)); right: calc(-1 * var(--cb)); width: calc(min(60%, 640px) + var(--cb)); aspect-ratio: auto; height: 520px; }
+.corner-art { -webkit-mask-image: linear-gradient(to left, #000 30%, transparent 96%), linear-gradient(to bottom, #000 30%, rgba(0, 0, 0, .5) 62%, transparent 92%);
+  mask-image: linear-gradient(to left, #000 30%, transparent 96%), linear-gradient(to bottom, #000 30%, rgba(0, 0, 0, .5) 62%, transparent 92%); }
+.corner-cap { right: calc(var(--cb) + 2px); bottom: 38%; }
+@media (max-width: 760px) { .corner { width: calc(78% + var(--cb)); height: 330px; } .corner-cap { bottom: 40%; } }
+@media (max-width: 760px) {
+  .corner-cap { display: none; }   /* phones: just the picture (the headline has the room); a tap still opens it */
+  .days { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); }
+}

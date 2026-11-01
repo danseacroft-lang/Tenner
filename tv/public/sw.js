@@ -3,8 +3,8 @@
 // - listings: the same, with a 4s wait; old days are cleared away
 // - the page's own files (versioned), logos and icons: kept on the device, as they never change under the same name
 // Sky's programme pictures are left to the browser's own cache. The version below changes with every update.
-const V = 'tenner-tv?v=3.2.1';
-const SHELL = ['/', '/tv.css?v=3.2.1', '/tv.js?v=3.2.1', '/logo.svg'];
+const V = 'tenner-tv?v=3.2.2';
+const SHELL = ['/', '/tv.css?v=3.2.2', '/tv.js?v=3.2.2', '/logo.svg'];
 
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(V).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => {
