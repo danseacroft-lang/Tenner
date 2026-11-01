@@ -270,6 +270,11 @@ body.home { overflow-x: clip; }
   background: linear-gradient(150deg, #0a84ff, #5e5ce6 55%, #bf5af2); box-shadow: 0 8px 18px -10px rgba(10, 132, 255, .7); }
 .bx-tv-ic svg { width: 26px; height: 26px; }
 
+/* What should I watch tonight?: the three floating icons over the question */
+.bx-tn-art .tn-fl { position: absolute; }
+.bx-tn-art { position: relative; width: 76px; height: 64px; margin: 2px 0 10px; }
+.bx-tn h2 { margin-bottom: 6px; }
+
 /* ---------- placeholders, loading and the rest ---------- */
 .bx-ph { display: grid; place-items: end start; padding: 10px; color: rgba(255, 255, 255, .9); font: 650 13px/1.2 var(--font); text-align: left; }
 .bx-ph.wide { place-items: end start; padding: 14px; font-size: 15px; }

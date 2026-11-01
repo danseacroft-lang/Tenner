@@ -153,5 +153,12 @@
     Object.assign(tonight, { step: 0, len: null, mood: null, who: null, dir: 1 }); tonight.seen.clear(); shown.clear();
     const d = tonightDialog(); drawTonight(); d.showModal(); $('#tnH')?.focus();   // start on the question, not a ringed close button
   });
-  window.tnTonight = { card: tonightCard, use(o) { Object.assign(opts, o); } };
+  // the same invitation as a box for the home page's side column
+  function tonightBox() {
+    return `<section class="bx-panel panel bx-tn" aria-labelledby="bxTn"><div class="bx-tn-art" aria-hidden="true">${tnIc('tv', 'tn-fl tn-c1')}${tnIc('feel', 'tn-fl tn-c2')}${tnIc('pop', 'tn-fl tn-c3')}</div>
+      <h2 id="bxTn">What should I watch tonight?</h2>
+      <p class="bx-panel-say">Three quick taps and Tenner picks from ${window.tn.mine.get().length ? 'your services' : 'all six services'}.</p>
+      <button type="button" class="btn btn-tinted bx-wide" data-tonight>Help me choose</button></section>`;
+  }
+  window.tnTonight = { card: tonightCard, box: tonightBox, use(o) { Object.assign(opts, o); } };
 })();

@@ -271,7 +271,6 @@
         <span class="bx-lp-copy"><b>${esc(it.title)}</b>${rating(it.rating)}</span><small>${esc(new Date(it.date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: it.year === today.slice(0, 4) ? undefined : 'numeric' }))}</small></a></li>`;
     });
     $('#bxRows').innerHTML = row('bxTrend', `Trending ${esc(where())}`, `The top ${words} this hour`, trend, 'bx-row-w', 'charts.html')
-      + (window.tnTonight?.card() || '')
       + row('bxTop', `Most popular${g ? ` in ${esc(g)}` : ''}`, `The ${words} most people are looking at${state.svc === 'all' ? ' on all six' : ` ${where()}`}`, top, 'bx-row-p', 'browse.html')
       + row('bxNew', `Latest releases${g ? ` in ${esc(g)}` : ''}`, 'The newest arrivals, most recent first', fresh, 'bx-row-p', 'charts.html#new')
       + kinds().map(topList).join('')
@@ -312,7 +311,7 @@
   // ---------- the side column: yours ----------
   function drawSide() {
     if (!state.data) return;
-    $('#bxSide').innerHTML = discover() + genres() + climbers() + tvGuide();
+    $('#bxSide').innerHTML = discover() + (window.tnTonight?.box() || '') + genres() + climbers() + tvGuide();
     markSaved();
   }
   // Tenner TV: its own box here instead of a place in the menu, while it's in beta
