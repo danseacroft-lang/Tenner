@@ -1605,3 +1605,46 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .
 .wl-x::before, .svc-link::before { content: ""; position: absolute; inset: -7px; }
 .svc-link::before { inset: -7px -4px; }
 
+
+/* ============================================================ hover cards (sheet.js, computers only)
+   Rest the pointer on a poster and it opens up into a card that floats above the page in glass: wide artwork that melts
+   into the card, the title, genre, age rating and length, Watch with Watchlist and Trailer beside it, a few lines of the
+   description and who's in it. Click anywhere else on it for the full sheet. */
+.hc { position: fixed; z-index: 70; left: 0; top: 0; width: 340px; max-width: calc(100vw - 24px); border-radius: 20px; overflow: hidden; cursor: pointer; color: var(--label);
+  background: color-mix(in srgb, var(--bg) 90%, transparent); -webkit-backdrop-filter: blur(30px) saturate(180%); backdrop-filter: blur(30px) saturate(180%);
+  box-shadow: inset 0 0 0 .5px var(--gl-rim), 0 24px 60px rgba(0, 0, 0, .34), 0 2px 8px rgba(0, 0, 0, .12); transform-origin: center; }
+.hc[hidden] { display: none; }
+.hc-art { position: relative; aspect-ratio: 16 / 9; overflow: hidden; }
+.hc-art img, .hc-art .ph { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;
+  -webkit-mask-image: linear-gradient(to bottom, #000 45%, rgba(0, 0, 0, .5) 75%, transparent); mask-image: linear-gradient(to bottom, #000 45%, rgba(0, 0, 0, .5) 75%, transparent); }
+.hc-art img.soft { filter: blur(24px) saturate(1.4); scale: 1.2; opacity: .85; }   /* no wide artwork (yet): the poster, softened */
+.hc-art img:not(.soft) { animation: fadeOnly .3s ease-out; }
+:root.still .hc-art img { animation: none; }
+.hc-body { position: relative; margin-top: -42px; padding: 0 16px 16px; }
+.hc h3 { margin: 0; font: 700 21px/1.18 var(--font); letter-spacing: -.012em; text-wrap: balance;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.hc-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0 2px; min-height: 18px; margin: 5px 0 0; font-size: 13px; color: var(--label2); font-variant-numeric: tabular-nums; }
+.hc-meta .sh-cert { min-width: 20px; height: 16px; font-size: 10px; }
+.hc-acts { display: flex; gap: 8px; margin-top: 14px; }
+.hc-acts .btn { height: 44px; -webkit-font-smoothing: antialiased; }
+.hc-go { flex: 1; min-width: 0; padding: 0 14px; font-size: 15px; }
+.hc-go span { overflow: hidden; text-overflow: ellipsis; }
+.hc-go svg { width: 13px; height: 13px; flex: none; }
+.hc-r { flex: none; width: 44px; padding: 0; border-radius: 50% !important; }
+.hc-r svg { width: 20px; height: 20px; }
+.hc-r[aria-pressed="true"] { color: var(--accent) !important; }
+.hc-r[aria-pressed="true"] .p, .hc-r[aria-pressed="false"] .c { display: none; }
+.hc-ov { margin: 12px 0 0; font-size: 14px; line-height: 1.45; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.hc-ov.sh-sk { display: grid; gap: 8px; padding: 4px 0; }
+.hc-ov.sh-sk span { height: 12px; border-radius: 6px; background: var(--fill); }
+.hc-ov.sh-sk span:last-child { width: 62%; }
+.hc-cast { display: flex; align-items: center; gap: 10px; min-height: 30px; margin: 14px 0 0; padding-top: 12px; border-top: .5px solid var(--sep); font-size: 13px; color: var(--label2); }
+.hc-faces { display: flex; flex: none; }
+.hc-faces > span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; color: #fff; font: 600 11px/1 var(--font);
+  background: linear-gradient(160deg, hsl(var(--h, 220) 30% 60%), hsl(var(--h, 220) 34% 36%)); box-shadow: 0 0 0 2px var(--card); }
+.hc-faces > span + span { margin-left: -8px; }
+.hc-faces img { width: 100%; height: 100%; object-fit: cover; object-position: center 22%; }
+.hc-wait .hc-faces > span { background: var(--fill); }
+.hc-who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (prefers-reduced-transparency: reduce) { .hc { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--card); } }
+@media (hover: none), (pointer: coarse) { .hc { display: none; } }

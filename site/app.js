@@ -462,6 +462,8 @@ view.addEventListener('click', (e) => {
   if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;   // modified clicks open TMDB as usual
   e.preventDefault(); window.tnSheet?.open(shown.get(a.dataset.sheet));
 });
+// on computers, resting the pointer on a poster opens it up into a hover card (sheet.js)
+window.tnSheet?.hover?.('.pcard a.cover, .nr a[data-sheet]', (a) => shown.get(a.dataset.sheet));
 // a shared link (?t=m123) opens that title's sheet once the chart has loaded
 function openFromUrl() {
   const k = new URL(location.href).searchParams.get('t'); if (!k || window.tnSheet?.isOpen()) return;

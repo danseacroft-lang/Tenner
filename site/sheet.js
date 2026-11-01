@@ -265,8 +265,9 @@
   }
 
   // ---------- open and close ----------
-  async function open(info, fromUrl) {
+  async function open(info, fromUrl, opts) {
     if (!info) return;
+    hideCard(true, true);
     info.watch ||= info.tmdb ? `${info.tmdb}/watch?locale=GB` : info.netflix || '#';
     if (!current) pageTitle = document.title;
     current = info; opener = fromUrl ? null : document.activeElement;
@@ -289,7 +290,9 @@
       if (current !== info) return;
       if (a) { for (const [f, v] of Object.entries(a.info || {})) if (v && !info[f]) info[f] = v; d = a; }
     }
-    shown = d; render(info, d); autoplay(info, d?.items?.[info.k]);
+    shown = d; render(info, d);
+    if (opts?.trailer && d?.items?.[info.k]?.tr) sheet.querySelector('[data-act="trailer"]')?.click();   // from a hover card's Trailer button
+    else autoplay(info, d?.items?.[info.k]);
     // no wide artwork in the hourly data (This Week, the Watchlist, search): the search API has it; swap it in softly
     if (!info.backdrop && info.k && window.tn.api) {
       const a = await fromApi(info.k), bd = a?.info?.backdrop;
@@ -444,5 +447,133 @@
   };
   sheet.addEventListener('pointerup', endDrag); sheet.addEventListener('pointercancel', endDrag);
 
-  window.tnSheet = { open, openKey, close, isOpen: () => !!current, details };
+  // ---------- hover cards (computers): rest the pointer on a poster and it opens up into a card ----------
+  // Wide artwork, the title, genre, age rating and length, a Watch button with Watchlist and Trailer beside it, a short
+  // description and who's in it; click anywhere else on it for the full sheet. Only with a mouse or trackpad: on touch
+  // screens a tap opens the sheet, as before. Pages say which posters get one with tnSheet.hover(selector, el → info).
+  const fine = matchMedia('(hover: hover) and (pointer: fine)');
+  const calm = () => reduce || document.documentElement.classList.contains('still');
+  const hovers = [];
+  const hc = Object.assign(document.createElement('div'), { className: 'hc', hidden: true });
+  hc.setAttribute('role', 'group'); document.body.append(hc);
+  let card = null, hcT = 0, hcWait = null, hcTok = 0, hcShut = 0, hcDirty = false;
+  const PLAY = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>';
+  const ADD = '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="p" d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="c" d="m5.5 12.5 4.2 4.2 8.8-9.4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const FILM = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10.2 9.4v5.2l4.4-2.6z" fill="currentColor"/></svg>';
+  const cardArt = (info) => info.backdrop ? `<img src="${esc(info.backdrop)}" alt="" decoding="async">`
+    : info.poster ? `<img class="soft" src="${esc(info.poster)}" alt="" decoding="async">`
+    : `<span class="ph" style="background:linear-gradient(160deg,hsl(${hue(info.title)} 45% 42%),hsl(${(hue(info.title) + 40) % 360} 55% 18%))"></span>`;
+  const saveRound = (on) => `<button type="button" class="btn btn-tinted hc-r" data-hc="save" aria-pressed="${on}" aria-label="${on ? 'In your Watchlist' : 'Add to Watchlist'}" title="${on ? 'In your Watchlist' : 'Add to Watchlist'}">${ADD}</button>`;
+  function cardBody({ info, d, cast }) {
+    const x = d?.items?.[info.k] || {};
+    const meta = [(x.g?.length ? x.g : info.genres || [])[0], x.c ? `<b class="sh-cert">${esc(x.c)}</b>` : '',
+      info.type === 'tv' ? (x.se ? `${x.se} season${x.se === 1 ? '' : 's'}` : 'Series') : runtime(x.rt) || 'Film', info.year].filter(Boolean)
+      .map((m) => (String(m).startsWith('<b') ? m : esc(String(m)))).join('<span aria-hidden="true"> · </span>');
+    const on = watchOn(info, d);
+    const main = on ? `<a class="btn btn-tinted hc-go" href="${esc(on.href)}" target="_blank" rel="noopener">${PLAY}<span>Watch on ${esc(on.name)}</span></a>`
+      : `<button type="button" class="btn btn-tinted hc-go" data-hc="open"><span>Where to watch</span></button>`;
+    const people = (cast?.cast || []).slice(0, 3);
+    const names = people.map((p) => p.name), who = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names[0] || '';
+    return `<h3>${esc(info.title)}</h3>
+      <p class="hc-meta">${meta}</p>
+      <div class="hc-acts">${main}${info.k ? saveRound(saved.has(info.k)) : ''}${x.tr ? `<button type="button" class="btn btn-tinted hc-r" data-hc="trailer" aria-label="Play the trailer" title="Trailer">${FILM}</button>` : ''}</div>
+      ${info.overview ? `<p class="hc-ov">${esc(info.overview)}</p>` : d && !ovLive(info) ? '' : '<p class="hc-ov sh-sk" aria-hidden="true"><span></span><span></span></p>'}
+      ${people.length ? `<p class="hc-cast"><span class="hc-faces" aria-hidden="true">${people.map((p) => `<span style="--h:${hue(p.name)}">${p.photo ? `<img src="${esc(p.photo)}" alt="" decoding="async">` : esc(p.name.split(/\s+/).map((w) => w[0]).slice(0, 2).join(''))}</span>`).join('')}</span><span class="hc-who">${esc(who)}</span></p>`
+        : cast === undefined && window.tn.api && /^[mt]\d+$/.test(info.k || '') ? '<p class="hc-cast hc-wait" aria-hidden="true"><span class="hc-faces"><span></span><span></span></span></p>' : ''}`;
+  }
+  const redraw = () => { if (card) $('.hc-body', hc).innerHTML = cardBody(card); };
+  function place() {
+    const a = card?.anchor; if (!a?.isConnected) return hideCard(true);
+    const r = a.getBoundingClientRect(), clamp = (v, lo, hi) => Math.max(lo, Math.min(v, hi));
+    hc.style.width = `${Math.round(clamp(r.width * 1.6, 320, 420))}px`;   // half as wide again as the poster, at least
+    const w = hc.offsetWidth, h = hc.offsetHeight;
+    const list = card.el.closest('ul, ol') || document.body, edge = list.getBoundingClientRect().left + parseFloat(getComputedStyle(list).paddingLeft || 0);
+    const left = clamp(r.left + r.width / 2 - w / 2, Math.max(12, edge - 12), innerWidth - w - 12);   // never out over the sidebar
+    const top = clamp(r.top - (h - r.height) * 0.3, 12, innerHeight - h - 12);
+    hc.style.left = `${left}px`; hc.style.top = `${top}px`;
+    return { r, left, top, w, h };
+  }
+  async function showCard(el, resolve) {
+    const tok = ++hcTok, info = await resolve(el);
+    if (tok !== hcTok || !info || !el.isConnected || current || !el.matches(':hover')) return;
+    card = { info, el, anchor: el.querySelector('.nr-art, .art, .pp-art, img') || el, d: dataD, cast: undefined }; hcDirty = false;
+    hc.getAnimations().forEach((a) => a.cancel());
+    hc.setAttribute('aria-label', info.title);
+    hc.innerHTML = `<div class="hc-art">${cardArt(info)}</div><div class="hc-body">${cardBody(card)}</div>`;
+    hc.hidden = false;
+    const p = place(); if (!p) return;
+    // it grows out of the poster: from the poster's size and place to its own, on a spring
+    if (!calm() && hc.animate) {
+      const s = p.r.width / p.w, dx = p.r.left + p.r.width / 2 - (p.left + p.w / 2), dy = p.r.top + p.r.height / 2 - (p.top + p.h / 2);
+      hc.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${s})` }, { transform: 'none' }], { duration: 460, easing: 'cubic-bezier(.25, 1.12, .4, 1)' });
+      hc.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'ease-out' });
+    } else if (!reduce && hc.animate) hc.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 150 });
+    const c = card;
+    // what isn't here yet: the hour's details (or, for a title Tenner doesn't follow, the search API's), the
+    // description and wider artwork, and the lead cast
+    (async () => {
+      let d = await details();
+      if (!d?.items?.[info.k] && window.tn.api) { const a = await fromApi(info.k); if (a) { for (const [f, v] of Object.entries(a.info || {})) if (v && !info[f]) info[f] = v; d = a; } }
+      if (card !== c) return; c.d = d || {}; redraw();
+      if (ovLive(info) || !info.backdrop) {
+        const a = await fromApi(info.k); if (card !== c) return;
+        const full = String(a?.info?.overview || '').trim(); if (full.length > (info.overview || '').length) info.overview = full;
+        if (!info.backdrop && a?.info?.backdrop) info.backdrop = a.info.backdrop;
+        info.ovDone = true; redraw();
+      }
+      // the wide artwork, if it only arrived now: swapped in softly
+      if (info.backdrop && !$('.hc-art img:not(.soft)', hc)) {
+        const img = new Image(); img.alt = ''; img.src = info.backdrop;
+        img.decode().catch(() => {}).then(() => { if (card === c) $('.hc-art', hc).replaceChildren(img); });
+      }
+    })();
+    castFor(info.k).then((x) => { if (card !== c) return; c.cast = x; redraw(); if (hc.getBoundingClientRect().bottom > innerHeight - 8) place(); });
+  }
+  function hideCard(now, toSheet) {
+    clearTimeout(hcT); hcWait = null; hcTok++;
+    if (!card) return;
+    card = null; hcShut = Date.now();
+    const done = () => { if (!card) { hc.hidden = true; hc.innerHTML = ''; } };
+    if (now || calm() || !hc.animate) done();
+    else hc.animate([{ opacity: 1 }, { opacity: 0, transform: 'scale(.96)' }], { duration: 160, easing: 'ease-in' }).finished.then(done, done);
+    // pages redraw for Watchlist changes once it's gone, as after the sheet (or after the sheet it's opening, which says so itself)
+    if (hcDirty) { hcDirty = false; if (!toSheet) dispatchEvent(new Event('tn:sheet-closed')); }
+  }
+  document.addEventListener('pointerover', (e) => {
+    if (e.pointerType !== 'mouse' || !fine.matches || current || hc.contains(e.target)) return;
+    for (const [sel, resolve] of hovers) {
+      const el = e.target.closest(sel); if (!el) continue;
+      if (el === card?.el || el === hcWait) return;
+      details(); clearTimeout(hcT); hcWait = el;
+      // a moment's rest first, so sweeping across the page doesn't set them off; quicker from one card to the next
+      hcT = setTimeout(() => { hcWait = null; showCard(el, resolve); }, card || Date.now() - hcShut < 800 ? 150 : 520);
+      return;
+    }
+  });
+  document.addEventListener('pointerout', (e) => { if (hcWait && !hcWait.contains(e.relatedTarget)) { clearTimeout(hcT); hcWait = null; } });
+  document.addEventListener('pointerdown', (e) => { if (!hc.contains(e.target)) hideCard(true); }, true);
+  hc.addEventListener('pointerleave', () => hideCard());
+  addEventListener('scroll', (e) => { if (card && (e.target === document || e.target.contains?.(card.el))) hideCard(true); }, { capture: true, passive: true });
+  addEventListener('resize', () => hideCard(true)); addEventListener('blur', () => hideCard(true));
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') hideCard(); });
+  hc.addEventListener('click', (e) => {
+    if (!card || e.target.closest('a')) return;   // Watch on …: off to the service, in a new tab
+    const { info, el } = card, b = e.target.closest('[data-hc]');
+    if (b?.dataset.hc === 'save') {
+      const on = saved.toggle(info); hcDirty = true;
+      b.outerHTML = saveRound(on); navigator.vibrate?.(10);
+      const nb = $('[data-hc="save"]', hc); if (on && !calm() && nb?.animate) nb.animate([{ scale: 1 }, { scale: 1.18 }, { scale: 1 }], { duration: 380, easing: 'cubic-bezier(.3,1.6,.5,1)' });
+      return;
+    }
+    if (b?.dataset.hc === 'trailer') {
+      const key = card.d?.items?.[info.k]?.tr;
+      if (key && window.tn.prefs.get().trailers === 'youtube') { window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(key)}`, '_blank', 'noopener'); return; }   // Settings: "Play trailers"
+    }
+    // anywhere else (or Trailer): the full sheet, and focus comes back to the poster when it closes
+    hideCard(true); el.focus?.({ preventScroll: true });
+    open(info, false, { trailer: b?.dataset.hc === 'trailer' });
+  });
+  const hover = (sel, resolve) => { hovers.push([sel, resolve]); };
+
+  window.tnSheet = { open, openKey, close, isOpen: () => !!current || !!card, details, hover };
 })();

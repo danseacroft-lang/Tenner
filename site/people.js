@@ -194,10 +194,15 @@
     }
     if (a.dataset.p) return showPerson(a.dataset.p, true);
     if (a.dataset.back !== undefined) { if (history.state?.p) history.back(); else { history.pushState(null, '', 'people.html' + (q.value.trim() ? `?q=${encodeURIComponent(q.value.trim())}` : '')); showFind(); } return; }
-    const x = [...pd.known, ...pd.acting, ...pd.crew].find((y) => y.k === a.dataset.k); if (!x) return;
-    window.tnSheet?.open({ k: x.k, type: x.type, title: x.title, year: x.year, poster: x.poster?.replace('/w342/', '/w500/'),
-      tmdb: `https://www.themoviedb.org/${x.type}/${x.k.slice(1)}`, services: (cat?.on.get(x.k) || []).map((s) => cat.svc[s]).filter(Boolean) });
+    const info = titleInfo(a.dataset.k); if (info) window.tnSheet?.open(info);
   });
+  const titleInfo = (k) => {
+    const x = pd && [...pd.known, ...pd.acting, ...pd.crew].find((y) => y.k === k); if (!x) return null;
+    return { k: x.k, type: x.type, title: x.title, year: x.year, poster: x.poster?.replace('/w342/', '/w500/'),
+      tmdb: `https://www.themoviedb.org/${x.type}/${x.k.slice(1)}`, services: (cat?.on.get(x.k) || []).map((s) => cat.svc[s]).filter(Boolean) };
+  };
+  // on computers, resting the pointer on a poster opens it up into a hover card (sheet.js)
+  window.tnSheet?.hover?.('.pp-known a[data-k]', (a) => titleInfo(a.dataset.k));
   // Back and Forward move between the search and the people you've opened (a title sheet handles its own ?t=)
   addEventListener('popstate', () => {
     const p = new URL(location.href).searchParams.get('p');

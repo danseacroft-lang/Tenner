@@ -423,58 +423,12 @@
       <button type="button" class="btn btn-tinted" data-clear="${state.q ? 'q' : 'filters'}">${state.q ? 'Clear search' : 'Clear filters'}</button></li>`;
   }
 
-  // ---------- hover preview (computers): rest the pointer on a poster and its details pop up beside it ----------
-  // Title, show or film, year, rating, genres, the description and where to watch, without leaving Browse. The
-  // descriptions and artwork live in data/browse-more.json, fetched the first time someone hovers.
+  // ---------- hover cards (computers, sheet.js): rest the pointer on a poster and it opens up with the title's details ----------
+  // The descriptions and artwork live in data/browse-more.json, fetched the first time a title is opened.
   const fine = matchMedia('(hover: hover) and (pointer: fine)');
-  let moreP = null, pvTimer = 0, pvFor = null;
+  let moreP = null;
   const moreData = () => (moreP ||= fetch('data/browse-more.json').then((r) => (r.ok ? r.json() : null)).catch(() => null));
-  const pv = Object.assign(document.createElement('div'), { className: 'pv', id: 'pv', hidden: true });
-  pv.setAttribute('role', 'tooltip'); document.body.append(pv);
   const item = (k) => cat?.items.find((x) => `${x.t[0]}${x.i}` === k);
-  function pvHtml(x, extra) {
-    const [ov, bd] = extra || [];
-    const art = bd && extra.base ? `<img src="${esc(extra.base + bd)}" alt="" decoding="async">`
-      : x.img ? `<img class="soft" src="${esc(x.img.startsWith('/') ? cat.img + x.img : x.img)}" alt="" decoding="async">`
-      : `<span class="ph" style="background:linear-gradient(160deg,hsl(${hue(x.n)} 45% 42%),hsl(${(hue(x.n) + 40) % 360} 55% 18%))"></span>`;
-    const meta = [x.t === 'tv' ? 'Show' : 'Film', (x.d || '').slice(0, 4), x.r ? `★ ${x.r.toFixed(1)}${x.v ? ` (${x.v.toLocaleString('en-GB')})` : ''}` : ''].filter(Boolean);
-    const genres = [...new Set(x.g.map((g) => cat.genres[g]).filter(Boolean))].slice(0, 3).join(' · ');
-    const where = x.s.map((k) => `<span class="pv-svc">${logos[k] ? `<img src="${esc(logos[k])}" alt="">` : ''}${esc(labels[k] || k)}</span>`).join('')
-      + (x.b ? '<span class="pv-svc buy">Buy or rent</span>' : '');
-    return `<div class="pv-art">${art}</div>
-      <div class="pv-body">
-        <h3>${esc(x.n)}</h3>
-        <p class="pv-meta">${meta.map(esc).join(' · ')}</p>
-        ${genres ? `<p class="pv-genres">${esc(genres)}</p>` : ''}
-        <p class="pv-ov">${extra ? esc(ov || 'No description yet.') : '<span class="pv-wait"></span><span class="pv-wait short"></span>'}</p>
-        ${where ? `<div class="pv-where"><span class="pv-l">Where to watch</span><div>${where}</div></div>` : ''}
-        <p class="pv-hint">Click for where to watch</p>
-      </div>`;
-  }
-  function placePv(tile) {
-    const r = tile.querySelector('.art').getBoundingClientRect(), w = pv.offsetWidth, h = pv.offsetHeight, gap = 14;
-    const right = r.right + gap + w <= innerWidth - 12;
-    const left = right ? r.right + gap : Math.max(12, r.left - gap - w);
-    pv.style.left = left + 'px';
-    pv.style.top = Math.min(Math.max(12, r.top - 8), innerHeight - h - 12) + 'px';
-    pv.style.transformOrigin = right ? 'left center' : 'right center';
-  }
-  async function showPv(tile) {
-    const x = item(tile.dataset.k); if (!x) return;
-    pvFor = tile; tile.querySelector('a')?.setAttribute('aria-describedby', 'pv');
-    const m = moreP && await Promise.race([moreData(), Promise.resolve(undefined)]);   // already here? use it now
-    pv.innerHTML = pvHtml(x, m?.items?.[tile.dataset.k] && Object.assign([...m.items[tile.dataset.k]], { base: m.img }));
-    pv.hidden = false; pv.classList.remove('in'); placePv(tile); requestAnimationFrame(() => pv.classList.add('in'));
-    if (!m) moreData().then((d) => {   // the first time: fill in the description and artwork as soon as they arrive
-      if (pvFor !== tile) return;
-      const e = d?.items?.[tile.dataset.k];
-      pv.innerHTML = pvHtml(x, Object.assign([...(e || ['', ''])], { base: d?.img })); placePv(tile);
-    });
-  }
-  function hidePv() {
-    clearTimeout(pvTimer); if (!pvFor) return;
-    pvFor.querySelector('a')?.removeAttribute('aria-describedby'); pvFor = null; pv.hidden = true; pv.classList.remove('in');
-  }
   const grid = $('#grid');
   // click a poster: where to watch, in Tenner (sheet.js); Cmd/Ctrl-click still opens TMDB in a new tab
   async function sheetFor(x) {
@@ -488,19 +442,11 @@
   }
   grid.addEventListener('click', async (e) => {
     const a = e.target.closest('.tile a'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
-    e.preventDefault(); hidePv();
+    e.preventDefault();
     const x = item(a.closest('.tile').dataset.k); if (x) window.tnSheet?.open(await sheetFor(x));
   });
-  grid.addEventListener('mouseover', (e) => {
-    const t = e.target.closest('.tile'); if (!fine.matches || !t || t === pvFor) return;
-    clearTimeout(pvTimer); if (pvFor) hidePv();
-    pvTimer = setTimeout(() => showPv(t), pvFor === null && !pv.dataset.warm ? 420 : 120);   // quicker once one is open
-  });
-  grid.addEventListener('mouseout', (e) => { const t = e.target.closest('.tile'); if (t && !t.contains(e.relatedTarget)) { hidePv(); pv.dataset.warm = '1'; clearTimeout(pv.coolT); pv.coolT = setTimeout(() => delete pv.dataset.warm, 600); } });
-  grid.addEventListener('focusin', (e) => { const t = e.target.closest('.tile'); if (t && e.target.matches(':focus-visible')) showPv(t); });
-  grid.addEventListener('focusout', hidePv);
-  addEventListener('scroll', hidePv, { passive: true });
-  addEventListener('keydown', (e) => { if (e.key === 'Escape') hidePv(); });
+  window.tnSheet?.hover?.('#grid .tile a', (a) => { const x = item(a.closest('.tile').dataset.k); return x && sheetFor(x); });
+  window.tnSheet?.hover?.('#bRows a[data-row]', (a) => { const x = item(a.dataset.row); return x && sheetFor(x); });
 
   // ---------- searching everything: films and shows Tenner doesn't follow, from TMDB via the search API ----------
   // Below this hour's catalogue matches, as you type (after a short pause). Each opens the same title sheet.
@@ -553,10 +499,11 @@
   $('#webGrid').addEventListener('click', (e) => {
     const a = e.target.closest('.tile a'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
     const x = web.items.get(a.closest('.tile').dataset.wk); if (!x) return;
-    e.preventDefault();
-    window.tnSheet?.open({ k: x.k, type: x.type, title: x.title, year: x.year, rating: x.rating, poster: x.poster, backdrop: x.backdrop, overview: x.overview,
-      tmdb: `https://www.themoviedb.org/${x.type}/${x.k.slice(1)}`, services: [] });
+    e.preventDefault(); window.tnSheet?.open(webInfo(x));
   });
+  const webInfo = (x) => ({ k: x.k, type: x.type, title: x.title, year: x.year, rating: x.rating, poster: x.poster, backdrop: x.backdrop, overview: x.overview,
+    tmdb: `https://www.themoviedb.org/${x.type}/${x.k.slice(1)}`, services: [] });
+  window.tnSheet?.hover?.('#webGrid .tile a', (a) => { const x = web.items.get(a.closest('.tile').dataset.wk); return x && webInfo(x); });
 
   // ---------- + to save, from the grid, the list or the rows ----------
   document.addEventListener('click', (e) => {
@@ -622,7 +569,9 @@
     const x = item(a.dataset.row); if (x) window.tnSheet?.open(await sheetFor(x));
   });
   // saving or starring changes For You (once the sheet has closed, so nothing moves under it)
-  addEventListener('tn:saved', () => cat && !window.tnSheet?.isOpen() && rows());
+  let rowsDirty = false;
+  addEventListener('tn:saved', () => { if (!cat) return; if (window.tnSheet?.isOpen()) rowsDirty = true; else rows(); });
+  addEventListener('tn:sheet-closed', () => { if (rowsDirty && cat) { rowsDirty = false; rows(); } });
   addEventListener('tn:sheet-closed', () => cat && rows());
 
   // ---------- the grid ----------
