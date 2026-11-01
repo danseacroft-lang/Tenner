@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '2.11.2';
+  const version = '2.12.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -342,7 +342,7 @@
       <input id="ssQ" type="search" placeholder="Search" aria-label="Search shows and films" autocomplete="off" spellcheck="false" enterkeyhint="search"
         role="combobox" aria-expanded="false" aria-controls="ssRes" aria-autocomplete="list">
       <div class="ss-res" id="ssRes" role="listbox" aria-label="Search results" hidden></div></div>`);
-    const box = $('.side-search'), qi = $('#ssQ'), res = $('#ssRes'), phone = matchMedia('(max-width: 719px)');
+    const box = $('.side-search'), qi = $('#ssQ'), res = $('#ssRes'), phone = matchMedia('(max-width: 719px)'), inline = matchMedia('(max-width: 719px), (min-width: 1000px)');
     const S = { cat: null, catP: null, svc: null, items: new Map(), q: '', t: 0, ctl: null, at: -1 };
     // the catalogue (and the services' names) are fetched the first time the box is used, then kept
     const load = () => S.catP ||= Promise.all([
@@ -354,18 +354,20 @@
       if (d && c) c.items = c.items.filter((x) => d.items?.[`${x.t[0]}${x.i}`]?.c !== '18');   // Settings: "Hide titles rated 18"
       if (S.q) draw();
     });
-    // computers: the results float over the page in a popover (the browser's top layer); phones: they fill the menu
+    // phones and computers: the results fill the menu (the drawer, or the sidebar); tablets: they float over the page in a
+    // popover (the browser's top layer)
     const fit = () => {
-      if (phone.matches) { res.removeAttribute('popover'); return; }
+      if (inline.matches) { res.removeAttribute('popover'); res.removeAttribute('style'); return; }
       res.setAttribute('popover', 'manual');
       const r = qi.getBoundingClientRect(), w = Math.min(380, innerWidth - r.left - 12);
       Object.assign(res.style, { left: `${r.left}px`, top: `${r.bottom + 8}px`, width: `${Math.max(w, r.width)}px` });
     };
-    const shown = () => (phone.matches ? !res.hidden : res.matches(':popover-open'));
+    const shown = () => (inline.matches ? !res.hidden : res.matches(':popover-open'));
     function show(on) {
       on = on && !!S.q;
       qi.setAttribute('aria-expanded', on); box.classList.toggle('on', on); $('#drawer')?.classList.toggle('finding', on && phone.matches);
-      if (phone.matches) { res.hidden = !on; return; }
+      box.parentElement.classList.toggle('finding', on && inline.matches && !phone.matches);
+      if (inline.matches) { res.hidden = !on; return; }
       res.hidden = false; fit();
       if (on && !shown()) res.showPopover?.(); else if (!on && shown()) res.hidePopover?.();
     }
@@ -439,7 +441,7 @@
     // computers: a tap anywhere else puts the results away; they come back when you return to the box
     qi.addEventListener('blur', () => { if (!phone.matches) setTimeout(() => { if (document.activeElement !== qi) show(false); }, 120); });
     addEventListener('resize', () => { if (shown()) fit(); });
-    phone.addEventListener('change', () => { show(false); fit(); });
+    inline.addEventListener('change', () => { show(false); fit(); });
     fit();
     window.tnFind = () => { qi.focus(); qi.select(); };
   }

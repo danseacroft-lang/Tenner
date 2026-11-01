@@ -991,7 +991,7 @@ main { padding-bottom: 40px; }   /* breathing room at the end of every page */
 .side-new { margin-left: auto; padding: 4px 8px; border-radius: 999px; background: color-mix(in srgb, var(--menu, var(--accent)) 15%, transparent); color: var(--menu, var(--accent));
   font: 500 11px/1 var(--font); letter-spacing: .02em; text-transform: uppercase; -webkit-font-smoothing: antialiased; }
 @media (min-width: 1000px) {
-  :root { --side: 236px; --side-bg: rgba(242, 242, 247, .82); }
+  :root { --side: 280px; --side-bg: rgba(242, 242, 247, .82); }
   :root[data-theme="dark"] { --side-bg: rgba(28, 28, 30, .82); }
   html { scroll-padding-top: 24px; }
   body { padding-left: var(--side); }
@@ -1856,3 +1856,13 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .
 .mine-subs p.mine-plan { margin: 14px 4px 0; }
 @media (max-width: 380px) { .mine-d { display: none; } }
 @media (prefers-reduced-transparency: reduce) { .mine-subs { background: var(--bg2); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+
+/* computers: search results fill the sidebar, as they fill the menu on phones (the rest of the sidebar steps aside) */
+@media (min-width: 1000px) {
+  .top-row > .side-search { flex-wrap: wrap; }
+  .top-row > .side-search .ss-ic { top: 9.5px; }
+  .top-row > .side-search .ss-res { position: static; inset: auto; flex-basis: 100%; margin: 12px 0 0; padding: 0; max-height: calc(100dvh - 190px); overflow-y: auto;
+    overscroll-behavior: contain; scrollbar-width: none; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; border-radius: 0; animation: none; }
+  .top-row > .side-search .ss-res::-webkit-scrollbar { display: none; }
+  .top-row.finding > :not(.top-brand, .side-search) { display: none; }
+}
