@@ -97,7 +97,7 @@
     };
     const queue = [...list]; await Promise.all(Array.from({ length: 6 }, async () => { while (queue.length) await work(queue.shift()); }));
     if (add.length) saved.set([...add, ...have].slice(0, 500));
-    const bits = [saves && `${saves} added to your Watchlist`, starred && `${starred} starred for For You`].filter(Boolean);
+    const bits = [saves && `${saves} added to your Watchlist`, starred && `${starred} loved, for For You`].filter(Boolean);
     say(bits.length ? `${got.from}: ${bits.join(', ')}${missed ? ` (${missed} not found)` : ''}` : `Nothing new from ${got.from}${missed ? ` (${missed} not found)` : ''}`);
   }
   document.getElementById('setImport').addEventListener('change', (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) importFile(f); });

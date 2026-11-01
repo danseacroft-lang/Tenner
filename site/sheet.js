@@ -81,9 +81,10 @@
   // the Watchlist button: a bookmark that fills in once saved
   const saveBtn = (on) => `<button type="button" class="btn btn-tinted sh-save${on ? ' on' : ''}" data-act="save" aria-pressed="${on}" aria-keyshortcuts="W">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h11v17L12 16.6 6.5 20.5z" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>${on ? 'In Watchlist' : 'Watchlist'}</button>`;
-  // the star (phones): tells Tenner you like this, for better recommendations; it does nothing else
-  const starBtn = (on) => `<button type="button" class="btn btn-tinted sh-star${on ? ' on' : ''}" data-act="star" aria-pressed="${on}" aria-label="${on ? 'Starred' : 'Star'}: tell Tenner you like this" title="${on ? 'Starred' : 'Star it, for better recommendations'}">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.5l-5.1 2.7 1-5.6-4.1-4 5.7-.8z" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg></button>`;
+  // the heart (phones): a round button that tells Tenner you love this, for better recommendations; it does nothing else.
+  // A grey circle with an outline heart, red with a filled heart once loved
+  const starBtn = (on) => `<button type="button" class="btn btn-tinted sh-star${on ? ' on' : ''}" data-act="star" aria-pressed="${on}" aria-label="${on ? 'Loved' : 'Love it'}: tell Tenner you like this" title="${on ? 'Loved' : 'Love it, for better recommendations'}">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2s-7.6-4.6-7.6-10.3A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 7.6 2.5c0 5.7-7.6 10.3-7.6 10.3z" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>`;
   const $ = (s, el = document) => el.querySelector(s);
   let dataP = null, dataD = null;
   const details = () => (dataP ||= fetch(`data/titles.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).then((d) => (dataD = d || dataD)).catch(() => null));
