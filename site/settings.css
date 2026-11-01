@@ -54,12 +54,12 @@
 .set-page .set-row { min-height: 56px; padding: 10px 16px; }
 .set-page .set-row + .set-row { border-top: 0; }
 .set-page .set-row + .set-row::before { content: ""; position: absolute; top: 0; left: 16px; right: 0; border-top: .5px solid var(--sep); }   /* hairlines inset, the iOS way */
-.set-page .set-row select { width: 150px; max-width: 48%; border-radius: 10px; }
+.set-page .set-row select { width: 150px; max-width: 48%; border-radius: 9px; }
 .set-page .set-link:hover { background: none; }
 @media (hover: hover) { .set-page .set-link:hover .set-pill, .set-hero:hover .set-pill { background: var(--gl-hover); } }
 
 /* the glass pill (Choose, Sign in): regular weight, never bold */
-.set-pill { flex: none; display: inline-grid; place-items: center; min-height: 36px; padding: 0 16px; border-radius: 11px; font: 500 15px/1 var(--font);
+.set-pill { flex: none; display: inline-grid; place-items: center; min-height: 36px; padding: 0 16px; border-radius: 9px; font: 500 15px/1 var(--font);
   -webkit-font-smoothing: antialiased; color: var(--label); background: var(--gl-fill); box-shadow: inset 0 0 0 .5px var(--gl-rim); transition: background .2s ease; }
 
 /* your account: the big picture card */
