@@ -75,8 +75,8 @@ Mac. When in doubt, ask "would this look at home in Apple TV, Apple Music or the
   Cast & Crew Top 10 and Browse's list view all use it. Rows of posters use `.nr`.
 - **Glass tokens:** `--gl-fill`, `--gl-rim`, `--gl-hover` (defined for light, auto-dark and forced dark).
 - **Buttons (the owner's chosen design, use it for every button):** solid deep tinted fills (`--bt-fill` navy, `--bt-round`
-  dark grey for icon-only circles), no glass or rim, softly rounded rectangles (14px; 18px for the big hero button), circles
-  when there's only an icon, an icon beside the words where there is one, and **white words and icons**, in Day and Night.
+  dark grey for icon-only circles), no glass or rim, softly rounded rectangles, never capsules (14px; 18px for the big hero
+  button; bars and search boxes about 18 to 22px, with 14px inside them), circles when there's only an icon, an icon beside the words where there is one, and **white words and icons**, in Day and Night.
   Regular weight (500) with font smoothing, never bold. Pills and badges that aren't buttons stay glass.
 - **The sidebar (computers):** its original shape (full height, against the window's edge, no rounded pane or rim), fixed
   in place; a light frost (milky by day, smoky by night), regular-weight names and plain monochrome icons.
