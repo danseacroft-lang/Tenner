@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '2.17.2';
+  const version = '2.18.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -772,7 +772,7 @@
     tabs.forEach((t) => { const on = t.dataset.tab === name; t.setAttribute('aria-selected', on); t.tabIndex = on ? 0 : -1; });
     placeInd(placed); placed = true;
   }
-  // pages without their own handler (About) send the tabs back to the chart
+  // pages without their own handler (About) send the tabs to their page; Home is the home page
   function open(name) {
     if (name === 'search') {   // Browse's own box on Browse; the menu's everywhere else
       const q = document.getElementById('q');
@@ -783,8 +783,9 @@
     if (name === cur) { scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); return; }
     if (name === 'about') { location.href = 'about.html'; return; }
     if (name === 'browse') { location.href = 'browse.html'; return; }
-    if (name === 'new') { location.href = './#new'; return; }
-    if (name === 'watchlist') { location.href = './#watchlist'; return; }
+    if (name === 'top') { location.href = 'charts.html'; return; }
+    if (name === 'new') { location.href = 'charts.html#new'; return; }
+    if (name === 'watchlist') { location.href = 'charts.html#watchlist'; return; }
     if (name === 'people') { location.href = 'people.html'; return; }
     if (name === 'discover') { location.href = 'discover.html'; return; }
     location.href = './';

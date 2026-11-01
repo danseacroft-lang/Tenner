@@ -78,7 +78,7 @@
     if (empty && !stage.querySelector('.d-end')) {
       stage.insertAdjacentHTML('beforeend', `<div class="d-end"><span class="d-end-ic" aria-hidden="true">${SAVE}</span><h2>You’ve seen them all</h2>
         <p>That’s everything ${kind === 'tv' ? 'in shows' : kind === 'movie' ? 'in films' : ''} in the catalogue for now. New titles arrive every hour.</p>
-        <div class="d-end-b"><button type="button" class="btn btn-tinted" id="dAgain">Show skipped again</button><a class="btn" href="./#watchlist">Your Watchlist</a></div></div>`);
+        <div class="d-end-b"><button type="button" class="btn btn-tinted" id="dAgain">Show skipped again</button><a class="btn" href="charts.html#watchlist">Your Watchlist</a></div></div>`);
       $('#dAgain').addEventListener('click', () => { const o = skipped.all(); for (const x of cat.items) if (kind === 'both' || x.t === kind) delete o[keyOf(x)]; skipped.set(o); build(); });
     }
   }

@@ -1,17 +1,26 @@
-// Tenner's beta home page: a preview of a redesigned home, a streaming dashboard built from Tenner's own data.
+// Tenner's home page: a streaming dashboard built from Tenner's own data.
 // A big featured title (its scores in a frosted box, its genres as pills, where to watch and a Watchlist button), the six
 // services as a rail of app icons that filter everything below, rows of what's trending, top rated and newest, and a
 // side column of your own things: shows you're watching, genres to narrow the rows, and this week's biggest climbers.
 // Reads data/trending.json, browse.json and week.json (rebuilt hourly), and titles.json through the title sheet.
-// Hidden: not in the menu or the sitemap, and marked noindex. The About page links to it at the very bottom.
+// The charts (Top 10, New and Watchlist) live on charts.html; old links to them here (./#new, ./#watchlist …) are sent on.
 
 (() => {
+  // links from before the charts had their own page (bookmarks, alerts, emails, the Home Screen) and Settings' "Open
+  // Tenner on" go straight to the charts
+  {
+    const h = location.hash.slice(1), start = window.tn.prefs.get().start;
+    const chart = /^(top|new|watchlist|week|mine|netflix|disney|prime|hbomax|paramount|appletv|skystore|store)$/.test(h);
+    let first = true; try { first = !sessionStorage.getItem('tenner-opened'); sessionStorage.setItem('tenner-opened', '1'); } catch {}
+    const opener = first && !h && !location.search && start && !['auto', 'home'].includes(start);
+    if (chart || opener) { location.replace(`charts.html${location.search}#${chart ? h : start}`); return; }
+  }
   const { esc, hue, reduce } = window.tn;
   const $ = (s, el = document) => el.querySelector(s);
   const LOGO = 'https://image.tmdb.org/t/p/w500';
   const KINDS = { both: 'Shows and films', tv: 'Shows', movie: 'Films' };
   const state = { kind: 'both', svc: 'all', genre: null, hero: 0, data: null, cat: null, week: null, titles: null };
-  try { const k = sessionStorage.getItem('tenner-beta-kind'); if (KINDS[k]) state.kind = k; } catch {}
+  try { const k = sessionStorage.getItem('tenner-home-kind'); if (KINDS[k]) state.kind = k; } catch {}
 
   // ---------- icons ----------
   const I = {
@@ -44,6 +53,7 @@
   addEventListener('tn:check', () => load(true));
 
   const services = () => (state.data?.services || []).filter((s) => !s.shop && !s.store);
+  window.tnTonight?.use({ cat: () => state.cat, services: () => state.data?.services, titles: () => state.titles });   // What should I watch tonight? borrows what's loaded
   const svcOf = (k) => (state.data?.services || []).find((s) => s.key === k);
   const kinds = () => (state.kind === 'both' ? ['tv', 'movie'] : [state.kind]);
   const det = (k) => state.titles?.items?.[k] || null;
@@ -132,7 +142,7 @@
 
   $('#bxKind').addEventListener('change', (e) => {
     state.kind = e.target.value; state.hero = 0; state.genre = null;
-    try { sessionStorage.setItem('tenner-beta-kind', state.kind); } catch {}
+    try { sessionStorage.setItem('tenner-home-kind', state.kind); } catch {}
     morph(draw);
   });
   const morph = (fn) => (document.startViewTransition && !document.documentElement.classList.contains('still') ? document.startViewTransition(fn) : fn());
@@ -260,9 +270,10 @@
       return `<li class="bx-lp"><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(info)}><span class="bx-lp-art">${poster(it)}</span>
         <span class="bx-lp-copy"><b>${esc(it.title)}</b>${rating(it.rating)}</span><small>${esc(new Date(it.date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: it.year === today.slice(0, 4) ? undefined : 'numeric' }))}</small></a></li>`;
     });
-    $('#bxRows').innerHTML = row('bxTrend', `Trending ${esc(where())}`, `The top ${words} this hour`, trend, 'bx-row-w', './#top')
+    $('#bxRows').innerHTML = row('bxTrend', `Trending ${esc(where())}`, `The top ${words} this hour`, trend, 'bx-row-w', 'charts.html')
+      + (window.tnTonight?.card() || '')
       + row('bxTop', `Most popular${g ? ` in ${esc(g)}` : ''}`, `The ${words} most people are looking at${state.svc === 'all' ? ' on all six' : ` ${where()}`}`, top, 'bx-row-p', 'browse.html')
-      + row('bxNew', `Latest releases${g ? ` in ${esc(g)}` : ''}`, 'The newest arrivals, most recent first', fresh, 'bx-row-p', './#new')
+      + row('bxNew', `Latest releases${g ? ` in ${esc(g)}` : ''}`, 'The newest arrivals, most recent first', fresh, 'bx-row-p', 'charts.html#new')
       + kinds().map(topList).join('')
       || '<p class="bx-empty">Nothing matches. Try another service or genre.</p>';
     for (const r of main.querySelectorAll('.bx-row')) edges(r);
@@ -421,5 +432,18 @@
     }).join('')}</ul></section>`;
   }
 
+  // a link shared to Tenner from another app (the manifest's share_target): Tenner finds the title and opens its sheet
+  {
+    const p = new URL(location.href).searchParams;
+    if (!p.get('t') && (p.get('url') || p.get('text') || p.get('title'))) {
+      const u = new URL(location.href); for (const k of ['url', 'text', 'title']) u.searchParams.delete(k); history.replaceState(null, '', u);
+      window.tn.sharedTitle(p).then((x) => {
+        if (!x?.k) { toast('Tenner couldn’t find that title'); return; }
+        const v = new URL(location.href); v.searchParams.set('t', x.k); history.replaceState(null, '', v);
+        if (state.data) openFromUrl();
+      });
+    }
+  }
+  addEventListener('popstate', () => state.data && openFromUrl());   // Forward to a title you'd closed opens it again
   load();
 })();

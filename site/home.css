@@ -1,7 +1,7 @@
-/* Tenner's beta home page: a streaming dashboard. A featured title on a big artwork card (scores in a frosted box,
+/* Tenner's home page: a streaming dashboard. A featured title on a big artwork card (scores in a frosted box,
    genres as glass pills), the services as a rail of app icons, rows of wide cards and posters, and a side column of
    frosted panels. Built on the tokens in styles.css: --r for every corner, --fr-* for every box, the navy buttons. */
-body.beta { overflow-x: clip; }
+body.home { overflow-x: clip; }
 .bx { position: relative; isolation: isolate; max-width: 1560px; margin: 0 auto; padding: 4px var(--gutter-r) 0 var(--gutter); }
 @media (min-width: 1000px) { .bx { padding-top: 22px; padding-left: 32px; padding-right: 32px; } }
 
@@ -17,7 +17,7 @@ body.beta { overflow-x: clip; }
 .bx-h { display: flex; align-items: center; gap: 10px; margin: 0; font: 800 31px/1.1 var(--font-display); letter-spacing: -.03em; }
 .bx-tag { padding: 4px 9px; border-radius: var(--r); font: 600 13px/1 var(--font); letter-spacing: 0; color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .bx-hd .dd { flex: none; min-width: 0; }
-@media (max-width: 420px) { .bx-hd .dd { width: 168px; } }
+@media (max-width: 360px) { .bx-hd .dd-kind { padding: 0 12px 0 14px; gap: 8px; font-size: 15px; } }
 
 .bx-grid { display: grid; gap: 30px; }
 .bx-main { min-width: 0; }
