@@ -84,7 +84,7 @@
     if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;   // modified clicks open TMDB as usual
     e.preventDefault(); window.tnSheet?.open(shown.get(a.dataset.sheet));
   });
-  window.tnSheet?.hover?.('a[data-sheet]:not(.bx-cta)', (a) => shown.get(a.dataset.sheet));
+  window.tnSheet?.hover?.('a[data-sheet]:not(.bx-cta, .bx-dc-card)', (a) => shown.get(a.dataset.sheet));
   function openFromUrl() {
     const k = new URL(location.href).searchParams.get('t'); if (!k || window.tnSheet?.isOpen()) return;
     for (const info of shown.values()) if (info.k === k) { window.tnSheet.open(info, true); return; }
