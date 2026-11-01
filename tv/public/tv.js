@@ -447,6 +447,11 @@
     $('#pvMeta').textContent = [started ? `Started at ${hm(x.at)}` : `${x.end <= t ? 'Was on' : `${x.at - t < 864e5 && ukDay(x.at) === today ? 'On' : dayName(ukDay(x.at), { weekday: 'long' })}`} at ${hm(x.at)}`,
       x.s && x.n ? `S${x.s} E${x.n}` : '', length(x.end - x.at), started ? `${minsLeft(x, t)} min left` : ''].filter(Boolean).join('  ·  ');
     const img = $('#pvImg'), src = x.wide || x.poster;
+    // behind the picture (and in its place when there isn't one, or it won't load): the title's own colours and the
+    // channel's logo, so the box is never empty
+    const h = hue(x.t), ph = $('#pvPh');
+    ph.style.background = `linear-gradient(150deg, hsl(${h} 45% 34%), hsl(${(h + 50) % 360} 55% 14%))`;
+    ph.innerHTML = logo(x.ch) ? `<img src="${esc(logo(x.ch))}" alt="">` : `<b>${esc(x.t)}</b>`;
     $('#pv').classList.toggle('poster', !x.wide && !!x.poster);
     if (!src) { img.hidden = true; img.removeAttribute('src'); return; }
     if (img.getAttribute('src') === src) return;
@@ -455,6 +460,19 @@
     img.onerror = () => { img.hidden = true; };
     img.src = src;
   }
+  // a picture that won't load (Sky sometimes drops one): its box shows the title on its own colours instead
+  document.addEventListener('error', (e) => {
+    const img = e.target; if (img.tagName !== 'IMG' || !img.closest('.pick-art, .tile-art, .sh-art, .corner-art')) return;
+    const box = img.closest('.pick-art, .tile-art, .sh-art, .corner-art'), x = shown.get(img.closest('[data-p]')?.dataset.p || '') || null;
+    if (box.classList.contains('corner-art')) {   // the next one instead (or none)
+      if (!img.classList.contains('on') && cornerL.length) { cornerL.splice(cornerI, 1); if (!cornerL.length) { $('#corner').hidden = true; clearInterval(cornerT); return; } cornerI %= cornerL.length; showCorner(); }
+      return;
+    }
+    if (box.classList.contains('sh-art')) { box.querySelectorAll('img').forEach((i) => i.remove()); box.classList.remove('sh-poster'); return; }
+    const t = x?.t || '', h = hue(t);
+    box.querySelectorAll('img').forEach((i) => i.remove());
+    if (!box.querySelector('.ph')) box.insertAdjacentHTML('afterbegin', `<span class="ph" style="background:linear-gradient(150deg,hsl(${h} 45% 40%),hsl(${(h + 50) % 360} 55% 18%))">${esc(t)}</span>`);
+  }, true);
   const over = (e) => { const b = e.target.closest?.('.blk, .pick, .tile'); if (b) preview(shown.get(b.dataset.p)); };
   document.addEventListener('pointerover', (e) => { if (e.pointerType === 'mouse') over(e); });
   document.addEventListener('focusin', over);

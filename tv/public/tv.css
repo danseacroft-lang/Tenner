@@ -87,8 +87,8 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
 .pv { display: grid; grid-template-columns: 224px minmax(0, 1fr); gap: 20px; align-items: center; min-height: 126px; padding: 6px 0 18px; }
 .pv-art { position: relative; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; background: color-mix(in srgb, var(--label) 7%, transparent);
   box-shadow: inset 0 0 0 .5px color-mix(in srgb, var(--label) 12%, transparent); }
-.pv-art img { display: block; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .25s ease; }
-.pv-art img.on { opacity: 1; }
+.pv-art > img { display: block; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .25s ease; }
+.pv-art > img.on { opacity: 1; }
 .pv.poster .pv-art img { object-fit: contain; background: #1c1c1e; }
 .pv-copy { min-width: 0; max-width: 680px; }
 .pv-ch { margin: 0 0 4px; color: var(--label2); font: 600 14px/1.2 var(--font); }
@@ -817,3 +817,16 @@ button.li-row:active { background: rgba(255, 255, 255, .12); }
   .corner-cap { display: none; }   /* phones: just the picture (the headline has the room); a tap still opens it */
   .days { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); }
 }
+/* the preview's box behind (or instead of) its picture: the title's colours and the channel's logo */
+.pv-ph { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; }
+.pv-ph img { width: 34%; max-height: 40%; object-fit: contain; opacity: .9; }
+.pv-ph b { color: #fff; font: 700 18px/1.2 var(--font); text-align: center; }
+.pv-art > #pvImg { position: relative; }
+.pv-art { background: none; }
+/* the corner reaches on down behind the preview and into the top of the guide, fading out as it goes */
+.corner { height: 860px; }
+.corner-art { -webkit-mask-image: linear-gradient(to left, #000 30%, transparent 96%), linear-gradient(to bottom, #000 22%, rgba(0, 0, 0, .55) 50%, rgba(0, 0, 0, .2) 75%, transparent 98%);
+  mask-image: linear-gradient(to left, #000 30%, transparent 96%), linear-gradient(to bottom, #000 22%, rgba(0, 0, 0, .55) 50%, rgba(0, 0, 0, .2) 75%, transparent 98%); }
+.corner-cap { bottom: auto; top: 250px; }
+@media (max-width: 760px) { .corner { height: 620px; } }
+.corner-art img { object-position: 60% top; }
