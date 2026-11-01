@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '2.5.0';
+  const version = '2.6.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -317,6 +317,140 @@
     }).catch(() => {});
   }
 
+  // ---------- search, from any page: a native search box under the logo (at the top of the menu on phones) ----------
+  // Results as you type, matched the way Browse matches (fold and score, below): this hour's catalogue first, then every
+  // other film and show from the search service, and a last row that opens the full results in Browse. A result opens
+  // its title sheet here, or on the homepage where a page has none. Browse keeps its own box.
+  // Accents, case and punctuation don't matter: 'Amelie' finds 'Amélie', 'spiderman' finds 'Spider-Man'.
+  const fold = (t) => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim();
+  function score(x, q) {           // x: a catalogue entry ({ n: name }); q: folded. Higher is better; 0 means no match
+    if (!x._f) { x._f = fold(x.n); x._t = x._f.replace(/ /g, ''); x._a = x._f.replace(/^(the|a|an) /, ''); x._i = x._f.split(' ').map((w) => w[0]).join(''); }
+    if (x._f === q || x._a === q) return 100;
+    if (x._f.startsWith(q) || x._a.startsWith(q)) return 80;
+    if ((' ' + x._f).includes(' ' + q)) return 60;            // a word starts with it
+    if (x._t.includes(q.replace(/ /g, ''))) return 40;         // ignoring spaces and dashes
+    const words = q.split(' ');
+    if (words.length > 1 && words.every((w) => x._f.includes(w) || (w.length > 1 && x._i.includes(w)))) return 30;   // initials count: 'svu'
+    if (q.length > 1 && !q.includes(' ') && x._i === q) return 50;
+    return 0;
+  }
+  const brandEl = $('.top-brand');
+  if (brandEl) {
+    const GLASS = '<svg class="ss-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.5 15.5 20 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+    brandEl.insertAdjacentHTML('afterend', `<div class="side-search" role="search">${GLASS}
+      <input id="ssQ" type="search" placeholder="Search" aria-label="Search shows and films" autocomplete="off" spellcheck="false" enterkeyhint="search"
+        role="combobox" aria-expanded="false" aria-controls="ssRes" aria-autocomplete="list">
+      <div class="ss-res" id="ssRes" role="listbox" aria-label="Search results" hidden></div></div>`);
+    const box = $('.side-search'), qi = $('#ssQ'), res = $('#ssRes'), phone = matchMedia('(max-width: 719px)');
+    const S = { cat: null, catP: null, svc: null, items: new Map(), q: '', t: 0, ctl: null, at: -1 };
+    // the catalogue (and the services' names) are fetched the first time the box is used, then kept
+    const load = () => S.catP ||= Promise.all([
+      fetch('data/browse.json').then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      fetch('data/trending.json').then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      prefs.get().no18 && window.tnSheet?.details ? window.tnSheet.details().catch(() => null) : null,
+    ]).then(([c, t, d]) => {
+      S.cat = c; S.svc = Object.fromEntries((t?.services || []).filter((s) => !s.store).map((s) => [s.key, s]));
+      if (d && c) c.items = c.items.filter((x) => d.items?.[`${x.t[0]}${x.i}`]?.c !== '18');   // Settings: "Hide titles rated 18"
+      if (S.q) draw();
+    });
+    // computers: the results float over the page in a popover (the browser's top layer); phones: they fill the menu
+    const fit = () => {
+      if (phone.matches) { res.removeAttribute('popover'); return; }
+      res.setAttribute('popover', 'manual');
+      const r = qi.getBoundingClientRect(), w = Math.min(380, innerWidth - r.left - 12);
+      Object.assign(res.style, { left: `${r.left}px`, top: `${r.bottom + 8}px`, width: `${Math.max(w, r.width)}px` });
+    };
+    const shown = () => (phone.matches ? !res.hidden : res.matches(':popover-open'));
+    function show(on) {
+      on = on && !!S.q;
+      qi.setAttribute('aria-expanded', on); box.classList.toggle('on', on); $('#drawer')?.classList.toggle('finding', on && phone.matches);
+      if (phone.matches) { res.hidden = !on; return; }
+      res.hidden = false; fit();
+      if (on && !shown()) res.showPopover?.(); else if (!on && shown()) res.hidePopover?.();
+    }
+    const row = (x, i) => {
+      const art = x.poster ? `<img src="${esc(x.poster)}" alt="" loading="lazy" decoding="async">` : `<span class="ss-ph" style="background:hsl(${hue(x.title)} 45% 35%)"></span>`;
+      return `<a class="ss-r" role="option" id="ssr${i}" aria-selected="false" href="./?t=${esc(x.k)}" data-k="${esc(x.k)}">${art}
+        <span class="ss-t"><b>${esc(x.title)}</b><small>${esc([x.type === 'tv' ? 'Show' : 'Film', x.year, x.on].filter(Boolean).join(' · '))}</small></span></a>`;
+    };
+    const seeAll = () => `<a class="ss-r ss-all" role="option" id="ssrAll" aria-selected="false" href="browse.html#q=${encodeURIComponent(qi.value.trim())}">${GLASS.replace('ss-ic', 'ss-all-ic')}
+      <span class="ss-t"><b>See all results</b><small>In Browse, with filters</small></span></a>`;
+    function draw() {
+      const q = S.q;
+      if (!q) { res.innerHTML = ''; show(false); return; }
+      const c = S.cat, local = !c ? [] : c.items.map((x) => [x, score(x, q)]).filter(([, sc]) => sc).sort((a, b) => b[1] - a[1] || b[0].p - a[0].p).slice(0, 5)
+        .map(([x]) => ({ k: `${x.t[0]}${x.i}`, type: x.t, title: x.n, year: (x.d || '').slice(0, 4) || null, rating: x.r || null, from: x,
+          poster: x.img ? (x.img.startsWith('/') ? c.img + x.img : x.img) : null, on: x.s.map((s) => S.svc?.[s]?.label).filter(Boolean)[0] || (x.b ? 'Buy or rent' : '') }));
+      const have = new Set(local.map((x) => x.k)), more = [...S.items.values()].filter((x) => !have.has(x.k)).slice(0, 8 - local.length);
+      S.list = [...local, ...more]; S.at = -1;
+      res.innerHTML = (S.list.length ? S.list.map(row).join('') : `<p class="ss-note">${S.busy || !S.catP || !c ? 'Searching…' : `Nothing found for “${esc(qi.value.trim())}”.`}</p>`) + seeAll();
+      qi.removeAttribute('aria-activedescendant');
+      show(document.activeElement === qi || box.contains(document.activeElement) || res.contains(document.activeElement));
+    }
+    // every other film and show (TMDB, via the search service), after a short pause in typing
+    function web() {
+      const raw = qi.value.trim(); clearTimeout(S.t); S.ctl?.abort(); S.items = new Map();
+      if (!api || raw.length < 2) { S.busy = false; return; }
+      S.busy = true;
+      S.t = setTimeout(async () => {
+        S.ctl = new AbortController();
+        try {
+          const r = await fetch(`${api}/search?q=${encodeURIComponent(raw.slice(0, 80))}`, { signal: S.ctl.signal }), d = r.ok ? await r.json() : null;
+          if (qi.value.trim() !== raw) return;
+          for (const x of d?.results || []) S.items.set(x.k, { ...x, poster: x.poster ? d.img + x.poster : null, backdrop: x.backdrop ? d.bd + x.backdrop : null, web: true });
+        } catch (e) { if (e.name === 'AbortError') return; }
+        S.busy = false; draw();
+      }, 280);
+    }
+    qi.addEventListener('focus', () => { load(); if (S.q) draw(); });
+    qi.addEventListener('input', () => { S.q = fold(qi.value).slice(0, 80); web(); draw(); });
+    // the arrow keys move through the results, Return opens one (or the full results), Escape clears, then leaves
+    const pick = (i) => {
+      const rows = [...res.querySelectorAll('.ss-r')]; if (!rows.length) return;
+      S.at = (i + rows.length) % rows.length;
+      rows.forEach((a, j) => a.setAttribute('aria-selected', j === S.at));
+      qi.setAttribute('aria-activedescendant', rows[S.at].id); rows[S.at].scrollIntoView({ block: 'nearest' });
+    };
+    qi.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { if (!shown()) return; e.preventDefault(); pick(S.at + (e.key === 'ArrowDown' ? 1 : S.at < 0 ? 0 : -1)); }
+      else if (e.key === 'Enter') { e.preventDefault(); if (!S.q) return; (res.querySelectorAll('.ss-r')[Math.max(0, S.at)] || res.querySelector('.ss-all'))?.click(); }
+      else if (e.key === 'Escape') { if (qi.value) { e.preventDefault(); e.stopPropagation(); qi.value = ''; S.q = ''; web(); draw(); } else if (!phone.matches) qi.blur(); }
+    });
+    qi.addEventListener('search', () => { if (!qi.value) { S.q = ''; web(); draw(); } });   // the box's own clear button
+    async function go(x) {
+      show(false); qi.blur();
+      if (!window.tnSheet) { location.href = `./?t=${x.k}`; return; }
+      if (window.tnSheet.isOpen()) { window.tnSheet.close(); await new Promise((r) => setTimeout(r, 380)); }
+      const c = x.from;
+      window.tnSheet.open(c ? { k: x.k, type: x.type, title: x.title, year: x.year, rating: x.rating, poster: x.poster,
+        genres: [...new Set(c.g.map((g) => S.cat.genres?.[g]).filter(Boolean))].slice(0, 3), tmdb: `https://www.themoviedb.org/${c.t}/${c.i}`,
+        services: c.s.map((s) => ({ label: S.svc?.[s]?.label || s, logo: S.svc?.[s]?.logo })) }
+        : { k: x.k, type: x.type, title: x.title, year: x.year, rating: x.rating, poster: x.poster, backdrop: x.backdrop, overview: x.overview,
+          tmdb: `https://www.themoviedb.org/${x.type}/${x.k.slice(1)}`, services: [] });
+    }
+    res.addEventListener('pointerdown', (e) => { if (!phone.matches) e.preventDefault(); });   // keep the box focused while choosing
+    res.addEventListener('click', (e) => {
+      const a = e.target.closest('.ss-r'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
+      if (a.classList.contains('ss-all')) { show(false); if (location.pathname.endsWith('/browse.html')) { e.preventDefault(); location.hash = `q=${encodeURIComponent(qi.value.trim())}`; } return; }
+      const x = S.list.find((y) => y.k === a.dataset.k); if (!x) return;
+      e.preventDefault(); go(x);
+    });
+    // computers: a tap anywhere else puts the results away; they come back when you return to the box
+    qi.addEventListener('blur', () => { if (!phone.matches) setTimeout(() => { if (document.activeElement !== qi) show(false); }, 120); });
+    addEventListener('resize', () => { if (shown()) fit(); });
+    phone.addEventListener('change', () => { show(false); fit(); });
+    fit();
+    window.tnFind = () => { qi.focus(); qi.select(); };
+  }
+
+  // the menu's search box, ready to type in: on phones the menu opens first
+  function findAnywhere() {
+    if (!window.tnFind) { location.href = 'browse.html#search'; return; }
+    const d = $('#drawer');
+    if (d && drawerQ.matches && !d.open) d.showModal();
+    window.tnFind();
+  }
+
   // ---------- phones: the Rakuten way. A round menu button opens a drawer that slides in from the left, laid out like
   // the sidebar on computers (the pages, then More: TV Guide, About, Theme and Settings, then the small print); the bar keeps
   // the logo in the middle and a round Share (or Search) on the right. The drawer is a native modal <dialog>. ----------
@@ -338,7 +472,7 @@
       <div class="dr-body" id="drBody"></div></dialog>`);
     const drawer = $('#drawer'), drBody = $('#drBody'), menuBtn = $('#menuBtn');
     // the sidebar's own pieces move into the drawer on phones (and back again on bigger screens), listeners and all
-    const movers = ['.tabbar', '.side-stores', '#sideMore', '.side-tv', '.side-about:not(.side-settings):not(.side-tv):not(.side-store)', '.top-act', '.side-about.side-settings', '.side-links'].map((q) => $(q)).filter(Boolean);
+    const movers = ['.side-search', '.tabbar', '.side-stores', '#sideMore', '.side-tv', '.side-about:not(.side-settings):not(.side-tv):not(.side-store)', '.top-act', '.side-about.side-settings', '.side-links'].map((q) => $(q)).filter(Boolean);
     const marks = movers.map((el) => { const m = document.createComment('drawer'); el.before(m); return m; });
     const place = () => {
       if (drawerQ.matches) { movers.forEach((el) => drBody.append(el)); topRow.append(right); }
@@ -355,7 +489,9 @@
       drawer.classList.add('out'); setTimeout(() => { drawer.classList.remove('out'); drawer.close(); }, 260);
     };
     menuBtn.addEventListener('click', () => { drawer.showModal(); $('#drX').focus({ preventScroll: true }); });
-    drawer.addEventListener('close', () => { menuBtn.setAttribute('aria-expanded', 'false'); root.classList.remove('drawer-open'); });
+    // the round Search button opens the menu with its search box ready to type in (Browse focuses its own box)
+    search?.addEventListener('click', (e) => { if (e.metaKey || e.ctrlKey || e.shiftKey) return; e.preventDefault(); open('search'); });
+    drawer.addEventListener('close', () => { menuBtn.setAttribute('aria-expanded', 'false'); root.classList.remove('drawer-open'); drawer.classList.remove('finding'); });
     drawer.addEventListener('cancel', (e) => { e.preventDefault(); shut(); });
     new MutationObserver(() => { const o = drawer.open; menuBtn.setAttribute('aria-expanded', o); root.classList.toggle('drawer-open', o); }).observe(drawer, { attributes: true, attributeFilter: ['open'] });
     $('#drX').addEventListener('click', shut);
@@ -387,13 +523,13 @@
 
   // ---------- a title from somewhere else: an IMDb number, a TMDB link, or a name (and year) to search for ----------
   // Used by Settings' import (Letterboxd, IMDb, Trakt, Netflix) and by links shared to Tenner from other apps.
-  const fold = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim().replace(/^the /, '');
+  const foldName = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim().replace(/^the /, '');
   async function findTitle({ imdb, title, year, type }) {
     const get = (p) => fetch(`${api}${p}`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
     if (/^tt\d{1,10}$/.test(imdb || '')) { const d = await get(`/find/${imdb}`); if (d?.k) return d; }
     if (!title) return null;
     const d = await get(`/search?q=${encodeURIComponent(String(title).slice(0, 80))}`), all = (d?.results || []).filter((x) => !type || x.type === type);
-    const same = all.filter((x) => fold(x.title) === fold(title)), near = (x) => year && x.year && Math.abs(x.year - year) <= 1;
+    const same = all.filter((x) => foldName(x.title) === foldName(title)), near = (x) => year && x.year && Math.abs(x.year - year) <= 1;
     const x = same.find(near) || (year ? all.find(near) : null) || same[0] || all[0];
     return x ? { k: x.k, type: x.type, title: x.title, year: x.year, poster: x.poster ? d.img + x.poster : null } : null;
   }
@@ -592,7 +728,7 @@
     },
   };
 
-  window.tn = { prefs, esc, hue, glide, arrows, segment, reduce, saved, stars, progress, nextUp, whenText, mine, pickMine, api, share, alerts, isIOS, account, avatar, featured, findTitle, sharedTitle };
+  window.tn = { prefs, esc, hue, glide, arrows, segment, reduce, saved, stars, progress, nextUp, whenText, mine, pickMine, api, share, alerts, isIOS, account, avatar, featured, findTitle, sharedTitle, fold, score };
 
   // ---------- paste or drop a link: an IMDb, TMDB, Letterboxd, JustWatch or Tenner link opens that title's sheet ----------
   // ⌘V (Ctrl+V) anywhere but a text box, or a link dragged onto the page. Anything else pasted is left alone.
@@ -635,10 +771,10 @@
   }
   // pages without their own handler (About) send the tabs back to the chart
   function open(name) {
-    if (name === 'search') {   // Search lives on the Browse page: go there with the box focused
+    if (name === 'search') {   // Browse's own box on Browse; the menu's everywhere else
       const q = document.getElementById('q');
       if (q) { q.focus(); q.select(); scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); return; }
-      location.href = 'browse.html#search'; return;
+      findAnywhere(); return;
     }
     if (window.tnOnTab) return window.tnOnTab(name);
     if (name === cur) { scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); return; }

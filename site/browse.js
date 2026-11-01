@@ -251,22 +251,8 @@
 
   try { ['tenner-searches', 'tenner-recent', 'tenner-browse-note'].forEach((k) => localStorage.removeItem(k)); } catch {}   // recent searches, Recently Viewed and the welcome note were tried and taken out: tidy away what they kept
 
-  // ---------- search ----------
-  // Accents, case and punctuation don't matter: 'Amelie' finds 'Amélie', 'spiderman' finds 'Spider-Man'.
-  const fold = (t) => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim();
-  const tight = (t) => t.replace(/ /g, '');
-  function score(x, q) {           // higher is better; 0 means no match
-    if (!x._f) { x._f = fold(x.n); x._t = tight(x._f); x._a = x._f.replace(/^(the|a|an) /, ''); x._i = x._f.split(' ').map((w) => w[0]).join(''); }
-    const tq = tight(q);
-    if (x._f === q || x._a === q) return 100;
-    if (x._f.startsWith(q) || x._a.startsWith(q)) return 80;
-    if ((' ' + x._f).includes(' ' + q)) return 60;            // a word starts with it
-    if (x._t.includes(tq)) return 40;                          // ignoring spaces and dashes
-    const words = q.split(' ');
-    if (words.length > 1 && words.every((w) => x._f.includes(w) || (w.length > 1 && x._i.includes(w)))) return 30;   // initials count: 'svu'
-    if (q.length > 1 && !q.includes(' ') && x._i === q) return 50;
-    return 0;
-  }
+  // ---------- search: matched as the menu's search box matches (shell.js) ----------
+  const { fold, score } = window.tn;
 
   // ---------- filtering ----------
   let certs = null;

@@ -1734,3 +1734,75 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .
 .hc-who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (prefers-reduced-transparency: reduce) { .hc { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--card); } }
 @media (hover: none), (pointer: coarse) { .hc { display: none; } }
+
+/* ============================================================ search from any page (shell.js)
+   A native search field under the logo in the sidebar (Apple Music's place for it), at the top of the menu on phones and
+   a round glass button that opens into a field on tablets. Results drop below it in a sheet of glass on computers, and
+   fill the menu on phones, in the chart list's style: small poster, title, grey second line, hairline separators. */
+.side-search { position: relative; display: flex; align-items: center; min-width: 0; pointer-events: auto; }
+.side-search .ss-ic { position: absolute; z-index: 1; left: 10px; width: 17px; height: 17px; color: var(--label2); pointer-events: none; }
+.side-search input {
+  width: 100%; height: 36px; box-sizing: border-box; margin: 0; padding: 0 8px 0 33px; border: 0; border-radius: 10px; appearance: none; -webkit-appearance: none;
+  background: var(--fill); color: var(--label); font: 400 15px/1 var(--font); letter-spacing: -.016em; -webkit-font-smoothing: antialiased;
+  transition: background-color .2s ease, box-shadow .2s ease;
+}
+.side-search input::placeholder { color: var(--label2); }
+.side-search input:focus { outline: none; background: var(--fill-strong); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 70%, transparent); }
+.side-search input::-webkit-search-decoration { -webkit-appearance: none; }
+.ss-res {
+  position: fixed; inset: auto; margin: 0; z-index: 66; box-sizing: border-box; max-height: min(560px, calc(100dvh - 120px)); overflow-y: auto; overscroll-behavior: contain;
+  padding: 6px; border: 0; border-radius: 18px; color: var(--label);
+  background: color-mix(in srgb, var(--bg) 86%, transparent); -webkit-backdrop-filter: blur(40px) saturate(1.8); backdrop-filter: blur(40px) saturate(1.8);
+  box-shadow: inset 0 0 0 .5px var(--gl-rim), 0 24px 60px rgba(0, 0, 0, .28);
+}
+.ss-res:popover-open { transform-origin: top left; animation: ssDrop .38s var(--ease-spring) both; }
+@keyframes ssDrop { from { opacity: 0; transform: translateY(-6px) scale(.97); } }
+:root.still .ss-res { animation: none; }
+.ss-r { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 7px 8px; border-radius: 12px; color: var(--label); text-decoration: none; position: relative; }
+.ss-r + .ss-r::before { content: ""; position: absolute; top: 0; left: 54px; right: 8px; border-top: .5px solid var(--sep); }   /* hairlines, inset past the poster */
+.ss-r:hover { text-decoration: none; }
+.ss-r[aria-selected="true"], .ss-r:focus-visible { outline: none; background: var(--fill); }
+@media (hover: hover) { .ss-r:hover { background: var(--fill); } }
+.ss-r:hover::before, .ss-r[aria-selected="true"]::before, .ss-r:hover + .ss-r::before, .ss-r[aria-selected="true"] + .ss-r::before { opacity: 0; }
+.ss-r:active { background: var(--fill-strong); }
+.ss-r img, .ss-ph { width: 34px; height: 51px; flex: none; object-fit: cover; border-radius: 5px; box-shadow: 0 0 0 .5px var(--sep); }
+.ss-t { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.ss-t b { font-weight: 500; font-size: 15px; letter-spacing: -.016em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ss-t small { font-size: 13px; color: var(--label2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ss-all-ic { width: 34px; height: 20px; flex: none; color: var(--menu, var(--accent)); }
+.ss-all b { color: var(--menu, var(--accent)); }
+.ss-note { margin: 0; padding: 12px 10px; color: var(--label2); font-size: 14px; }
+@media (min-width: 1000px) {
+  .top-row > .side-search { margin: -6px 0 -8px; }
+}
+/* tablets: a round glass button beside the tabs that opens into a field over them while you search */
+@media (min-width: 720px) and (max-width: 999px) {
+  .top-row > .top-brand { grid-area: 1 / 1; }
+  .top-row > .tabbar { grid-area: 1 / 2; }
+  .top-row > .top-act { grid-area: 1 / 3; }
+  .top-row > .side-search { grid-area: 1 / 1; justify-self: end; width: 40px; height: 40px; z-index: 3; }
+  .bar-title { right: 48px; }
+  .side-search input { position: absolute; left: 0; top: 0; width: 40px; height: 40px; padding: 0 0 0 40px; border-radius: 999px; cursor: pointer; font-size: 15px;
+    background: var(--frost); box-shadow: var(--frost-line); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); }
+  .side-search input::placeholder { color: transparent; }
+  .side-search .ss-ic { left: 11px; width: 18px; height: 18px; color: var(--label); }
+  .side-search input:focus, .side-search input:not(:placeholder-shown) { width: min(340px, calc(100vw - 150px)); padding-right: 10px; cursor: text; box-shadow: var(--frost-line), 0 0 0 2px color-mix(in srgb, var(--accent) 70%, transparent);
+    background: var(--sheet-bg); }
+  .side-search input:focus::placeholder { color: var(--label2); }
+  .top-row:has(.side-search input:focus, .side-search input:not(:placeholder-shown)) > .tabbar { opacity: 0; pointer-events: none; }   /* the field takes the tabs' place while you search */
+  :root:not(.still) .side-search input { transition: width .45s var(--ease-spring), background-color .2s ease, box-shadow .2s ease; }
+}
+/* phones: at the top of the menu; while you search, the results take the menu's place */
+@media (max-width: 719px) {
+  .drawer .side-search { margin: 0 2px 12px; }
+  .drawer .side-search input { height: 40px; border-radius: 12px; font-size: 17px; padding-left: 36px; }   /* 16px and up, so iOS doesn't zoom in */
+  .drawer .side-search .ss-ic { left: 11px; width: 18px; height: 18px; }
+  .drawer .ss-res { position: static; inset: auto; padding: 4px 0 0; max-height: none; overflow: visible; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; border-radius: 0; }
+  .drawer .side-search { flex-wrap: wrap; }
+  .drawer .side-search .ss-ic { top: 11px; }
+  .drawer .ss-res { flex-basis: 100%; }
+  .drawer.finding .dr-body > :not(.side-search) { display: none; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .ss-res { background: var(--card); }
+  .ss-res, .side-search input { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; } }
