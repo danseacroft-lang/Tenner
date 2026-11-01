@@ -249,9 +249,9 @@ h1 { margin: 0; font: 800 clamp(40px, 6vw, 76px)/1 var(--font-display); letter-s
   color: #fff; font: 500 11.5px/1.1 var(--font); background: linear-gradient(160deg, #ff375f, #bf5af2 55%, #0a84ff); box-shadow: 0 6px 16px -8px rgba(191, 90, 242, .8); }
 .daymark b { font: 700 14px/1 var(--font); letter-spacing: -.01em; }
 
-/* the beta badge, beside the name */
-.beta { margin-left: 2px; padding: 4px 8px 4px; border-radius: 999px; font: 600 11.5px/1 var(--font); letter-spacing: .01em; color: var(--label);
-  background: linear-gradient(var(--wp-base), var(--wp-base)) padding-box, linear-gradient(100deg, #ff375f, #bf5af2 55%, #0a84ff) border-box; border: 1.5px solid transparent; }
+/* the small New badge beside the name: Apple's tinted style, as on tenner.stream's menu */
+.badge-new { margin-left: 2px; padding: 4px 8px; border-radius: 999px; font: 500 11px/1 var(--font); letter-spacing: .02em; text-transform: uppercase;
+  color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); -webkit-font-smoothing: antialiased; }
 .blk .new { margin-right: 6px; padding: 2px 5px; border-radius: 5px; vertical-align: 1px; font: 700 9.5px/1 var(--font); font-style: normal; letter-spacing: .04em; text-transform: uppercase; color: #fff;
   background: linear-gradient(100deg, #ff375f, #bf5af2); }
 
@@ -310,7 +310,7 @@ html:has(.sheet[open]) { overflow: hidden; }
   .side-row:active { background: var(--fill-strong); }
   .side-row[aria-current] { background: var(--fill); font-weight: 600; }
   .side-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-  .side-row .beta { margin-left: auto; }
+  .side-row .badge-new { margin-left: auto; }
   .side-h { margin: 8px 0 -12px; padding: 0 10px; color: var(--label3); font: 600 13px/1 var(--font); letter-spacing: -.005em; }
   .side-links { margin-top: auto; display: flex; flex-wrap: wrap; gap: 2px 12px; padding: 0 10px; }
   .side-links a { padding: 3px 0; color: var(--label2); font: 400 12px/1.3 var(--font); letter-spacing: -.01em; }
@@ -693,7 +693,7 @@ button.li-row:active { background: rgba(255, 255, 255, .12); }
   .tools, .days, .toast, .banner { background: #1c1c1e; } .sheet { background: #1c1c1e; } .sh-hd { background: #1c1c1e; }
   .sh-bg { display: none; }
 }
-@media (max-width: 380px) { .bar .beta { display: none; } .bar-link { padding: 0 10px 0 12px; font-size: 13.5px; } .brand { font-size: 17px; gap: 8px; } }
+@media (max-width: 380px) { .bar .badge-new { display: none; } .bar-link { padding: 0 10px 0 12px; font-size: 13.5px; } .brand { font-size: 17px; gap: 8px; } }
 
 /* =====================================================================================================================
    Tenner TV 3.1: no round glass. Controls are rounded rectangles, as on the Mac and in iOS's grouped controls (a 9-12px
@@ -773,7 +773,6 @@ button.li-row:active { background: rgba(255, 255, 255, .12); }
 .pop:hover svg { color: var(--accent); }
 .find-btn kbd { background: none; color: var(--label3); }
 .bar-link { background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 4px; }
-.beta { border: 0; padding: 0; background: linear-gradient(100deg, #ff375f, #bf5af2 55%, #0a84ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
 /* the guide: no lines between channels, tiles a faint tint with nothing round them */
 .crow::before { display: none; }
 .blk, .blk.live { box-shadow: none; }
