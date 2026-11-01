@@ -13,8 +13,8 @@ body.home { overflow-x: clip; }
 :root[data-theme="light"] .bx-amb img { opacity: .26; }
 @media (prefers-color-scheme: light) { :root:not([data-theme]) .bx-amb img { opacity: .26; } }
 
-.bx-hd { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 6px 0 16px; }
-.bx-h { display: flex; align-items: center; gap: 10px; margin: 0; font: 800 31px/1.1 var(--font-display); letter-spacing: -.03em; }
+.bx-hd { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 6px 0 6px; }
+.bx-h { display: flex; align-items: center; gap: 10px; margin: 0; font: 700 27px/1.1 var(--font); letter-spacing: -.025em; }
 .bx-tag { padding: 4px 9px; border-radius: var(--r); font: 600 13px/1 var(--font); letter-spacing: 0; color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .bx-hd .dd { flex: none; min-width: 0; }
 @media (max-width: 360px) { .bx-hd .dd-kind { padding: 0 12px 0 14px; gap: 8px; font-size: 15px; } }
@@ -105,7 +105,7 @@ body.home { overflow-x: clip; }
 @media (max-width: 380px) { .bx-score dd { font-size: 10.5px; } .bx-score div { padding: 0 9px; } .bx-cta { padding: 0 16px 0 14px; } }
 
 /* ---------- the services: a rail of app icons (the first reference's left-hand rail) ---------- */
-.bx-rail { display: flex; gap: 6px; margin: 18px calc(-1 * var(--gutter)) 0; padding: 4px var(--gutter) 6px; overflow-x: auto; scrollbar-width: none; scroll-padding-inline: var(--gutter); }
+.bx-rail { display: flex; gap: 6px; margin: 0 calc(-1 * var(--gutter)) 14px; padding: 4px var(--gutter) 6px; overflow-x: auto; scrollbar-width: none; scroll-padding-inline: var(--gutter); }
 .bx-rail::-webkit-scrollbar { display: none; }
 @media (min-width: 1000px) { .bx-rail { margin-inline: 0; padding-inline: 0; flex-wrap: wrap; } }
 .bx-svc-b { position: relative; display: grid; justify-items: center; gap: 7px; flex: none; width: 76px; padding: 6px 0 10px; border: 0; border-radius: var(--r); background: none; color: var(--label2); cursor: pointer; font: 500 12px/1.2 var(--font); -webkit-tap-highlight-color: transparent; }
