@@ -42,8 +42,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=2.7.0">
-  <link rel="stylesheet" href="browse.css?v=2.7.0">
+  <link rel="stylesheet" href="styles.css?v=2.8.0">
+  <link rel="stylesheet" href="browse.css?v=2.8.0">
 </head>
 <body class="browse">
   <a class="skip" href="#grid">Skip to the titles</a>
@@ -72,7 +72,7 @@
         <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><rect class="solid" x="8.6" y="3" width="10.5" height="15" rx="2.6" transform="rotate(12 13.85 10.5)" opacity=".45"/><rect class="solid" x="4.2" y="5.5" width="11" height="15.6" rx="2.8"/></svg>
         <span>Discover</span></button>
       <button type="button" role="tab" data-tab="people" aria-selected="false" tabindex="-1">
-        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 19.5c.8-3.4 3.3-5.3 6.2-5.3s5.4 1.9 6.2 5.3"/><circle cx="17" cy="9.5" r="2.6"/><path d="M16.2 14.4c2.7.0 4.3 1.7 5 4.6"/></svg>
+        <svg class="i-o" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 19.5c.8-3.4 3.3-5.3 6.2-5.3s5.4 1.9 6.2 5.3"/><circle cx="17" cy="9.5" r="2.6"/><path d="M16.2 14.4c2.8.0 4.3 1.7 5 4.6"/></svg>
         <svg class="i-f" viewBox="0 0 24 24" aria-hidden="true"><circle class="solid" cx="9" cy="8.5" r="3.8"/><path class="solid" d="M2.5 20c.7-3.8 3.4-6.2 6.5-6.2s5.8 2.4 6.5 6.2z"/><circle class="solid" cx="17.2" cy="9.4" r="2.9"/><path class="solid" d="M16.6 14c2.9 0 5 2 5.6 5.4h-4.9c-.2-2-.8-3.8-1.9-5.2z"/></svg>
         <span>Cast &amp; Crew</span></button>
       <button type="button" role="tab" data-tab="watchlist" aria-selected="false" tabindex="-1">
@@ -94,7 +94,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 2.7.0</span>
+      <span class="side-ver">Tenner 2.8.0</span>
     </div>
   </div>
 
@@ -106,41 +106,32 @@
 
 
   <main id="main" class="bwrap" tabindex="-1">
-    <!-- the spotlight: the best of whatever you're browsing, one after another, full width and melting into the page -->
+    <!-- the header: the best of whatever you're browsing behind a large title (the iOS way), with its tools beside it -->
     <section class="spot" id="spot" aria-label="Spotlight">
       <div class="spot-bg" aria-hidden="true"><div class="spot-art" id="spotArt"></div><div class="spot-wash"></div></div>
       <div class="spot-copy">
         <p class="spot-eye" id="spotEye">Every popular show and film</p>
-        <h1 class="spot-h" data-title="Browse"><em class="grad">Browse</em></h1>
-        <p class="spot-lede">Search Netflix, HBO Max, Prime Video, Paramount+, Disney+, Apple TV and more. Also, see <a href="people.html" class="b-people">Cast &amp; Crew</a></p>
+        <h1 class="spot-h">Browse</h1>
+      </div>
+      <div class="b-tools">
+        <div class="search" role="search">
+          <svg class="s-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 20 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+          <input id="q" type="search" placeholder="Search shows and films" autocomplete="off" spellcheck="false" enterkeyhint="search" aria-label="Search shows and films">
+          <kbd class="s-key" aria-hidden="true">/</kbd>
+          <button type="button" class="s-clear" id="qClear" aria-label="Clear search" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke="var(--bg)" stroke-width="2" stroke-linecap="round"/></svg></button>
+        </div>
+        <label class="dd dd-kind b-kind" id="kindDD"><span class="dd-l" id="kindL">Shows</span><span class="dd-chev" aria-hidden="true"></span>
+          <select id="kindSel" aria-label="Shows, films or both"><option value="tv">Shows</option><option value="movie">Films</option><option value="both">Shows and films</option></select></label>
+        <button type="button" class="btn btn-tinted b-round b-dice" id="surprise" aria-label="Surprise me" title="Surprise me: a good one at random">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"/></svg></button>
+        <button type="button" class="btn btn-tinted b-round f-btn" id="openFilters" aria-controls="filters" aria-expanded="false" aria-label="Filters" title="Filters">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="17" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/></svg><span class="badge" id="fCount" hidden></span></button>
       </div>
     </section>
 
-    <!-- the command bar: search, Shows / Films / Both and Filters in one glass bar that stays at the top as you scroll -->
+    <!-- the collections: one floating glass bar (as on Apple TV), the chosen one lit with Tenner's rainbow underline -->
     <div class="cmd-mark" id="cmdMark" aria-hidden="true"></div>
-    <div class="cmd" id="cmd">
-      <div class="search" role="search">
-        <svg class="s-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 20 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
-        <input id="q" type="search" placeholder="Search shows and films" autocomplete="off" spellcheck="false" enterkeyhint="search" aria-label="Search shows and films">
-        <kbd class="s-key" aria-hidden="true">/</kbd>
-        <button type="button" class="s-clear" id="qClear" aria-label="Clear search" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke="var(--bg)" stroke-width="2" stroke-linecap="round"/></svg></button>
-      </div>
-      <div class="b-ctl">
-      <div class="segmented" role="radiogroup" aria-label="Shows, films or both">
-        <span class="seg-thumb" aria-hidden="true"></span>
-          <button type="button" role="radio" data-kind="tv" aria-checked="true">Shows</button>
-        <button type="button" role="radio" data-kind="movie" aria-checked="false">Films</button>
-        <button type="button" role="radio" data-kind="both" aria-checked="false">Both</button>
-      </div>
-        <button type="button" class="btn btn-tinted b-dice" id="surprise" aria-label="Surprise me" title="Surprise me: a good one at random">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"/></svg></button>
-        <button type="button" class="btn btn-tinted f-btn" id="openFilters" aria-controls="filters" aria-expanded="false">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="17" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-            Filters<span class="badge" id="fCount" hidden></span></button>
-      </div>
-    </div>
-
-    <div class="coll"><div class="coll-track" id="coll" role="radiogroup" aria-label="Collections"></div></div>
+    <nav class="coll" aria-label="Collections"><div class="coll-track" id="coll" role="radiogroup" aria-label="Collections"></div></nav>
 
     <!-- for you: a row of posters picked from your Watchlist -->
     <div class="b-rows" id="bRows" hidden></div>
@@ -205,10 +196,10 @@
   <div class="scrim" id="scrim" hidden></div>
 
 
-  <script src="shell.js?v=2.7.0" defer></script>
-  <script src="links.js?v=2.7.0" defer></script>
-  <script src="sheet.js?v=2.7.0" defer></script>
-  <script src="browse.js?v=2.7.0" defer></script>
-  <script src="cards.js?v=2.7.0" defer></script>
+  <script src="shell.js?v=2.8.0" defer></script>
+  <script src="links.js?v=2.8.0" defer></script>
+  <script src="sheet.js?v=2.8.0" defer></script>
+  <script src="browse.js?v=2.8.0" defer></script>
+  <script src="cards.js?v=2.8.0" defer></script>
 </body>
 </html>

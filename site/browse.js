@@ -136,27 +136,14 @@
 
   // ---------- controls ----------
   function buildControls() {
-    // collections: a row of big words, the chosen one underlined in rainbow
+    // collections: one glass bar of words, the chosen one lit and underlined in rainbow (it scrolls sideways when narrow)
     $('#coll').insertAdjacentHTML('beforeend', COLLECTIONS.map((c) =>
       `<button type="button" role="radio" class="coll-b" data-c="${c.key}" aria-checked="false">${esc(c.label)}</button>`).join(''));
     $('#coll').addEventListener('click', (e) => { const b = e.target.closest('.coll-b'); if (!b) return;
       state.c = b.dataset.c; state.sort = null; apply(true); });
-    // the words as big as they can be with every collection on one line (22px down to 14px); on phones they scroll sideways
-    const track = $('#coll'), fitColl = () => {
-      const bs = [...track.querySelectorAll('.coll-b')]; if (!bs.length || !track.clientWidth) return;
-      track.style.setProperty('--cfs', '22px');
-      const gap = parseFloat(getComputedStyle(track).columnGap) || 0, words = bs.reduce((n, b) => n + b.offsetWidth, 0);
-      const fs = Math.min(22, Math.floor(22 * (track.clientWidth - 4 - gap * (bs.length - 1)) / words * 10) / 10);
-      track.style.setProperty('--cfs', `${Math.max(14, fs)}px`);
-    };
-    new ResizeObserver(fitColl).observe(track); document.fonts?.ready.then(fitColl);
 
-    const setKind = (k) => {
-      state.k = k; state.g = state.g.filter((g) => genreSet().has(g)); apply(true);
-    };
-    document.querySelectorAll('[data-kind]').forEach((b) => b.addEventListener('click', () => setKind(b.dataset.kind)));
-    arrows($('.cmd .segmented'), () => [...document.querySelectorAll('[data-kind]')], (b) => setKind(b.dataset.kind));
-    window.tn.segment($('.cmd .segmented'), (b) => setKind(b.dataset.kind));
+    // Shows, Films or both: the system's own pop-up menu
+    $('#kindSel').addEventListener('change', (e) => { state.k = e.target.value; state.g = state.g.filter((g) => genreSet().has(g)); apply(true); });
     arrows($('#coll'), () => [...document.querySelectorAll('.coll-b')], (b) => b.click());
     arrows($('#sort'), () => [...document.querySelectorAll('.s-b')], (b) => b.click());
     $('#grid').addEventListener('click', (e) => {   // the empty state's button clears whatever is hiding the results
@@ -215,6 +202,7 @@
 
     // search: results as you type; / or ⌘K jumps to the box (shell.js); Escape clears it
     const qi = $('#q');
+    if (matchMedia('(max-width: 400px)').matches) qi.placeholder = 'Search';   // the smallest phones: the short word, never cut off
     qi.addEventListener('input', () => { state.q = qi.value; apply(true, true); if (scrollY > 300) scrollTo({ top: 0, behavior: 'auto' }); });
     qi.addEventListener('keydown', (e) => { if (e.key === 'Escape' && qi.value) { e.preventDefault(); state.q = ''; apply(true); } if (e.key === 'Enter') qi.blur(); });
     $('#qClear').addEventListener('click', () => { state.q = ''; apply(true); qi.focus(); });
@@ -279,7 +267,7 @@
     document.querySelectorAll('.coll-b').forEach((b) => b.setAttribute('aria-checked', b.dataset.c === state.c));
     { const tr = $('#coll'), on = tr.querySelector('[aria-checked="true"]');   // phones: the chosen one slides into view
       if (on && tr.scrollWidth > tr.clientWidth + 1) tr.scrollTo({ left: Math.max(0, on.offsetLeft - tr.clientWidth / 2 + on.offsetWidth / 2), behavior: reduce ? 'auto' : 'smooth' }); }
-    document.querySelectorAll('[data-kind]').forEach((b) => b.setAttribute('aria-checked', b.dataset.kind === state.k));
+    $('#kindSel').value = state.k; $('#kindL').textContent = { tv: 'Shows', movie: 'Films', both: 'Both' }[state.k];
     document.querySelectorAll('.w-b').forEach((b) => b.setAttribute('aria-pressed', state.s.includes(b.dataset.s)));
     document.querySelectorAll('.s-b').forEach((b) => b.setAttribute('aria-checked', b.dataset.sort === (q && !state.sort ? '' : sortKey())));   // searching: best match first unless you pick a sort
     const gs = [...genreSet()].filter((g) => cat.genres[g]).sort((a, b) => cat.genres[a].localeCompare(cat.genres[b]));
@@ -377,8 +365,8 @@
     $('#cmdMark').scrollIntoView({ behavior: still() ? 'auto' : 'smooth', block: 'start' });
   });
 
-  // ---------- the command bar: glass that firms up once it's holding on at the top ----------
-  new IntersectionObserver(([e]) => $('#cmd').classList.toggle('stuck', !e.isIntersecting && e.boundingClientRect.top < 200), { rootMargin: '-90px 0px 0px 0px' }).observe($('#cmdMark'));
+  // ---------- the collections bar: glass that firms up once it's holding on at the top ----------
+  new IntersectionObserver(([e]) => $('.coll').classList.toggle('stuck', !e.isIntersecting && e.boundingClientRect.top < 200), { rootMargin: '-90px 0px 0px 0px' }).observe($('#cmdMark'));
 
   // ---------- posters lean towards the pointer, with a sheen of light across them (computers) ----------
   const tiltOk = () => fine.matches && !still();
