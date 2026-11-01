@@ -311,3 +311,8 @@
 }
 .more-ver { display: none; }
 @media (max-width: 999px) { .more-ver { display: block; margin: 12px 4px 0; color: var(--label3); font-size: 13px; } }
+
+/* the very bottom: a quiet way into the beta home page (hidden from the menu and search engines) */
+.beta-link { margin: 36px 0 8px; text-align: center; font-size: 13px; }
+.beta-link a { color: var(--label3); text-decoration: none; padding: 12px 16px; }
+.beta-link a:hover { color: var(--accent); }
