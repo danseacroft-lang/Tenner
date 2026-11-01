@@ -16,7 +16,7 @@ div.set-tile { cursor: default; }
 /* two columns, not three, for the signed-out page */
 @container (min-width: 1000px) { .ac-panel2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .acct .set-note { max-width: calc(100vw - 32px); text-align: center; text-wrap: balance; }
-.ac-input { height: 36px; max-width: 55%; padding: 0 14px; border: 0; border-radius: 12px; background: transparent; color: var(--label); font: 400 17px/1 var(--font); text-align: right; }
+.ac-input { height: 36px; max-width: 55%; padding: 0 14px; border: 0; border-radius: var(--r); background: transparent; color: var(--label); font: 400 17px/1 var(--font); text-align: right; }
 .ac-input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
 .set-note.bad { color: #ff453a; }
 .ac-sync::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: var(--green); vertical-align: 2px; }
@@ -29,7 +29,7 @@ div.set-tile { cursor: default; }
 .ac-hue { width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; background: linear-gradient(145deg, hsl(var(--h) 80% 62%), hsl(calc(var(--h) + 40) 75% 42%)); }
 .ac-hue[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--sp-group, var(--bg2)), 0 0 0 4px var(--label); }
 .ac-x { flex: none; padding: 6px 4px; border: 0; background: none; cursor: pointer; color: #ff453a; font: 500 15px/1 var(--font); }
-.ac-here { margin-left: 6px; padding: 2px 7px; border-radius: 6px; font-style: normal; font-size: 11px; font-weight: 700; color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.ac-here { margin-left: 6px; padding: 2px 7px; border-radius: var(--r); font-style: normal; font-size: 11px; font-weight: 700; color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .ac-linkrow { gap: 10px; }
 .ac-copy { border: 0; cursor: pointer; }
 .ac-url { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; color: var(--label2); }
@@ -50,7 +50,7 @@ div.set-tile { cursor: default; }
 /* email and password */
 .ac-form:not([hidden]) { display: grid; gap: 10px; width: 100%; text-align: left; }
 .ac-form h2 { margin: 6px 0 2px; font: 700 20px/1.2 var(--font); }
-.ac-form input { height: 46px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--fill); color: var(--label); font: 400 17px/1 var(--font); }
+.ac-form input { height: 46px; padding: 0 14px; border: 0; border-radius: var(--r); background: var(--fill); color: var(--label); font: 400 17px/1 var(--font); }
 .ac-form input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
 .ac-form input[readonly] { color: var(--label2); }
 .ac-link { justify-self: center; padding: 6px; border: 0; background: none; cursor: pointer; color: var(--accent); font: 400 14px/1.3 var(--font); }
@@ -59,12 +59,12 @@ div.set-tile { cursor: default; }
 .ac-btns { display: flex; gap: 14px; flex: none; }
 .ac-ok { color: var(--accent); }
 .ac-pwform:not([hidden]) { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
-.ac-pwform input { min-width: 0; height: 38px; padding: 0 12px; border: 0; border-radius: 10px; background: var(--fill); color: var(--label); font: 400 15px/1 var(--font); }
+.ac-pwform input { min-width: 0; height: 38px; padding: 0 12px; border: 0; border-radius: var(--r); background: var(--fill); color: var(--label); font: 400 15px/1 var(--font); }
 /* show password: the eye sits inside the box, at its end */
 .ac-pw { position: relative; display: grid; min-width: 0; }
 .ac-pw input { width: 100%; padding-right: 48px; }
 .ac-pw input::-ms-reveal { display: none; }
-.ac-eye { position: absolute; top: 50%; right: 0; display: grid; place-items: center; width: 44px; height: 44px; margin-top: -22px; padding: 0; border: 0; border-radius: 10px; background: none; color: var(--label3); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: color .2s, transform .25s cubic-bezier(.34, 1.56, .64, 1); }
+.ac-eye { position: absolute; top: 50%; right: 0; display: grid; place-items: center; width: 44px; height: 44px; margin-top: -22px; padding: 0; border: 0; border-radius: var(--r); background: none; color: var(--label3); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: color .2s, transform .25s cubic-bezier(.34, 1.56, .64, 1); }
 .ac-eye:hover, .ac-eye[aria-pressed="true"] { color: var(--label2); }
 .ac-eye:active { transform: scale(.88); }
 .ac-eye:focus-visible { outline: 2px solid var(--accent); outline-offset: -6px; }
@@ -77,13 +77,13 @@ div.set-tile { cursor: default; }
 .ac-check:not([hidden]) { display: grid; justify-items: center; gap: 10px; width: 100%; }
 .ac-check h2 { margin: 6px 0 0; font: 700 22px/1.2 var(--font); }
 .ac-check p { margin: 0 0 8px; color: var(--label2); line-height: 1.45; }
-.ac-mail { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 18px; color: #fff; background: linear-gradient(180deg, #4aa3ff, #0a6cff); box-shadow: 0 10px 30px rgba(10, 108, 255, .35); }
+.ac-mail { display: grid; place-items: center; width: 64px; height: 64px; border-radius: var(--r); color: #fff; background: linear-gradient(180deg, #4aa3ff, #0a6cff); box-shadow: 0 10px 30px rgba(10, 108, 255, .35); }
 .ac-mail svg { width: 34px; height: 34px; }
 .ac-warn { color: #ff9f0a; font-weight: 600; }
 .ac-inline { display: inline; padding: 0; font-size: inherit; }
 /* slide to sign out */
 .ac-slide-row { padding-top: 10px; padding-bottom: 10px; }
-.ac-slide { --x: 0px; --p: 0; position: relative; width: 100%; height: 56px; border-radius: 28px; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none;
+.ac-slide { --x: 0px; --p: 0; position: relative; width: 100%; height: 56px; border-radius: var(--r); overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none;
   background: var(--gl-fill); box-shadow: inset 0 0 0 1px var(--gl-rim); }
 .ac-slide:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .ac-fill { position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--x) + 52px); border-radius: inherit; background: linear-gradient(90deg, rgba(255, 69, 58, .15), rgba(255, 69, 58, .45)); opacity: calc(.4 + var(--p) * .6); }
@@ -98,9 +98,9 @@ div.set-tile { cursor: default; }
 .ac-slide.done .ac-knob { transition: transform .25s ease-out; }
 .ac-knob svg { width: 22px; height: 22px; }
 /* Delete account: an iOS alert, centred glass, a pink heart, Keep as the clear primary and Delete in system red below it */
-.ac-del-dlg { width: min(340px, calc(100vw - 48px)); border-radius: 22px; text-align: center; }
+.ac-del-dlg { width: min(340px, calc(100vw - 48px)); border-radius: var(--r); text-align: center; }
 .ac-del-dlg form { padding: 26px 22px 20px; }
-.ac-del-ic { display: inline-grid; place-items: center; width: 52px; height: 52px; margin-bottom: 12px; border-radius: 15px; color: #fff;
+.ac-del-ic { display: inline-grid; place-items: center; width: 52px; height: 52px; margin-bottom: 12px; border-radius: var(--r); color: #fff;
   background: linear-gradient(160deg, #ff7a6b, #ff375f 60%, #e0245e); box-shadow: 0 8px 22px rgba(255, 55, 95, .35); }
 .ac-del-ic svg { width: 26px; height: 26px; }
 .ac-del-warn { background: linear-gradient(160deg, #ff6b5e, #ff3b30 60%, #d70015); box-shadow: 0 8px 22px rgba(255, 59, 48, .35); }
@@ -108,7 +108,7 @@ div.set-tile { cursor: default; }
 .ac-del-dlg p { margin: 0 auto 12px; max-width: 32ch; font-size: 15px; line-height: 1.45; text-wrap: pretty; }
 .ac-del-dlg p.ac-del-alt { margin-bottom: 18px; font-size: 14px; }
 .ac-del-acts { display: grid; gap: 8px; }
-.ac-del-acts .btn { width: 100%; height: 46px; border-radius: 14px; font-size: 16px; font-weight: 500; -webkit-font-smoothing: antialiased; }
+.ac-del-acts .btn { width: 100%; height: 46px; border-radius: var(--r); font-size: 16px; font-weight: 500; -webkit-font-smoothing: antialiased; }
 .ac-del-keep { color: #fff; background: var(--accent); }
 .ac-del-go { color: #ff3b30; background: var(--fill); }
 @media (hover: hover) { .ac-del-keep:hover { filter: brightness(1.08); } .ac-del-go:hover { background: color-mix(in srgb, #ff3b30 14%, transparent); } }

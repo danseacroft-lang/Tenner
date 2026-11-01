@@ -75,13 +75,17 @@ Mac. When in doubt, ask "would this look at home in Apple TV, Apple Music or the
   Cast & Crew Top 10 and Browse's list view all use it. Rows of posters use `.nr`.
 - **Glass tokens:** `--gl-fill`, `--gl-rim`, `--gl-hover` (defined for light, auto-dark and forced dark).
 - **Buttons (the owner's chosen design, use it for every button):** solid deep tinted fills (`--bt-fill` navy, `--bt-round`
-  dark grey for icon-only circles), no glass or rim, softly rounded rectangles, never capsules (9px; 12px for the big hero
-  button; bars and search boxes about 13 to 15px, with 9px inside them), circles when there's only an icon, an icon beside the words where there is one, and **white words and icons**, in Day and Night.
+  dark grey for icon-only circles), no glass or rim, softly rounded rectangles, never capsules, circles when there's only an icon, an icon beside the words where there is one, and **white words and icons**, in Day and Night.
   Regular weight (500) with font smoothing, never bold. Pills and badges that aren't buttons stay glass.
 - **The sidebar (computers):** its original shape (full height, against the window's edge, no rounded pane or rim), fixed
   in place; a light frost (milky by day, smoky by night), regular-weight names and plain monochrome icons.
 - **My services:** the iOS Subscriptions card: round back button, centred title, Active / Inactive headings, a rounded
   card per service (logo tile, name, grey line, note, chevron) and the all-six switch in its own card.
+- **One corner everywhere:** every button, search bar, box, card, panel, sheet and poster uses `--r` (9px) in
+  styles.css; never a one-off radius. Only icon-only circles, switches, app-icon logos and hairline-thin bars differ.
+- **One frost everywhere:** every box, bar, search box, sheet and popup uses `--fr-bg` (the page colour at 80%) over
+  `--fr-blur` (40px blur) with a `--fr-rim` edge, like the My services card; a box inside a frosted one uses the faint
+  `--fr-in` tint instead (never glass on glass). Buttons keep their deep tint, a touch see-through, over the same blur.
 - **Shows / Films / Both** is a native dropdown (`.dd` with a `<select>`) except where a segmented switch was approved
   (Browse's search bar).
 - **The chart numbers never shine:** no rainbow sweep, colour turn (`hue-rotate`) or any other moving effect on the neon

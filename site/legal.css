@@ -17,19 +17,19 @@
 /* each document scrolls inside its own box */
 .policy-box {
   width: 100%; height: min(55vh, 520px); overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scroll-padding-top: 20px;
-  background: var(--card); border: .5px solid var(--sep); border-radius: 12px; padding: 24px clamp(18px, 4vw, 32px);
+  background: var(--card); border: .5px solid var(--sep); border-radius: var(--r); padding: 24px clamp(18px, 4vw, 32px);
 }
 .policy-box:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* the words fade out at the foot of the box as they scroll on, rather than being cut off */
 .policy-box::after { content: ""; position: sticky; bottom: -24px; display: block; height: 56px; margin: -32px calc(-1 * clamp(18px, 4vw, 32px)) -24px; pointer-events: none;
-  background: linear-gradient(to bottom, transparent, var(--card) 85%); border-radius: 0 0 12px 12px; }
+  background: linear-gradient(to bottom, transparent, var(--card) 85%); border-radius: 0 0 var(--r) var(--r); }
 .policy-box h2 { margin: 20px 0 6px; font: 600 17px/1.3 var(--font); letter-spacing: -.022em; }
 .policy-box h2:first-child { margin-top: 0; }
 .policy-box p, .policy-box li { margin: 0 0 12px; font-size: 15px; line-height: 1.55; letter-spacing: -.016em; }
 .policy-box ul { margin: 0 0 12px; padding-left: 20px; }
 .policy-box strong { font-weight: 600; }
 .policy-box::-webkit-scrollbar { width: 8px; }
-.policy-box::-webkit-scrollbar-thumb { background: var(--label3); border-radius: 8px; }
+.policy-box::-webkit-scrollbar-thumb { background: var(--label3); border-radius: var(--r); }
 .policy-box::-webkit-scrollbar-track { background: transparent; }
 /* night: frosted boxes */
 :root[data-theme="dark"] :is(.policy-box, .c-sheet) { background: rgba(44, 44, 48, .62); border-color: transparent; box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .12);
@@ -43,12 +43,12 @@
    Rows like Mail's (To, From, Subject), a topic switch, then the message. Send opens your own email app with it all
    filled in: nothing is sent to or stored by Tenner. */
 .c-icon {
-  display: grid; place-items: center; width: 64px; height: 64px; margin: 10px 0 4px; border-radius: 16px; color: var(--accent);
+  display: grid; place-items: center; width: 64px; height: 64px; margin: 10px 0 4px; border-radius: var(--r); color: var(--accent);
   background: var(--frost); box-shadow: var(--frost-line); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur);
 }
 .c-icon svg { width: 30px; height: 30px; }
 .c-icon + h1 { margin-top: 12px; }
-.c-sheet { width: 100%; background: var(--card); border: .5px solid var(--sep); border-radius: 12px; overflow: hidden; }
+.c-sheet { width: 100%; background: var(--card); border: .5px solid var(--sep); border-radius: var(--r); overflow: hidden; }
 .c-row { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 16px; border-bottom: .5px solid var(--sep); }
 .c-row > span:first-child { flex: none; width: 64px; color: var(--label2); font-size: 15px; }
 .c-row input {
@@ -71,7 +71,7 @@
 .c-row select:focus { outline: none; }
 .c-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 /* sent: a tick and a thank-you in place of the form */
-.c-done { width: 100%; display: grid; justify-items: center; gap: 6px; padding: 34px 20px 28px; text-align: center; border-radius: 12px; background: var(--card); border: .5px solid var(--sep); outline: none; }
+.c-done { width: 100%; display: grid; justify-items: center; gap: 6px; padding: 34px 20px 28px; text-align: center; border-radius: var(--r); background: var(--card); border: .5px solid var(--sep); outline: none; }
 .c-done h2 { margin: 6px 0 0; font: 700 22px/1.2 var(--font); }
 .c-done p { margin: 0 0 12px; color: var(--label2); }
 .c-tick { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; color: #fff; background: var(--green); }
@@ -81,12 +81,12 @@
 .c-send { flex: none; gap: 8px; height: 40px; padding: 0 18px 0 15px; color: var(--accent); }
 .c-send svg { width: 16px; height: 16px; }
 .c-more { width: 100%; margin-top: 24px; }
-.c-list { list-style: none; margin: 0; padding: 0; background: var(--bg2); border-radius: 12px; overflow: hidden; }
+.c-list { list-style: none; margin: 0; padding: 0; background: var(--bg2); border-radius: var(--r); overflow: hidden; }
 .c-list li + li { border-top: .5px solid var(--sep); }
 .c-list a { display: flex; align-items: center; gap: 12px; padding: 13px 16px; color: var(--label); }
 .c-list a:hover { text-decoration: none; }
 @media (hover: hover) { .c-list a:hover { background: var(--fill); } }
-.c-list .gi { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; color: #fff; }
+.c-list .gi { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: var(--r); color: #fff; }
 .c-list .gi svg { width: 17px; height: 17px; }
 .c-list .tx { flex: 1; min-width: 0; display: grid; gap: 1px; }
 .c-list .tx b { font-weight: 500; font-size: 16px; }

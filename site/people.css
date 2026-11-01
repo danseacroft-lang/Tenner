@@ -28,9 +28,9 @@ body.people { overflow-x: clip; }
 
 /* the search bar: the same glass as Browse's */
 .p-cmd { position: sticky; z-index: 30; top: calc(env(safe-area-inset-top, 0px) + 12px); display: flex; align-items: center; margin-top: 6px; padding: 6px;
-  border-radius: 20px; background: var(--gl-fill); box-shadow: inset 0 0 0 1px var(--gl-rim), 0 10px 30px rgba(0, 0, 0, .12);
+  border-radius: var(--r); background: var(--gl-fill); box-shadow: inset 0 0 0 1px var(--gl-rim), 0 10px 30px rgba(0, 0, 0, .12);
   -webkit-backdrop-filter: blur(30px) saturate(1.8); backdrop-filter: blur(30px) saturate(1.8); }
-.p-cmd input { flex: 1; min-width: 0; height: 46px; padding: 0 44px 0 44px; border: 0; border-radius: 14px; background: transparent; -webkit-appearance: none; appearance: none;
+.p-cmd input { flex: 1; min-width: 0; height: 46px; padding: 0 44px 0 44px; border: 0; border-radius: var(--r); background: transparent; -webkit-appearance: none; appearance: none;
   color: var(--label); font: 400 18px/1 var(--font); letter-spacing: -.016em; }
 .p-cmd input::placeholder { color: var(--label2); }
 .p-cmd input::-webkit-search-cancel-button { display: none; }
@@ -57,7 +57,7 @@ body.people { overflow-x: clip; }
 .pc-name small { color: var(--label2); font-size: 13px; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 /* the title they're in: a small poster tucked into the portrait's corner */
 .pc-ph { position: relative; display: block; width: 100%; }
-.pc-in { position: absolute; right: 2px; bottom: 0; width: 30%; aspect-ratio: 2 / 3; border-radius: 6px; object-fit: cover;
+.pc-in { position: absolute; right: 2px; bottom: 0; width: 30%; aspect-ratio: 2 / 3; border-radius: var(--r); object-fit: cover;
   box-shadow: 0 0 0 2px var(--bg), 0 8px 18px rgba(0, 0, 0, .45); transition: transform .45s var(--ease-spring); }
 
 /* a portrait: 3:4 on cards, round elsewhere; no photo gets a gradient and initials, Apple Contacts-style */
@@ -111,11 +111,11 @@ body.people { overflow-x: clip; }
     linear-gradient(90deg, color-mix(in srgb, var(--fade) 82%, transparent) 0%, color-mix(in srgb, var(--fade) 45%, transparent) 42%, transparent 72%),
     linear-gradient(180deg, transparent 28%, color-mix(in srgb, var(--fade) 50%, transparent) 62%, color-mix(in srgb, var(--fade) 78%, transparent) 92%); }
 /* Back: a quiet link above their name; what the artwork is: a glass card beside Share, the same height */
-.pp-back { display: inline-flex; align-items: center; gap: 2px; margin: 0 0 14px -4px; padding: 4px 8px 4px 2px; border-radius: 999px;
+.pp-back { display: inline-flex; align-items: center; gap: 2px; margin: 0 0 14px -4px; padding: 4px 8px 4px 2px; border-radius: var(--r);
   color: var(--label2); font: 500 15px/1 var(--font); letter-spacing: -.012em; text-decoration: none; -webkit-font-smoothing: antialiased; transition: color .2s ease, background-color .2s ease; }
 .pp-back svg { width: 18px; height: 18px; }
 @media (hover: hover) { .pp-back:hover { color: var(--label); background: var(--fill); text-decoration: none; } }
-.pp-now { display: inline-flex; align-items: center; gap: 10px; height: 42px; padding: 0 14px 0 5px; border-radius: 12px; color: var(--label); text-decoration: none; min-width: 0;
+.pp-now { display: inline-flex; align-items: center; gap: 10px; height: 42px; padding: 0 14px 0 5px; border-radius: var(--r); color: var(--label); text-decoration: none; min-width: 0;
   background: var(--gl-fill); box-shadow: inset 0 0 0 1px var(--gl-rim); -webkit-backdrop-filter: blur(24px) saturate(1.8); backdrop-filter: blur(24px) saturate(1.8); }
 .pp-now img { width: 22px; height: 33px; border-radius: 4px; object-fit: cover; }
 .pp-now span { display: grid; min-width: 0; text-align: left; }
@@ -125,7 +125,7 @@ body.people { overflow-x: clip; }
 .pp-now:focus-visible, .pp-back:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* the portrait card and who they are */
 .pp-in { display: grid; grid-template-columns: auto 1fr; align-items: end; gap: 22px 36px; }
-.pp-ph { width: clamp(150px, 16vw, 210px); aspect-ratio: 3 / 4; border-radius: 26px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .18), 0 30px 70px -20px rgba(0, 0, 0, .7); }
+.pp-ph { width: clamp(150px, 16vw, 210px); aspect-ratio: 3 / 4; border-radius: var(--r); box-shadow: 0 0 0 1px rgba(255, 255, 255, .18), 0 30px 70px -20px rgba(0, 0, 0, .7); }
 .pp-ph.sk, .sk-t { animation: pBreathe 1.4s ease-in-out infinite alternate; }
 .pp-ph.sk { background: var(--fill); box-shadow: none; }
 .pp-id { min-width: 0; padding-bottom: 6px; }
@@ -133,7 +133,7 @@ body.people { overflow-x: clip; }
 .pp-id h1 { outline: none; margin: 0; font: 800 clamp(38px, 5.4vw, 80px)/.98 var(--font-display); letter-spacing: -.04em; text-wrap: balance; }
 .splash .pp-id h1 { text-shadow: 0 2px 30px color-mix(in srgb, var(--fade) 60%, transparent); }
 .pp-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 0; }
-.pp-chips span { padding: 7px 12px; border-radius: 999px; font: 500 14px/1 var(--font); letter-spacing: -.01em; -webkit-font-smoothing: antialiased;
+.pp-chips span { padding: 7px 12px; border-radius: var(--r); font: 500 14px/1 var(--font); letter-spacing: -.01em; -webkit-font-smoothing: antialiased;
   background: var(--gl-fill); box-shadow: inset 0 0 0 1px var(--gl-rim); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); }
 .pp-figs { display: flex; flex-wrap: wrap; gap: 10px 34px; margin: 22px 0 0; }
 .pp-figs dt { font: 700 30px/1 var(--font-display); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
@@ -159,7 +159,7 @@ body.people { overflow-x: clip; }
 .pp-known a { position: relative; display: grid; gap: 2px; color: inherit; text-decoration: none; }
 .pp-known b { margin-top: 9px; font: 500 14px/1.25 var(--font); -webkit-font-smoothing: antialiased; letter-spacing: -.012em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .pp-known small { color: var(--label2); font-size: 12px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.pp-art { position: relative; display: grid; place-items: center; aspect-ratio: 2 / 3; border-radius: 10px; overflow: hidden;
+.pp-art { position: relative; display: grid; place-items: center; aspect-ratio: 2 / 3; border-radius: var(--r); overflow: hidden;
   background: linear-gradient(160deg, hsl(var(--h) 34% 40%), hsl(var(--h) 40% 18%)); box-shadow: 0 0 0 .5px var(--sep), 0 10px 22px -10px rgba(0, 0, 0, .55);
   transition: transform .5s var(--ease-spring), box-shadow .3s ease; }
 .pp-art img { width: 100%; height: 100%; object-fit: cover; }
@@ -169,7 +169,7 @@ body.people { overflow-x: clip; }
 .pp-known a:focus-visible .pp-art { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--accent); }
 /* where it's streaming: the services' own icons */
 .pp-on { display: inline-flex; flex: none; }
-.pp-on img { width: 22px; height: 22px; border-radius: 6px; box-shadow: 0 0 0 1.5px var(--bg); }
+.pp-on img { width: 22px; height: 22px; border-radius: var(--r); box-shadow: 0 0 0 1.5px var(--bg); }
 .pp-on img + img { margin-left: -6px; }
 .pp-on-art { position: absolute; left: 8px; top: calc(var(--cw) * 1.5 - 32px); }
 .pp-on-art img { width: 24px; height: 24px; box-shadow: 0 0 0 1.5px rgba(0, 0, 0, .4), 0 4px 10px rgba(0, 0, 0, .4); }
@@ -178,7 +178,7 @@ body.people { overflow-x: clip; }
 .pp-fh { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px; }
 .pp-ctl { display: flex; flex-wrap: wrap; gap: 10px; }
 .pp-kinds { display: inline-flex; gap: 6px; }
-.pp-kinds button { height: 36px; padding: 0 14px; border: 0; border-radius: 999px; cursor: pointer; color: var(--label2); font: 500 14px/1 var(--font); -webkit-font-smoothing: antialiased;
+.pp-kinds button { height: 36px; padding: 0 14px; border: 0; border-radius: var(--r); cursor: pointer; color: var(--label2); font: 500 14px/1 var(--font); -webkit-font-smoothing: antialiased;
   background: var(--gl-fill); box-shadow: inset 0 0 0 1px var(--gl-rim); transition: color .2s ease, background-color .2s ease; }
 .pp-kinds button[aria-checked="true"] { color: var(--label); background: var(--gl-hover); box-shadow: inset 0 0 0 1.5px var(--accent); }
 .pp-kinds button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -187,12 +187,12 @@ body.people { overflow-x: clip; }
 .pp-dec h3 small { font: 500 14px/1 var(--font); color: var(--label3); letter-spacing: 0; }
 /* each decade: the homepage's chart list (.cl), with the poster, the role and where it's streaming */
 .pp-cl li > a { display: flex; align-items: center; gap: 14px; padding: 9px 10px; color: inherit; }
-.pp-cl .pp-art { width: 40px; flex: none; border-radius: 5px; box-shadow: 0 0 0 .5px var(--sep); }
+.pp-cl .pp-art { width: 40px; flex: none; border-radius: var(--r); box-shadow: 0 0 0 .5px var(--sep); }
 .pp-cl .pp-art img { width: 100%; height: 100%; border-radius: 0; box-shadow: none; }
 .pp-cl .pp-art i { display: none; }
 .pp-cl .cl-r { min-width: 3ch; text-align: right; }
 .pp-cl li:has(.pp-on) .cl-r { color: var(--label); }
-.pp-cl a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 8px; }
+.pp-cl a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--r); }
 
 /* the reveal: things rise into place, unless animations are off */
 :root:not(.still) .p-sec, :root:not(.still) .p-grid, :root:not(.still) .pp-in { animation: pRise .6s var(--ease-out, ease) both; }
