@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '2.3.0';
+  const version = '2.4.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -294,6 +294,29 @@
     $('#scX').focus({ preventScroll: true });
   }
 
+  // ---------- Buy or rent: the stores, under the pages; each store opens its own chart of shows and films to buy or rent. Wrapped in a
+  // display: contents box, so the sidebar's spacing treats it like the rest; its logos come from the charts' own data ----------
+  const sideMore = $('#sideMore');
+  if (sideMore) {
+    const STORES = [['skystore', 'Sky Store'], ['rakuten', 'Rakuten TV']];
+    const BAG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 8h13l-1 12.5h-11z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9 10.5V7a3 3 0 0 1 6 0v3.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
+    sideMore.insertAdjacentHTML('beforebegin', `<div class="side-stores" role="group" aria-labelledby="sideStores"><h2 class="side-h" id="sideStores">Buy or rent</h2>${
+      STORES.map(([k, label]) => `<a class="side-about side-store" href="./#${k}" data-store="${k}"><span class="st-ic">${BAG}</span><span>${label}</span></a>`).join('')}</div>`);
+    const mark = () => document.querySelectorAll('.side-store').forEach((a) => {
+      const on = /\/(index\.html)?$/.test(location.pathname) && location.hash === `#${a.dataset.store}`;
+      if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+    mark(); addEventListener('hashchange', mark);
+    fetch('data/trending.json').then((r) => (r.ok ? r.json() : null)).then((d) => {
+      for (const s of d?.services || []) {
+        const a = document.querySelector(`.side-store[data-store="${s.key}"]`);
+        if (a && s.logo) a.querySelector('.st-ic').innerHTML = `<img src="${esc(s.logo)}" alt="" width="20" height="20" loading="lazy">`;
+      }
+      // a store with no chart this hour (too few titles) leaves the menu until it's back
+      if (d?.services) document.querySelectorAll('.side-store').forEach((a) => { a.hidden = !d.services.some((s) => s.key === a.dataset.store); });
+    }).catch(() => {});
+  }
+
   // ---------- phones: the Rakuten way. A round menu button opens a drawer that slides in from the left, laid out like
   // the sidebar on computers (the pages, then More: TV Guide, About, Theme and Settings, then the small print); the bar keeps
   // the logo in the middle and a round Share (or Search) on the right. The drawer is a native modal <dialog>. ----------
@@ -315,7 +338,7 @@
       <div class="dr-body" id="drBody"></div></dialog>`);
     const drawer = $('#drawer'), drBody = $('#drBody'), menuBtn = $('#menuBtn');
     // the sidebar's own pieces move into the drawer on phones (and back again on bigger screens), listeners and all
-    const movers = ['.tabbar', '.side-h', '.side-tv', '.side-about:not(.side-settings):not(.side-tv)', '.top-act', '.side-about.side-settings', '.side-links'].map((q) => $(q)).filter(Boolean);
+    const movers = ['.tabbar', '.side-stores', '#sideMore', '.side-tv', '.side-about:not(.side-settings):not(.side-tv):not(.side-store)', '.top-act', '.side-about.side-settings', '.side-links'].map((q) => $(q)).filter(Boolean);
     const marks = movers.map((el) => { const m = document.createComment('drawer'); el.before(m); return m; });
     const place = () => {
       if (drawerQ.matches) { movers.forEach((el) => drBody.append(el)); topRow.append(right); }

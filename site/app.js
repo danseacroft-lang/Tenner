@@ -220,10 +220,12 @@ function draw() {
   const picks = state.kind === 'both' ? zip(ranked('tv'), ranked('movie')) : ranked(state.kind);
   const list = picks.map((p) => p.it);
   const where = s ? s.label : 'UK streaming';
-  $('#heading').innerHTML = `Top 10 <em class="grad">${esc(words())}</em>${s?.store ? ' to buy or rent' : ''}`;
+  $('#heading').innerHTML = `Top 10 <em class="grad">${esc(words())}</em>${s?.store || s?.shop ? ' to buy or rent' : ''}`;
+  // a store's chart is about paying per title, not a subscription: no service picker, and the menu shows the store chosen, not Top 10
+  svcLink.hidden = !!s?.shop; document.documentElement.classList.toggle('on-shop', !!s?.shop);
   $('#lede').innerHTML = s?.mine ? `On your services: ${esc(s.names)}`
     : s?.store ? 'New releases from Apple TV, Sky Store and others'
-    : s ? `${s.shop ? 'To buy or rent on' : 'On'} ${s.logo ? `<img class="sub-logo" src="${esc(s.logo)}" alt="">` : ''}${esc(s.label)}${s.official ? ` · ${esc(officialLine(s.official))}` : ''}` : 'On all six services in the UK';
+    : s ? `On ${s.logo ? `<img class="sub-logo" src="${esc(s.logo)}" alt="">` : ''}${esc(s.label)}${s.shop ? ' · Pay per title, no subscription' : ''}${s.official ? ` · ${esc(officialLine(s.official))}` : ''}` : 'On all six services in the UK';
   document.title = s?.mine ? 'My Top 10 | Tenner' : s ? `${s.label} Top 10 | Tenner` : 'Tenner';
 
   const feat = s ? picks : withEvery(picks, kinds);
@@ -278,7 +280,7 @@ function pickFeatured(pool, n) {
 function heroCopy({ it, n, sv }) {
   // on a service's page it's that service's chart; on All it's the UK-wide chart, and the details say where to find it
   const s = sv || heroScope, kind = it.type === 'tv' ? 'show' : 'film', k = wlKey(it, it.type), x = (k && det(k)) || {};
-  const badge = s?.store ? `No. ${n} to buy or rent` : s ? `No. ${n} ${kind} on ${s.label}` : `No. ${n} ${kind} in the UK`;
+  const badge = s?.store ? `No. ${n} to buy or rent` : s?.shop ? `No. ${n} ${kind} to buy or rent on ${s.label}` : s ? `No. ${n} ${kind} on ${s.label}` : `No. ${n} ${kind} in the UK`;
   const on = s && !s.mine ? s : svc((it.on || [])[0]);
   const bits = [it.type === 'tv' ? (it.season || 'Series') : 'Film', ...(x.g || []).slice(0, 2), it.year,
     it.rating && window.tn.prefs.get().ratings ? `★ ${it.rating.toFixed(1)}` : '', n === 1 ? topText(it) : weeksText(it)].filter(Boolean);
@@ -396,7 +398,7 @@ function banners(picks, scope) {
   const byKey = new Map(picks.map((p) => [heroKey(p.it), p])), list = banKeys.map((k) => byKey.get(k)), wide = (u) => u && u.replace('/w1280/', '/w780/');
   mountBanners(list.map(({ it, n, sv }, i) => {
     const s = sv || scope;   // a service's own No. 1 (on All) is badged and linked as that service's
-    const kind = it.type === 'tv' ? 'show' : 'film', badge = s?.store ? `No. ${n} to buy or rent` : s ? `No. ${n} on ${s.label}` : `No. ${n} ${kind} in the UK`;
+    const kind = it.type === 'tv' ? 'show' : 'film', badge = s?.store ? `No. ${n} to buy or rent` : s?.shop ? `No. ${n} to buy or rent on ${s.label}` : s ? `No. ${n} on ${s.label}` : `No. ${n} ${kind} in the UK`;
     const art = it.backdrop ? `<img src="${esc(wide(it.backdrop))}" alt="" ${i ? 'loading="lazy"' : 'fetchpriority="high"'} decoding="async">`
       : it.poster ? `<img class="soft" src="${esc(it.poster)}" alt="" loading="lazy">` : `<span class="mb-ph" style="--h:${hue(it.title)}"></span>`;
     return `<a class="mb-card" href="${esc(it.url)}" target="_blank" rel="noopener" aria-label="${esc(`${badge}: ${it.title}`)}" ${reg(infoFor(it, it.type, badge, s && !s.store && !s.mine ? [s] : null))}>
@@ -522,7 +524,7 @@ function rankSvg(i, row = '') {
 
 const scope = () => (state.route === 'top' ? null : svc(state.route));
 const eyeFor = (n, type) => { const s = scope(), what = type === 'tv' ? 'show' : 'film';
-  return s?.store ? `No. ${n} to buy or rent` : s ? `No. ${n} ${what} on ${s.label}` : `No. ${n} ${what} in the UK`; };
+  return s?.store ? `No. ${n} to buy or rent` : s?.shop ? `No. ${n} ${what} to buy or rent on ${s.label}` : s ? `No. ${n} ${what} on ${s.label}` : `No. ${n} ${what} in the UK`; };
 const chartInfo = (it, i, type) => infoFor(it, type, [eyeFor(i + 1, type), i === 0 ? topText(it) : ''].filter(Boolean).join(' · '), scope() && !scope().store && !scope().mine ? [scope()] : null);
 function posterRow(list, kind = state.kind, first = true) {
   const edge = (side) => `<div class="edge ${side}" aria-hidden="true">${'<i></i>'.repeat(6)}</div>`;
