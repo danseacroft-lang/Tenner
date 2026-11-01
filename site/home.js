@@ -60,12 +60,15 @@
   const keyOf = (it, type) => (/^\d+$/.test(String(it.id ?? '')) ? `${(it.type || type) === 'movie' ? 'm' : 't'}${it.id}` : null);
   const tmdbUrl = (type, id) => `https://www.themoviedb.org/${type}/${id}`;
   const where = () => (state.svc === 'all' ? 'in the UK' : `on ${svcOf(state.svc)?.label || ''}`);
-  // the chart you're looking at: the UK's, or one service's; with both kinds, shows and films take turns
-  function chart() {
-    const s = state.svc === 'all' ? state.data.overall : svcOf(state.svc) || state.data.overall;
-    const lists = kinds().map((k) => (s[k] || []).map((it, i) => ({ it: { ...it, type: it.type || k }, n: i + 1 })));
-    const out = []; for (let i = 0; i < 10; i++) for (const l of lists) if (l[i]) out.push(l[i]);
-    return out;
+  // what's popular: every chart's titles (they come with artwork), kept to the kind and service you've picked, most popular first
+  function popular() {
+    const lists = state.svc === 'all' ? [state.data.overall, ...(state.data.services || [])] : [svcOf(state.svc)].filter(Boolean);
+    const seen = new Set(), out = [];
+    for (const s of lists) for (const k of kinds()) for (const it of s[k] || []) {
+      const x = { ...it, type: it.type || k, on: it.on || (s.key ? [s.key] : undefined) }, id = keyOf(x, x.type) || x.title;
+      if (!seen.has(id)) { seen.add(id); out.push(x); }
+    }
+    return out.sort((a, b) => (b.popularity || 0) - (a.popularity || 0)).map((it) => ({ it }));
   }
   // the catalogue (Browse's), kept to the kind, service and genre you've picked
   function catalogue() {
@@ -150,7 +153,7 @@
   // ---------- the featured title ----------
   let heroList = [], heroTimer = 0;
   function drawHero() {
-    const picks = chart(), withArt = picks.filter((p) => p.it.backdrop);
+    const picks = popular(), withArt = picks.filter((p) => p.it.backdrop);
     heroList = (withArt.length >= 3 ? withArt : picks).slice(0, 10);
     const box = $('#bxHero'); box.classList.remove('sk');
     if (!heroList.length) { box.hidden = true; return; }
@@ -185,18 +188,18 @@
   }
   function drawHeroCopy() {
     const p = heroList[state.hero], c = $('#bxCopy'); if (!p || !c) return;
-    const { it, n } = p, x = det(keyOf(it)) || {}, info = infoFor(it, `No. ${n} ${it.type === 'movie' ? 'film' : 'show'} ${where()}`);
+    const { it } = p, x = det(keyOf(it)) || {}, info = infoFor(it, 'Popular');
     const on = (it.on || [state.svc]).map(svcOf).filter(Boolean)[0];
-    // the scores, in a frosted box (the second reference): TMDB's rating, the rank, and weeks on the chart or the running time
+    // the scores, in a frosted box (the second reference): TMDB's rating, the year, and the running time or seasons
     const cells = [
       it.rating ? [`${I.star}${it.rating.toFixed(1)}`, 'TMDB score'] : null,
-      [`No. ${n}`, where()],
-      it.weeks > 1 ? [`${it.weeks} wks`, 'in the Top 10'] : x.rt ? [runtime(x.rt), it.type === 'tv' ? 'an episode' : 'running time'] : x.se ? [`${x.se}`, x.se === 1 ? 'season' : 'seasons'] : null,
+      it.year ? [`${it.year}`, it.type === 'movie' ? 'released' : 'first aired'] : null,
+      x.rt ? [runtime(x.rt), it.type === 'tv' ? 'an episode' : 'running time'] : x.se ? [`${x.se}`, x.se === 1 ? 'season' : 'seasons'] : null,
     ].filter(Boolean);
     const meta = [it.type === 'tv' ? (x.se ? `${x.se} season${x.se === 1 ? '' : 's'}` : 'Series') : 'Film', it.year, x.rt && it.type === 'movie' ? runtime(x.rt) : ''].filter(Boolean);
     const genres = (x.g || []).slice(0, 3);
     c.innerHTML = `<dl class="bx-score">${cells.map(([v, l]) => `<div><dt>${v}</dt><dd>${esc(l)}</dd></div>`).join('')}</dl>
-      <p class="bx-eye">${I.flame}<span>${n === 1 ? 'Number one' : `No. ${n}`} ${esc(where())} right now</span></p>
+      <p class="bx-eye">${I.flame}<span>Popular ${esc(where())} right now</span></p>
       ${genres.length ? `<p class="bx-pills">${genres.map((g) => `<span>${esc(g)}</span>`).join('')}</p>` : ''}
       <h2 class="bx-h-t">${x.lg ? `<img class="bx-h-logo" src="${esc(LOGO + x.lg)}" alt="${esc(it.title)}">` : esc(it.title)}</h2>
       <p class="bx-h-meta">${svcIcon(on)}<span>${meta.map(esc).join(' · ')}</span>${x.c ? `<b class="bx-cert">${esc(x.c)}</b>` : ''}</p>
@@ -247,16 +250,8 @@
         <span class="bx-sec-acts">${more ? `<a class="bx-more" href="${more}">See all</a>` : ''}<button type="button" class="bx-r bx-r-s" data-scroll="-1" aria-label="Back">${I.left}</button><button type="button" class="bx-r bx-r-s" data-scroll="1" aria-label="More">${I.right}</button></span></header>
       <ul class="bx-row ${cls}">${items.join('')}</ul></section>`;
   function drawRows() {
-    const picks = chart(), cat = catalogue(), g = state.genre != null ? state.cat?.genres?.[state.genre] : null;
+    const cat = catalogue(), g = state.genre != null ? state.cat?.genres?.[state.genre] : null;
     const words = { both: 'shows and films', tv: 'shows', movie: 'films' }[state.kind];
-    // trending: wide cards, artwork first (the first reference's top row)
-    const trend = picks.map(({ it, n }) => {
-      const info = infoFor(it, `No. ${n} ${it.type === 'movie' ? 'film' : 'show'} ${where()}`), on = (it.on || [state.svc]).map(svcOf).filter(Boolean)[0];
-      return `<li class="bx-wc"><a href="${esc(it.url || '#')}" target="_blank" rel="noopener" ${reg(info)}>
-        <span class="bx-wc-art">${wide(it)}</span><span class="bx-rank">No. ${n}${state.kind === 'both' ? (it.type === 'movie' ? ' film' : ' show') : ''}</span>
-        <span class="bx-wc-copy"><b>${esc(it.title)}</b><small>${[it.type === 'movie' ? 'Film' : 'Series', it.year].filter(Boolean).map(esc).join(' · ')}${rating(it.rating)}</small></span></a>
-        <span class="bx-wc-acts">${svcIcon(on)}${saveBtn(info)}</span></li>`;
-    });
     // most popular: posters with their score in a chip (the first and third references)
     const top = cat.slice().sort((a, b) => b.p - a.p).slice(0, 14).map(fromCat).map((it) => {
       const info = infoFor(it, 'Popular');
@@ -270,8 +265,7 @@
       return `<li class="bx-lp"><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(info)}><span class="bx-lp-art">${poster(it)}</span>
         <span class="bx-lp-copy"><b>${esc(it.title)}</b>${rating(it.rating)}</span><small>${esc(new Date(it.date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: it.year === today.slice(0, 4) ? undefined : 'numeric' }))}</small></a></li>`;
     });
-    $('#bxRows').innerHTML = row('bxTrend', `Trending ${esc(where())}`, `The top ${words} this hour`, trend, 'bx-row-w', 'charts.html')
-      + row('bxTop', `Most popular${g ? ` in ${esc(g)}` : ''}`, `The ${words} most people are looking at${state.svc === 'all' ? ' on all six' : ` ${where()}`}`, top, 'bx-row-p', 'browse.html')
+    $('#bxRows').innerHTML = row('bxTop', `Most popular${g ? ` in ${esc(g)}` : ''}`, `The ${words} most people are looking at${state.svc === 'all' ? ' on all six' : ` ${where()}`}`, top, 'bx-row-p', 'browse.html')
       + row('bxNew', `Latest releases${g ? ` in ${esc(g)}` : ''}`, 'The newest arrivals, most recent first', fresh, 'bx-row-p', 'charts.html#new')
       + kinds().map(topList).join('')
       || '<p class="bx-empty">Nothing matches. Try another service or genre.</p>';
@@ -311,7 +305,7 @@
   // ---------- the side column: yours ----------
   function drawSide() {
     if (!state.data) return;
-    $('#bxSide').innerHTML = discover() + (window.tnTonight?.box() || '') + genres() + climbers() + tvGuide();
+    $('#bxSide').innerHTML = discover() + topTen() + (window.tnTonight?.box() || '') + genres() + climbers() + tvGuide();
     markSaved();
   }
   // Tenner TV: its own box here instead of a place in the menu, while it's in beta
@@ -414,6 +408,24 @@
     morph(() => { drawRows(); drawSide(); markSaved(); });
     $(`#bxSide [data-genre="${state.genre ?? ''}"]`)?.focus({ preventScroll: true });
   });
+  // the Top 10 itself, numbered, for the kind and service you've picked; with both, the shows then the films
+  function topTen() {
+    const s = state.svc === 'all' ? state.data.overall : svcOf(state.svc); if (!s) return '';
+    const ks = kinds(), many = ks.length > 1 ? 5 : 10;
+    const part = (k) => {
+      const l = (s[k] || []).slice(0, many); if (!l.length) return '';
+      const word = k === 'movie' ? 'film' : 'show';
+      return `${ks.length > 1 ? `<h3 class="bx-tt-sub">${k === 'movie' ? 'Films' : 'Shows'}</h3>` : ''}<ol class="bx-ups bx-tt">${l.map((it0, i) => {
+        const it = { ...it0, type: it0.type || k, on: it0.on || (s.key ? [s.key] : undefined) }, info = infoFor(it, `No. ${i + 1} ${word} ${where()}`);
+        const sub = [it.type === 'movie' ? 'Film' : 'Series', it.year].filter(Boolean).join(' · ');
+        return `<li><a href="${esc(it.url || '#')}" target="_blank" rel="noopener" ${reg(info)}><span class="bx-tt-n">${i + 1}</span><span class="bx-up-art">${poster(it)}</span>
+          <span class="bx-up-copy"><b>${esc(it.title)}</b><small>${esc(sub)}${it.weeks > 1 ? ` · ${it.weeks} weeks` : ''}</small></span></a></li>`;
+      }).join('')}</ol>`;
+    };
+    const body = ks.map(part).join(''); if (!body) return '';
+    const words = { both: 'Top 10', tv: 'Top 10 shows', movie: 'Top 10 films' }[state.kind];
+    return `<section class="bx-panel panel" aria-labelledby="bxTt"><header class="bx-panel-hd"><h2 id="bxTt">${words} ${esc(where())}</h2><a class="bx-more" href="charts.html">See all</a></header>${body}</section>`;
+  }
   // this week's biggest climbers, as a list (the third reference's activity panel)
   function climbers() {
     const w = state.week; if (!w?.climbers?.length) return '';

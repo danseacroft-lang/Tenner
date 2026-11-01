@@ -51,7 +51,7 @@ body.home { overflow-x: clip; }
 .bx-score dd { margin: 0; font-size: 11.5px; color: var(--label2); white-space: nowrap; }
 
 /* "Number one in the UK right now" and the genres: glass pills on the artwork (the second and third references) */
-.bx-eye, .bx-pills span, .bx-rank, .bx-chip { -webkit-backdrop-filter: var(--fr-blur); backdrop-filter: var(--fr-blur); background: rgba(255, 255, 255, .14); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .2); color: #fff; }
+.bx-eye, .bx-pills span, .bx-chip { -webkit-backdrop-filter: var(--fr-blur); backdrop-filter: var(--fr-blur); background: rgba(255, 255, 255, .14); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .2); color: #fff; }
 .bx-eye { display: inline-flex; align-items: center; gap: 6px; margin: 0; padding: 6px 12px 6px 9px; border-radius: var(--r); font-size: 13px; font-weight: 500; }
 .bx-eye svg { width: 16px; height: 16px; color: #ff9f0a; }
 .bx-pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
@@ -155,22 +155,9 @@ body.home { overflow-x: clip; }
 @media (min-width: 1000px) { .bx-row { margin-inline: 0; padding-inline: 0; scroll-padding-inline: 0; } }
 .bx-row a { display: block; color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
 .bx-row a:focus-visible { outline: none; }
-.bx-row a:focus-visible :is(.bx-wc-art, .bx-pc-art, .bx-lp-art) { outline: 2px solid var(--accent); outline-offset: 3px; }
+.bx-row a:focus-visible :is(.bx-pc-art, .bx-lp-art) { outline: 2px solid var(--accent); outline-offset: 3px; }
 
 /* trending: wide artwork cards (the first reference) */
-.bx-row-w { grid-auto-columns: min(80vw, 420px); }
-@media (min-width: 1000px) { .bx-row-w { grid-auto-columns: calc((100% - 28px) / 2.35); } }
-.bx-wc { position: relative; }
-.bx-wc-art { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--r); background: var(--fill); box-shadow: var(--cover-shadow); }
-.bx-wc-art img, .bx-wc-art .bx-ph { width: 100%; height: 100%; object-fit: cover; }
-.bx-wc-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0, 0, 0, .82), rgba(0, 0, 0, .25) 48%, transparent 70%); }
-:root:not(.still) .bx-wc-art img { transition: transform .6s var(--ease-out); }
-@media (hover: hover) { .bx-wc a:hover .bx-wc-art img { transform: scale(1.045); } }
-.bx-rank { position: absolute; top: 10px; left: 10px; padding: 5px 9px; border-radius: var(--r); font: 600 12.5px/1 var(--font); }
-.bx-wc-copy { position: absolute; left: 16px; right: 96px; bottom: 14px; display: grid; gap: 3px; color: #fff; }
-.bx-wc-copy b { font: 700 19px/1.15 var(--font); letter-spacing: -.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bx-wc-copy small { display: flex; align-items: center; gap: 8px; font-size: 13px; color: rgba(255, 255, 255, .8); }
-.bx-wc-acts { position: absolute; right: 12px; bottom: 12px; display: flex; align-items: center; gap: 10px; }
 .bx-svc { width: 26px; height: 26px; border-radius: 6px; object-fit: cover; box-shadow: 0 0 0 .5px rgba(255, 255, 255, .25); }
 .bx-star { display: inline-flex; align-items: center; gap: 3px; font-variant-numeric: tabular-nums; }
 .bx-star svg { width: 13px; height: 13px; color: #ffb340; }
@@ -270,6 +257,11 @@ body.home { overflow-x: clip; }
   background: linear-gradient(150deg, #0a84ff, #5e5ce6 55%, #bf5af2); box-shadow: 0 8px 18px -10px rgba(10, 132, 255, .7); }
 .bx-tv-ic svg { width: 26px; height: 26px; }
 
+/* the Top 10, numbered */
+.bx-tt-n { flex: none; width: 22px; text-align: center; font: 700 17px/1 var(--font); font-variant-numeric: tabular-nums; color: var(--label2); }
+.bx-tt-sub { margin: 10px 0 2px; font: 600 13px/1.2 var(--font); color: var(--label2); }
+.bx-tt-sub:first-of-type { margin-top: 2px; }
+
 /* What should I watch tonight?: the three floating icons over the question */
 .bx-tn-art .tn-fl { position: absolute; }
 .bx-tn-art { position: relative; width: 76px; height: 64px; margin: 2px 0 10px; }
@@ -279,7 +271,7 @@ body.home { overflow-x: clip; }
 .bx-ph { display: grid; place-items: end start; padding: 10px; color: rgba(255, 255, 255, .9); font: 650 13px/1.2 var(--font); text-align: left; }
 .bx-ph.wide { place-items: end start; padding: 14px; font-size: 15px; }
 .bx-ph span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
-.bx-wc-art .bx-ph span, .bx-pc-art .bx-ph span, .bx-h-l .bx-ph span { visibility: hidden; }   /* the title's already written over it */
+.bx-pc-art .bx-ph span, .bx-h-l .bx-ph span { visibility: hidden; }   /* the title's already written over it */
 .bx-blurfill { filter: blur(24px) saturate(1.4); transform: scale(1.3); }
 .bx-sk-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 30px; }
 .bx-sk-row i { aspect-ratio: 16 / 9; border-radius: var(--r); background: var(--fill); }
@@ -288,4 +280,4 @@ body.home { overflow-x: clip; }
 .bx-empty { margin: 30px 0; color: var(--label2); font-size: 15px; }
 .bx-note { margin: 40px 0 8px; text-align: center; font-size: 13px; color: var(--label3); }
 .bx-note a { color: var(--accent); }
-@media (prefers-reduced-transparency: reduce) { .bx-panel.panel { background: var(--bg2); } .bx-eye, .bx-pills span, .bx-rank, .bx-chip { background: rgba(28, 28, 30, .92); } .bx-amb { display: none; } }
+@media (prefers-reduced-transparency: reduce) { .bx-panel.panel { background: var(--bg2); } .bx-eye, .bx-pills span, .bx-chip { background: rgba(28, 28, 30, .92); } .bx-amb { display: none; } }
