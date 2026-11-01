@@ -1798,3 +1798,82 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .
 @media (prefers-reduced-transparency: reduce) {
   .ss-res { background: var(--card); }
   .ss-res, .side-search input { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; } }
+
+/* ============================================================ Liquid Glass
+   Every piece of glass now reads like a pane you could pick up: a translucent blurred fill, a specular rim that catches
+   the light at its top-left and glints again at its bottom-right, a soft sheen just inside the top edge, and a gentle
+   shadow below. Buttons and pills are capsules; panels (the sidebar, lists, settings, filters, sheets) are deeply
+   rounded slabs with the same rim. Box shadows only (no extra layers), so it costs nothing at rest. */
+:root {
+  --lg-hi: rgba(255, 255, 255, .95); --lg-lo: rgba(255, 255, 255, .55); --lg-glow: rgba(255, 255, 255, .7);
+  --lg-fill: rgba(255, 255, 255, .52); --lg-fill-hi: rgba(255, 255, 255, .78);
+  --lg-drop: 0 10px 30px -14px rgba(30, 30, 60, .28);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --lg-hi: rgba(255, 255, 255, .34); --lg-lo: rgba(255, 255, 255, .14); --lg-glow: rgba(255, 255, 255, .1);
+    --lg-fill: rgba(255, 255, 255, .07); --lg-fill-hi: rgba(255, 255, 255, .14); --lg-drop: 0 14px 34px -14px rgba(0, 0, 0, .7); }
+}
+:root[data-theme="dark"] { --lg-hi: rgba(255, 255, 255, .34); --lg-lo: rgba(255, 255, 255, .14); --lg-glow: rgba(255, 255, 255, .1);
+  --lg-fill: rgba(255, 255, 255, .07); --lg-fill-hi: rgba(255, 255, 255, .14); --lg-drop: 0 14px 34px -14px rgba(0, 0, 0, .7); }
+:root {
+  /* the rim: a hairline all round, brighter where the light falls (top-left) and a fainter glint opposite */
+  --lg-rim: inset 0 0 0 .5px var(--gl-rim), inset 1px 1px 0 -.25px var(--lg-hi), inset -1px -1px 0 -.25px var(--lg-lo);
+  --lg-sheen: inset 0 16px 22px -18px var(--lg-glow);
+  --lg-edge: var(--lg-rim), var(--lg-sheen);
+  --lg-blur: blur(30px) saturate(1.9);
+}
+
+/* buttons and pills: capsules of glass */
+.btn-tinted, .dd, .h-badge, .share-chart, .pv-ok, .h-cta, .sh-main .btn, .h-add, .tb-round, .cal-add, .set-pill {
+  border-radius: 999px !important; box-shadow: var(--lg-edge), var(--lg-drop) !important; }
+.h-cta { padding-inline: 30px; }
+.segmented { border-radius: 999px; box-shadow: var(--lg-edge), var(--lg-drop); }
+.segmented button, .seg-thumb { border-radius: 999px; }
+.seg-thumb { background: var(--lg-fill-hi); box-shadow: var(--lg-rim), 0 2px 8px rgba(0, 0, 0, .14); }
+@media (max-width: 999px) { .top-act { border-radius: 999px; box-shadow: var(--lg-edge), var(--lg-drop); } .top-act .tb-btn { border-radius: 999px; } }
+.tabs { box-shadow: var(--lg-sheen), 0 12px 32px -8px rgba(0, 0, 0, .28), 0 2px 6px rgba(0, 0, 0, .08); }
+.tab-ind { box-shadow: var(--lg-rim); }
+.side-acct { border-radius: 18px; box-shadow: var(--lg-edge); }
+
+/* the list (Top rated at a glance, Watchlist, New This Week, Cast & Crew): one slab of glass, hairlines inside, and the
+   row you point at frosts over in a rounded tile that sits concentric inside it */
+.cl { padding: 8px; border-radius: 26px; background: var(--lg-fill); box-shadow: var(--lg-edge), var(--lg-drop);
+  -webkit-backdrop-filter: var(--lg-blur); backdrop-filter: var(--lg-blur); column-gap: 24px; }
+.cl li { border-radius: 18px; border-top: 0 !important; position: relative; }
+.cl li + li::before { content: ""; position: absolute; top: 0; left: 100px; right: 12px; border-top: .5px solid var(--sep); }
+.cl li:nth-child(5n + 1)::before { display: none; }
+@media (max-width: 640px) { .cl li:nth-child(5n + 1)::before { display: block; } .cl li:first-child::before { display: none; } .cl { column-gap: 0; padding: 6px; border-radius: 24px; } }
+@media (hover: hover) { .cl li:hover { background: var(--lg-fill-hi); box-shadow: var(--lg-rim); } .cl li:hover::before, .cl li:hover + li::before { opacity: 0; } }
+
+/* the "What should I watch tonight?" card */
+.tn-card { border-radius: 28px; box-shadow: var(--lg-edge), var(--lg-drop); }
+
+/* the sidebar (computers): a pane of glass floating just inside the window's edge, as in macOS, with the chosen page a
+   lighter glass tile */
+@media (min-width: 1000px) {
+  .top-row { inset: 10px auto 10px 10px; width: calc(var(--side) - 14px); border-right: 0; border-radius: 28px;
+    padding-top: calc(env(safe-area-inset-top, 0px) + 18px); padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+    box-shadow: var(--lg-edge), 0 20px 50px -20px rgba(0, 0, 0, .35); }
+  .tabs button, .side-about, .tb-btn { border-radius: 14px; }
+  .tabs button[aria-selected="true"], .side-about[aria-current], .tb-btn[aria-expanded="true"] { background: var(--lg-fill-hi); box-shadow: var(--lg-rim); }
+  .top-row > .side-search input { border-radius: 999px; background: var(--lg-fill); box-shadow: var(--lg-rim); }
+}
+
+/* sheets, menus and cards that float over the page share the rim */
+.sheet { border-radius: 30px; box-shadow: var(--lg-rim), 0 30px 80px rgba(0, 0, 0, .35); }
+.hc { border-radius: 24px; box-shadow: var(--lg-rim), 0 24px 60px rgba(0, 0, 0, .34), 0 2px 8px rgba(0, 0, 0, .12); }
+.ss-res { border-radius: 24px; box-shadow: var(--lg-rim), 0 24px 60px rgba(0, 0, 0, .28); }
+.ss-r { border-radius: 16px; }
+.tip { border-radius: 999px; box-shadow: var(--lg-rim), 0 8px 24px rgba(0, 0, 0, .22); }
+@media (max-width: 719px) { .drawer { border-radius: 32px; box-shadow: var(--lg-rim), 0 30px 80px rgba(0, 0, 0, .45); } }
+@media (min-width: 720px) and (max-width: 999px) { .side-search input { border-radius: 999px; } }
+
+@media (prefers-reduced-transparency: reduce) {
+  .cl { background: var(--bg2); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  :root { --lg-sheen: 0 0 #0000; }
+}
+.cl:empty { padding: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+@media (max-width: 719px) {
+  .drawer .side-search input { border-radius: 999px; background: var(--lg-fill); box-shadow: var(--lg-rim); }
+  .drawer .tabs button[aria-selected="true"], .drawer .side-about[aria-current] { background: var(--lg-fill-hi); box-shadow: var(--lg-rim); }
+}
