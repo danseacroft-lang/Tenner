@@ -6,7 +6,8 @@ body.beta { overflow-x: clip; }
 @media (min-width: 1000px) { .bx { padding-top: 22px; padding-left: 32px; padding-right: 32px; } }
 
 /* the artwork's colours, blurred far out behind the top of the page */
-.bx-amb { position: absolute; z-index: -1; inset: -40px 0 auto; height: 900px; pointer-events: none; overflow: hidden;
+.bx-amb { --bx-gap: max(0px, (100vw - var(--side, 0px) - 1560px) / 2); position: absolute; z-index: -1; top: -40px; height: 900px;
+  left: calc(-1 * (var(--side, 0px) + var(--bx-gap) + 40px)); right: calc(-1 * (var(--bx-gap) + 40px));   /* the full width of the window, under the sidebar too, so it never stops in a line */ pointer-events: none; overflow: hidden;
   -webkit-mask-image: linear-gradient(to bottom, #000 20%, transparent); mask-image: linear-gradient(to bottom, #000 20%, transparent); }
 .bx-amb img { width: 100%; height: 100%; object-fit: cover; filter: blur(90px) saturate(1.6); opacity: .42; transform: scale(1.2); }
 :root[data-theme="light"] .bx-amb img { opacity: .26; }
