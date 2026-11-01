@@ -421,16 +421,6 @@ html:has(.sheet[open]) { overflow: hidden; }
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
 
-/* ---------- the colours of the artwork, washing the top of the page ---------- */
-main { position: relative; }
-.amb { position: absolute; z-index: -1; top: calc(-1 * env(safe-area-inset-top, 0px) - 80px); left: calc(-1 * max(0px, (100vw - var(--side, 0px) - var(--max)) / 2) - var(--side, 0px));
-  width: 100vw; height: 900px; pointer-events: none; overflow: hidden;
-  -webkit-mask-image: linear-gradient(#000 25%, rgba(0, 0, 0, .55) 55%, transparent 92%); mask-image: linear-gradient(#000 25%, rgba(0, 0, 0, .55) 55%, transparent 92%); }
-.amb img { position: absolute; inset: -12%; width: 124%; height: 124%; object-fit: cover; filter: blur(70px) saturate(1.6); opacity: 0; transform: scale(1.06);
-  transition: opacity 1.4s var(--ease-out), transform 2.4s var(--ease-out); }
-.amb img.on { opacity: .42; transform: none; }
-.amb::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(5, 5, 8, .15), rgba(5, 5, 8, .55)); }
-
 /* ---------- the days: a capsule of glass with a thumb that glides to the day chosen ---------- */
 .days { margin-left: 0; margin-right: 0; padding: 4px; gap: 2px; width: max-content; max-width: 100%; border-radius: 999px; isolation: isolate;
   background: var(--lg-fill); -webkit-backdrop-filter: var(--lg-blur); backdrop-filter: var(--lg-blur); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), var(--lg-shadow); scroll-padding-inline: 4px; }
@@ -701,7 +691,62 @@ button.li-row:active { background: rgba(255, 255, 255, .12); }
 @media (prefers-reduced-transparency: reduce) {
   .tools, .days, .toast, .banner, .sheet, .tile-ch .ch-badge, .chip-bell, .sh-x, .sh-hd { -webkit-backdrop-filter: none; backdrop-filter: none; }
   .tools, .days, .toast, .banner { background: #1c1c1e; } .sheet { background: #1c1c1e; } .sh-hd { background: #1c1c1e; }
-  .amb, .sh-bg { display: none; }
+  .sh-bg { display: none; }
 }
-@media (prefers-reduced-motion: reduce) { .amb img { transition: none; } }
 @media (max-width: 380px) { .bar .beta { display: none; } .bar-link { padding: 0 10px 0 12px; font-size: 13.5px; } .brand { font-size: 17px; gap: 8px; } }
+
+/* =====================================================================================================================
+   Tenner TV 3.1: no round glass. Controls are rounded rectangles, as on the Mac and in iOS's grouped controls (a 9-12px
+   corner, concentric inside their bar), the menus are the native pop-up menus, and a poster of the evening's most
+   popular programme melts into the top-right corner.
+   ===================================================================================================================== */
+.days { border-radius: 14px; padding: 4px; }
+.days .thumb { border-radius: 10px; }
+.days button { border-radius: 10px; }
+.tools { border-radius: 16px; padding: 6px; }
+.seg { border-radius: 10px; padding: 2px; }
+.seg .thumb { top: 2px; bottom: 2px; border-radius: 8px; }
+.seg button { border-radius: 8px; }
+.pop { border-radius: 10px; background: rgba(118, 118, 128, .2); box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .12); }
+.pop:hover { background: rgba(118, 118, 128, .3); }
+.ic-btn, .tools .find-btn { border-radius: 10px; }
+.act, .live-btn { border-radius: 12px; }
+.pv .live-btn { border-radius: 10px; }
+.sh-x { border-radius: 10px; }
+.li-x svg, .bn-x svg, .wx-x svg { border-radius: 8px; }
+.toast { border-radius: 16px; }
+.toast-act, .bn-act { border-radius: 9px; }
+.banner { border-radius: 18px; }
+.chip-bell { border-radius: 8px; }
+.tile { border-radius: 16px; }
+.bar-link { border-radius: 10px; }
+@media (max-width: 760px) { .tools { border-radius: 14px; } .tiles .tile { border-radius: 14px; } #shIn .sh-acts .act { border-radius: 14px; } }
+
+/* ---------- the corner poster ---------- */
+.hero { isolation: isolate; }
+.corner { position: absolute; z-index: -1; top: calc(-1 * env(safe-area-inset-top, 0px) - 44px); right: calc(-1 * var(--gutter-r)); width: min(60%, 640px); aspect-ratio: 16 / 10;
+  padding: 0; border: 0; background: none; cursor: pointer; color: var(--label); text-align: right; -webkit-tap-highlight-color: transparent; }
+.corner[hidden] { display: none; }
+.corner-art { position: absolute; inset: 0; overflow: hidden;
+  -webkit-mask-image: linear-gradient(to left, #000 35%, transparent 98%), linear-gradient(to bottom, #000 45%, transparent 96%); -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to left, #000 35%, transparent 98%), linear-gradient(to bottom, #000 45%, transparent 96%); mask-composite: intersect; }
+.corner-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transform: scale(1.04); transition: opacity 1.2s var(--ease-out), transform 9s linear; }
+.corner-art img.on { opacity: .9; transform: none; }
+.corner-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to left, transparent 50%, rgba(5, 5, 8, .35)); }
+.corner-cap { position: absolute; right: calc(var(--gutter-r) + 2px); bottom: 26%; display: grid; gap: 3px; max-width: 60%; text-shadow: 0 1px 12px rgba(0, 0, 0, .6);
+  opacity: 0; transform: translateY(6px); transition: opacity .6s ease .3s, transform .8s var(--ease-out) .3s; }
+.corner-cap.in { opacity: 1; transform: none; }
+.corner-cap small { color: rgba(255, 255, 255, .78); font: 500 13px/1.2 var(--font); }
+.corner-cap b { font: 600 17px/1.2 var(--font); letter-spacing: -.02em; }
+.corner:hover .corner-cap b { text-decoration: underline; text-underline-offset: 3px; }
+.corner:focus-visible { outline: none; } .corner:focus-visible .corner-cap b { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.hero > :not(.corner) { position: relative; }
+.hero h1, .hero .eye, .hero .lede { text-shadow: 0 2px 24px rgba(0, 0, 0, .45); pointer-events: none; }   /* taps go through to the corner */
+@media (min-width: 1000px) { .corner { top: -44px; } }
+@media (max-width: 760px) {
+  .corner { width: 78%; aspect-ratio: 4 / 3; right: calc(-1 * var(--gutter-r)); }
+  .corner-art img.on { opacity: .7; }
+  .corner-cap { bottom: 30%; max-width: 46%; } .corner-cap b { font-size: 15px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; } .corner-cap small { font-size: 12px; }
+  .lede { max-width: 30ch; }
+}
+@media (prefers-reduced-motion: reduce) { .corner-art img { transition: opacity .3s ease; transform: none; } }

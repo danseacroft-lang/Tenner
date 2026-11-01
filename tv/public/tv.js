@@ -447,7 +447,6 @@
     $('#pvMeta').textContent = [started ? `Started at ${hm(x.at)}` : `${x.end <= t ? 'Was on' : `${x.at - t < 864e5 && ukDay(x.at) === today ? 'On' : dayName(ukDay(x.at), { weekday: 'long' })}`} at ${hm(x.at)}`,
       x.s && x.n ? `S${x.s} E${x.n}` : '', length(x.end - x.at), started ? `${minsLeft(x, t)} min left` : ''].filter(Boolean).join('  ·  ');
     const img = $('#pvImg'), src = x.wide || x.poster;
-    ambient(src);
     $('#pv').classList.toggle('poster', !x.wide && !!x.poster);
     if (!src) { img.hidden = true; img.removeAttribute('src'); return; }
     if (img.getAttribute('src') === src) return;
@@ -455,18 +454,6 @@
     img.onload = () => { if (img.getAttribute('src') === src) img.classList.add('on'); };
     img.onerror = () => { img.hidden = true; };
     img.src = src;
-  }
-  // the preview's artwork, blurred into the top of the page (and on under the sidebar): two layers that cross-fade,
-  // changed only once the pointer has settled, and never more than every 700ms, so it stays calm
-  let ambT = 0, ambAt = 0, ambSrc = '';
-  function ambient(src) {
-    if (!src || src === ambSrc) return;
-    clearTimeout(ambT); const wait = Math.max(0, 700 - (Date.now() - ambAt));
-    ambT = setTimeout(() => {
-      const [a, b] = document.querySelectorAll('.amb img'), back = a.classList.contains('on') ? b : a, front = back === a ? b : a;
-      back.onload = () => { if (ambSrc !== src) return; back.classList.add('on'); front.classList.remove('on'); };
-      ambSrc = src; ambAt = Date.now(); back.src = src;
-    }, wait);
   }
   const over = (e) => { const b = e.target.closest?.('.blk, .pick, .tile'); if (b) preview(shown.get(b.dataset.p)); };
   document.addEventListener('pointerover', (e) => { if (e.pointerType === 'mouse') over(e); });
@@ -483,10 +470,33 @@
         - (/News|Talk Show|Weather/.test(g) || /\b(News|Weather|Lottery|Teleshopping|Party Political|Regional)\b/i.test(x.t) ? 6 : 0);
       list.push({ x, c: c.name, next: c.items[j + 1], score });
     });
-    const picks = list.sort((a, b) => b.score - a.score).filter(({ x }) => !seen.has(x.show || x.t) && seen.add(x.show || x.t)).slice(0, 10).sort((a, b) => a.x.at - b.x.at);
+    const ranked = list.sort((a, b) => b.score - a.score).filter(({ x }) => !seen.has(x.show || x.t) && seen.add(x.show || x.t));
+    corner(ranked.filter(({ x, next }) => x.wide && ends(x, next) > Date.now()).slice(0, 6));
+    const picks = ranked.slice(0, 10).sort((a, b) => a.x.at - b.x.at);
     $('#picksSec').hidden = picks.length < 3;
     $('#picksH').textContent = d === today ? 'Tonight’s picks' : d === days[1] ? 'Tomorrow’s picks' : `${dayName(d, { weekday: 'long' })}’s picks`;
     $('#picks').innerHTML = picks.map(({ x, c, next }) => card(x, c, next, epLine(x) || (x.g || []).join(', ') || c, true)).join('');
+  }
+  // ---------- the corner: the evening's most popular programmes with artwork, one at a time, melting into the page.
+  // Each stays 9 seconds and cross-fades to the next (it holds still with Reduce Motion, or while the page is hidden) ----------
+  let cornerL = [], cornerI = 0, cornerT = 0;
+  function corner(l) {
+    const key = l.map((o) => o.x.id).join();
+    if (key === cornerL.map((o) => o.x.id).join()) return;
+    cornerL = l; cornerI = 0; clearInterval(cornerT);
+    $('#corner').hidden = !l.length; if (!l.length) return;
+    showCorner();
+    if (!reduce && l.length > 1) cornerT = setInterval(() => { if (!document.hidden) { cornerI = (cornerI + 1) % cornerL.length; showCorner(); } }, 9000);
+  }
+  function showCorner() {
+    const { x, c, next } = cornerL[cornerI], b = $('#corner'), [a1, a2] = b.querySelectorAll('img');
+    const back = a1.classList.contains('on') ? a2 : a1, front = back === a1 ? a2 : a1;
+    b.setAttribute('data-p', x.id); reg(x, c, next);
+    b.setAttribute('aria-label', `${x.t}, ${c} at ${hm(x.at)}. Tap for what it’s about`);
+    back.onload = () => { back.classList.add('on'); front.classList.remove('on'); $('#cornerCap').classList.add('in'); };
+    $('#cornerCap').classList.remove('in');
+    $('#cornerCap').innerHTML = `<small>${esc(isLive(x) ? `On now · ${c}` : `${hm(x.at)} · ${c}`)}</small><b>${esc(x.t)}</b>`;
+    back.src = x.wide;
   }
   // a card: wide artwork with the time on a frosted chip, the title and a grey line (the same in every shelf)
   const card = (x, c, next, sub, sameDay) => `<li><button type="button" class="pick" ${reg(x, c, next)}>

@@ -16,7 +16,7 @@
   <meta property="og:description" content="Every UK channel, now and next, and the whole evening.">
   <meta property="og:image" content="https://tenner.stream/og.jpg">
   <link rel="preconnect" href="https://images.metadata.sky.com">
-  <link rel="stylesheet" href="tv.css?v=3.0.0">
+  <link rel="stylesheet" href="tv.css?v=3.1.0">
   <!-- the listings start downloading now, alongside the page's own files (not after them) -->
   <script>(() => { const t = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(Date.now()), q = new URLSearchParams(location.search).get('d'), d = /^\d{4}-\d\d-\d\d$/.test(q || '') && q >= t ? q : t;
     const day = fetch('/api/day?d=' + d), meta = fetch('/data/meta.json').then((r) => (r.ok ? r.json() : null)).catch(() => null); day.catch(() => {});
@@ -43,7 +43,7 @@
     <div class="side-links">
       <button type="button" class="side-acct" id="acctSide" aria-haspopup="dialog"></button>
       <a href="https://tenner.stream/legal.html#terms">Terms of Service</a><a href="https://tenner.stream/legal.html#privacy">Privacy Policy</a><a href="https://tenner.stream/legal.html#cookies">Cookies</a><a href="https://tenner.stream/contact.html">Contact</a>
-      <span class="side-ver">Tenner TV 3.0.0</span>
+      <span class="side-ver">Tenner TV 3.1.0</span>
     </div>
   </aside>
   <header class="bar">
@@ -53,9 +53,9 @@
   </header>
 
   <main id="main">
-    <!-- the artwork of whatever's in the preview, blurred into the top of the page and on under the sidebar's glass -->
-    <div class="amb" aria-hidden="true"><img alt="" decoding="async"><img alt="" decoding="async"></div>
     <section class="hero">
+      <!-- in the corner: a popular programme on the guide, its artwork melting into the page (tap for what it's about) -->
+      <button type="button" class="corner" id="corner" hidden><span class="corner-art"><img alt="" decoding="async"><img alt="" decoding="async"></span><span class="corner-cap" id="cornerCap"></span></button>
       <!-- the Met Office's weather warnings, when there are any: bad weather can knock out a dish or an aerial's signal -->
       <aside class="wx" id="wx" aria-labelledby="wxT" hidden></aside>
       <p class="eye" id="eye">&nbsp;</p>
@@ -145,6 +145,6 @@
   <div class="toast" id="toast" role="status" aria-live="polite" popover="manual"></div>
   <div class="banner" id="banner" role="alert" popover="manual"></div>
 
-  <script src="tv.js?v=3.0.0" defer></script>
+  <script src="tv.js?v=3.1.0" defer></script>
 </body>
 </html>
