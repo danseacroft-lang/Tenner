@@ -46,7 +46,7 @@
 @font-face { font-family: "Caveat"; font-style: normal; font-weight: 500; font-display: swap; src: url(fonts/caveat-latin.woff2) format("woff2"); }
 .sp-hd { position: relative; width: fit-content; max-width: 100%; }
 .sp-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
-.sp-note { --ink: var(--label); display: flex; align-items: flex-end; gap: 4px; max-width: 310px; margin: 0 8px 2px clamp(4px, 2vw, 24px);
+.sp-note { --ink: var(--label); display: flex; align-items: flex-end; gap: 4px; max-width: 310px; margin: 0 0 2px auto;
   color: var(--ink); font: 500 27px/1.08 "Caveat", "Bradley Hand", "Noteworthy", "Segoe Print", cursive; letter-spacing: .01em; rotate: -3deg; text-wrap: pretty;
   filter: url(#pen); -webkit-font-smoothing: antialiased; }
 .sp-note .sp-words { padding-bottom: 30px; }
@@ -57,8 +57,16 @@
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 8' preserveAspectRatio='none'%3E%3Cpath d='M1 5c20-2 50-3 98-2M6 7c25-2 55-2 88-3' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") 0 0 / 100% 100%;
           mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 8' preserveAspectRatio='none'%3E%3Cpath d='M1 5c20-2 50-3 98-2M6 7c25-2 55-2 88-3' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") 0 0 / 100% 100%; }
 .sp-arw { flex: none; fill: none; stroke: var(--ink); stroke-width: 2.3; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
-/* the arrow curls down onto "trending?" */
-.sp-arw-dn { width: 48px; height: 58px; margin-bottom: -26px; scale: -1 -1; }
+/* on the right, over "trending?": the arrow curls down and left onto it */
+.sp-arw-dn { width: 48px; height: 58px; margin-bottom: 0; scale: 1 -1; }
+.splash h1 em { anchor-name: --sp-hour; }
+/* computers: its right edge lines up with the end of "trending?", however the headline wraps */
+@supports (anchor-name: --a) {
+  @media (min-width: 900px) {
+    .sp-hd { padding-top: 112px; }
+    .sp-note { position: absolute; top: 0; position-anchor: --sp-hour; right: anchor(right); width: 310px; margin: 0; }
+  }
+}
 /* written on: word by word at a pen's pace (--t: when the word starts, --n: its letters), then the underline, then the
    arrow */
 :root:not(.still) .sp-words span { animation: spWrite calc(var(--n) * 45ms) linear calc(.9s + var(--t) * 1s) both; }

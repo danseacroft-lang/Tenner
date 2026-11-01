@@ -41,8 +41,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=2.1.1">
-  <link rel="stylesheet" href="about.css?v=2.1.1">
+  <link rel="stylesheet" href="styles.css?v=2.1.2">
+  <link rel="stylesheet" href="about.css?v=2.1.2">
   <link rel="preload" href="fonts/caveat-latin.woff2" as="font" type="font/woff2" crossorigin>
 
 </head>
@@ -95,7 +95,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 2.1.1</span>
+      <span class="side-ver">Tenner 2.1.2</span>
     </div>
   </div>
 
@@ -113,7 +113,7 @@
       <div class="sp-hd">
         <!-- a note written above the headline: handwriting (Caveat) and a drawn arrow, given a hand's slight wobble by the
              pen filter below -->
-        <p class="sp-note"><span class="sp-words"><span style="--t:0;--n:3">Oh,</span> <span style="--t:0.205;--n:3">and</span> <span style="--t:0.41;--n:4">btw…</span> <span style="--t:0.66;--n:6">Tenner</span> <span style="--t:1;--n:2">is</span> <span class="ul" style="--t:1.16;--n:13">independently</span> <span style="--t:1.815;--n:4">run.</span> <span style="--t:2.065;--n:2">No</span> <span style="--t:2.225;--n:4">huge</span> <span style="--t:2.475;--n:11">corporation</span> <span style="--t:3.04;--n:6">behind</span> <span style="--t:3.38;--n:3">it!</span></span><svg class="sp-arw sp-arw-dn" viewBox="0 0 70 84" aria-hidden="true"><path d="M58 80c4-22-4-46-42-68" pathLength="1"/><path class="hd" d="M12 9c7 0 14 1 20 3M12 9c2 6 5 13 8 18" pathLength="1"/></svg></p>
+        <p class="sp-note"><svg class="sp-arw sp-arw-dn" viewBox="0 0 70 84" aria-hidden="true"><path d="M58 80c4-22-4-46-42-68" pathLength="1"/><path class="hd" d="M12 9c7 0 14 1 20 3M12 9c2 6 5 13 8 18" pathLength="1"/></svg><span class="sp-words"><span style="--t:0;--n:3">Oh,</span> <span style="--t:0.205;--n:3">and</span> <span style="--t:0.41;--n:4">btw…</span> <span style="--t:0.66;--n:6">Tenner</span> <span style="--t:1;--n:2">is</span> <span class="ul" style="--t:1.16;--n:13">independently</span> <span style="--t:1.815;--n:4">run.</span> <span style="--t:2.065;--n:2">No</span> <span style="--t:2.225;--n:4">huge</span> <span style="--t:2.475;--n:11">corporation</span> <span style="--t:3.04;--n:6">behind</span> <span style="--t:3.38;--n:3">it!</span></span></p>
         <h1 id="h-about" data-title="About">What’s <em class="grad">trending?</em></h1>
         <svg class="sp-defs" width="0" height="0" aria-hidden="true"><filter id="pen" x="-5%" y="-5%" width="110%" height="110%">
           <feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="4" result="wobble"/>
@@ -300,7 +300,7 @@
     <nav class="more-links" aria-label="Site information">
       <a href="contact.html">Contact</a><a href="legal.html#privacy">Privacy Policy</a><a href="legal.html#terms">Terms of Service</a><a href="legal.html#cookies">Cookies</a>
     </nav>
-    <p class="more-ver side-ver-text">Tenner 2.1.1</p>
+    <p class="more-ver side-ver-text">Tenner 2.1.2</p>
     </main>
 
 
@@ -321,6 +321,6 @@
     }
     load(false); addEventListener('tn:check', function(){ load(true); });
   })();</script>
-  <script src="shell.js?v=2.1.1" defer></script>
+  <script src="shell.js?v=2.1.2" defer></script>
 </body>
 </html>
