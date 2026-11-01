@@ -750,3 +750,57 @@ button.li-row:active { background: rgba(255, 255, 255, .12); }
   .lede { max-width: 30ch; }
 }
 @media (prefers-reduced-motion: reduce) { .corner-art img { transition: opacity .3s ease; transform: none; } }
+
+/* =====================================================================================================================
+   Tenner TV 3.2 (a test): borderless. No rims, outlines, hairlines or shadows round controls or boxes; buttons are plain
+   (an icon and a word), and the few boxes left are a faint tint that melts into the page. What's chosen is shown by
+   Tenner's rainbow underline. Focus rings stay, for the keyboard.
+   ===================================================================================================================== */
+.tools::before { display: none; }
+.tools { background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 6px 0; }
+/* stuck to the top: the guide frosts and fades under it (iOS's scroll edge), with no edge where it stops */
+.tools::after { content: ""; position: absolute; z-index: -1; inset: -10px calc(-1 * var(--gutter-r)) -18px calc(-1 * var(--gutter)); pointer-events: none;
+  background: linear-gradient(rgba(5, 5, 8, .82) 55%, rgba(5, 5, 8, 0)); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+  -webkit-mask-image: linear-gradient(#000 60%, transparent); mask-image: linear-gradient(#000 60%, transparent); }
+.days, .seg { background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.days { padding: 0; margin-left: -12px; }
+.seg { padding: 0; }
+.thumb, .days .thumb, .seg .thumb { top: auto; bottom: 2px; height: 2.5px; border-radius: 2px; box-shadow: none; background: linear-gradient(90deg, #ff375f, #bf5af2 55%, #0a84ff);
+  transform-origin: left; }
+.days button, .seg button { padding: 0 12px; }
+.pop, .pop:hover, .ic-btn, .tools .find-btn, .tools .find-btn:hover { background: none; box-shadow: none; }
+.pop:hover, .ic-btn:hover, .tools .find-btn:hover { color: var(--accent); }
+.pop:hover svg { color: var(--accent); }
+.find-btn kbd { background: none; color: var(--label3); }
+.bar-link { background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 4px; }
+.beta { border: 0; padding: 0; background: linear-gradient(100deg, #ff375f, #bf5af2 55%, #0a84ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+/* the guide: no lines between channels, tiles a faint tint with nothing round them */
+.crow::before { display: none; }
+.blk, .blk.live { box-shadow: none; }
+.blk { background: rgba(255, 255, 255, .045); }
+@media (hover: hover) { .blk:hover { background: rgba(255, 255, 255, .1); box-shadow: none; transform: none; } }
+.blk.live { background: rgba(10, 132, 255, .16); }
+.blk.live::after { box-shadow: none; }
+.ch-badge, .pv-logo, .pv-art, .pick-art, .tile, .tile:hover, .daymark, .fd-pst { box-shadow: none !important; }
+.ch-badge { background: rgba(255, 255, 255, .06); }
+.tile { background: rgba(255, 255, 255, .04); }
+@media (hover: hover) { .tile:hover { background: rgba(255, 255, 255, .08); } }
+.chip { box-shadow: none; }
+/* buttons: plain, an icon and a word in the accent colour */
+.act, .live-btn { background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 10px; color: var(--accent); }
+.act:hover, .live-btn:hover { background: rgba(255, 255, 255, .07); }
+.live-btn { color: var(--label); }
+.act.on { background: none; color: #ffd60a; }
+.act.primary { box-shadow: none; }
+.sh-x, .sh-x:hover { background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.sh-art .sh-x { background: rgba(0, 0, 0, .3); }
+.li-x svg, .bn-x svg, .wx-x svg, .toast-act, .bn-act { background: none !important; box-shadow: none; }
+.toast-act, .bn-act { color: var(--accent); padding: 0 6px; }
+.bn-act { color: #ff375f; }
+/* lists and popups: no hairlines, no rims */
+.list li + li::before, .fd-list li + li::before, .wx-more { border: 0; }
+.list li + li::before, .fd-list li + li::before { display: none; }
+.toast, .banner, .wx, .sheet { box-shadow: 0 30px 80px rgba(0, 0, 0, .5); }
+.wx::after { box-shadow: none; }
+#fq { background: rgba(255, 255, 255, .06); }
+@media (max-width: 760px) { #shIn .sh-acts .act { background: rgba(255, 255, 255, .05); } }
