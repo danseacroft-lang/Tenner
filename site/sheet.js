@@ -25,17 +25,32 @@
   // is still building up, gaps where it was out of the top 10; and its life on the charts so far (days in the top 10,
   // its peak, days at No. 1, when it first charted)
   const SVC = { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+', appletv: 'Apple TV' };
-  function lifeHtml(p) {
-    if (!p?.n) return '';
+  function lifeHtml(t) {
+    const p = t.p; if (!p?.n) return '';
     const peak = p.u ? `Peaked at No. ${p.u} in the UK` : p.b ? `Peaked at No. ${p.b[0]} on ${SVC[p.b[1]] || p.b[1]}` : '';
     const first = new Date(p.f + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', ...(p.f.slice(0, 4) !== String(new Date().getFullYear()) ? { year: 'numeric' } : {}) });
     const cells = [[p.n, p.n === 1 ? 'day in a Top 10' : 'days in a Top 10'], peak && [peak.match(/No\. \d+/)[0], peak.replace(/^Peaked at No\. \d+ /, 'peak ')], p.o ? [p.o, p.o === 1 ? 'day at No. 1' : 'days at No. 1'] : null].filter(Boolean);
-    return `<dl class="sh-life">${cells.map(([v, l]) => `<div><dt>${esc(String(v))}</dt><dd>${esc(l)}</dd></div>`).join('')}</dl><p class="sh-first">First charted ${esc(first)}</p>`;
+    return `<dl class="sh-life">${cells.map(([v, l]) => `<div><dt>${esc(String(v))}</dt><dd>${esc(l)}</dd></div>`).join('')}</dl>${onesHtml(t)}<p class="sh-first">First charted ${esc(first)}</p>`;
+  }
+  // Where it's been No. 1: the UK chart and each service's own, the ones it tops right now first
+  function onesHtml(t) {
+    const w = { ...(t.p?.w || {}) }, now = new Set(t.t1 || []);
+    for (const sv of now) w[sv] ||= [1, new Date().toISOString().slice(0, 10)];
+    const list = Object.entries(w).sort(([a, x], [b, y]) => now.has(b) - now.has(a) || (a === 'all' ? -1 : b === 'all' ? 1 : 0) || y[0] - x[0] || y[1].localeCompare(x[1]));
+    if (!list.length) return '';
+    const day = (d) => new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    const rows = list.map(([sv, [n, last]]) => {
+      const s = sv === 'all' ? { label: 'UK Top 10' } : trailD?.svc?.[sv] || { label: SVC[sv] || sv };
+      const days = `${n} ${n === 1 ? 'day' : 'days'}`;
+      const line = now.has(sv) ? (n > 1 ? `No. 1 now · ${days}` : 'No. 1 now') : `${days} · last on ${day(last)}`;
+      return `<li${now.has(sv) ? ' class="now"' : ''}><span class="sh-one-ic">${s.logo ? `<img src="${esc(s.logo)}" alt="" loading="lazy">` : esc(sv === 'all' ? 'UK' : s.label[0])}</span><span><b>${esc(s.label)}</b><small>${esc(line)}</small></span></li>`;
+    }).join('');
+    return `<div class="sh-ones"><h4>No. 1 on</h4><ul>${rows}</ul></div>`;
   }
   function chartHtml(info) {
     const t = trailD?.items?.[info.k]; if (!t) return '';
     const byDay = t.d.filter(Boolean).length >= 3, r = byDay ? t.d : t.h, when = byDay ? trailD.days : trailD.hours;
-    if (r.filter(Boolean).length < 2) return t.p ? `<section class="sh-track" aria-labelledby="shC"><h3 id="shC">On the Chart</h3>${lifeHtml(t.p)}</section>` : '';
+    if (r.filter(Boolean).length < 2) return t.p ? `<section class="sh-track" aria-labelledby="shC"><h3 id="shC">On the Chart</h3>${lifeHtml(t)}</section>` : '';
     // Apple Stocks style: the plot on the left, No. 1 and No. 10 in a margin on the right, so labels never sit on the line
     const W = 300, H = 92, R = 40, px = (i) => 8 + (i * (W - R - 16)) / Math.max(1, r.length - 1), py = (n) => 10 + ((n - 1) * (H - 20)) / 9;
     let path = '', pen = false;
@@ -53,7 +68,7 @@
         <text x="${W}" y="${py(1) + 4}" class="y" text-anchor="end">No. 1</text><text x="${W}" y="${py(10) + 4}" class="y" text-anchor="end">No. 10</text>
         <path d="${path}" class="ln"/>${dots}
         <text x="8" y="${H + 12}" class="x">${esc(label(when[0]))}</text><text x="${W - R - 8}" y="${H + 12}" class="x" text-anchor="end">${byDay ? 'Today' : 'Now'}</text>
-      </svg>${lifeHtml(t.p)}</section>`;
+      </svg>${lifeHtml(t)}</section>`;
   }
   // Shows: when the next episode lands, and where you're up to (kept on this device)
   function nextHtml(info, x) {

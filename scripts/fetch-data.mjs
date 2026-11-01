@@ -325,20 +325,22 @@ export function addMovement(data, prev, now = new Date()) {
 
 // ---------- Each title's life on the charts: kept for a year after it was last in one ----------
 // life[k] = { f: first day in a chart, l: last day, n: days in a chart, u: best UK rank, b: [best rank, service] on a
-// service's own chart, o: days at No. 1 }. The first time, it's filled in from
-// the days already kept.
+// service's own chart, o: days at No. 1, w: { chart: [days at No. 1, last day at No. 1] } where chart is 'all' (the UK)
+// or a service }. The first time, it's filled in from the days already kept (w too, the first run after it was added).
 function lifeDay(life, snap, day, svcs) {
-  const seen = new Map();   // key -> { u, b: [rank, svc] }
+  const seen = new Map();   // key -> { u, b: [rank, svc], t: [charts it tops] }
   for (const [c, list] of Object.entries(snap)) {
     const [sv] = c.split(':'); if (sv !== 'all' && !svcs.has(sv)) continue;
     list.forEach((k, i) => {
       if (k[0] === 'x') return;
+      if (i === 0) { const x = seen.get(k) || {}; (x.t ||= []).push(sv); seen.set(k, x); }
       const x = seen.get(k) || {}; if (sv === 'all') x.u = Math.min(x.u || 99, i + 1); else if (!x.b || i + 1 < x.b[0]) x.b = [i + 1, sv];
       seen.set(k, x);
     });
   }
   for (const [k, x] of seen) {
     const e = life[k] || (life[k] = { f: day, l: '', n: 0, o: 0 });
+    for (const sv of x.t || []) { const w = (e.w ||= {})[sv] ||= [0, '']; if (w[1] !== day) { w[0]++; w[1] = day; } }
     if (e.l === day) { if (x.u && x.u < (e.u || 99)) e.u = x.u; if (x.b && (!e.b || x.b[0] < e.b[0])) e.b = x.b; continue; }
     e.l = day; e.n++; if (x.u === 1 || x.b?.[0] === 1) e.o++;
     if (x.u && x.u < (e.u || 99)) e.u = x.u; if (x.b && (!e.b || x.b[0] < e.b[0])) e.b = x.b;
@@ -347,6 +349,12 @@ function lifeDay(life, snap, day, svcs) {
 function trackLife(h, data, day, keyOf) {
   const svcs = new Set((data.services || []).map((s) => s.key));
   if (!h.life) { h.life = {}; for (const d of Object.keys(h.days).sort()) if (d !== day) lifeDay(h.life, h.days[d], d, svcs); }
+  else if (!h.lifeW) {   // where each title has been No. 1: filled in once from the days already kept
+    const tmp = {};
+    for (const d of Object.keys(h.days).sort()) if (d !== day) lifeDay(tmp, h.days[d], d, svcs);
+    for (const [k, e] of Object.entries(tmp)) if (e.w && h.life[k]) h.life[k].w = e.w;
+  }
+  h.lifeW = 1;
   lifeDay(h.life, h.days[day], day, svcs);
   const cut = new Date(Date.parse(`${day}T12:00:00Z`) - 400 * 864e5).toISOString().slice(0, 10);
   for (const [k, e] of Object.entries(h.life)) if (e.l < cut) delete h.life[k];
@@ -355,7 +363,7 @@ function trackLife(h, data, day, keyOf) {
 // ---------- Trackers from the same history: each title's recent ranks, and the week's round-up ----------
 // trail.json: for every charted title, its rank in its main chart (the UK chart if it's there, else its service's)
 //   by day for the last 30 days and by hour for the last 24, for the line in the title sheet (0 = not in it), and its
-//   life on the charts so far (p, from trackLife).
+//   life on the charts so far (p, from trackLife), and the charts it's No. 1 on right now (t1); svc: each service's name and logo.
 // week.json: "This week on Tenner": the biggest climbers, new arrivals and each chart's No. 1, against a week ago
 //   (or the oldest day kept, while the history is still building up).
 export function buildTrackers(data, h, now = new Date()) {
@@ -371,13 +379,16 @@ export function buildTrackers(data, h, now = new Date()) {
   }
   // ---- trail
   const rank = (snap, c, k) => (snap?.[c] ? snap[c].indexOf(k) + 1 : 0);
-  const trail = { generatedAt: data.generatedAt, days, hours: hours.map((x) => `${x}:00:00Z`), items: {} };
+  const trail = { generatedAt: data.generatedAt, days, hours: hours.map((x) => `${x}:00:00Z`), items: {},
+    svc: Object.fromEntries((data.services || []).map((s) => [s.key, { label: s.label, logo: s.logo || null }])) };
+  const tops = {};   // key -> the charts it's No. 1 on right now
+  for (const [c, list] of Object.entries(charts)) if (list[0]) (tops[keyOf(list[0])] ||= []).push(c.split(':')[0]);
   for (const k of Object.keys(info)) {
     const t = info[k].type, seen = (c) => days.filter((d) => rank(h.days[d], c, k)).length + hours.filter((x) => rank(h.hours[x], c, k)).length;
     const cands = [`all:${t}`, ...Object.keys(label).map((s) => `${s}:${t}`)].filter((c) => seen(c));
     if (!cands.length) continue;
     const c = cands.includes(`all:${t}`) ? `all:${t}` : cands.sort((a, b) => seen(b) - seen(a))[0];
-    trail.items[k] = { c, d: days.map((d) => rank(h.days[d], c, k)), h: hours.map((x) => rank(h.hours[x], c, k)), ...(h.life?.[k] ? { p: h.life[k] } : {}) };
+    trail.items[k] = { c, d: days.map((d) => rank(h.days[d], c, k)), h: hours.map((x) => rank(h.hours[x], c, k)), ...(h.life?.[k] ? { p: h.life[k] } : {}), ...(tops[k] ? { t1: tops[k] } : {}) };
   }
   // ---- the week
   const today = now.toISOString().slice(0, 10);

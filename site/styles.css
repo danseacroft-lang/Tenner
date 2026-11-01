@@ -938,6 +938,18 @@ a.tb-btn:hover { text-decoration: none; }
 .sh-life dt { font: 700 22px/1.1 var(--font); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .sh-life dd { margin: 3px 0 0; font-size: 12.5px; line-height: 1.3; color: var(--label2); }
 .sh-first { margin: 10px 0 0; font-size: 13px; color: var(--label2); }
+/* where it's been No. 1: a small card per chart (logo, name, grey line), the ones it tops now first */
+.sh-ones { margin: 14px 0 0; }
+.sh-ones h4 { margin: 0 0 8px; font: 600 15px/1.3 var(--font); }
+.sh-ones ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.sh-ones li { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 8px 12px 8px 8px; border-radius: var(--r); background: var(--fill); }
+.sh-ones li > span:last-child { display: grid; min-width: 0; }
+.sh-ones b { font: 600 14px/1.25 var(--font); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.sh-ones small { font-size: 12.5px; line-height: 1.3; color: var(--label2); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.sh-ones li.now small { color: var(--accent); font-weight: 500; }
+.sh-one-ic { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; overflow: hidden;
+  background: var(--bt-fill); color: #fff; font: 600 12px/1 var(--font); letter-spacing: .02em; }
+.sh-one-ic img { width: 100%; height: 100%; object-fit: cover; }
 /* the cheapest way to rent and to buy */
 .sh-prices { display: grid; gap: 6px; }
 .sh-pr { display: block; font-size: 15px; color: var(--label); }
