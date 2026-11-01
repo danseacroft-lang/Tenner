@@ -9,6 +9,7 @@ on:
     paths: ['tv/**', '.github/workflows/tv.yml']
   schedule:
     - cron: '17 */3 * * *'
+    - cron: '47 1-23/3 * * *'   # a second try 90 minutes later, as GitHub skips some scheduled runs when it's busy
   workflow_dispatch:
 concurrency: { group: tv, cancel-in-progress: true }
 permissions:
@@ -75,6 +76,23 @@ jobs:
           npx --yes wrangler@4 deploy
           if [ -n "$TMDB_TOKEN" ]; then printf '%s' "$TMDB_TOKEN" | npx --yes wrangler@4 secret put TMDB_TOKEN; fi
           echo "::warning title=Connect tv.tenner.stream::Tenner TV is live on its workers.dev address. To put it on tv.tenner.stream: Cloudflare dashboard > Workers & Pages > tenner-tv > Settings > Domains & Routes > Add > Custom domain > tv.tenner.stream. (Or give the API token 'Zone: Workers Routes: Edit' and 'Zone: DNS: Edit' for tenner.stream and run this again.)"
+      # The Cloudflare token deploys Tenner TV, the search service and accounts. If it was made with an end date, the run
+      # says so a month ahead, and fails (so GitHub emails the owner) in the last fortnight, before anything stops deploying.
+      - name: Check the Cloudflare token isn't about to run out
+        if: steps.ready.outputs.go == 'yes'
+        env: { T: '${{ secrets.CLOUDFLARE_API_TOKEN }}', A: '${{ secrets.CLOUDFLARE_ACCOUNT_ID }}' }
+        run: |
+          r=$(curl -s -m 30 -H "Authorization: Bearer $T" https://api.cloudflare.com/client/v4/user/tokens/verify)
+          echo "$r" | grep -q '"success":true' || r=$(curl -s -m 30 -H "Authorization: Bearer $T" "https://api.cloudflare.com/client/v4/accounts/$A/tokens/verify")
+          state=$(printf '%s' "$r" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const j=JSON.parse(s);if(!j.success){console.log("unknown");return}const x=j.result||{};console.log(x.status!=="active"?"inactive":x.expires_on?Math.floor((Date.parse(x.expires_on)-Date.now())/864e5):"never")}catch{console.log("unknown")}})')
+          case "$state" in
+            never) echo "✓ The Cloudflare token has no end date" ;;
+            unknown) echo "· Couldn't check the Cloudflare token's end date this time" ;;
+            inactive) echo "::error title=Cloudflare token not active::Make a new one in Cloudflare and save it as the CLOUDFLARE_API_TOKEN secret."; exit 1 ;;
+            *) echo "The Cloudflare token runs out in $state days"
+               if [ "$state" -lt 14 ]; then echo "::error title=Cloudflare token runs out in $state days::Make a new one (or extend it) in Cloudflare > My Profile > API Tokens, and save it as the CLOUDFLARE_API_TOKEN secret."; exit 1; fi
+               if [ "$state" -lt 30 ]; then echo "::warning title=Cloudflare token runs out in $state days::Extend it in Cloudflare > My Profile > API Tokens."; fi ;;
+          esac
       # GitHub pauses scheduled workflows after 60 days without a commit; re-enabling every run keeps this one going
       - name: Keep the listings schedule alive
         if: github.event_name == 'schedule'

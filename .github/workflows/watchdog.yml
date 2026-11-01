@@ -1,10 +1,10 @@
-# The watchdog: every three hours, checks every part of Tenner is up and fresh. Anything behind is put right
+# The watchdog: every hour, checks every part of Tenner is up and fresh. Anything behind is put right
 # automatically (by re-running the job that makes it); only if that hasn't worked by the next check does this run fail,
 # and GitHub emails the owner. Nothing here needs a person while things are healthy.
 name: Watchdog
 on:
   schedule:
-    - cron: '41 */3 * * *'
+    - cron: '41 * * * *'   # hourly; GitHub skips some scheduled runs when it's busy, and the next one picks up
   workflow_dispatch:
 permissions:
   contents: read
@@ -28,7 +28,7 @@ jobs:
             code=$(curl -s -o /dev/null -w '%{http_code}' -m 30 https://tenner.stream/)
             [ "$code" = 200 ] || echo "update.yml|tenner.stream answered $code"
             mins=$(curl -s -m 30 "https://tenner.stream/data/trending.json?v=$(date +%s)" | age)   # rebuilt hourly
-            [ "$mins" -le 150 ] || echo "update.yml|the charts are $((mins/60)) hours old"
+            [ "$mins" -le 120 ] || echo "update.yml|the charts are $((mins/60)) hours old"
             # each title's own page (for link previews): the No. 1 show's must be there, with its name in the preview tags
             k=$(curl -s -m 30 "https://tenner.stream/data/trending.json?v=$(date +%s)" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log("t"+JSON.parse(s).overall.tv[0].id)}catch{console.log("t0")}})')
             curl -s -m 30 "https://tenner.stream/t/$k/" | grep -q 'property="og:title"' || echo "update.yml|the link preview page for $k is missing"
@@ -70,6 +70,15 @@ jobs:
           if [ -z "$still" ]; then echo "✓ Put right: $(echo "$found" | cut -d'|' -f2 | paste -sd ';' -)"; exit 0; fi
           echo "$still" | while IFS='|' read -r job what; do echo "::error title=Tenner needs a look::$what (still, after re-running $job)"; done
           exit 1
+      # the tenner.stream address itself: a nudge a month before it's due for renewal, and a failed run (so GitHub emails
+      # the owner) in its last fortnight. Read from the domain registry's public record; if that can't be read, nothing is said.
+      - name: Check the address isn't about to run out
+        run: |
+          days=$(curl -s -L -m 30 -H 'Accept: application/rdap+json' https://rdap.org/domain/tenner.stream | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const e=(JSON.parse(s).events||[]).find(x=>/expir/i.test(x.eventAction));console.log(e?Math.floor((Date.parse(e.eventDate)-Date.now())/864e5):"")}catch{console.log("")}})')
+          if [ -z "$days" ]; then echo "· Couldn't read the domain's renewal date this time"; exit 0; fi
+          echo "tenner.stream is registered for another $days days"
+          if [ "$days" -lt 14 ]; then echo "::error title=Renew tenner.stream::The domain runs out in $days days. Renew it (or turn on auto-renew) with its registrar."; exit 1; fi
+          if [ "$days" -lt 30 ]; then echo "::warning title=Renew tenner.stream soon::The domain runs out in $days days. Check auto-renew is on with its registrar."; fi
       # GitHub pauses scheduled workflows after 60 days without a commit; re-enabling every run keeps this one going
       - name: Keep the watchdog's schedule alive
         if: github.event_name == 'schedule'
