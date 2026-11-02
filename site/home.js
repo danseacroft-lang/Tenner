@@ -452,7 +452,11 @@
     const body = ks.map(part).join(''); if (!body) return '';
     const more = ks.length > 1 && ks.some((k) => (s[k] || []).length > 5);
     const words = { both: 'Top 10', tv: 'Top 10 shows', movie: 'Top 10 films' }[state.kind];
-    return `<section class="bx-panel panel bx-tt-box${ttOpen ? ' open' : ''}" aria-labelledby="bxTt"><header class="bx-panel-hd"><h2 id="bxTt">${words} ${esc(where())}</h2></header>${body}
+    // behind the heading: a scene from the chart's leading films (shows when it's shows only), in grey, melting into the box;
+    // a different one each hour, and with Animations on they take turns
+    const scenes = [...ks].sort((a, b) => (b === 'movie') - (a === 'movie')).flatMap((k) => (s[k] || []).slice(0, 10)).filter((it) => it.backdrop).slice(0, 4);
+    const bg = scenes.length ? `<div class="bx-tt-bg" aria-hidden="true">${scenes.map((it, i) => { const on = i === Math.floor(Date.now() / 36e5) % scenes.length; return `<img${on ? ' class="on"' : ''} src="${esc(it.backdrop.replace('/w1280/', '/w780/'))}" alt="" loading="${on ? 'eager' : 'lazy'}" decoding="async">`; }).join('')}</div>` : '';
+    return `<section class="bx-panel panel bx-tt-box${ttOpen ? ' open' : ''}${bg ? ' has-bg' : ''}" aria-labelledby="bxTt">${bg}<header class="bx-panel-hd"><h2 id="bxTt">${words} ${esc(where())}</h2></header>${body}
       ${more ? `<button type="button" class="bx-more bx-tt-more" data-tt aria-expanded="${ttOpen}">${ttOpen ? 'Show less' : 'See more'}</button>` : ''}</section>`;
   }
   document.addEventListener('click', (e) => {
@@ -461,6 +465,14 @@
     box.classList.toggle('open', ttOpen); b.setAttribute('aria-expanded', ttOpen); b.textContent = ttOpen ? 'Show less' : 'See more';
     if (!ttOpen && box.getBoundingClientRect().top < 0) box.scrollIntoView({ block: 'start', behavior: still() ? 'auto' : 'smooth' });
   });
+  // the scene behind the Top 10 moves on to the next film every so often (with Animations on and the page in view)
+  setInterval(() => {
+    if (still() || document.hidden) return;
+    const imgs = [...document.querySelectorAll('.bx-tt-bg img')]; if (imgs.length < 2) return;
+    const at = imgs.findIndex((im) => im.classList.contains('on')), next = imgs[(at + 1) % imgs.length];
+    if (!next.complete || !next.naturalWidth) { next.loading = 'eager'; return; }
+    imgs[at]?.classList.remove('on'); next.classList.add('on');
+  }, 9000);
   // this week's biggest climbers, as a list (the third reference's activity panel)
   function climbers() {
     const w = state.week; if (!w?.climbers?.length) return '';
