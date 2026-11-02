@@ -11,7 +11,7 @@
 :root[data-theme="dark"] { --a-card: rgba(44, 44, 48, .5); --a-card-rim: inset 0 0 0 .5px rgba(255, 255, 255, .1); --a-card-shadow: 0 12px 40px -16px rgba(0, 0, 0, .7); }
 
 /* one column shared with Top 10 and Browse, left-aligned like Apple Music */
-.awrap { max-width: var(--max); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter-r); }
+.awrap { max-width: var(--max); margin: 0 auto 0 var(--page-left); padding-left: var(--gutter); padding-right: var(--gutter-r); }
 .eyebrow { font: 600 15px/1.2 var(--font); letter-spacing: -.01em; color: var(--accent); margin: 0 0 10px; }
 
 /* ============================================================ the splash
@@ -37,7 +37,7 @@
   background:
     linear-gradient(90deg, color-mix(in srgb, var(--fade) 78%, transparent) 0%, color-mix(in srgb, var(--fade) 40%, transparent) 38%, transparent 68%),
     linear-gradient(180deg, transparent 30%, color-mix(in srgb, var(--fade) 45%, transparent) 62%, color-mix(in srgb, var(--fade) 70%, transparent) 90%); }
-.sp-copy { width: 100%; max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter-r) 16vh calc(var(--gutter) + 12px); color: var(--label); }
+.sp-copy { width: 100%; max-width: var(--max); margin: 0 auto 0 var(--page-left); padding: 0 var(--gutter-r) 16vh calc(var(--gutter) + 12px); color: var(--label); }
 .sp-logo { width: 72px; height: 72px; border-radius: var(--r); display: block; margin-bottom: 22px; box-shadow: 0 0 0 .5px rgba(127,127,127,.3), 0 18px 50px rgba(0,0,0,.35); }
 .sp-eye { margin: 0 0 12px; font: 600 14px/1 var(--font); letter-spacing: .14em; text-transform: uppercase; color: var(--label2); }
 .splash h1 { margin: 0; max-width: 11ch; font: 800 clamp(52px, 7.6vw, 116px)/.95 var(--font-display); letter-spacing: -.035em; }

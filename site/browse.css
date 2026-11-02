@@ -4,7 +4,7 @@
    Built on the tokens and shell in styles.css. */
 
 body.browse { overflow-x: clip; }
-.bwrap { max-width: 1240px; margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter-r); }
+.bwrap { max-width: var(--max); margin: 0 auto 0 var(--page-left); padding-left: var(--gutter); padding-right: var(--gutter-r); }
 
 
 /* ---------- the spotlight ---------- */

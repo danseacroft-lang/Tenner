@@ -1,7 +1,7 @@
 /* Cast & Crew: faces drifting behind a big title, a glass search bar, portrait cards, a ranked Top 10 of people; a
    person as a cinematic splash with their portrait, chips of facts, big figures, what's streaming now and a career by
    decade. Built on the tokens and glass in styles.css. */
-.pwrap { max-width: 1240px; margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter-r); }
+.pwrap { max-width: var(--max); margin: 0 auto 0 var(--page-left); padding-left: var(--gutter); padding-right: var(--gutter-r); }
 body.people { overflow-x: clip; }
 
 /* ---------- the front: the wall of faces ---------- */

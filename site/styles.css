@@ -24,7 +24,8 @@
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter Tight", "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --gutter: max(20px, env(safe-area-inset-left, 0px)); --gutter-r: max(20px, env(safe-area-inset-right, 0px));
-  --max: 1240px; --radius: 9px; --r: 9px;   /* --r: the one corner for every button, box, bar, card and poster */
+  --max: 1560px; --page-left: auto;   /* every page: the homepage's width, and on computers its place beside the sidebar */
+  --radius: 9px; --r: 9px;   /* --r: the one corner for every button, box, bar, card and poster */
   /* the frosted control material every button and control shares: a blurred translucent fill, a hairline edge and a
      soft top highlight (no shadow), on softly rounded rectangles */
   --frost: rgba(255, 255, 255, .55); --frost-on: #ffffff; --frost-edge: rgba(60, 60, 67, .18); --frost-hi: rgba(255, 255, 255, .6);
@@ -99,7 +100,7 @@ img { display: block; max-width: 100%; }
 main:focus { outline: none; }
 ::selection { background: color-mix(in srgb, var(--accent) 28%, transparent); }
 .page-title { margin-top: 14px; }
-.wrap { max-width: var(--max); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter-r); }
+.wrap { max-width: var(--max); margin: 0 auto 0 var(--page-left); padding-left: var(--gutter); padding-right: var(--gutter-r); }
 
 /* ============================================================ one button family */
 .btn {
@@ -407,7 +408,7 @@ a.tb-btn:hover { text-decoration: none; }
   main { position: relative; isolation: isolate; }
   .backdrop {
     /* pinned to the window: it stays put while the page scrolls up over it */
-    display: block; position: fixed; z-index: -1; top: 0; right: 0; width: min(calc((100vw - var(--side, 0px)) * .84), 1560px); height: clamp(640px, 94vh, 1000px); pointer-events: none; overflow: hidden;
+    display: block; position: fixed; z-index: -1; top: 0; right: 0; width: min(calc((100vw - var(--side, 0px)) * .84), var(--max)); height: clamp(640px, 94vh, 1000px); pointer-events: none; overflow: hidden;
     /* two fades multiplied together: in from the left, out towards the bottom, both on soft curves so neither edge shows */
     -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, .12) 10%, rgba(0, 0, 0, .42) 22%, rgba(0, 0, 0, .78) 36%, #000 50%),
                         linear-gradient(to bottom, #000 0%, #000 42%, rgba(0, 0, 0, .7) 60%, rgba(0, 0, 0, .3) 78%, transparent 100%);
@@ -844,7 +845,8 @@ main { padding-bottom: 40px; }   /* breathing room at the end of every page */
    rows), and the small print and the version at the very foot. The page sits to the right of it. */
 .side-links, .side-about, .side-h { display: none; }
 @media (min-width: 1000px) {
-  :root { --side: 280px; --side-bg: rgba(242, 242, 247, .82); }
+  /* --page-left: content starts where the homepage's does, right beside the sidebar (centred only past --max) */
+  :root { --side: 280px; --side-bg: rgba(242, 242, 247, .82); --page-left: max(0px, (100% - var(--max)) / 2); }
   :root[data-theme="dark"] { --side-bg: rgba(28, 28, 30, .82); }
   html { scroll-padding-top: 24px; }
   body { padding-left: var(--side); }

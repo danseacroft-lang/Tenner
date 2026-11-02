@@ -2,11 +2,11 @@
    genres as glass pills), the services as a rail of app icons, rows of posters, the top rated lists, and a side column of
    frosted panels. Built on the tokens in styles.css: --r for every corner, --fr-* for every box, the navy buttons. */
 body.home { overflow-x: clip; }
-.bx { position: relative; isolation: isolate; max-width: 1560px; margin: 0 auto; padding: 4px var(--gutter-r) 0 var(--gutter); }
+.bx { position: relative; isolation: isolate; max-width: var(--max); margin: 0 auto 0 var(--page-left); padding: 4px var(--gutter-r) 0 var(--gutter); }
 @media (min-width: 1000px) { .bx { padding-top: 22px; padding-left: 32px; padding-right: 32px; } }
 
 /* the artwork's colours, blurred far out behind the top of the page */
-.bx-amb { --bx-gap: max(0px, (100vw - var(--side, 0px) - 1560px) / 2); position: absolute; z-index: -1; top: -40px; height: 900px;
+.bx-amb { --bx-gap: max(0px, (100vw - var(--side, 0px) - var(--max)) / 2); position: absolute; z-index: -1; top: -40px; height: 900px;
   left: calc(-1 * (var(--side, 0px) + var(--bx-gap) + 40px)); right: calc(-1 * (var(--bx-gap) + 40px));   /* the full width of the window, under the sidebar too, so it never stops in a line */ pointer-events: none; overflow: hidden;
   -webkit-mask-image: linear-gradient(to bottom, #000 20%, transparent); mask-image: linear-gradient(to bottom, #000 20%, transparent); }
 .bx-amb img { width: 100%; height: 100%; object-fit: cover; filter: blur(90px) saturate(1.6); opacity: .42; transform: scale(1.2); }

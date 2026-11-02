@@ -3,7 +3,7 @@
    scrolls on its own (frosted at night); on phones the text simply runs on down the page. */
 
 .lwrap {
-  max-width: 680px; margin: 0 auto; padding: 8px var(--gutter-r) 0 var(--gutter);
+  max-width: 680px; margin: 0 auto 0 var(--page-left); padding: 8px var(--gutter-r) 0 var(--gutter);
   display: flex; flex-direction: column; align-items: center;
 }
 .lwrap h1 { margin: 10px 0 4px; font: 700 28px/1.15 var(--font); letter-spacing: .004em; text-align: center; text-wrap: balance; }

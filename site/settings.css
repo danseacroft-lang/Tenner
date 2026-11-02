@@ -37,7 +37,7 @@
    columns (three on computers, two on tablets, one on phones). Your account is a big picture card with a pill button,
    the settings are grouped lists, and your data is a stack of tiles with an icon, a line of help and a chevron. */
 .set-page { --sp-panel: var(--bg2); --sp-group: var(--card); --sp-rim: transparent;
-  width: 100%; max-width: 1240px; margin: 0 auto; padding: 8px var(--gutter-r) 0 var(--gutter); }
+  width: 100%; max-width: var(--max); margin: 0 auto 0 var(--page-left); padding: 8px var(--gutter-r) 0 var(--gutter); }
 :root[data-theme="dark"] .set-page { --sp-panel: rgba(36, 36, 40, .5); --sp-group: rgba(255, 255, 255, .06); --sp-rim: rgba(255, 255, 255, .1); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme]) .set-page { --sp-panel: rgba(36, 36, 40, .5); --sp-group: rgba(255, 255, 255, .06); --sp-rim: rgba(255, 255, 255, .1); } }
 .set-page .large-title { margin: 14px 0 6px; padding-inline: 4px; }
