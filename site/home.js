@@ -1,8 +1,8 @@
 // Tenner's home page: a streaming dashboard built from Tenner's own data.
-// The six services as a rail of app icons that filter everything (tap several to pick them together) (with Shows, films or both beside them), a big featured
+// The six services as a rail of app icons that filter everything (tap several to pick them together) (with Shows, films or both and a genre beside them), a big featured
 // title from what's popular (its scores in a frosted box, its genres as pills, where to watch and a Watchlist button),
 // rows of the most popular and newest, and the top rated at a glance; beside them a column of boxes: Discover's swipe deck,
-// the Top 10 itself, What should I watch tonight?, genres to narrow the rows, this week's biggest climbers and Tenner TV.
+// the Top 10 itself, What should I watch tonight?, this week's biggest climbers and Tenner TV.
 // Reads data/trending.json, browse.json and week.json (rebuilt hourly), and titles.json through the title sheet.
 // The Top 10 lives here (its own page is gone); New and Watchlist live on charts.html, and old links to them here are sent on.
 
@@ -138,7 +138,7 @@
   function draw() {
     shown.clear();
     $('#bxKindL').textContent = KINDS[state.kind]; $('#bxKind').value = state.kind;
-    drawRail(); drawHero(); drawRows(); drawSide(); markSaved();
+    drawRail(); drawGenres(); drawHero(); drawRows(); drawSide(); markSaved();
   }
 
   // the services as a rail of app icons (the first reference's left-hand rail, laid across the top of the rows)
@@ -159,9 +159,32 @@
   window.tn.arrows($('#bxRail'), () => [...$('#bxRail').querySelectorAll('button')]);
 
   $('#bxKind').addEventListener('change', (e) => {
-    state.kind = e.target.value; state.hero = 0; state.genre = null;
+    state.kind = e.target.value; state.hero = 0;
     try { sessionStorage.setItem('tenner-home-kind', state.kind); } catch {}
     morph(draw);
+  });
+  // genres: a pop-up button beside Shows and films, listing the genres there are titles for (with the kind and services
+  // you've picked), A to Z; a genre with nothing left after you change those goes back to All genres
+  function genreList() {
+    const c = state.cat; if (!c?.genres) return [];
+    const ks = kinds(), have = new Set();
+    for (const x of c.items) if (ks.includes(x.t) && pickedAny(x.s)) for (const g of x.g || []) if (c.genres[g]) have.add(String(g));
+    return [...have].sort((a, b) => c.genres[a].localeCompare(c.genres[b], 'en-GB'));
+  }
+  function drawGenres() {
+    const sel = $('#bxGen'), c = state.cat, list = genreList();
+    if (state.genre != null && c?.genres && !list.includes(String(state.genre))) state.genre = null;
+    const name = state.genre != null ? c?.genres?.[state.genre] : null;
+    sel.innerHTML = '<option value="">All genres</option>' + genreList().map((g) => `<option value="${esc(g)}">${esc(c.genres[g])}</option>`).join('');
+    sel.value = state.genre ?? '';
+    $('#bxGenL').textContent = name || 'All genres';
+    $('#bxGenDD').classList.toggle('on', state.genre != null);
+  }
+  $('#bxGen').addEventListener('change', (e) => {
+    state.genre = e.target.value || null;
+    $('#bxGenL').textContent = state.genre != null ? state.cat?.genres?.[state.genre] : 'All genres';
+    $('#bxGenDD').classList.toggle('on', state.genre != null);
+    morph(() => { drawRows(); drawSide(); markSaved(); });
   });
   const morph = (fn) => (document.startViewTransition && !document.documentElement.classList.contains('still') ? document.startViewTransition(fn) : fn());
 
@@ -320,7 +343,7 @@
   // ---------- the side column: yours ----------
   function drawSide() {
     if (!state.data) return;
-    $('#bxSide').innerHTML = discover() + topTen() + (window.tnTonight?.box() || '') + genres() + climbers() + tvGuide();
+    $('#bxSide').innerHTML = discover() + topTen() + (window.tnTonight?.box() || '') + climbers() + tvGuide();
     markSaved();
   }
   // Tenner TV: its own box here instead of a place in the menu, while it's in beta
@@ -407,25 +430,6 @@
     if (e.key === 'ArrowRight') { e.preventDefault(); decide(true); $('#bxSide [data-dc="yes"]')?.focus(); }
     if (e.key === 'ArrowLeft') { e.preventDefault(); decide(false); $('#bxSide [data-dc="no"]')?.focus(); }
   });
-  // genres: pills that narrow the rows (the first reference's genre panel); the chosen one gets Tenner's rainbow underline
-  function genres() {
-    const c = state.cat; if (!c?.genres) return '';
-    const ks = kinds(), count = new Map();
-    for (const x of c.items) if (ks.includes(x.t) && pickedAny(x.s)) for (const g of new Set(x.g || [])) count.set(g, (count.get(g) || 0) + 1);
-    const list = [...count].filter(([g]) => c.genres[g]).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([g]) => g);
-    if (state.genre != null && !list.includes(+state.genre)) list.unshift(+state.genre);
-    return `<section class="bx-panel panel" aria-labelledby="bxGen"><header class="bx-panel-hd"><h2 id="bxGen">Genres</h2>${state.genre != null ? '<button type="button" class="bx-more" data-genre="">Clear</button>' : ''}</header>
-      <div class="bx-gens">${list.map((g) => { const on = String(g) === String(state.genre); return `<button type="button" class="bx-gen" data-genre="${g}" aria-pressed="${on}"><span>${esc(c.genres[g])}</span>${on ? I.tick : I.plus}</button>`; }).join('')}</div></section>`;
-  }
-  $('#bxSide').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-genre]'); if (!b) return;
-    state.genre = b.dataset.genre === '' || b.dataset.genre === String(state.genre) ? null : b.dataset.genre;
-    morph(() => { drawRows(); drawSide(); markSaved(); });
-    $(`#bxSide [data-genre="${state.genre ?? ''}"]`)?.focus({ preventScroll: true });
-    // one column (phones, tablets): the rows that changed are above the boxes, so glide back up to them
-    if (oneCol.matches) requestAnimationFrame(() => $('#bxRows')?.firstElementChild?.scrollIntoView({ block: 'start', behavior: still() ? 'auto' : 'smooth' }));
-  });
-  const oneCol = matchMedia('(max-width: 1299px)');
   // the Top 10 itself, numbered and compact, for the kind and service you've picked (with both, the shows then the films):
   // all ten for shows or films; with both, the first five of each, and See more opens the box out to show six to ten
   let ttOpen = false;
