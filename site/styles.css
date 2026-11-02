@@ -178,7 +178,6 @@ a.tb-btn:hover { text-decoration: none; }
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }
-.tabs button[data-tab="people"] { display: none; }   /* phones: the bar is full; Cast & Crew is reached from Browse and title sheets */
 .tabs button {
   position: relative; z-index: 1; appearance: none; border: 0; background: none; display: flex; align-items: center; gap: 7px; height: 36px; padding: 0 16px;
   border-radius: var(--r); font: 600 15px/1 var(--font); letter-spacing: -.016em; color: var(--label); cursor: pointer; touch-action: manipulation;
@@ -875,7 +874,6 @@ main { padding-bottom: 40px; }   /* breathing room at the end of every page */
   .tabs button:active { transform: none; filter: none; background: var(--fill-strong); }
   @media (hover: hover) { .tabs button[aria-selected="false"]:hover { color: var(--label); background: var(--fill); } }
   .top-act > .tb-about { display: none; }   /* About is at the foot of the sidebar */
-  .tabs button[data-tab="people"] { display: flex; }
   .th-wrap { display: contents; }   /* computers: the round button opens its own card instead */
   .th-sel { display: none; }
   /* More: a small grey heading, then About, Theme and Settings as rows like the pages above (2px apart, as they are) */
@@ -1121,6 +1119,25 @@ a.sh-prov:hover { text-decoration: none; }
   .sheet h2 { font-size: 24px; }
 }
 @media (prefers-reduced-transparency: reduce) { .sheet { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--card); } }
+
+/* a person's sheet (person.js): the title sheet's layout, with their portrait as a round picture where the poster hangs */
+.ps-face { display: grid; place-items: center; aspect-ratio: 1; border-radius: 50%; overflow: hidden; color: #fff; font: 600 30px/1 var(--font);
+  background: linear-gradient(160deg, hsl(var(--h, 220) 45% 46%), hsl(calc(var(--h, 220) + 40) 55% 22%)); }
+.ps-face img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
+.sh-art .ps-sk { background: var(--fill); }
+.sh-art > .ph.ps-sk { -webkit-mask-image: none; mask-image: none; background: linear-gradient(var(--fill), transparent); }
+.ps-on { position: absolute; left: 6px; bottom: 6px; display: flex; gap: 3px; }
+.ps-on img { width: 20px !important; height: 20px !important; aspect-ratio: 1 !important; border-radius: 5px; box-shadow: 0 0 0 .5px rgba(255, 255, 255, .3), 0 2px 6px rgba(0, 0, 0, .4); }
+.ps-career .sh-h { flex-wrap: wrap; gap: 10px; }
+.ps-cl { grid-template-columns: minmax(0, 1fr); margin: 6px -10px 0; }
+.ps-cl li:nth-child(2) { border-top: .5px solid var(--sep) !important; }
+.ps-none { padding-top: 56px; }
+.ps-body .sh-more { grid-auto-columns: auto; justify-content: start; }
+.ps-body .sh-more .btn { padding: 0 18px; }
+/* the menu's search: a person is a round face where a title has its poster */
+.ss-r .ss-pf { display: grid; place-items: center; width: 34px; height: 34px; margin: 0 0 0; flex: none; border-radius: 50%; overflow: hidden; color: #fff; font: 600 13px/1 var(--font);
+  background: hsl(var(--h, 220) 40% 38%); box-shadow: 0 0 0 .5px var(--sep); }
+.ss-r .ss-pf img { width: 100%; height: 100%; border-radius: 0; box-shadow: none; object-position: center 20%; }
 @media (hover: hover) and (pointer: fine) { a.sh-prov:active { filter: var(--press); } }
 
 /* ============================================================ pointer interactions, the macOS way
@@ -1366,7 +1383,6 @@ a.sh-prov:hover { text-decoration: none; }
   .drawer .tabs button, .drawer .side-about, .drawer .tb-btn {
     flex: none; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 14px; width: 100%; height: 48px; padding: 0 14px;
     border-radius: var(--r); font: 500 17px/1 var(--font); letter-spacing: -.02em; color: var(--label); text-decoration: none; background: none; }
-  .drawer .tabs button[data-tab="people"] { display: flex; }
   .drawer .tabs button svg, .drawer .side-about svg, .drawer .tb-btn svg { width: 22px; height: 22px; flex: none; color: var(--menu, var(--accent)); }
   .drawer .tabs button[aria-selected="true"], .drawer .side-about[aria-current] { background: var(--fill); font-weight: 600; color: var(--label); }
   .drawer .tabs button:active, .drawer .side-about:active, .drawer .tb-btn:active { transform: none; filter: none; background: var(--fill-strong); }
@@ -1564,6 +1580,7 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .
   background: var(--fill); color: var(--label); font: 400 15px/1 var(--font); letter-spacing: -.016em; -webkit-font-smoothing: antialiased;
   transition: background-color .2s ease, box-shadow .2s ease;
 }
+.side-search input::placeholder { font-size: 13.5px; letter-spacing: -.02em; }   /* "Search for shows, movies, cast" fits the sidebar */
 .side-search input::placeholder { color: var(--label2); }
 .side-search input:focus { outline: none; background: var(--fill-strong); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 70%, transparent); }
 .side-search input::-webkit-search-decoration { -webkit-appearance: none; }

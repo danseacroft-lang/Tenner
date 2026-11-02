@@ -396,13 +396,12 @@ function toast(text) {
   clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.hidden = true), 2600);
 }
 
-// ---------- tabs (pages): Home, New, Browse, Discover (phones), Cast & Crew, Watchlist, About. The bar itself lives in shell.js ----------
+// ---------- tabs (pages): Home, New, Browse, Discover (phones), Watchlist, About. The bar itself lives in shell.js ----------
 const selectTab = (name) => window.tnShell.select(name);
 function openTab(name) {
   if (name === 'home') { location.href = './'; return; }
   if (name === 'about') { location.href = 'about.html'; return; }
   if (name === 'browse') { location.href = 'browse.html'; return; }
-  if (name === 'people') { location.href = 'people.html'; return; }   // Cast & Crew
   if (name === 'discover') { location.href = 'discover.html'; return; }   // Discover (phones)
   if (name === state.route) { scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }); return; } // tap the open tab: back to the top
   if (name === 'new' || name === 'watchlist') location.hash = name; else location.href = './';

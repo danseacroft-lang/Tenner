@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '2.26.1';
+  const version = '2.27.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -320,8 +320,9 @@
 
   // ---------- search, from any page: a native search box under the logo (at the top of the menu on phones) ----------
   // Results as you type, matched the way Browse matches (fold and score, below): this hour's catalogue first, then every
-  // other film and show from the search service, and a last row that opens the full results in Browse. A result opens
-  // its title sheet here, or on the homepage where a page has none. Browse keeps its own box.
+  // other film and show and the cast and crew from the search service, and a last row that opens the full results in
+  // Browse. A title opens its sheet here, a person theirs (person.js), or on the homepage where a page has neither.
+  // Browse keeps its own box.
   // Accents, case and punctuation don't matter: 'Amelie' finds 'Amélie', 'spiderman' finds 'Spider-Man'.
   const fold = (t) => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim();
   function score(x, q) {           // x: a catalogue entry ({ n: name }); q: folded. Higher is better; 0 means no match
@@ -339,11 +340,11 @@
   if (brandEl) {
     const GLASS = '<svg class="ss-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.5 15.5 20 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
     brandEl.insertAdjacentHTML('afterend', `<div class="side-search" role="search">${GLASS}
-      <input id="ssQ" type="search" placeholder="Search" aria-label="Search shows and films" autocomplete="off" spellcheck="false" enterkeyhint="search"
+      <input id="ssQ" type="search" placeholder="Search for shows, movies, cast" aria-label="Search for shows, movies and cast" autocomplete="off" spellcheck="false" enterkeyhint="search"
         role="combobox" aria-expanded="false" aria-controls="ssRes" aria-autocomplete="list">
       <div class="ss-res" id="ssRes" role="listbox" aria-label="Search results" hidden></div></div>`);
     const box = $('.side-search'), qi = $('#ssQ'), res = $('#ssRes'), phone = matchMedia('(max-width: 719px)'), inline = matchMedia('(max-width: 719px), (min-width: 1000px)');
-    const S = { cat: null, catP: null, svc: null, items: new Map(), q: '', t: 0, ctl: null, at: -1 };
+    const S = { cat: null, catP: null, svc: null, items: new Map(), people: [], q: '', t: 0, ctl: null, at: -1 };
     // the catalogue (and the services' names) are fetched the first time the box is used, then kept
     const load = () => S.catP ||= Promise.all([
       fetch('data/browse.json').then((r) => (r.ok ? r.json() : null)).catch(() => null),
@@ -371,7 +372,11 @@
       res.hidden = false; fit();
       if (on && !shown()) res.showPopover?.(); else if (!on && shown()) res.hidePopover?.();
     }
+    const DEPT = { Acting: 'Actor', Directing: 'Director', Writing: 'Writer', Production: 'Producer', Sound: 'Composer', Camera: 'Cinematographer', Editing: 'Editor' };
     const row = (x, i) => {
+      if (x.person) return `<a class="ss-r ss-p" role="option" id="ssr${i}" aria-selected="false" href="./?p=${x.id}" data-p="${x.id}"><span class="ss-pf" style="--h:${hue(x.name)}">${x.photo
+        ? `<img src="${esc(x.photo)}" alt="" loading="lazy" decoding="async">` : esc(x.name.split(/\s+/).map((w) => w[0]).slice(0, 2).join(''))}</span>
+        <span class="ss-t"><b>${esc(x.name)}</b><small>${esc([DEPT[x.dept] || x.dept, x.known.slice(0, 2).join(', ')].filter(Boolean).join(' · '))}</small></span></a>`;
       const art = x.poster ? `<img src="${esc(x.poster)}" alt="" loading="lazy" decoding="async">` : `<span class="ss-ph" style="background:hsl(${hue(x.title)} 45% 35%)"></span>`;
       return `<a class="ss-r" role="option" id="ssr${i}" aria-selected="false" href="./?t=${esc(x.k)}" data-k="${esc(x.k)}">${art}
         <span class="ss-t"><b>${esc(x.title)}</b><small>${esc([x.type === 'tv' ? 'Show' : 'Film', x.year, x.on].filter(Boolean).join(' · '))}</small></span></a>`;
@@ -385,22 +390,29 @@
         .map(([x]) => ({ k: `${x.t[0]}${x.i}`, type: x.t, title: x.n, year: (x.d || '').slice(0, 4) || null, rating: x.r || null, from: x,
           poster: x.img ? (x.img.startsWith('/') ? c.img + x.img : x.img) : null, on: x.s.map((s) => S.svc?.[s]?.label).filter(Boolean)[0] || '' }));
       const have = new Set(local.map((x) => x.k)), more = [...S.items.values()].filter((x) => !have.has(x.k)).slice(0, 8 - local.length);
-      S.list = [...local, ...more]; S.at = -1;
+      // cast and crew: up to three, first when a name matches better than any title does ('tom hanks'), otherwise after
+      // this hour's titles
+      const people = S.people.slice(0, 3), best = (l) => Math.max(0, ...l.map((x) => score({ n: x.title || x.name }, q)));
+      const lead = people.length && best(people) > best([...local, ...more]);
+      S.list = lead ? [...people, ...local, ...more] : [...local, ...people, ...more]; S.at = -1;
       res.innerHTML = (S.list.length ? S.list.map(row).join('') : `<p class="ss-note">${S.busy || !S.catP || !c ? 'Searching…' : `Nothing found for “${esc(qi.value.trim())}”.`}</p>`) + seeAll();
       qi.removeAttribute('aria-activedescendant');
       show(document.activeElement === qi || box.contains(document.activeElement) || res.contains(document.activeElement));
     }
-    // every other film and show (TMDB, via the search service), after a short pause in typing
+    // every other film and show, and the people (TMDB, via the search service), after a short pause in typing
     function web() {
-      const raw = qi.value.trim(); clearTimeout(S.t); S.ctl?.abort(); S.items = new Map();
+      const raw = qi.value.trim(); clearTimeout(S.t); S.ctl?.abort(); S.items = new Map(); S.people = [];
       if (!api || raw.length < 2) { S.busy = false; return; }
       S.busy = true;
       S.t = setTimeout(async () => {
         S.ctl = new AbortController();
         try {
-          const r = await fetch(`${api}/search?q=${encodeURIComponent(raw.slice(0, 80))}`, { signal: S.ctl.signal }), d = r.ok ? await r.json() : null;
+          const ask = (path) => fetch(`${api}${path}?q=${encodeURIComponent(raw.slice(0, 80))}`, { signal: S.ctl.signal }).then((r) => (r.ok ? r.json() : null)).catch((e) => { if (e.name === 'AbortError') throw e; return null; });
+          const [d, pp] = await Promise.all([ask('/search'), ask('/people')]);
           if (qi.value.trim() !== raw) return;
           for (const x of d?.results || []) S.items.set(x.k, { ...x, poster: x.poster ? d.img + x.poster : null, backdrop: x.backdrop ? d.bd + x.backdrop : null, web: true });
+          // the people worth showing: a face or something they're known for, so the names nobody's heard of stay out
+          S.people = (pp?.results || []).filter((x) => x.photo && x.known?.length).map((x) => ({ ...x, person: true, k: `p${x.id}` }));
         } catch (e) { if (e.name === 'AbortError') return; }
         S.busy = false; draw();
       }, 280);
@@ -435,6 +447,11 @@
     res.addEventListener('click', (e) => {
       const a = e.target.closest('.ss-r'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
       if (a.classList.contains('ss-all')) { show(false); if (location.pathname.endsWith('/browse.html')) { e.preventDefault(); location.hash = `q=${encodeURIComponent(qi.value.trim())}`; } return; }
+      if (a.dataset.p) {   // a person: their sheet here, or on the homepage where this page has none
+        show(false); qi.blur();
+        if (window.tnPerson) { e.preventDefault(); window.tnPerson.open(a.dataset.p, false, a.querySelector('b')?.textContent); }
+        return;
+      }
       const x = S.list.find((y) => y.k === a.dataset.k); if (!x) return;
       e.preventDefault(); go(x);
     });
@@ -820,7 +837,6 @@
     if (name === 'browse') { location.href = 'browse.html'; return; }
     if (name === 'new') { location.href = 'charts.html#new'; return; }
     if (name === 'watchlist') { location.href = 'charts.html#watchlist'; return; }
-    if (name === 'people') { location.href = 'people.html'; return; }
     if (name === 'discover') { location.href = 'discover.html'; return; }
     location.href = './';
   }

@@ -3,12 +3,12 @@
 // last copy kept for when there's no connection, or when the network is too slow to answer within a few seconds. Fonts and icons: from the cache. TMDB's posters: from the cache, the most recent
 // 60 or so. A title's details and cast from the search API, and On TV this week: the network first, the last 150 kept
 // for offline. Everything on your Watchlist (its details and poster) is kept too, so its sheets open on a plane.
-const SHELL = 'tenner-shell-2.26.1', IMGS = 'tenner-img-v1', FONTS = 'tenner-font-v1', API = 'tenner-api-v1', KEEP = 'tenner-keep-v1';   // the shell cache follows the version; fonts never change
+const SHELL = 'tenner-shell-2.27.0', IMGS = 'tenner-img-v1', FONTS = 'tenner-font-v1', API = 'tenner-api-v1', KEEP = 'tenner-keep-v1';   // the shell cache follows the version; fonts never change
 const APIS = 'https://tenner-api.danseacroft.workers.dev', ONAIR = 'https://tenner-tv.danseacroft.workers.dev/api/onair';
 // the hourly data every page reads, fetched when the app is installed (and refreshed in the background where the device
 // allows), so each page opens offline even if it's never been visited
 const DATA = ['trending', 'titles', 'trail', 'week', 'new', 'prices', 'cinema', 'browse', 'browse-more'].map((n) => `data/${n}.json`);
-const CORE = ['./', 'index.html', 'charts.html', 'home.css', 'home.js', 'tonight.js', 'browse.html', 'about.html', 'settings.html', 'settings.css', 'settings.js', 'legal.html', 'legal.css', 'people.html', 'discover.html', 'account.html', 'account.css', 'account.js', 'styles.css', 'browse.css', 'about.css', 'people.css', 'discover.css', 'contact.html', 'contact.js', 'list.html', 'list.js', 'shell.js', 'links.js', 'sheet.js', 'app.js', 'browse.js', 'cards.js', 'people.js', 'discover.js',
+const CORE = ['./', 'index.html', 'charts.html', 'home.css', 'home.js', 'tonight.js', 'browse.html', 'about.html', 'settings.html', 'settings.css', 'settings.js', 'legal.html', 'legal.css', 'discover.html', 'account.html', 'account.css', 'account.js', 'styles.css', 'browse.css', 'about.css', 'discover.css', 'contact.html', 'contact.js', 'list.html', 'list.js', 'shell.js', 'links.js', 'sheet.js', 'app.js', 'browse.js', 'cards.js', 'person.js', 'discover.js',
   'logo.svg', 'favicon.svg', 'favicon.ico'];
 
 self.addEventListener('install', (e) => {

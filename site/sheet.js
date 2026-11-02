@@ -216,7 +216,7 @@
     const main = watch || trailer, rest = [watch ? trailer : '', info.k ? saveBtn(saved.has(info.k)) : '', info.k ? starBtn(window.tn.stars.has(info.k)) : '', share].filter(Boolean);
     return `<div class="sh-btns">${main ? `<div class="sh-main">${main}</div>` : ''}<div class="sh-more">${rest.join('')}</div><p class="sh-thanks" id="shThanks" role="status"></p></div>`;
   }
-  // Cast & Crew: round faces in a row, each opening that person's page (people.html), from the search API
+  // Cast & Crew: round faces in a row, each opening that person’s sheet (person.js), from the search API
   const castCache = new Map();
   const castFor = (k) => {
     if (!window.tn.api || !/^[mt]\d+$/.test(k || '')) return Promise.resolve(null);
@@ -260,7 +260,7 @@
     if (current !== info || !sec) return;
     const people = [...(c?.crew || []).slice(0, 2), ...(c?.cast || [])].filter((p, i, l) => l.findIndex((q) => q.id === p.id) === i);
     if (!people.length) return;
-    sec.innerHTML = `<h3 id="shCC">Cast &amp; Crew</h3><ul class="sh-faces">${people.map((p) => `<li><a href="people.html?p=${p.id}" data-p="${p.id}">
+    sec.innerHTML = `<h3 id="shCC">Cast &amp; Crew</h3><ul class="sh-faces">${people.map((p) => `<li><a href="./?p=${p.id}" data-p="${p.id}">
       <span class="sh-face" style="--h:${hue(p.name)}">${p.photo ? `<img src="${esc(p.photo)}" alt="" loading="lazy" decoding="async">` : esc(p.name.split(/\s+/).map((w) => w[0]).slice(0, 2).join(''))}</span>
       <b>${esc(p.name)}</b><small>${esc(p.role)}</small></a></li>`).join('')}</ul>`;
     sec.hidden = false;

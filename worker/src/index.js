@@ -1,8 +1,7 @@
 // Tenner's go-between for searching every film and show on TMDB, without putting the TMDB key in the website.
 //   GET /search?q=…&page=…   films and shows, best match first, 20 a page (up to ten pages)
 //   GET /title/m123   one title's details and UK where-to-watch, in the same shape as data/titles.json
-//   GET /people?q=…   people (cast and crew) matching a name; without q, this week's most talked-about people;
-//                     ?page=N (1–30) a page of the most popular people across all of TMDB, for Cast & Crew's wall of faces
+//   GET /people?q=…   people (cast and crew) matching a name, for the menu's search
 //   GET /person/123   one person: biography, and everything they've been in or made
 //   GET /credits/m123 a title's main cast and key crew
 //   GET /find/tt123   the film or show with that IMDb number (for imports and links shared from IMDb)
@@ -51,11 +50,8 @@ export default {
       path = '/search/multi'; params = { query: q, language: 'en-GB', region: REGION, include_adult: 'false', ...(page > 1 ? { page: String(page) } : {}) }; shape = searchShape; ttl = 86400;
     } else if (url.pathname === '/people') {
       const q = (url.searchParams.get('q') || '').trim().slice(0, 80);
-      if (q.length === 1) return json({ results: [] }, 200, cors);
-      const page = Math.min(30, parseInt(url.searchParams.get('page'), 10) || 0);
-      path = q ? '/search/person' : page > 0 ? '/person/popular' : '/trending/person/week';
-      params = q ? { query: q, language: 'en-GB', include_adult: 'false' } : page > 0 ? { language: 'en-GB', page: String(page) } : { language: 'en-GB' };
-      shape = peopleShape; ttl = q ? 86400 : 21600;
+      if (q.length < 2) return json({ results: [] }, 200, cors);
+      path = '/search/person'; params = { query: q, language: 'en-GB', include_adult: 'false' }; shape = peopleShape; ttl = 86400;
     } else if (/^\/person\/\d{1,9}$/.test(url.pathname)) {
       path = url.pathname; params = { language: 'en-GB', append_to_response: 'combined_credits' }; shape = personShape; ttl = 86400;
     } else if (/^\/credits\/[mt]\d{1,9}$/.test(url.pathname)) {
