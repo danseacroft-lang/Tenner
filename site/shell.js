@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '2.24.0';
+  const version = '2.25.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -456,18 +456,20 @@
 
   // ---------- phones: the Rakuten way. A round menu button opens a drawer that slides in from the left, laid out like
   // the sidebar on computers (the pages, then More: TV Guide, About, Theme and Settings, then the small print); the bar keeps
-  // the logo in the middle and a round Share (or Search) on the right. The drawer is a native modal <dialog>. ----------
+  // the logo in the middle, a round Search under the menu button and a round Share (or Filters) on the right. The drawer is a native modal <dialog>. ----------
   const drawerQ = matchMedia('(max-width: 719px)');
   const topRow = $('.top-row');
   if (topRow) {
     const MENU = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15M4.5 12h15M4.5 17h15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
     topRow.insertAdjacentHTML('afterbegin', `<button type="button" class="tb-round tb-menu" id="menuBtn" aria-label="Menu" aria-haspopup="dialog" aria-controls="drawer" aria-expanded="false">${MENU}</button>`);
-    // the right-hand slot: the page's own Share if it has one, otherwise Search
+    // the right-hand slot: the page's own Share if it has one, otherwise the Filters menu if the page has filters.
+    // Search sits on the left, under the menu button.
     const share = $('#shareChart');
-    const search = share ? null : Object.assign(document.createElement('a'), { className: 'tb-round tb-search', href: 'browse.html#search', ariaLabel: 'Search',
+    const filters = [...document.querySelectorAll('[data-filter]')];
+    const search = Object.assign(document.createElement('a'), { className: 'tb-round tb-search', href: 'browse.html#search', ariaLabel: 'Search',
       innerHTML: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.5 15.5 20 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' });
-    search?.setAttribute('aria-label', 'Search');
-    const right = share || search, rightHome = share ? document.createComment('share') : null;
+    search.setAttribute('aria-label', 'Search');
+    const right = share, rightHome = share ? document.createComment('share') : null;
     if (rightHome) share.before(rightHome);
     document.body.insertAdjacentHTML('beforeend', `<dialog class="drawer" id="drawer" aria-label="Menu">
       <div class="dr-head"><a class="dr-brand" href="./"><img src="logo.svg" alt="" width="34" height="34"><b>Tenner</b></a>
@@ -478,11 +480,11 @@
     const movers = ['.side-search', '.tabbar', '#sideMore', '.side-about:not(.side-settings)', '.top-act', '.side-about.side-settings', '.side-links'].map((q) => $(q)).filter(Boolean);
     const marks = movers.map((el) => { const m = document.createComment('drawer'); el.before(m); return m; });
     const place = () => {
-      if (drawerQ.matches) { movers.forEach((el) => drBody.append(el)); topRow.append(right); }
+      if (drawerQ.matches) { movers.forEach((el) => drBody.append(el)); if (right) topRow.append(right); topRow.append(search); }
       else {
         if (drawer.open) drawer.close();
         movers.forEach((el, i) => marks[i].after(el));
-        if (rightHome) rightHome.after(share); else search?.remove();
+        if (rightHome) rightHome.after(share); search.remove();
       }
     };
     place(); drawerQ.addEventListener('change', place);
@@ -493,7 +495,7 @@
     };
     menuBtn.addEventListener('click', () => { drawer.showModal(); $('#drX').focus({ preventScroll: true }); });
     // the round Search button opens the menu with its search box ready to type in (Browse focuses its own box)
-    search?.addEventListener('click', (e) => { if (e.metaKey || e.ctrlKey || e.shiftKey) return; e.preventDefault(); open('search'); });
+    search.addEventListener('click', (e) => { if (e.metaKey || e.ctrlKey || e.shiftKey) return; e.preventDefault(); open('search'); });
     drawer.addEventListener('close', () => { menuBtn.setAttribute('aria-expanded', 'false'); root.classList.remove('drawer-open'); drawer.classList.remove('finding'); });
     drawer.addEventListener('cancel', (e) => { e.preventDefault(); shut(); });
     new MutationObserver(() => { const o = drawer.open; menuBtn.setAttribute('aria-expanded', o); root.classList.toggle('drawer-open', o); }).observe(drawer, { attributes: true, attributeFilter: ['open'] });
@@ -502,6 +504,39 @@
       if (e.target === drawer) { const r = drawer.getBoundingClientRect(); if (e.clientX > r.right || e.clientY > r.bottom || e.clientY < r.top) shut(); return; }
       if (e.target.closest('[role="tab"], a[href]')) setTimeout(shut, 60);   // a page or link chosen: the drawer gets out of the way
     });
+
+    // ---------- phones: the Filters menu, the left menu's twin, sliding in from the right. Any control on the page marked
+    // data-filter="Its heading" moves in here on phones (and back on bigger screens), listeners and all, so a new filter
+    // only needs the attribute. Done (or a tap outside) puts it away. ----------
+    if (filters.length && !share) {
+      const FILT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="15" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="9" cy="17" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+      topRow.insertAdjacentHTML('beforeend', `<button type="button" class="tb-round tb-filt" id="filtBtn" aria-label="Filters" aria-haspopup="dialog" aria-controls="filters" aria-expanded="false">${FILT}</button>`);
+      document.body.insertAdjacentHTML('beforeend', `<dialog class="drawer drawer-r" id="filters" aria-labelledby="flH">
+        <div class="dr-head"><h2 class="fl-h" id="flH">Filters</h2>
+          <button type="button" class="tb-round dr-x" id="flX" aria-label="Close filters"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></div>
+        <div class="dr-body fl-body" id="flBody"></div>
+        <button type="button" class="btn btn-tinted fl-done" id="flDone"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Done</button></dialog>`);
+      const fl = $('#filters'), flBody = $('#flBody'), flBtn = $('#filtBtn');
+      const fmarks = filters.map((el) => { const m = document.createComment('filter'); el.before(m); return m; });
+      const rows = filters.map((el) => { const r = document.createElement('div'); r.className = 'fl-row';
+        r.innerHTML = `<span class="fl-l">${esc(el.dataset.filter)}</span>`; flBody.append(r); return r; });
+      const fplace = () => {
+        root.classList.toggle('filters-out', drawerQ.matches);
+        if (drawerQ.matches) filters.forEach((el, i) => rows[i].append(el));
+        else { if (fl.open) fl.close(); filters.forEach((el, i) => fmarks[i].after(el)); }
+      };
+      fplace(); drawerQ.addEventListener('change', fplace);
+      const fshut = () => {
+        if (!fl.open || fl.classList.contains('out')) return;
+        if (reduce || root.classList.contains('still')) { fl.close(); return; }
+        fl.classList.add('out'); setTimeout(() => { fl.classList.remove('out'); fl.close(); }, 260);
+      };
+      flBtn.addEventListener('click', () => { fl.showModal(); $('#flX').focus({ preventScroll: true }); });
+      fl.addEventListener('cancel', (e) => { e.preventDefault(); fshut(); });
+      new MutationObserver(() => { const o = fl.open; flBtn.setAttribute('aria-expanded', o); root.classList.toggle('drawer-open', o); }).observe(fl, { attributes: true, attributeFilter: ['open'] });
+      $('#flX').addEventListener('click', fshut); $('#flDone').addEventListener('click', fshut);
+      fl.addEventListener('click', (e) => { if (e.target !== fl) return; const r = fl.getBoundingClientRect(); if (e.clientX < r.left || e.clientY > r.bottom || e.clientY < r.top) fshut(); });
+    }
   }
 
   // ---------- a one-time note about privacy: not a consent banner (there's nothing to consent to), just reassurance ----------

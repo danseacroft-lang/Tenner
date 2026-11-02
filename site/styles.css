@@ -1318,7 +1318,11 @@ a.sh-prov:hover { text-decoration: none; }
   a.tb-round:hover { text-decoration: none; }
   .tb-menu { grid-column: 1; justify-self: start; }
   .top-brand { grid-column: 2; justify-self: center; }
-  .top-row > .tb-search, .top-row > .share-chart { grid-column: 3; justify-self: end; }
+  .top-row > .share-chart, .top-row > .tb-filt { grid-column: 3; justify-self: end; }
+  /* Search: on the left, under the menu button, floating with it as the page scrolls; the page starts below it */
+  .top-row { margin-bottom: 50px; }
+  .top-row > .tb-search { position: absolute; left: var(--gutter); top: calc(env(safe-area-inset-top, 0px) + 56px); }
+  .top-row::before { bottom: -76px; }   /* the scroll edge's frost reaches under Search too */
         body { padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }   /* no tab bar along the bottom to clear */
   .toast { bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
   .pv-note { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
@@ -1334,6 +1338,19 @@ a.sh-prov:hover { text-decoration: none; }
   @keyframes drIn { from { transform: translateX(-108%); } }
   @keyframes drOut { to { transform: translateX(-108%); } }
   :root.still .drawer[open], :root.still .drawer.out { animation-duration: .01s; }
+  /* the Filters menu: the left menu's twin, from the right, with a heading per filter and one Done button */
+  .drawer-r { inset: 10px 10px 10px auto; }
+  .drawer-r[open] { animation-name: drInR; } .drawer-r.out { animation-name: drOutR; }
+  @keyframes drInR { from { transform: translateX(108%); } }
+  @keyframes drOutR { to { transform: translateX(108%); } }
+  .fl-h { margin: 0; font: 700 26px/1 var(--font); letter-spacing: -.02em; }
+  .drawer .fl-body { gap: 18px; }
+  .fl-row { display: grid; gap: 8px; }
+  .fl-l { padding: 0 4px; color: var(--label3); font: 600 13px/1 var(--font); letter-spacing: -.005em; }
+  .fl-row .dd { width: 100%; max-width: none; height: 44px; margin: 0; }
+  .fl-done { width: 100%; height: 48px; margin-top: 18px; color: #fff; font-size: 16px; }
+  .fl-done svg { width: 18px; height: 18px; }
+  .filters-out .bx-dds { display: none; }
   .dr-head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 18px; padding: 0 2px 0 8px; }
   .dr-brand { display: flex; align-items: center; gap: 11px; color: var(--label); text-decoration: none; }
   .dr-brand:hover { text-decoration: none; }
