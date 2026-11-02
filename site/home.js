@@ -1,5 +1,5 @@
 // Tenner's home page: a streaming dashboard built from Tenner's own data.
-// The six services as a rail of app icons that filter everything (with Shows, films or both beside them), a big featured
+// The six services as a rail of app icons that filter everything (tap several to pick them together) (with Shows, films or both beside them), a big featured
 // title from what's popular (its scores in a frosted box, its genres as pills, where to watch and a Watchlist button),
 // rows of the most popular and newest, and the top rated at a glance; beside them a column of boxes: Discover's swipe deck,
 // the Top 10 itself, What should I watch tonight?, genres to narrow the rows, this week's biggest climbers and Tenner TV.
@@ -20,7 +20,10 @@
   const $ = (s, el = document) => el.querySelector(s);
   const LOGO = 'https://image.tmdb.org/t/p/w500';
   const KINDS = { both: 'Shows and films', tv: 'Shows', movie: 'Films' };
-  const state = { kind: 'both', svc: 'all', genre: null, hero: 0, data: null, cat: null, week: null, titles: null };
+  const state = { kind: 'both', picks: [], genre: null, hero: 0, data: null, cat: null, week: null, titles: null };
+  // the services you've picked in the rail (none means all six): your last choice here, or else My services
+  const PICKS = 'tenner-home-svc';
+  try { const l = JSON.parse(localStorage.getItem(PICKS) || 'null'); state.picks = Array.isArray(l) ? l : window.tn.mine.get(); } catch {}
   // this visit's choice, or else Settings' "Show"
   try { const k = sessionStorage.getItem('tenner-home-kind') || localStorage.getItem('tenner-kind'); if (KINDS[k]) state.kind = k; } catch {}
 
@@ -47,7 +50,8 @@
     const [data, cat, week] = await Promise.all([get('trending', bust), get('browse', bust), get('week', bust)]);
     if (!data) { if (!state.data) $('#bxRows').innerHTML = '<p class="bx-empty">The charts didn’t load. Check your connection and try again.</p>'; return; }
     Object.assign(state, { data, cat: cat || state.cat, week: week || state.week });
-    if (state.svc !== 'all' && !services().some((s) => s.key === state.svc)) state.svc = 'all';
+    state.picks = state.picks.filter((k) => services().some((s) => s.key === k));
+    if (state.picks.length >= services().length) state.picks = [];
     draw();
     window.tnSheet?.details().then((d) => { if (d) { state.titles = d; drawHeroCopy(); drawSide(); } });   // genres, age ratings, logos, episodes
     openFromUrl();
@@ -61,10 +65,14 @@
   const det = (k) => state.titles?.items?.[k] || null;
   const keyOf = (it, type) => (/^\d+$/.test(String(it.id ?? '')) ? `${(it.type || type) === 'movie' ? 'm' : 't'}${it.id}` : null);
   const tmdbUrl = (type, id) => `https://www.themoviedb.org/${type}/${id}`;
-  const where = () => (state.svc === 'all' ? 'in the UK' : `on ${svcOf(state.svc)?.label || ''}`);
+  const all = () => !state.picks.length;
+  const picked = (k) => all() || state.picks.includes(k);
+  const pickedAny = (l) => all() || (l || []).some(picked);
+  const and = (l) => (l.length > 1 ? `${l.slice(0, -1).join(', ')} and ${l[l.length - 1]}` : l[0] || '');
+  const where = () => (all() ? 'in the UK' : `on ${and(state.picks.map((k) => svcOf(k)?.label).filter(Boolean))}`);
   // what's popular: every chart's titles (they come with artwork), kept to the kind and service you've picked, most popular first
   function popular() {
-    const lists = state.svc === 'all' ? [state.data.overall, ...(state.data.services || [])] : [svcOf(state.svc)].filter(Boolean);
+    const lists = all() ? [state.data.overall, ...(state.data.services || [])] : state.picks.map(svcOf).filter(Boolean);
     const seen = new Set(), out = [];
     for (const s of lists) for (const k of kinds()) for (const it of s[k] || []) {
       const x = { ...it, type: it.type || k, on: it.on || (s.key ? [s.key] : undefined) }, id = keyOf(x, x.type) || x.title;
@@ -76,7 +84,7 @@
   function catalogue() {
     const c = state.cat; if (!c?.items) return [];
     const ks = kinds();
-    return c.items.filter((x) => ks.includes(x.t) && x.s?.length && (state.svc === 'all' || x.s.includes(state.svc)) && (state.genre == null || (x.g || []).includes(+state.genre)));
+    return c.items.filter((x) => ks.includes(x.t) && x.s?.length && pickedAny(x.s) && (state.genre == null || (x.g || []).includes(+state.genre)));
   }
   const fromCat = (x) => ({ id: x.i, type: x.t, title: x.n, year: (x.d || '').slice(0, 4), date: x.d, rating: x.r, on: x.s, url: tmdbUrl(x.t, x.i),
     poster: x.img ? (x.img.startsWith('/') ? state.cat.img + x.img : x.img) : null });
@@ -135,13 +143,18 @@
 
   // the services as a rail of app icons (the first reference's left-hand rail, laid across the top of the rows)
   function drawRail() {
-    const all = `<button type="button" class="bx-svc-b" data-svc="all" aria-pressed="${state.svc === 'all'}"><span class="bx-app bx-app-all"><img src="logo.svg" alt=""></span><small>All six</small></button>`;
-    $('#bxRail').innerHTML = all + services().map((s) => `<button type="button" class="bx-svc-b" data-svc="${esc(s.key)}" aria-pressed="${state.svc === s.key}">
+    const first = `<button type="button" class="bx-svc-b" data-svc="all" aria-pressed="${all()}"><span class="bx-app bx-app-all"><img src="logo.svg" alt=""></span><small>All six</small></button>`;
+    $('#bxRail').innerHTML = first + services().map((s) => `<button type="button" class="bx-svc-b" data-svc="${esc(s.key)}" aria-pressed="${state.picks.includes(s.key)}">
       <span class="bx-app"${s.logo ? '' : ` style="--h:${hue(s.label)}"`}>${s.logo ? `<img src="${esc(s.logo)}" alt="">` : `<b>${esc(s.label.slice(0, 1))}</b>`}</span><small>${esc(s.label)}</small></button>`).join('');
   }
   $('#bxRail').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-svc]'); if (!b || b.dataset.svc === state.svc) return;
-    state.svc = b.dataset.svc; state.hero = 0; morph(draw);
+    // a tap turns a service on or off, so you can pick several; All six clears them (and picking all six is the same)
+    const b = e.target.closest('[data-svc]'), k = b?.dataset.svc; if (!b || (k === 'all' && all())) return;
+    const l = k === 'all' ? [] : state.picks.includes(k) ? state.picks.filter((x) => x !== k) : [...state.picks, k];
+    state.picks = l.length >= services().length ? [] : l; state.hero = 0;
+    try { localStorage.setItem(PICKS, JSON.stringify(state.picks)); } catch {}
+    window.tn.haptic?.(); morph(draw);
+    $(`#bxRail [data-svc="${CSS.escape(k)}"]`)?.focus({ preventScroll: true });
   });
   window.tn.arrows($('#bxRail'), () => [...$('#bxRail').querySelectorAll('button')]);
 
@@ -191,7 +204,7 @@
   function drawHeroCopy() {
     const p = heroList[state.hero], c = $('#bxCopy'); if (!p || !c) return;
     const { it } = p, x = det(keyOf(it)) || {}, info = infoFor(it, 'Popular');
-    const on = (it.on || [state.svc]).map(svcOf).filter(Boolean)[0];
+    const on = (it.on || state.picks).filter(picked).concat(it.on || []).map(svcOf).filter(Boolean)[0];   // one you picked first
     // the scores, in a frosted box (the second reference): TMDB's rating, the year, and the running time or seasons
     const cells = [
       it.rating ? [`${I.star}${it.rating.toFixed(1)}`, 'TMDB score'] : null,
@@ -267,7 +280,7 @@
       return `<li class="bx-lp"><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(info)}><span class="bx-lp-art">${poster(it)}</span>
         <span class="bx-lp-copy"><b>${esc(it.title)}</b>${rating(it.rating)}</span><small>${esc(new Date(it.date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: it.year === today.slice(0, 4) ? undefined : 'numeric' }))}</small></a></li>`;
     });
-    $('#bxRows').innerHTML = row('bxTop', `Most popular${g ? ` in ${esc(g)}` : ''}`, `The ${words} everyone’s looking at${state.svc === 'all' ? '' : ` ${where()}`}`, top, 'bx-row-p', 'browse.html')
+    $('#bxRows').innerHTML = row('bxTop', `Most popular${g ? ` in ${esc(g)}` : ''}`, `The ${words} everyone’s looking at${all() ? '' : ` ${where()}`}`, top, 'bx-row-p', 'browse.html')
       + row('bxNew', `Latest releases${g ? ` in ${esc(g)}` : ''}`, 'The newest arrivals, most recent first', fresh, 'bx-row-p', 'charts.html#new')
       + kinds().map(topList).join('')
       || '<p class="bx-empty">Nothing matches. Try another service or genre.</p>';
@@ -281,15 +294,15 @@
     let l = pass(300); if (l.length < 10) l = pass(100);
     l = l.sort((a, b) => b.r - a.r || b.v - a.v).slice(0, 10).map(fromCat);
     if (!l.length) return '';
-    const q = new URLSearchParams({ c: 'top', ...(k === 'movie' ? { k: 'movie' } : {}), ...(state.svc !== 'all' ? { s: state.svc } : {}) });
-    const label = (it) => (it.on || []).map((x) => svcOf(x)?.label).filter(Boolean).slice(0, 2).join(', ');
+    const q = new URLSearchParams({ c: 'top', ...(k === 'movie' ? { k: 'movie' } : {}), ...(all() ? {} : { s: state.picks.join(',') }) });
+    const label = (it) => (it.on || []).filter(picked).map((x) => svcOf(x)?.label).filter(Boolean).slice(0, 2).join(', ');
     return `<section class="clist bx-clist" aria-labelledby="bxCl-${k}">
       <div class="row-hd"><h2 class="row-h" id="bxCl-${k}">Top rated ${k === 'movie' ? 'films' : 'shows'}${g ? ` in ${esc(g)}` : ''} at a glance</h2>
         <a class="see-all" href="browse.html#${esc(String(q))}">See more in Browse<span class="chev" aria-hidden="true"></span></a></div>
-      <ol class="cl">${l.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(infoFor(it, `No. ${i + 1} top rated${state.svc === 'all' ? '' : ` ${where()}`}`))}>
+      <ol class="cl">${l.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(infoFor(it, `No. ${i + 1} top rated${all() ? '' : ` ${where()}`}`))}>
         <span class="cl-n">${i + 1}</span>
         ${it.poster ? `<img src="${esc(it.poster.replace('/t/p/w342/', '/t/p/w154/'))}" alt="" loading="lazy" decoding="async">` : `<span class="cl-ph" style="background:hsl(${hue(it.title)} 45% 35%)"></span>`}
-        <span class="cl-t"><b>${esc(it.title)}</b><small>${esc([state.svc === 'all' ? label(it) : '', it.year].filter(Boolean).join(' · '))}</small></span>
+        <span class="cl-t"><b>${esc(it.title)}</b><small>${esc([state.picks.length === 1 ? '' : label(it), it.year].filter(Boolean).join(' · '))}</small></span>
         ${it.rating ? `<span class="cl-r">★ ${it.rating.toFixed(1)}</span>` : ''}
       </a></li>`).join('')}</ol></section>`;
   }
@@ -324,7 +337,7 @@
     add(k) { const o = skips.all(); o[k] = Date.now(); try { localStorage.setItem(SKIP, JSON.stringify(o)); } catch {} } };
   let dk = { sig: '', list: [], at: 0 };
   function deck() {
-    const sig = [state.kind, state.svc, state.genre, state.cat?.generatedAt].join('|');
+    const sig = [state.kind, state.picks.join(), state.genre, state.cat?.generatedAt].join('|');
     if (sig !== dk.sig) {
       const skip = skips.all(), have = new Set(window.tn.saved.all().map((x) => x.k));
       const pool = catalogue().filter((x) => x.img && !skip[`${x.t[0]}${x.i}`] && !have.has(`${x.t[0]}${x.i}`)).sort((a, b) => b.p - a.p).slice(0, 120);
@@ -398,7 +411,7 @@
   function genres() {
     const c = state.cat; if (!c?.genres) return '';
     const ks = kinds(), count = new Map();
-    for (const x of c.items) if (ks.includes(x.t) && (state.svc === 'all' || x.s?.includes(state.svc))) for (const g of new Set(x.g || [])) count.set(g, (count.get(g) || 0) + 1);
+    for (const x of c.items) if (ks.includes(x.t) && pickedAny(x.s)) for (const g of new Set(x.g || [])) count.set(g, (count.get(g) || 0) + 1);
     const list = [...count].filter(([g]) => c.genres[g]).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([g]) => g);
     if (state.genre != null && !list.includes(+state.genre)) list.unshift(+state.genre);
     return `<section class="bx-panel panel" aria-labelledby="bxGen"><header class="bx-panel-hd"><h2 id="bxGen">Genres</h2>${state.genre != null ? '<button type="button" class="bx-more" data-genre="">Clear</button>' : ''}</header>
@@ -417,7 +430,10 @@
   // all ten for shows or films; with both, the first five of each, and See more opens the box out to show six to ten
   let ttOpen = false;
   function topTen() {
-    const s = state.svc === 'all' ? state.data.overall : svcOf(state.svc); if (!s) return '';
+    // all six: the UK chart; one service: its chart; several: their charts together, most popular first
+    const merge = (k) => { const seen = new Set(); return state.picks.flatMap((p) => (svcOf(p)?.[k] || []).map((it) => ({ ...it, on: it.on || [p] })))
+      .sort((a, b) => (b.popularity || 0) - (a.popularity || 0)).filter((it) => { const id = keyOf(it, it.type || k) || it.title; return !seen.has(id) && seen.add(id); }); };
+    const s = all() ? state.data.overall : state.picks.length === 1 ? svcOf(state.picks[0]) : { tv: merge('tv'), movie: merge('movie') }; if (!s) return '';
     const ks = kinds();
     const part = (k) => {
       const l = (s[k] || []).slice(0, 10); if (!l.length) return '';
@@ -448,7 +464,7 @@
       ...(state.data.services || []).flatMap((s) => ['tv', 'movie'].flatMap((t) => (s[t] || []).map((it) => ({ ...it, type: it.type || t, on: it.on || [s.key] }))))];
     const find = (k) => lists.find((it) => keyOf(it) === k);
     const ks = kinds(), seen = new Set();
-    const items = w.climbers.filter((c) => (state.svc === 'all' || c.c.startsWith(`${state.svc}:`) || c.c.startsWith('all:')) && ks.includes(c.c.split(':')[1]))
+    const items = w.climbers.filter((c) => (all() || state.picks.some((p) => c.c.startsWith(`${p}:`)) || c.c.startsWith('all:')) && ks.includes(c.c.split(':')[1]))
       .map((c) => ({ c, it: find(c.k) })).filter(({ it }) => it && !seen.has(it.title) && seen.add(it.title)).slice(0, 5);
     if (!items.length) return '';
     return `<section class="bx-panel panel" aria-labelledby="bxUp"><header class="bx-panel-hd"><h2 id="bxUp">Climbing this week</h2></header><ul class="bx-ups">${items.map(({ c, it }) => {
