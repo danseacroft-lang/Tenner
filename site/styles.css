@@ -550,6 +550,7 @@ a.tb-btn:hover { text-decoration: none; }
 .tn-card h2 { margin: 0; font: 700 21px/1.2 var(--font); letter-spacing: -.015em; }
 .tn-card p { margin: 4px 0 0; font-size: 14.5px; color: var(--label2); }
 .tn-card .btn { flex: none; box-shadow: 0 1px 2px rgba(0, 0, 0, .06) !important; }
+.btn[data-tonight] svg { width: 17px; height: 17px; flex: none; }
 @media (max-width: 560px) {
   .tn-card { display: grid; grid-template-columns: auto 1fr; gap: 12px 14px; padding: 16px; }
   .tn-c-art { width: 62px; height: 56px; }
@@ -1710,3 +1711,21 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .
     --bt-fill: #0b1e3c; --bt-hover: #132a52; --bt-round: #222226; --bt-round-hover: #2e2e33; }
   * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 }
+
+/* ============================================================ phones: edge to edge (the owner's ask). Every feature box
+   runs the full width bar a slim 12px margin, all exactly the same width, with no grey or white outline round it: a soft
+   filled frost marks the box instead, as on iPhone. Tighter boxes inside get the same treatment. */
+@media (max-width: 719px) {
+  :root:root { --gutter: max(12px, env(safe-area-inset-left, 0px)); --gutter-r: max(12px, env(safe-area-inset-right, 0px));
+    --ph-box: color-mix(in srgb, var(--label) 7%, color-mix(in srgb, var(--bg) 55%, transparent)); }
+  /* the boxes: filled, never outlined */
+  :root .panel, :root .bx-panel.panel, :root .coll, :root .p-cmd, :root .tn-card {
+    background: var(--ph-box); box-shadow: none; }
+  :root .view-sw, :root .segmented, :root .seg-thumb, :root .pp-kinds button:not([aria-checked="true"]) { box-shadow: none; }
+  /* artwork cards: no hairline round the picture */
+  :root .bx-hero, :root .bx-dc-card, :root .dc, :root .mood, :root .dyn-ahs { box-shadow: 0 24px 48px -26px rgba(0, 0, 0, .6); }
+  /* Settings: its groups and tiles filled, not outlined */
+  :root .set-page { --sp-rim: transparent !important; }
+  :root .set-page .set-form .set-group, :root .set-page .set-form .set-tile, :root .set-page .set-group, :root .set-page .set-tile { background: var(--ph-box); }
+}
+@media (max-width: 719px) and (prefers-reduced-transparency: reduce) { :root:root { --ph-box: var(--bg2); } }

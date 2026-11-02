@@ -91,3 +91,14 @@ body.discover { overflow-x: clip; }
 /* on a computer: a little room at the top */
 @media (min-width: 720px) { .dwrap { padding-top: 16px; } }
 @media (min-width: 1000px) { .dwrap { padding-top: 22px; } }   /* the title on the same line as every other page's */
+/* phones: the card runs the full width, like every other feature, and only gets shorter when the screen does */
+@media (max-width: 719px) {
+  .dwrap { --cw: calc(100vw - var(--gutter) - var(--gutter-r)); }
+  .d-stage { aspect-ratio: auto; height: clamp(320px, 100svh - 340px, var(--cw) * 1.5); }
+  .d-acts { margin-top: 46px; }
+}
+/* the four round buttons: Tenner's round button (the deep grey fill, no rim), white where they aren't coloured */
+.d-btn { color: #fff; background: var(--bt-round); box-shadow: 0 10px 26px -10px rgba(0, 0, 0, .5); }
+.d-sm { color: rgba(255, 255, 255, .85); }
+.d-btn.d-no { color: #ff375f; } .d-btn.d-yes { color: #30d158; }
+@media (hover: hover) { .d-btn:not(:disabled):hover { background: var(--bt-round-hover); } }

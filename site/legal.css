@@ -100,3 +100,5 @@
 }
 /* computers: the title starts on the same line as every other page's */
 @media (min-width: 1000px) { .lwrap { padding-top: 20px; } }
+/* phones: the boxes filled, with no outline round them */
+@media (max-width: 719px) { .policy-box, .c-sheet, .c-done { border-color: transparent; } }

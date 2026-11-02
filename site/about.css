@@ -312,3 +312,5 @@
 .more-ver { display: none; }
 @media (max-width: 999px) { .more-ver { display: block; margin: 12px 4px 0; color: var(--label3); font-size: 13px; } }
 
+/* phones: the cards filled, with no outline round them */
+@media (max-width: 719px) { :root:root { --a-card-rim: 0 0 0 0 transparent; } }
