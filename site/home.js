@@ -308,6 +308,7 @@
       + kinds().map(topList).join('')
       || '<p class="bx-empty">Nothing matches. Try another service or genre.</p>';
     for (const r of main.querySelectorAll('.bx-row')) edges(r);
+    clScenes();
   }
   // top rated at a glance: the home page's chart list (.cl in styles.css), ten each of the best-reviewed shows and films
   // with enough votes to trust (the same test as Browse's Top rated), kept to the service and genre you've picked
@@ -319,7 +320,7 @@
     if (!l.length) return '';
     const q = new URLSearchParams({ c: 'top', ...(k === 'movie' ? { k: 'movie' } : {}), ...(all() ? {} : { s: state.picks.join(',') }) });
     const label = (it) => (it.on || []).filter(picked).map((x) => svcOf(x)?.label).filter(Boolean).slice(0, 2).join(', ');
-    return `<section class="clist bx-clist" aria-labelledby="bxCl-${k}">
+    return `<section class="clist bx-clist" aria-labelledby="bxCl-${k}" data-scenes="${esc(l.slice(0, 6).map((it) => keyOf(it, k)).join(','))}">
       <div class="row-hd"><h2 class="row-h" id="bxCl-${k}">Top rated ${k === 'movie' ? 'films' : 'shows'}${g ? ` in ${esc(g)}` : ''} at a glance</h2>
         <a class="see-all" href="browse.html#${esc(String(q))}">See more in Browse<span class="chev" aria-hidden="true"></span></a></div>
       <ol class="cl">${l.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(infoFor(it, `No. ${i + 1} top rated${all() ? '' : ` ${where()}`}`))}>
@@ -328,6 +329,19 @@
         <span class="cl-t"><b>${esc(it.title)}</b><small>${esc([state.picks.length === 1 ? '' : label(it), it.year].filter(Boolean).join(' · '))}</small></span>
         ${it.rating ? `<span class="cl-r">★ ${it.rating.toFixed(1)}</span>` : ''}
       </a></li>`).join('')}</ol></section>`;
+  }
+  // on phones each Top rated list is a box like the Top 10, with a scene in grey behind its heading: the wide artwork
+  // comes from browse-more.json (already kept on the device by the service worker), fetched once and only on phones
+  let more = null;
+  function clScenes() {
+    if (!matchMedia('(max-width: 719px)').matches) return;
+    if (!more) { if (more === null) { more = false; fetch('data/browse-more.json').then((r) => (r.ok ? r.json() : null)).then((m) => { more = m?.items ? m : 0; clScenes(); }).catch(() => { more = 0; }); } return; }
+    const hour = Math.floor(Date.now() / 36e5);
+    for (const sec of main.querySelectorAll('.bx-clist[data-scenes]:not(.has-bg)')) {
+      const pics = sec.dataset.scenes.split(',').map((k) => more.items[k]?.[1]).filter(Boolean).slice(0, 4); if (!pics.length) continue;
+      sec.insertAdjacentHTML('afterbegin', `<div class="bx-tt-bg" aria-hidden="true">${pics.map((b, i) => { const on = i === hour % pics.length; return `<img${on ? ' class="on"' : ''} src="${esc(more.img + b)}" alt="" loading="${on ? 'eager' : 'lazy'}" decoding="async">`; }).join('')}</div>`);
+      sec.classList.add('has-bg');
+    }
   }
   // each row's arrows, and its edges frosting away when there's more to scroll
   function edges(r) {
@@ -465,13 +479,15 @@
     box.classList.toggle('open', ttOpen); b.setAttribute('aria-expanded', ttOpen); b.textContent = ttOpen ? 'Show less' : 'See more';
     if (!ttOpen && box.getBoundingClientRect().top < 0) box.scrollIntoView({ block: 'start', behavior: still() ? 'auto' : 'smooth' });
   });
-  // the scene behind the Top 10 moves on to the next film every so often (with Animations on and the page in view)
+  // the scenes behind the Top 10 and Top rated move on to the next film every so often (with Animations on and the page in view)
   setInterval(() => {
     if (still() || document.hidden) return;
-    const imgs = [...document.querySelectorAll('.bx-tt-bg img')]; if (imgs.length < 2) return;
-    const at = imgs.findIndex((im) => im.classList.contains('on')), next = imgs[(at + 1) % imgs.length];
-    if (!next.complete || !next.naturalWidth) { next.loading = 'eager'; return; }
-    imgs[at]?.classList.remove('on'); next.classList.add('on');
+    for (const bg of document.querySelectorAll('.bx-tt-bg')) {
+      const imgs = [...bg.children]; if (imgs.length < 2) continue;
+      const at = imgs.findIndex((im) => im.classList.contains('on')), next = imgs[(at + 1) % imgs.length];
+      if (!next.complete || !next.naturalWidth) { next.loading = 'eager'; continue; }
+      imgs[at]?.classList.remove('on'); next.classList.add('on');
+    }
   }, 9000);
   // this week's biggest climbers, as a list (the third reference's activity panel)
   function climbers() {
