@@ -518,31 +518,15 @@
     window.tnSheet?.open({ ...(await sheetFor(x)), eye: 'Tenner’s surprise pick' });
   }
 
-  // ---------- For You (from your Watchlist and your stars): a row of posters above the genres ----------
-  // the genres of what you've starred count double, what you've saved once; nothing you've saved or starred is suggested
-  function forYou() {
-    const saved = window.tn.saved.all(), starred = window.tn.stars.all();
-    const liked = starred.map((k) => item(k)).filter((x) => x && !x._x), have = saved.map((s) => item(s.k)).filter((x) => x && !x._x);
-    if (!liked.length && !have.length) return null;
-    const w = new Map(), add = (x, n) => { for (const g of new Set(x.g)) w.set(g, (w.get(g) || 0) + n); };
-    for (const x of have) add(x, 1); for (const x of liked) add(x, 2);
-    const skip = new Set([...saved.map((s) => s.k), ...starred]);
-    const picks = cat.items.filter((x) => !x._x && x.img && kindOk(x) && ok18(x) && x.r >= 6.5 && x.v >= 50 && !skip.has(`${x.t[0]}${x.i}`)
-        && (state.s.length ? x.s.some((k) => state.s.includes(k)) : x.s.length))
-      .map((x) => [x, x.g.reduce((n, g) => n + (w.get(g) || 0), 0) * x.r * Math.log10(10 + x.v)]).filter(([, n]) => n > 0)
-      .sort((a, b) => b[1] - a[1]).slice(0, 14).map(([x]) => x);
-    if (picks.length < 4) return null;
-    const near = (l) => l.find((h) => h.g.some((g) => picks[0].g.includes(g)));
-    const star = near(liked), because = star || near(have) || liked[0] || have[0];
-    return { picks, because, how: star || (!near(have) && liked[0]) ? 'liked' : 'saved' };
-  }
+  // ---------- For You (from your Discover swipes, stars and Watchlist; shell.js's forYou): a row of posters above the genres ----------
+  const forYou = () => window.tn.forYou(cat.items, (x) => !x._x && kindOk(x) && ok18(x) && (state.s.length ? x.s.some((k) => state.s.includes(k)) : x.s.length));
   function rows() {
     const box = $('#bRows');
     if (state.q || state.g.length || state.c !== 'popular') { box.hidden = true; return; }
     const poster = (x) => x.img ? (x.img.startsWith('/') ? cat.img + x.img : x.img) : null;
     const art = (src, title) => src ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async">` : `<span class="ph" style="background:linear-gradient(160deg,hsl(${hue(title)} 45% 42%),hsl(${(hue(title) + 40) % 360} 55% 18%))">${esc(title)}</span>`;
     const fy = forYou();
-    box.innerHTML = (fy ? `<section class="b-row" aria-labelledby="fyH"><div class="b-row-hd"><h2 id="fyH">For You</h2><p>Because you ${fy.how} ${esc(fy.because.n)}</p></div>
+    box.innerHTML = (fy ? `<section class="b-row" aria-labelledby="fyH"><div class="b-row-hd"><h2 id="fyH">For You</h2><p>${fy.because ? `Because you ${fy.how} ${esc(fy.because.n)}${fy.how === 'liked' ? ' in Discover' : ''}` : 'From what you’ve liked'}</p></div>
         <ul class="nr">${fy.picks.map((x) => `<li><a href="https://www.themoviedb.org/${x.t}/${x.i}" target="_blank" rel="noopener" data-row="${x.t[0]}${x.i}">
           <span class="nr-art">${art(poster(x), x.n)}</span><b>${esc(x.n)}</b><small>${esc([x.t === 'tv' ? 'Show' : 'Film', (x.d || '').slice(0, 4), x.r ? `★ ${x.r.toFixed(1)}` : ''].filter(Boolean).join(' · '))}</small></a></li>`).join('')}</ul></section>` : '');
     box.hidden = !box.innerHTML;
@@ -554,7 +538,7 @@
   });
   // saving or starring changes For You (once the sheet has closed, so nothing moves under it)
   let rowsDirty = false;
-  addEventListener('tn:saved', () => { if (!cat) return; if (window.tnSheet?.isOpen()) rowsDirty = true; else rows(); });
+  ['tn:saved', 'tn:swiped'].forEach((ev) => addEventListener(ev, () => { if (!cat) return; if (window.tnSheet?.isOpen()) rowsDirty = true; else rows(); }));
   addEventListener('tn:sheet-closed', () => { if (rowsDirty && cat) { rowsDirty = false; rows(); } });
   addEventListener('tn:sheet-closed', () => cat && rows());
 

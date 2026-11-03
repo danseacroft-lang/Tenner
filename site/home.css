@@ -326,3 +326,12 @@ html.still .bx-tt-bg img { transition: none; }
 @keyframes bxPulse { from { opacity: .55; } to { opacity: 1; } }
 .bx-empty { margin: 30px 0; color: var(--label2); font-size: 15px; }
 @media (prefers-reduced-transparency: reduce) { .bx-panel.panel { background: var(--bg2); } .bx-eye, .bx-pills span, .bx-chip { background: rgba(28, 28, 30, .92); } .bx-amb { display: none; } }
+
+/* For you (signed in): its skeletons while the picks load, and the nudge towards Discover before there's anything to go on */
+.bx-fy-sk { overflow: hidden; }
+.bx-fy-sk .bx-pc-art { box-shadow: none; }
+:root:not(.still) .bx-fy-sk .bx-pc-art { animation: bxPulse 1.4s ease-in-out infinite alternate; }
+.bx-fy-none .bx-sec-hd { align-items: center; flex-wrap: wrap; }
+.bx-fy-none .bx-sec-hd > div { flex: 1 1 260px; min-width: 0; }
+.bx-fy-go { height: 44px; flex: none; }
+.bx-fy-go svg { width: 16px; height: 16px; }

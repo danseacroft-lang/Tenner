@@ -2,7 +2,7 @@
 // your Watchlist, left to skip it, down (or tap) for the details sheet. The buttons and arrow keys do the same.
 // Skipped titles are remembered on this device so they don't come round again; Undo takes back the last swipe.
 (() => {
-  const { esc, hue, reduce, saved } = window.tn;   // from shell.js
+  const { esc, hue, reduce, saved, swipes } = window.tn;   // from shell.js
   const $ = (s) => document.querySelector(s);
   const SKIP = 'tenner-skipped', KIND = 'tenner-discover-kind', HINTED = 'tenner-discover-hinted';
   const stage = $('#dStage'), mouse = matchMedia('(hover: hover) and (pointer: fine)');
@@ -111,6 +111,7 @@
     el.leaving = true; const x = el._x, k = keyOf(x);
     if (yes) { if (!saved.has(k)) saved.toggle(infoFor(x)); added++; counter(); }
     else skipped.add(k);
+    swipes.set(k, yes);   // For You learns from it
     hist.push({ x, yes }); if (hist.length > 30) hist.shift(); $('#dUndo').disabled = false;
     say(`${x.n}: ${yes ? 'added to your Watchlist' : 'skipped'}`);
     navigator.vibrate?.(8);
@@ -128,6 +129,7 @@
     $('#dUndo').disabled = !hist.length;
     const k = keyOf(h.x);
     if (h.yes) { saved.remove(k); added = Math.max(0, added - 1); counter(); } else skipped.drop(k);
+    swipes.set(k, null);
     stage.querySelector('.d-end')?.remove();
     // the third card goes back in the pile; the undone one returns on top
     if (cards.length >= 3) { const last = cards.pop(); deck.unshift(last._x); last.remove(); }

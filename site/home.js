@@ -52,7 +52,7 @@
     Object.assign(state, { data, cat: cat || state.cat, week: week || state.week });
     state.picks = state.picks.filter((k) => services().some((s) => s.key === k));
     if (state.picks.length >= services().length) state.picks = [];
-    draw();
+    draw(); refreshFy();
     window.tnSheet?.details().then((d) => { if (d) { state.titles = d; drawHeroCopy(); drawSide(); } });   // genres, age ratings, logos, episodes
     openFromUrl();
   }
@@ -303,13 +303,69 @@
       return `<li class="bx-lp"><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(info)}><span class="bx-lp-art">${poster(it)}</span>
         <span class="bx-lp-copy"><b>${esc(it.title)}</b>${rating(it.rating)}</span><small>${esc(new Date(it.date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: it.year === today.slice(0, 4) ? undefined : 'numeric' }))}</small></a></li>`;
     });
-    $('#bxRows').innerHTML = row('bxTop', `Most popular${g ? ` in ${esc(g)}` : ''}`, `The ${words} everyone’s looking at${all() ? '' : ` ${where()}`}`, top, 'bx-row-p', 'browse.html')
+    $('#bxRows').innerHTML = forYouRow() + row('bxTop', `Most popular${g ? ` in ${esc(g)}` : ''}`, `The ${words} everyone’s looking at${all() ? '' : ` ${where()}`}`, top, 'bx-row-p', 'browse.html')
       + row('bxNew', `Latest releases${g ? ` in ${esc(g)}` : ''}`, 'The newest arrivals, most recent first', fresh, 'bx-row-p', 'charts.html#new')
       + kinds().map(topList).join('')
       || '<p class="bx-empty">Nothing matches. Try another service or genre.</p>';
     for (const r of main.querySelectorAll('.bx-row')) edges(r);
     clScenes();
   }
+  // ---------- For you (signed in): picks from what you swiped right on in Discover (and loved and saved) ----------
+  // shell.js's forYou weighs the genres; TMDB's More Like This for your latest right swipes (the Worker's /more, kept on
+  // this device for three days) lifts the closest matches. While those load, the row holds its place with skeletons.
+  const LC = 'tenner-like-cache';
+  const likeCache = {
+    all() { try { const o = JSON.parse(localStorage.getItem(LC) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } },
+    put(k, l) { const o = likeCache.all(); o[k] = { at: Date.now(), l }; const ks = Object.keys(o); if (ks.length > 24) ks.sort((a, b) => o[a].at - o[b].at).slice(0, ks.length - 24).forEach((x) => delete o[x]); try { localStorage.setItem(LC, JSON.stringify(o)); } catch {} },
+  };
+  const fy = { like: {}, ready: false, want: '' };
+  const signedIn = () => !!window.tn.account.token();
+  function loadLike() {
+    const want = window.tn.swipes.liked().slice(0, 4), c = likeCache.all(), fresh = Date.now() - 3 * 864e5;
+    fy.like = Object.fromEntries(want.filter((k) => c[k]).map((k) => [k, c[k].l]));
+    const need = signedIn() ? want.filter((k) => !(c[k]?.at > fresh)) : [];
+    if (!need.length) return Promise.resolve();
+    const got = Promise.all(need.map((k) => fetch(`${window.tn.api}/more/${k}`).then((r) => (r.ok ? r.json() : null))
+      .then((m) => { if (!m) return; const l = (m.like || []).map((x) => x.k).filter(Boolean); fy.like[k] = l; likeCache.put(k, l); }).catch(() => {})));
+    return Promise.race([got, new Promise((r) => setTimeout(r, 3500))]);   // never wait long: the genres alone still work
+  }
+  function forYouRow() {
+    fy.sig = ''; if (!signedIn() || !state.cat?.items) return '';
+    const head = (sub, acts = '') => `<header class="bx-sec-hd"><div><h2 id="bxFy">For you</h2><p>${sub}</p></div>${acts}</header>`;
+    if (!window.tn.swipes.liked().length && !window.tn.stars.all().length) return `<section class="bx-sec bx-fy-none" aria-labelledby="bxFy">
+      ${head('Swipe right on a few titles in Discover and Tenner will find more you’ll like.', `<a class="btn btn-tinted bx-fy-go" href="discover.html">${I.mark}Open Discover</a>`)}</section>`;
+    if (!fy.ready) return `<section class="bx-sec" aria-labelledby="bxFy" aria-busy="true">${head('Finding picks from what you’ve liked in Discover')}
+      <ul class="bx-row bx-row-p bx-fy-sk" aria-hidden="true">${'<li><span class="bx-pc-art"></span></li>'.repeat(8)}</ul></section>`;
+    const ks = kinds(), r = window.tn.forYou(state.cat.items, (x) => ks.includes(x.t) && pickedAny(x.s) && (state.genre == null || (x.g || []).includes(+state.genre)), fy.like);
+    if (!r) return '';
+    const b = r.because, sub = !b ? 'From what you’ve liked in Discover' : r.how === 'liked' ? `Because you liked ${b.n} in Discover` : `Because you ${r.how} ${b.n}`;
+    fy.sig = sub + r.picks.map((x) => x.i).join();
+    const items = r.picks.map(fromCat).map((it) => {
+      const info = infoFor(it, 'For you');
+      return `<li class="bx-pc"><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(info)}><span class="bx-pc-art">${poster(it)}</span>${rating(it.rating).replace('bx-star', 'bx-star bx-chip')}
+        <span class="bx-pc-copy"><b>${esc(it.title)}</b><small>${esc([it.type === 'movie' ? 'Film' : 'Series', it.year].filter(Boolean).join(' · '))}</small></span></a>${saveBtn(info, ' bx-pc-add')}</li>`;
+    });
+    return row('bxFy', 'For you', sub, items, 'bx-row-p');
+  }
+  // redraw just the row (once you've stopped swiping, and never under your pointer or an open sheet)
+  let fyT = 0;
+  function drawFy() {
+    const box = $('#bxRows'), el = box?.querySelector('[aria-labelledby="bxFy"]');
+    if (!state.data || !box) return;
+    if (el?.matches(':hover, :focus-within') || window.tnSheet?.isOpen()) { clearTimeout(fyT); fyT = setTimeout(drawFy, 1500); return; }
+    const was = fy.sig, html = forYouRow();
+    if (el && was && was === fy.sig) return;   // nothing new: leave it (and where you've scrolled it to) alone
+    if (el) { if (html) el.outerHTML = html; else el.remove(); } else if (html) box.insertAdjacentHTML('afterbegin', html);
+    const r = box.querySelector('[aria-labelledby="bxFy"] .bx-row'); if (r) edges(r);
+    markSaved();
+  }
+  function refreshFy(wait = 0) {
+    const want = window.tn.swipes.liked().slice(0, 4).join() + signedIn();
+    clearTimeout(fyT);
+    fyT = setTimeout(() => { if (want !== fy.want) { fy.want = want; loadLike().then(() => { fy.ready = true; drawFy(); }); } else drawFy(); }, wait);
+  }
+  ['tn:swiped', 'tn:account', 'tn:synced'].forEach((e) => addEventListener(e, () => refreshFy(1200)));
+
   // top rated at a glance: the home page's chart list (.cl in styles.css), ten each of the best-reviewed shows and films
   // with enough votes to trust (the same test as Browse's Top rated), kept to the service and genre you've picked
   function topList(k) {
@@ -408,6 +464,7 @@
     // the choice lands once the card has gone (a save redraws the side column itself)
     const next = () => {
       if (yes) { if (!window.tn.saved.has(k)) window.tn.saved.toggle(infoFor(it)); toast(`${it.title} is on your Watchlist`); } else skips.add(k);
+      window.tn.swipes.set(k, yes);   // For You learns from it
       const box = $('#bxSide [aria-labelledby="bxDc"]'); if (box && !yes) box.outerHTML = discover();
     };
     if (card && !still()) { card.style.transition = 'transform .35s cubic-bezier(.3,.7,.4,1), opacity .35s ease'; card.style.transform = `translateX(${yes ? 130 : -130}%) rotate(${yes ? 14 : -14}deg)`; card.style.opacity = '0'; setTimeout(next, 300); } else next();

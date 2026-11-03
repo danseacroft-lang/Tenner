@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '2.27.1';
+  const version = '2.28.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -125,6 +125,43 @@
       try { localStorage.setItem(ST, JSON.stringify(m)); } catch {} dispatchEvent(new Event('tn:saved')); return on;
     },
   };
+  // Discover's swipes: { k: [1 (right, saved) or 0 (left, skipped), when] }, the newest 1,500, kept with your account so
+  // For You learns from them on every device. (Discover's own deck still uses the skip list on this device.)
+  const SW = 'tenner-swipes';
+  const swipes = {
+    map() { try { const m = JSON.parse(localStorage.getItem(SW) || '{}'); return m && typeof m === 'object' ? m : {}; } catch { return {}; } },
+    liked() { return Object.entries(swipes.map()).filter(([, v]) => v?.[0]).sort((a, b) => b[1][1] - a[1][1]).map(([k]) => k); },
+    set(k, yes) {
+      if (!k) return; const m = swipes.map(); if (yes == null) delete m[k]; else m[k] = [yes ? 1 : 0, Date.now()];
+      const ks = Object.keys(m); if (ks.length > 1500) ks.sort((a, b) => m[a][1] - m[b][1]).slice(0, ks.length - 1500).forEach((x) => delete m[x]);
+      try { localStorage.setItem(SW, JSON.stringify(m)); } catch {} dispatchEvent(new Event('tn:swiped'));
+    },
+  };
+  // For You: titles from the catalogue (data/browse.json's items) you'd probably like, from what you swiped right on in
+  // Discover (most), loved (stars) and saved; left swipes count a little against their genres. TMDB's own "more like this"
+  // for your latest right swipes (like: { k: [keys] }) lifts those titles well up. Nothing you've swiped, saved or loved
+  // comes back. ok(x) keeps to the page's filters. Gives { picks, because, how ('liked' in Discover, 'loved' or 'saved') } or null.
+  function forYou(items, ok = () => true, like = {}, n = 14) {
+    const byK = new Map(items.map((x) => [`${x.t[0]}${x.i}`, x]));
+    const sw = swipes.map(), yes = swipes.liked(), starred = stars.all(), have = saved.all().map((s) => s.k);
+    if (!yes.length && !starred.length && !have.length) return null;
+    const w = new Map(), add = (k, v) => { const x = byK.get(k); if (x) for (const g of new Set(x.g)) w.set(g, (w.get(g) || 0) + v); };
+    yes.slice(0, 200).forEach((k) => add(k, 3)); starred.forEach((k) => add(k, 2)); have.forEach((k) => add(k, 1));
+    Object.entries(sw).filter(([, v]) => !v[0]).sort((a, b) => b[1][1] - a[1][1]).slice(0, 300).forEach(([k]) => add(k, -0.6));
+    const hits = new Map(); for (const [src, l] of Object.entries(like)) for (const k of l || []) if (!hits.has(k)) hits.set(k, src);
+    const top = Math.max(1, ...w.values()), skip = new Set([...Object.keys(sw), ...starred, ...have]);
+    const picks = items.filter((x) => x.img && x.s?.length && ok(x) && !skip.has(`${x.t[0]}${x.i}`) && ((x.r >= 6.3 && x.v >= 40) || hits.has(`${x.t[0]}${x.i}`)))
+      .map((x) => { const g = x.g.reduce((s, id) => s + (w.get(id) || 0), 0) / top / Math.sqrt(Math.max(1, x.g.length));
+        return [x, (Math.max(0, g) + (hits.has(`${x.t[0]}${x.i}`) ? 1.6 : 0)) * (x.r || 6) * Math.log10(10 + (x.v || 0))]; })
+      .filter(([, s]) => s > 0).sort((a, b) => b[1] - a[1]).slice(0, n).map(([x]) => x);
+    if (picks.length < 4) return null;
+    // the "because": the swipe that brought the first pick, or else the latest liked title that shares its genres
+    const k0 = `${picks[0].t[0]}${picks[0].i}`, from = (l) => l.map((k) => byK.get(k)).filter(Boolean);
+    const near = (l) => from(l).find((x) => x.g.some((g) => picks[0].g.includes(g)));
+    const because = byK.get(hits.get(k0)) || near(yes) || near(starred) || near(have) || from(yes)[0] || from(starred)[0] || from(have)[0] || null;
+    const bk = because && `${because.t[0]}${because.i}`;
+    return { picks, because, how: !bk ? null : sw[bk]?.[0] ? 'liked' : starred.includes(bk) ? 'loved' : 'saved' };
+  }
   // where you're up to in a show: { k: [season, episode] } (the last episode you've watched), also on this device only
   const PR = 'tenner-progress';
   const progress = {
@@ -688,7 +725,7 @@
   }
 
   // ---------- accounts (worker/src/auth.js): optional; sign in and this device keeps in step with your others ----------
-  // The session is a random token kept here (no cookies). Whenever the Watchlist, progress, services or settings change,
+  // The session is a random token kept here (no cookies). Whenever the Watchlist, progress, services, settings or Discover's swipes change,
   // and when you come back to the page, this device's copy goes to the account, which merges it with your other devices'
   // (newest change wins, item by item) and hands back the result.
   const SESS = 'tenner-session', ACC = 'tenner-account';
@@ -715,11 +752,11 @@
     async signOut(clear) {
       try { await account.call('POST', '/auth/logout'); } catch {}
       account.forget();
-      if (clear) { ['tenner-watchlist', 'tenner-progress', 'tenner-services', 'tenner-stars', SYNC].forEach((k) => lsSet(k, null)); dispatchEvent(new Event('tn:saved')); dispatchEvent(new Event('tn:mine')); }
+      if (clear) { ['tenner-watchlist', 'tenner-progress', 'tenner-services', 'tenner-stars', SW, SYNC].forEach((k) => lsSet(k, null)); dispatchEvent(new Event('tn:saved')); dispatchEvent(new Event('tn:mine')); }
     },
     local() {
       const m = meta.get();
-      return { watchlist: saved.all(), removed: m.removed, progress: progress.all(), pat: m.pat, stars: stars.map(), services: mine.get(), sat: m.sat, settings: prefs.get(), pfat: m.pfat };
+      return { watchlist: saved.all(), removed: m.removed, progress: progress.all(), pat: m.pat, stars: stars.map(), swipes: swipes.map(), services: mine.get(), sat: m.sat, settings: prefs.get(), pfat: m.pfat };
     },
     // send this device's copy; take back the merged one
     sync() {
@@ -737,15 +774,16 @@
     lsSet(WL, JSON.stringify(d.watchlist || []));
     lsSet(PR, JSON.stringify(d.progress || {}));
     lsSet(ST, JSON.stringify(d.stars || {}));
+    if (d.swipes) lsSet(SW, JSON.stringify(d.swipes));
     lsSet(MS, d.services?.length ? JSON.stringify(d.services) : null);
     if (d.settings && Object.keys(d.settings).length) lsSet(PREFS, JSON.stringify({ ...DEF, ...d.settings }));
     lsSet(SYNC, JSON.stringify({ removed: d.removed || {}, pat: d.pat || {}, sat: d.sat || 0, pfat: d.pfat || 0 }));
-    if (JSON.stringify(account.local()) !== before) { apply(); dispatchEvent(new Event('tn:saved')); dispatchEvent(new Event('tn:mine')); dispatchEvent(new Event('tn:prefs')); }
+    if (JSON.stringify(account.local()) !== before) { apply(); dispatchEvent(new Event('tn:saved')); dispatchEvent(new Event('tn:mine')); dispatchEvent(new Event('tn:prefs')); dispatchEvent(new Event('tn:swiped')); }
     applying = false;
     dispatchEvent(new Event('tn:synced'));
   }
   const soon = () => { if (applying || !account.token()) return; clearTimeout(acctT); acctT = setTimeout(account.sync, 1200); };
-  ['tn:saved', 'tn:mine', 'tn:prefs'].forEach((e) => addEventListener(e, soon));
+  ['tn:saved', 'tn:mine', 'tn:prefs', 'tn:swiped'].forEach((e) => addEventListener(e, soon));
   addEventListener('tn:check', () => account.sync());
   if (account.token()) setTimeout(account.sync, 600);
 
@@ -783,7 +821,7 @@
     },
   };
 
-  window.tn = { prefs, esc, hue, glide, arrows, segment, reduce, saved, stars, progress, nextUp, whenText, mine, pickMine, api, share, alerts, isIOS, account, avatar, featured, findTitle, sharedTitle, fold, score };
+  window.tn = { prefs, esc, hue, glide, arrows, segment, reduce, saved, stars, swipes, forYou, progress, nextUp, whenText, mine, pickMine, api, share, alerts, isIOS, account, avatar, featured, findTitle, sharedTitle, fold, score };
 
   // ---------- paste or drop a link: an IMDb, TMDB, Letterboxd, JustWatch or Tenner link opens that title's sheet ----------
   // ⌘V (Ctrl+V) anywhere but a text box, or a link dragged onto the page. Anything else pasted is left alone.

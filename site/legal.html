@@ -40,8 +40,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=2.27.1">
-  <link rel="stylesheet" href="legal.css?v=2.27.1">
+  <link rel="stylesheet" href="styles.css?v=2.28.0">
+  <link rel="stylesheet" href="legal.css?v=2.28.0">
 </head>
 <body class="legal">
   <a class="skip" href="#main">Skip to the page</a>
@@ -87,7 +87,7 @@
       <a class="side-link" href="legal.html#privacy" aria-current="page">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies" aria-current="page">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 2.27.1</span>
+      <span class="side-ver">Tenner 2.28.0</span>
     </div>
   </div>
 
@@ -126,7 +126,7 @@
       <ul>
         <li><strong>Your name</strong>, as you typed it (or your first name from Google), and the colour you choose for your initial;</li>
         <li><strong>How you sign in:</strong> the public half of each passkey you add (the private half never leaves your device or password manager); if you use Google, Google’s number for your account, your email address and your profile picture’s address; if you use an email and password, your email address and a scrambled copy of your password (it’s scrambled on your device before it’s sent, and again by us, so we never see or keep the password itself). We keep these only to recognise you, show which accounts are linked and, if you ask, email you a link to reset your password;</li>
-        <li><strong>What you keep in Tenner:</strong> your Watchlist, the titles you’ve loved, where you’re up to in shows, your services and your settings, so they’re the same on every device you sign in on;</li>
+        <li><strong>What you keep in Tenner:</strong> your Watchlist, the titles you’ve loved, which way you swiped titles in Discover, where you’re up to in shows, your services and your settings, so they’re the same on every device you sign in on;</li>
         <li><strong>Where you’re signed in:</strong> the kind of device (such as “iPhone”), when you signed in and when it was last used. The sign-in itself is a random code kept on your device; we store only a scrambled copy of it;</li>
         <li><strong>Your shared list link</strong>, if you turn sharing on. Anyone with the link can see your name, picture and Watchlist until you turn it off.</li>
       </ul>
@@ -142,7 +142,7 @@
         <li><strong>My services:</strong> the streaming services you’ve told Tenner you use, if you choose them, so it can show you a Top 10 of just those.</li>
         <li><strong>Your settings:</strong> the choices you make on the Settings page, such as which page Tenner opens on.</li>
         <li><strong>Your progress:</strong> the season and episode you’re up to in shows you’re watching, if you set it. Like your Watchlist, it stays on this device.</li>
-        <li><strong>Discover:</strong> the titles you’ve swiped past, so they don’t come round again (up to the 3,000 most recent), and whether you last chose shows, films or both.</li>
+        <li><strong>Discover:</strong> the titles you’ve swiped past, so they don’t come round again (up to the 3,000 most recent), whether you last chose shows, films or both, and which way you swiped (the 1,500 most recent), used only to suggest things you might like in For you.</li>
         <li><strong>Browse:</strong> whether you like posters or a list, and that you’ve seen the note about Browse changing.</li>
         <li><strong>Suggestions:</strong> which of Tenner’s suggestion cards you’ve closed, so they stay closed, and, for the length of a visit, whether you’re seeing one.</li>
         <li><strong>Hearts:</strong> the shows and films you’ve loved, used only to suggest things you might like in For You.</li>
@@ -225,6 +225,6 @@
   </main>
 
 
-  <script src="shell.js?v=2.27.1" defer></script>
+  <script src="shell.js?v=2.28.0" defer></script>
 </body>
 </html>
