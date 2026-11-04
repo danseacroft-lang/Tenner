@@ -32,6 +32,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete mac-app --yes --cleanup-tag 2>/dev/null || true
-          gh release create mac-app "mac/build/Tenner-Layout.zip" --title "Tenner Layout (Mac app)" --target "$GITHUB_SHA" \
+          # clear any half-made draft from an earlier try, then make the release once and replace its file each time
+          gh api "repos/$GITHUB_REPOSITORY/releases" --jq '.[] | select(.draft) | .id' | while read -r id; do gh api -X DELETE "repos/$GITHUB_REPOSITORY/releases/$id"; done
+          gh release view mac-app >/dev/null 2>&1 || gh release create mac-app --title "Tenner Layout (Mac app)" --target "$GITHUB_SHA" \
             --notes "The ready-made Tenner Layout app. Unzip it, move it to Applications, and the first time open System Settings → Privacy & Security → Open Anyway."
+          gh release upload mac-app "mac/build/Tenner-Layout.zip" --clobber
