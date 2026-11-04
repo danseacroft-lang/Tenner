@@ -295,17 +295,18 @@
         <span class="bx-sec-acts">${more ? `<a class="bx-more" href="${more}">See all</a>` : ''}<button type="button" class="bx-r bx-r-s" data-scroll="-1" aria-label="Back">${I.left}</button><button type="button" class="bx-r bx-r-s" data-scroll="1" aria-label="More">${I.right}</button></span></header>
       <ul class="bx-row ${cls}">${items.join('')}</ul></section>`;
   // a poster card: the artwork, its score in a chip, the title and a second line, and a Watchlist button
-  const card = (it, info, sub) => `<li class="bx-pc"><a href="${esc(it.url || '#')}" target="_blank" rel="noopener" ${reg(info)}><span class="bx-pc-art">${poster(it)}</span>${rating(it.rating).replace('bx-star', 'bx-star bx-chip')}
+  const card = (it, info, sub, n) => `<li class="bx-pc${n ? ' bx-pc-ranked' : ''}"><a href="${esc(it.url || '#')}" target="_blank" rel="noopener" ${reg(info)}><span class="bx-pc-art">${poster(it)}</span>${n ? `<span class="bx-pc-n" aria-label="No. ${n}">${n}</span>` : ''}${rating(it.rating).replace('bx-star', 'bx-star bx-chip')}
         <span class="bx-pc-copy"><b>${esc(it.title)}</b><small>${esc(sub)}</small></span></a>${saveBtn(info, ' bx-pc-add')}</li>`;
-  // phones: the UK's Top 10 and the top rated, each a row of cards to swipe through (one of each for shows and films)
+  // phones: the UK's Top 10 and the top rated, each a chart of ten cards to swipe through, numbered 1 to 10 (one of each
+  // for shows and films)
   function phoneRows() {
     const word = (k) => (k === 'movie' ? 'films' : 'shows');
     const top = kinds().map((k) => row(`bxP10-${k}`, `Top 10 ${word(k)} in the UK`, 'Updated every hour', (state.data?.overall?.[k] || []).slice(0, 10).map((it0, i) => {
       const it = { ...it0, type: it0.type || k };
-      return card(it, infoFor(it, `No. ${i + 1} ${word(k).slice(0, -1)} in the UK`), [`No. ${i + 1}`, it.year].filter(Boolean).join(' · '));
+      return card(it, infoFor(it, `No. ${i + 1} ${word(k).slice(0, -1)} in the UK`), it.year, i + 1);
     }), 'bx-row-p'));
     const g = state.genre != null ? state.cat?.genres?.[state.genre] : null;
-    const best = kinds().map((k) => row(`bxPTr-${k}`, `Top rated ${word(k)}${g ? ` in ${esc(g)}` : ''}`, 'The highest scores from viewers', topRated(k).map((it, i) => card(it, infoFor(it, `No. ${i + 1} top rated`), it.year)),
+    const best = kinds().map((k) => row(`bxPTr-${k}`, `Top rated ${word(k)}${g ? ` in ${esc(g)}` : ''}`, 'The highest scores from viewers', topRated(k).map((it, i) => card(it, infoFor(it, `No. ${i + 1} top rated`), it.year, i + 1)),
       'bx-row-p', `browse.html#${esc(String(new URLSearchParams({ c: 'top', ...(k === 'movie' ? { k: 'movie' } : {}) })))}`));
     return top.join('') + best.join('');
   }
