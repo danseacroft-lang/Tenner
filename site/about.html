@@ -41,9 +41,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=2.29.0">
-  <link rel="stylesheet" href="about.css?v=2.29.0">
-  <link rel="preload" href="fonts/caveat-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css?v=2.30.0">
+  <link rel="stylesheet" href="about.css?v=2.30.0">
 
 </head>
 <body class="about">
@@ -90,7 +89,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 2.29.0</span>
+      <span class="side-ver">Tenner 2.30.0</span>
     </div>
   </div>
 
@@ -100,219 +99,153 @@
   </div>
 
 
-  <section class="splash" aria-labelledby="h-about">
-    <div class="sp-bg" aria-hidden="true"><div class="sp-art" id="spArt"></div><div class="sp-wash"></div><div class="sp-shade"></div></div>
-    <div class="sp-copy">
-      <img class="sp-logo" src="logo.svg" alt="" width="72" height="72">
-      <p class="sp-eye">About Tenner</p>
-      <div class="sp-hd">
-        <!-- a note written above the headline: handwriting (Caveat) and a drawn arrow, given a hand's slight wobble by the
-             pen filter below -->
-        <p class="sp-note"><svg class="sp-arw sp-arw-dn" viewBox="0 0 70 84" aria-hidden="true"><path d="M58 80c4-22-4-46-42-68" pathLength="1"/><path class="hd" d="M12 9c7 0 14 1 20 3M12 9c2 6 5 13 8 18" pathLength="1"/></svg><span class="sp-words"><span style="--t:0;--n:3">Oh,</span> <span style="--t:0.205;--n:3">and</span> <span style="--t:0.41;--n:4">btw…</span> <span style="--t:0.66;--n:6">Tenner</span> <span style="--t:1;--n:2">is</span> <span class="ul" style="--t:1.16;--n:13">independently</span> <span style="--t:1.815;--n:4">run.</span> <span style="--t:2.065;--n:2">No</span> <span style="--t:2.225;--n:4">huge</span> <span style="--t:2.475;--n:11">corporation</span> <span style="--t:3.04;--n:6">behind</span> <span style="--t:3.38;--n:3">it!</span></span></p>
-        <h1 id="h-about" data-title="About">What’s <em class="grad">trending?</em></h1>
-        <svg class="sp-defs" width="0" height="0" aria-hidden="true"><filter id="pen" x="-5%" y="-5%" width="110%" height="110%">
-          <feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="4" result="wobble"/>
-          <feDisplacementMap in="SourceGraphic" in2="wobble" scale="1.4" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
+  <!-- the opening: this hour's No. 1, full width beside the sidebar and melting into the page, with the promise in one line -->
+  <section class="ab-hero" aria-labelledby="h-about">
+    <div class="ab-hero-bg" aria-hidden="true"><img id="abArt" alt="" decoding="async" fetchpriority="high" hidden></div>
+    <div class="ab-ext" aria-hidden="true"><img id="abExt" alt="" decoding="async" hidden></div>
+    <div class="ab-hero-copy">
+      <p class="ab-eye">About Tenner</p>
+      <h1 id="h-about" data-title="About">Find your next <span class="grad">favourite.</span></h1>
+      <p class="ab-lede">Live charts from the six biggest streamers, a Top 10 made just for you, and a quicker way to discover something new. Free, and all in one place.</p>
+      <div class="ab-acts">
+        <a class="btn btn-tinted ab-btn" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 19.5v-7M12 19.5v-14M18.5 19.5v-10"/></svg>See the Top 10</a>
+        <a class="btn btn-tinted ab-btn" href="discover.html"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8.6" y="3" width="10.5" height="15" rx="2.6" transform="rotate(12 13.85 10.5)"/><rect x="4.5" y="5.8" width="10.5" height="15" rx="2.6"/></svg>Start discovering</a>
       </div>
-      <p class="sp-lead">See what films and shows are trending on the charts. We cover Netflix, Disney+, Apple TV, Paramount+, Prime Video and HBO Max. <b>Finding something to watch got so much easier.</b></p>
-      <div class="sp-ctas"><a class="sp-cta primary" href="./">See the top 10</a><a class="sp-cta" href="browse.html">Browse everything</a></div>
     </div>
-    <a class="sp-now" id="spNow" href="./" hidden></a>
   </section>
-  <script>/* the splash: this hour's top shows and films, each a full poster for a few seconds */
-  (function(){
-    var art=document.getElementById('spArt'), now=document.getElementById('spNow');
-    var still=document.documentElement.classList.contains('still');
-    var timer=0;
-    function load(bust){ fetch('data/trending.json'+(bust?'?v='+Date.now():'')).then(function(r){return r.json()}).then(function(d){
-      var o=d.overall||{}, pick=[], seen={};
-      [o.tv&&o.tv[0],o.movie&&o.movie[0],o.tv&&o.tv[1],o.movie&&o.movie[1],o.tv&&o.tv[2]].forEach(function(x){ if(x&&x.backdrop&&!seen[x.title]){seen[x.title]=1;pick.push(x);} });
-      /* a service the UK-wide chart leaves out (often Apple TV) adds its own No. 1 show and film */
-      (d.services||[]).forEach(function(s){ ['tv','movie'].forEach(function(k){
-        if((o[k]||[]).some(function(x){return (x.on||[]).indexOf(s.key)>=0;})) return;
-        var x=(s[k]||[])[0]; if(x&&x.backdrop&&!seen[x.title]){seen[x.title]=1;pick.push({title:x.title,id:x.id,type:k,poster:x.poster,backdrop:x.backdrop,svc:s.label});}
-      }); });
-      if(!pick.length) return;
-      var big=function(u){return u.replace('/t/p/w1280/','/t/p/original/');};
-      /* only the first picture loads now; each of the others just before its turn (one at a time, not all five at once) */
-      art.innerHTML=pick.map(function(x,i){var s=' srcset="'+x.backdrop+' 1280w, '+big(x.backdrop)+' 1920w" sizes="100vw"';return i?'<img data-s="'+x.backdrop+'" data-ss="'+x.backdrop+' 1280w, '+big(x.backdrop)+' 1920w" sizes="100vw" alt="" decoding="async">':'<img src="'+x.backdrop+'"'+s+' alt="" decoding="async" fetchpriority="high">';}).join('');
-      var imgs=art.querySelectorAll('img'), i=0;
-      function want(m){ if(m&&m.dataset.s){ m.srcset=m.dataset.ss; m.src=m.dataset.s; delete m.dataset.s; } }
-      function show(n){
-        want(imgs[n]); want(imgs[(n+1)%imgs.length]);
-        imgs.forEach(function(m,k){m.classList.toggle('on',k===n);});
-        var x=pick[n], on=(x.on||[])[0];
-        now.hidden=false; now.href='./?t='+(x.type==='movie'?'m':'t')+x.id;
-        now.innerHTML=(x.poster?'<img src="'+x.poster+'" alt="">':'')+'<span><small>No. 1 '+(x.type==='movie'?'film':'show')+' in the UK</small><b>'+x.title.replace(/</g,'&lt;')+'</b>'
-          +'<span class="sp-dots">'+pick.map(function(_,k){return '<i class="'+(k===n?'on':'')+'"></i>';}).join('')+'</span></span>';
-        if(x.svc) now.querySelector('small').textContent='No. 1 '+(x.type==='movie'?'film':'show')+' on '+x.svc;
-        else if(o.tv&&o.tv.indexOf(x)>0||o.movie&&o.movie.indexOf(x)>0) now.querySelector('small').textContent='No. '+((o.tv.indexOf(x)+1)||(o.movie.indexOf(x)+1))+' '+(x.type==='movie'?'film':'show')+' in the UK';
-      }
-      show(0); clearInterval(timer);
-      if(!still&&pick.length>1) timer=setInterval(function(){ if(document.visibilityState==='visible'){i=(i+1)%pick.length; show(i);} }, 7000);
-    }).catch(function(){});}
-    load(false); addEventListener('tn:check', function(){ load(true); });   /* a new hour, a new No. 1 */
-  })();</script>
-  <main id="main" class="awrap" tabindex="-1">
 
+  <main id="main" class="awrap ab" tabindex="-1">
 
-    <!-- six services, ranked together: their own icons (from the hour's chart), drifting at slightly different speeds -->
-    <section class="sec svc-band" aria-labelledby="h-six">
-      <div class="sec-h">
-        <p class="eyebrow">The charts</p>
-        <h2 id="h-six">See what’s trending. <span class="dim">On every service.</span></h2>
-        <p>See what films and shows are trending on the charts. We cover Netflix, Disney+, Apple TV, Paramount+, Prime Video and HBO Max.</p>
+    <!-- 1. the live charts: the hour's real top five, and the six services it covers -->
+    <section class="ab-ch" aria-labelledby="h-live">
+      <div class="ab-copy">
+        <p class="ab-k ab-k1"><i class="ab-live" aria-hidden="true"></i><span id="abUpd">Live charts</span></p>
+        <h2 id="h-live">What everyone’s watching. <span class="dim">Right now.</span></h2>
+        <p>The top 10 shows and films on Netflix, Disney+, Prime Video, HBO Max, Paramount+ and Apple TV, rebuilt every hour from what people across the UK are watching, searching for and saving.</p>
+        <a class="btn btn-tinted ab-btn" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 19.5v-7M12 19.5v-14M18.5 19.5v-10"/></svg>See the Top 10</a>
       </div>
-      <ul class="svc-icons" id="svcIcons" aria-label="The six services">
-        <li style="--i:0"><span class="si-tile">Netflix</span><small>Netflix</small></li>
-        <li style="--i:1"><span class="si-tile">Disney+</span><small>Disney+</small></li>
-        <li style="--i:2"><span class="si-tile">Prime Video</span><small>Prime Video</small></li>
-        <li style="--i:3"><span class="si-tile">HBO Max</span><small>HBO Max</small></li>
-        <li style="--i:4"><span class="si-tile">Paramount+</span><small>Paramount+</small></li>
-        <li style="--i:5"><span class="si-tile">Apple TV</span><small>Apple TV</small></li>
-      </ul>
-    </section>
-
-    <!-- the numbers, the Apple keynote way -->
-    <section class="sec stats" aria-label="Tenner in numbers">
-      <dl class="stat-row">
-        <div><dt>Streaming services</dt><dd class="stat-n">6</dd><dd class="stat-s">each with its own chart</dd></div>
-        <div><dt>Chart updates a day</dt><dd class="stat-n">24</dd><dd class="stat-s">one every hour, on the hour</dd></div>
-        <div><dt>Shows and films</dt><dd class="stat-n" id="statTitles">1,100+</dd><dd class="stat-s">across every service, and thousands more to search</dd></div>
-        <div><dt>Adverts</dt><dd class="stat-n">0</dd><dd class="stat-s">and no tracking either</dd></div>
-      </dl>
-    </section>
-
-    <!-- everything Tenner does, as a bento of tiles, each one a way in -->
-    <section class="sec" aria-labelledby="h-all">
-      <div class="sec-h">
-        <p class="eyebrow">Features</p>
-        <h2 id="h-all">Something for <span class="grad">everyone.</span></h2>
-        <p>It’s never been easier to find something to watch, see where it’s on, and keep track of what’s next. All on Tenner.</p>
+      <div class="ab-vis ab-box">
+        <div class="ab-box-hd"><h3>Top shows in the UK</h3><span class="ab-pill" id="abHour">This hour</span></div>
+        <ol class="cl ab-cl" id="abTop"></ol>
+        <ul class="ab-six" id="abSix" aria-label="The six services"></ul>
       </div>
-      <ul class="bento">
-        <li class="bt bt-big bt-top"><a href="./">
-          <span class="bt-vis" aria-hidden="true"><span class="bt-ten">10</span><span class="bt-live"><i></i><span id="lastUpd">Updated every hour</span></span></span>
-          <span class="bt-txt"><b>The Top 10, live</b><small>The UK's most popular shows and films right now, with what's climbing, what's new and how long the No. 1 has held on.</small></span></a></li>
-        <li class="bt bt-big bt-tonight"><a href="./">
-          <span class="bt-vis" aria-hidden="true">
-            <span class="ab-ic bt-f1" style="--a:#64d2ff;--b:#0a84ff"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="12.5" rx="3"/><path d="M8.5 20.5h7"/><path d="M10.3 8.3v5.4l4.5-2.7z" fill="currentColor"/></svg></span>
-            <span class="ab-ic bt-f2" style="--a:#ff8fab;--b:#ff375f"><svg viewBox="0 0 24 24"><path d="M12 20.3s-8-4.7-8-10.6a4.4 4.4 0 0 1 8-2.6 4.4 4.4 0 0 1 8 2.6c0 5.9-8 10.6-8 10.6z" fill="currentColor"/></svg></span>
-            <span class="ab-ic bt-f3" style="--a:#ff6b6b;--b:#ff375f"><svg viewBox="0 0 24 24"><path d="M5.6 9.2h12.8l-1.7 11.1a1.5 1.5 0 0 1-1.5 1.3H8.8a1.5 1.5 0 0 1-1.5-1.3z"/><path d="M10 9.6l.5 11.9M14 9.6l-.5 11.9"/><path d="M6.2 9a2.6 2.6 0 0 1 2.1-4.1 2.9 2.9 0 0 1 5.1-1 2.6 2.6 0 0 1 4.1 2.6A2 2 0 0 1 17.8 9"/></svg></span>
-          </span>
-          <span class="bt-txt"><b>What should I watch tonight?</b><small>Three quick taps (how long, the mood, who's watching) and Tenner picks three from your services.</small></span></a></li>
-        <li class="bt"><a href="browse.html">
-          <span class="ab-ic" style="--a:#da8fff;--b:#5e5ce6" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg></span>
-          <span class="bt-txt"><b>Browse and search</b><small>Collections, genres and filters, and search every film and show there is.</small></span></a></li>
-        <li class="bt"><a href="charts.html#watchlist">
-          <span class="ab-ic" style="--a:#ffd60a;--b:#ff9f0a" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 3.5h11v17L12 16.6 6.5 20.5z" fill="currentColor"/></svg></span>
-          <span class="bt-txt"><b>Watchlist and alerts</b><small>Save anything, track your episodes, and hear when it arrives.</small></span></a></li>
-        <li class="bt"><a href="charts.html#new">
-          <span class="ab-ic" style="--a:#66e08a;--b:#00b5a8" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.5 3.5l1.8 4.9 4.9 1.8-4.9 1.8-1.8 4.9-1.8-4.9-4.9-1.8 4.9-1.8z" fill="currentColor"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z" fill="currentColor"/></svg></span>
-          <span class="bt-txt"><b>New this week</b><small>What's just landed, what's coming and what's leaving soon.</small></span></a></li>
-        <li class="bt"><a href="discover.html">
-          <span class="ab-ic" style="--a:#ff8fab;--b:#bf5af2" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="8.6" y="3" width="10.5" height="15" rx="2.6" transform="rotate(12 13.85 10.5)"/><rect x="4.5" y="5.8" width="10.5" height="15" rx="2.6" fill="currentColor"/></svg></span>
-          <span class="bt-txt"><b>Discover</b><small>Swipe through ideas: right to save, left to skip.</small></span></a></li>
-        <li class="bt"><a href="https://tv.tenner.stream/">
-          <span class="ab-ic" style="--a:#64d2ff;--b:#5e5ce6" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="2.8" y="5.5" width="18.4" height="12.5" rx="2.6"/><path d="M8.5 21h7M9 2.8l3 2.7 3-2.7"/></svg></span>
-          <span class="bt-txt"><b>TV Guide</b><small>What's on Freeview, with reminders for your Watchlist.</small></span></a></li>
-        <li class="bt"><a href="settings.html">
-          <span class="ab-ic" style="--a:#ff7a45;--b:#ff2d55" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg></span>
-          <span class="bt-txt"><b>Made to measure</b><small>Pick the services you pay for and get a Top 10 of just those.</small></span></a></li>
-        <li class="bt"><a href="account.html">
-          <span class="ab-ic" style="--a:#8e8e93;--b:#48484a" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7.5 18.5a4.5 4.5 0 0 1-.4-9 6 6 0 0 1 11.5 1.6 3.7 3.7 0 0 1-.6 7.4z"/><path d="M9.5 14l2 2 3.5-3.8"/></svg></span>
-          <span class="bt-txt"><b>On all your devices</b><small>Sign in, with a passkey if you like, and everything stays in step.</small></span></a></li>
-      </ul>
     </section>
 
-    <!-- privacy: what isn't there -->
-    <section class="sec" aria-labelledby="h-priv">
-      <div class="priv">
-        <span class="priv-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.8 4.5 5.6v5.9c0 4.6 3.1 8.6 7.5 9.7 4.4-1.1 7.5-5.1 7.5-9.7V5.6z" fill="currentColor"/><path d="M9 12.2l2.1 2.1 4-4.4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        <div class="priv-copy">
-          <h2 id="h-priv">Private by design.</h2>
-          <p>Tenner has nothing to sell you and nobody to sell you to. Your Watchlist and settings stay on this device unless you choose to sign in.</p>
-          <ul class="priv-list">
-            <li><b>No cookies</b><span>Not one, even with an account.</span></li>
-            <li><b>No tracking</b><span>No analytics, no profiles.</span></li>
-            <li><b>No adverts</b><span>Just the shows and films.</span></li>
-          </ul>
-          <a class="priv-link" href="legal.html#privacy">Read the Privacy Policy<span class="chev" aria-hidden="true"></span></a>
+    <!-- 2. made for you: a little working Top 10 that follows the services you tap (it doesn't change your settings) -->
+    <section class="ab-ch ab-flip" aria-labelledby="h-you">
+      <div class="ab-copy">
+        <p class="ab-k ab-k2">Made for you</p>
+        <h2 id="h-you">Your services. <span class="dim">Your chart.</span></h2>
+        <p>Tell Tenner which services you pay for and your Top 10 shows only what you can watch tonight. Swipe in Discover and For you picks out more to suit your taste.</p>
+        <a class="btn btn-tinted ab-btn" href="settings.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>Choose my services</a>
+      </div>
+      <div class="ab-vis ab-box">
+        <div class="ab-box-hd"><h3>Try it: tap your services</h3></div>
+        <div class="ab-pick" id="abPick" role="group" aria-label="Services to include"></div>
+        <ol class="cl ab-cl" id="abMine" aria-live="polite"></ol>
+      </div>
+    </section>
+
+    <!-- 3. discovery: a small deck to swipe through, the way Discover works -->
+    <section class="ab-ch" aria-labelledby="h-disc">
+      <div class="ab-copy">
+        <p class="ab-k ab-k3">Discover</p>
+        <h2 id="h-disc">Swipe your way to <span class="dim">something new.</span></h2>
+        <p>Discover deals out ideas one at a time. Swipe right to save it to your Watchlist, left to skip. The more you swipe, the better your picks get.</p>
+        <a class="btn btn-tinted ab-btn" href="discover.html"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8.6" y="3" width="10.5" height="15" rx="2.6" transform="rotate(12 13.85 10.5)"/><rect x="4.5" y="5.8" width="10.5" height="15" rx="2.6"/></svg>Start discovering</a>
+      </div>
+      <div class="ab-vis ab-deck-wrap">
+        <div class="ab-deck" id="abDeck" aria-hidden="true"></div>
+        <div class="ab-deck-acts">
+          <button type="button" class="ab-round" data-swipe="no" aria-label="Skip" title="Skip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg></button>
+          <button type="button" class="ab-round" data-swipe="yes" aria-label="Save" title="Save"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.3s-8-4.7-8-10.6a4.4 4.4 0 0 1 8-2.6 4.4 4.4 0 0 1 8 2.6c0 5.9-8 10.6-8 10.6z"/></svg></button>
         </div>
       </div>
     </section>
 
-    <!-- the small things -->
-    <section class="sec" aria-labelledby="h-touch">
-      <div class="sec-h"><h2 id="h-touch">The little things.</h2></div>
-      <ul class="touches">
-        <li><span class="t-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="3"/><path d="M10.5 18.5h3"/></svg></span><b>Made for your phone</b><span>Add it to your Home Screen and it opens full screen, like an app.</span></li>
-        <li><span class="t-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.4a9.5 9.5 0 0 1 13 0M8.7 15.7a5 5 0 0 1 6.6 0"/><circle cx="12" cy="19" r="1.2" fill="currentColor"/></svg></span><b>Works offline</b><span>Your Watchlist and the last chart are there with no signal.</span></li>
-        <li><span class="t-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6 10h.01M9 10h.01M12 10h.01M15 10h.01M18 10h.01M7.5 14h9"/></svg></span><b>Keyboard shortcuts</b><span>Press / or ⌘K anywhere to search.</span></li>
-        <li><span class="t-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M12 3.4a8.6 8.6 0 0 1 0 17.2z" fill="currentColor"/></svg></span><b>Day and night</b><span>Light, dark, or follow your device. Your call.</span></li>
-      </ul>
+    <!-- the promise, kept short -->
+    <section class="ab-promise ab-box" aria-label="Free and private">
+      <div><b>Free, for good</b><span>Nothing to pay and nothing to unlock.</span></div>
+      <div><b>No adverts, no tracking</b><span>No analytics and no profiles.</span></div>
+      <div><b>No cookies</b><span>Not one, even with an account.</span></div>
+      <a class="ab-more" href="legal.html#privacy">Privacy Policy<span class="chev" aria-hidden="true"></span></a>
     </section>
 
-    <!-- the app: on its way; meanwhile, the Home Screen -->
-    <section class="sec" aria-labelledby="h-app">
-      <div class="app-soon">
-        <img class="app-icon" src="apple-touch-icon.png" alt="" width="120" height="120" loading="lazy">
-        <div class="app-copy">
-          <p class="app-badge">Coming soon</p>
-          <h2 id="h-app">The Tenner app.</h2>
-          <p>A Tenner app is on its way. Until then, add Tenner to your Home Screen: on iPhone, tap Share, then Add to Home Screen. It opens full screen, just like an app, and can send your Watchlist alerts.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="sec faq" aria-labelledby="h-faq">
-      <div class="sec-h"><h2 id="h-faq">Questions and answers.</h2></div>
+    <section class="faq" aria-labelledby="h-faq">
+      <h2 id="h-faq">Questions</h2>
       <div class="faq-list">
-        <details><summary>What is Tenner?</summary>
-          <div class="a"><p>Tenner shows the UK's top 10 shows and films on Netflix, Disney+, Prime Video, HBO Max, Paramount+ and Apple TV, all in one place. You can look at every service together or one at a time, and browse everything popular on them.</p></div></details>
         <details><summary>How is the top 10 worked out?</summary>
-          <div class="a"><p>We use popularity from TMDB, which reflects what people are watching, searching for, rating and adding to their lists, and keep only the titles streaming on each service in the UK. It's a strong guide to what's popular, though not official viewing figures.</p></div></details>
-        <details><summary>How often is it updated?</summary>
-          <div class="a"><p>Every hour. The time of the last update is shown at the top of the Top 10 page, and you can tap it to check for a newer chart.</p></div></details>
-        <details><summary>Why isn't a film I'm watching on the list?</summary>
-          <div class="a"><p>The Top 10 only counts titles included with a subscription. Brand-new films are often only available to buy or rent at first. Search for one and its sheet shows where to rent or buy it, and the price where we have it.</p></div></details>
-        <details><summary>Is Tenner free?</summary>
-          <div class="a"><p>Yes, completely. There are no adverts and nothing to pay for.</p></div></details>
+          <div class="a"><p>We use popularity from TMDB, which reflects what people are watching, searching for, rating and adding to their lists, and keep only the titles streaming on each service in the UK. It’s a strong guide to what’s popular, though not official viewing figures.</p></div></details>
         <details><summary>Do I need an account?</summary>
-          <div class="a"><p>No. Everything works without one, and your Watchlist and settings are kept on your device. An account is optional: sign in (with a passkey, Google or an email and password) and your Watchlist, progress and settings stay in step on every phone and computer you use.</p></div></details>
-        <details><summary>How do Watchlist alerts work?</summary>
-          <div class="a"><p>Turn them on from your Watchlist or in Settings, and Tenner sends a notification when something you've saved arrives on a service, gets a new episode, or is about to leave. On an iPhone or iPad, add Tenner to your Home Screen first (Share, then Add to Home Screen) and open it from there.</p></div></details>
-        <details><summary>Is Tenner part of Netflix, Disney+ or the other services?</summary>
-          <div class="a"><p>No. Tenner is independent. The services' names and logos belong to them. Popularity, artwork and where-to-watch details come from TMDB and JustWatch, and new releases from Watchmode.</p></div></details>
+          <div class="a"><p>No. Everything works without one, and your Watchlist and settings are kept on your device. Sign in (with a passkey, Google or an email and password) and they stay in step on every phone and computer you use.</p></div></details>
+        <details><summary>Is Tenner part of Netflix or the other services?</summary>
+          <div class="a"><p>No. Tenner is independently run, with no big company behind it. The services’ names and logos belong to them. Popularity, artwork and where-to-watch details come from TMDB and JustWatch, and new releases from Watchmode.</p></div></details>
         <details><summary>Can I suggest a feature?</summary>
-          <div class="a"><p>Please do. We read everything, and plenty of Tenner started as someone's idea. <a href="contact.html?about=Feedback">Send us a message</a>.</p></div></details>
+          <div class="a"><p>Please do. We read everything, and plenty of Tenner started as someone’s idea. <a href="contact.html?about=Feedback">Send us a message</a>.</p></div></details>
       </div>
     </section>
 
     <nav class="more-links" aria-label="Site information">
       <a href="contact.html">Contact</a><a href="legal.html#privacy">Privacy Policy</a><a href="legal.html#terms">Terms of Service</a><a href="legal.html#cookies">Cookies</a>
     </nav>
-    <p class="more-ver side-ver-text">Tenner 2.29.0</p>
-    </main>
+    <p class="more-ver side-ver-text">Tenner 2.30.0</p>
+  </main>
 
-
-  <script>/* the live bits: each service's own icon, the hour the chart was made, and how many titles there are to browse */
+  <script>/* the live bits, from the hour's chart: the hero's picture, the top five, the try-it chart and the deck */
   (function(){
-    function get(u,bust){return fetch(u+(bust?'?v='+Date.now():''),bust?{cache:'no-store'}:{}).then(function(r){return r.ok?r.json():null}).catch(function(){return null})}
-    function load(bust){
-      get('data/trending.json',bust).then(function(d){ if(!d) return;
-        var tiles=document.querySelectorAll('#svcIcons li');
-        (d.services||[]).slice(0,6).forEach(function(s,i){ var li=tiles[i]; if(!li) return;
-          var t=li.querySelector('.si-tile'), name=String(s.label||'');
-          li.querySelector('small').textContent=name;
-          if(s.logo){ var im=new Image(); im.alt=''; im.decoding='async'; im.onload=function(){t.textContent='';t.appendChild(im);t.classList.add('has-logo')}; im.src=s.logo; } else t.textContent=name;
-        });
-        if(d.generatedAt&&!d.sample) document.getElementById('lastUpd').textContent='Updated '+new Date(d.generatedAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-      });
-      get('data/browse.json',bust).then(function(d){ var n=d&&d.items&&d.items.length; if(n>=1100) document.getElementById('statTitles').textContent=(Math.floor(n/100)*100).toLocaleString('en-GB')+'+'; });
+    var SIX=['netflix','disney','prime','hbomax','paramount','appletv'];
+    var $=function(id){return document.getElementById(id)};
+    var esc=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+    var still=document.documentElement.classList.contains('still');
+    var data=null, svc={}, picks=null;
+    var hue=function(t){var h=0;for(var i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))%360;return h};
+    var link=function(x){return './?t='+(x.type==='movie'?'m':'t')+x.id};
+    var poster=function(x,cls){return x.poster?'<img class="'+(cls||'')+'" src="'+esc(x.poster)+'" alt="" loading="lazy" decoding="async">'
+      :'<span class="cl-ph '+(cls||'')+'" style="--h:'+hue(x.title||'')+'"></span>'};
+    function rows(l){ return l.slice(0,5).map(function(x,i){
+      var on=(x.on||[]).map(function(k){return svc[k]&&svc[k].label}).filter(Boolean)[0];
+      var sub=[on,x.type==='movie'?'Film':'Series',x.year].filter(Boolean).join(' · ');
+      return '<li><a href="'+link(x)+'"><span class="cl-n">'+(i+1)+'</span>'+poster(x)+'<span class="cl-t"><b>'+esc(x.title)+'</b><small>'+esc(sub)+'</small></span></a></li>';
+    }).join(''); }
+    function tile(s){ return s.logo?'<img src="'+esc(s.logo)+'" alt="">':'<b style="--h:'+hue(s.label)+'">'+esc(s.label.slice(0,1))+'</b>'; }
+    /* the try-it chart: one service, its chart; several, their charts together, most popular first */
+    function mine(){
+      var on=SIX.filter(function(k){return picks[k]&&svc[k]});
+      $('abPick').querySelectorAll('button').forEach(function(b){b.setAttribute('aria-pressed',!!picks[b.dataset.k])});
+      if(!on.length){ $('abMine').innerHTML='<li class="ab-none">Pick a service or two to see their Top 10.</li>'; return; }
+      var seen={}, l=on.reduce(function(a,k){return a.concat((svc[k].tv||[]).map(function(x){return Object.assign({type:'tv'},x,{on:[k]})}))},[])
+        .sort(function(a,b){return (b.popularity||0)-(a.popularity||0)}).filter(function(x){return !seen[x.id]&&(seen[x.id]=1)});
+      $('abMine').innerHTML=rows(l);
     }
-    load(false); addEventListener('tn:check', function(){ load(true); });
+    /* the deck: three ideas from further down the charts; Skip and Save send the top card off and bring the next up */
+    var deck=[];
+    function drawDeck(){ $('abDeck').innerHTML=deck.slice(0,3).map(function(x,i){return '<div class="ab-card" style="--i:'+i+'">'+poster(x,'ab-card-art')+'<span class="ab-card-t">'+esc(x.title)+'</span></div>'}).reverse().join(''); }
+    document.querySelectorAll('[data-swipe]').forEach(function(b){ b.addEventListener('click',function(){
+      if(deck.length<2) return; var top=$('abDeck').lastElementChild, yes=b.dataset.swipe==='yes';
+      navigator.vibrate&&navigator.vibrate(8);
+      var next=function(){ deck.push(deck.shift()); drawDeck(); };
+      if(still||!top) return next();
+      top.classList.add(yes?'go-yes':'go-no'); setTimeout(next,320);
+    }); });
+    function load(bust){ fetch('data/trending.json'+(bust?'?v='+Date.now():'')).then(function(r){return r.json()}).then(function(d){
+      data=d; svc={}; (d.services||[]).forEach(function(s){svc[s.key]=s});
+      var o=d.overall||{}, tv=o.tv||[], mv=o.movie||[];
+      var lead=tv.concat(mv).filter(function(x){return x.backdrop})[0];
+      if(lead){ var im=$('abArt'); im.srcset=lead.backdrop+' 1280w, '+lead.backdrop.replace('/t/p/w1280/','/t/p/original/')+' 1920w'; im.sizes='100vw'; im.src=lead.backdrop; im.hidden=false; var ex=$('abExt'); ex.src=lead.backdrop; ex.hidden=false; }
+      if(d.generatedAt&&!d.sample){ var t=new Date(d.generatedAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); $('abUpd').textContent='Live · updated '+t; $('abHour').textContent='Updated '+t; }
+      $('abTop').innerHTML=rows(tv.map(function(x){return Object.assign({type:'tv'},x)}));
+      var six=SIX.filter(function(k){return svc[k]});
+      $('abSix').innerHTML=six.map(function(k){return '<li title="'+esc(svc[k].label)+'"><span class="ab-app">'+tile(svc[k])+'</span><span class="vh">'+esc(svc[k].label)+'</span></li>'}).join('');
+      if(!picks){ picks={}; var m=(window.tn&&window.tn.mine.get())||[]; (m.length?m:six.slice(0,2)).forEach(function(k){picks[k]=1}); }
+      $('abPick').innerHTML=six.map(function(k){return '<button type="button" data-k="'+k+'" aria-pressed="false"><span class="ab-app">'+tile(svc[k])+'<i aria-hidden="true"></i></span><small>'+esc(svc[k].label)+'</small></button>'}).join('');
+      $('abPick').onclick=function(e){ var b=e.target.closest('button'); if(!b) return; picks[b.dataset.k]=!picks[b.dataset.k]; mine(); };
+      mine();
+      var ids={}; deck=mv.slice(2).concat(tv.slice(5)).filter(function(x){return !ids[x.id]&&(ids[x.id]=1)}).slice(0,8); drawDeck();
+    }).catch(function(){}); }
+    /* shell.js (deferred) brings window.tn, for the services you've already chosen */
+    if(document.readyState==='loading') addEventListener('DOMContentLoaded',function(){load(false)}); else load(false);
+    addEventListener('tn:check',function(){load(true)});   /* a new hour, a new chart */
   })();</script>
-  <script src="shell.js?v=2.29.0" defer></script>
+  <script src="shell.js?v=2.30.0" defer></script>
 </body>
 </html>
