@@ -32,6 +32,19 @@
   const apply = () => { const p = prefs.get(); root.classList.toggle('still', !p.anim || osStill); root.classList.toggle('no-moves', !p.moves); root.classList.toggle('no-ratings', !p.ratings); };
   apply();
   const reduce = osStill || !prefs.get().anim;
+  // every tap answers (styles.css, "polish and motion"): a ring of light from a button, the new choice gliding into a
+  // pop-up button, and a small buzz from a switch where the device has one. Restarting a class replays its animation.
+  const replay = (el, c) => { el.classList.remove(c); void el.offsetWidth; el.classList.add(c); };
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest?.('.btn, .dd, .h-cta, .h-add, .hc-r, .cal-add, .set-pill, .share-chart, .pv-ok, .ft-ok, .tn-opt');
+    if (b && !root.classList.contains('still')) replay(b, 'tap-ring');
+  }, true);
+  document.addEventListener('change', (e) => {
+    const t = e.target;
+    if (t.matches?.('input[role="switch"]')) navigator.vibrate?.(6);
+    if (t.tagName === 'SELECT' && !root.classList.contains('still')) requestAnimationFrame(() => replay(t.closest('.dd')?.querySelector('.dd-l') || t, 'dd-swap'));
+  });
+  document.addEventListener('animationend', (e) => { if (e.animationName === 'tapRing' || e.animationName === 'ddSwap' || e.animationName === 'ddFlash') e.target.classList.remove('tap-ring', 'dd-swap'); });
 
   // ---------- shared helpers ----------
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -95,7 +108,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '2.35.0';
+  const version = '2.36.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------

@@ -35,15 +35,30 @@
     edge: ['#ff7a45', '#ff2d55'], feel: ['#ff8fab', '#ff375f'], mind: ['#a78bfa', '#5e5ce6'], real: ['#66e08a', '#00b5a8'],
     scare: ['#8e8cf0', '#3a2f8f'], me: ['#64d2ff', '#0a84ff'], two: ['#ff8fab', '#bf5af2'], family: ['#ffd60a', '#ff8a00'], pop: ['#ff6b6b', '#ff375f'] };
   const tnIc = (k, cls = 'tn-ic', style = '') => `<span class="${cls}" style="--a:${TN_TINT[k][0]};--b:${TN_TINT[k][1]};${style}" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${TN_GLYPH[k]}</svg></span>`;
-  // a scene: icons floating at angles over a soft glow of their colours, with a few sparkles. [icon, x offset, top, size, tilt]
-  const tnSpark = (x, y, s) => `<svg class="tn-sp" style="left:calc(50% + ${x}px);top:${y}px;width:${s}px" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0c.6 6.4 5.6 11.4 12 12-6.4.6-11.4 5.6-12 12-.6-6.4-5.6-11.4-12-12 6.4-.6 11.4-5.6 12-12z" fill="currentColor"/></svg>`;
-  const tnScene = (tiles) => `<div class="tn-hero" style="--g1:${TN_TINT[tiles[0][0]][1]};--g2:${TN_TINT[tiles[tiles.length - 1][0]][1]}" aria-hidden="true">
-    ${tiles.map(([k, x, y, s, r], i) => tnIc(k, 'tn-fl', `left:calc(50% + ${x}px);top:${y}px;width:${s}px;--r:${r}deg;--i:${i}`)).join('')}
-    ${tnSpark(-118, 26, 12)}${tnSpark(112, 18, 15)}${tnSpark(92, 92, 9)}${tnSpark(-96, 98, 8)}</div>`;
+  // a scene, drawn fresh: the answer's icon front and centre on a little stage, the others sitting on two orbits round it,
+  // over a faint dot grid with a scatter of confetti in the scene's colours. Positions are from the stage's centre line.
+  // [icon, x, y (its centre), size, tilt]
+  const TN_BITS = [['d', -172, 34, 4], ['o', -122, 22, 6], ['p', -50, 16, 10, 30], ['x', 58, 14, 8], ['d', 132, 24, 3.5], ['s', 166, 52, 16],
+    ['d', -178, 120, 3], ['o', 184, 116, 5], ['p', 104, 132, 9, -24], ['d', -100, 134, 3], ['x', -40, 138, 6], ['d', 46, 140, 2.5]];
+  const tnBit = ([t, x, y, s, r = 0], c, i) => {
+    const st = `style="--i:${i};color:${c}"`;
+    if (t === 'd') return `<circle class="tn-bit" ${st} cx="${x}" cy="${y}" r="${s}" fill="currentColor"/>`;
+    if (t === 'o') return `<circle class="tn-bit" ${st} cx="${x}" cy="${y}" r="${s}" fill="none" stroke="currentColor" stroke-width="2"/>`;
+    if (t === 'p') return `<rect class="tn-bit" ${st} x="${x - s / 2}" y="${y - 2}" width="${s}" height="4" rx="2" fill="currentColor" transform="rotate(${r} ${x} ${y})"/>`;
+    if (t === 'x') return `<path class="tn-bit" ${st} d="M${x - s / 2} ${y}h${s}M${x} ${y - s / 2}v${s}" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>`;
+    return `<path class="tn-bit" ${st} d="M${x - s / 2} ${y}q${s / 8} -5 ${s / 4} 0t${s / 4} 0t${s / 4} 0t${s / 4} 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>`;
+  };
+  const tnScene = (tiles) => {
+    const cols = tiles.flatMap(([k]) => TN_TINT[k]).reverse();
+    return `<div class="tn-hero" style="--g1:${TN_TINT[tiles[0][0]][1]};--g2:${TN_TINT[tiles[tiles.length - 1][0]][1]}" aria-hidden="true"><div class="tn-stage">
+    <svg class="tn-orb" viewBox="-200 0 400 150"><ellipse class="tn-o1" cx="0" cy="76" rx="98" ry="30" pathLength="1"/><ellipse class="tn-o2" cx="0" cy="80" rx="158" ry="48" pathLength="1"/>
+    ${TN_BITS.map((b, i) => tnBit(b, cols[i % cols.length], i)).join('')}</svg><i class="tn-floor"></i>
+    ${tiles.map(([k, x, y, s, r], i) => tnIc(k, 'tn-fl', `left:calc(50% + ${x}px);top:${y}px;width:${s}px;--r:${r}deg;--i:${i};--dx:${-x}px;--dy:${70 - y}px`)).join('')}</div></div>`;
+  };
   const TN_SCENES = [
-    [['movie', -66, 44, 54, -12], ['any', 66, 46, 54, 12], ['tv', 0, 22, 78, 0]],
-    [['scare', -112, 62, 38, -14], ['laugh', -64, 30, 52, -8], ['mind', 112, 64, 38, 14], ['edge', 64, 32, 52, 8], ['feel', 0, 20, 74, 0]],
-    [['me', -66, 44, 54, -12], ['family', 66, 46, 54, 12], ['two', 0, 22, 78, 0]],
+    [['movie', -98, 74, 52, -10], ['any', 98, 74, 52, 10], ['tv', 0, 70, 76, 0]],
+    [['scare', -150, 94, 36, -12], ['mind', 150, 94, 36, 12], ['laugh', -94, 66, 50, -8], ['edge', 94, 66, 50, 8], ['feel', 0, 70, 74, 0]],
+    [['me', -98, 74, 52, -10], ['family', 98, 74, 52, 10], ['two', 0, 70, 76, 0]],
   ];
   function tonightCard() {
     return `<section class="tn-card"><div class="tn-c-art" aria-hidden="true">${tnIc('tv', 'tn-fl tn-c1')}${tnIc('feel', 'tn-fl tn-c2')}${tnIc('pop', 'tn-fl tn-c3')}</div>
@@ -117,8 +132,8 @@
     b.querySelector('.tn-pane')?.classList.add(tonight.dir < 0 ? 'tn-bk' : 'tn-fw');
     if (document.activeElement?.closest?.('#tnDlg') || document.activeElement === document.body) b.querySelector('.tn-opt')?.focus({ preventScroll: true });
   }
-  // the answers you gave, floating round a bucket of popcorn
-  const tnPicksScene = () => tnScene([[tonight.len === 'any' ? 'any' : tonight.len, -112, 62, 38, -14], [tonight.mood, -64, 32, 52, -8], [tonight.who, 64, 32, 52, 8], ['pop', 0, 20, 76, 0]].filter((t) => TN_TINT[t[0]]));
+  // the answers you gave, on their orbits round a bucket of popcorn
+  const tnPicksScene = () => tnScene([[tonight.len, -150, 94, 36, -12], [tonight.mood, -94, 66, 50, -8], [tonight.who, 94, 66, 50, 8], ['pop', 0, 70, 76, 0]].filter((t) => TN_TINT[t[0]]));
   async function tonightPicks() {
     tnCat ||= (opts.cat?.() ? Promise.resolve(opts.cat()) : fetch('data/browse.json').then((r) => (r.ok ? r.json() : null)).catch(() => null));   // the page has it already, usually
     const cat = await tnCat; if (!cat?.items) return `<h2 id="tnH">Couldn’t load the picks</h2><p class="tn-sub">Try again in a moment.</p><div class="tn-acts"><button type="button" class="btn btn-tinted" data-tn="again">Start again</button></div>`;

@@ -566,15 +566,21 @@ a.tb-btn:hover { text-decoration: none; }
 .tn-ic svg, .tn-fl svg { width: 58%; height: 58%; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .18)); }
 .tn-ic { width: 42px; }
 .tn-fl { rotate: var(--r, 0deg); }
-/* each step's scene, melting into the sheet */
-.tn-hero { position: relative; height: 138px; margin-bottom: -6px; overflow: hidden;
-  background: radial-gradient(60% 90% at 30% 30%, color-mix(in srgb, var(--g1) 38%, transparent), transparent 70%),
-    radial-gradient(60% 90% at 72% 40%, color-mix(in srgb, var(--g2) 34%, transparent), transparent 70%);
-  -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); }
-.tn-hero .tn-fl { position: absolute; translate: -50% 0; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 0 0 .5px rgba(255, 255, 255, .25), 0 14px 28px -10px color-mix(in srgb, var(--b) 90%, transparent); }
-.tn-sp { position: absolute; color: #fff; opacity: .8; filter: drop-shadow(0 0 6px rgba(255, 255, 255, .6)); }
-:root[data-theme="light"] .tn-sp { color: #ffb340; filter: none; }
-@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .tn-sp { color: #ffb340; filter: none; } }
+/* each step's scene, melting into the sheet: a little stage with a faint dot grid, two orbits and confetti */
+.tn-hero { position: relative; height: 150px; margin-bottom: -10px; overflow: hidden;
+  background: radial-gradient(55% 85% at 30% 35%, color-mix(in srgb, var(--g1) 34%, transparent), transparent 70%),
+    radial-gradient(55% 85% at 72% 40%, color-mix(in srgb, var(--g2) 30%, transparent), transparent 70%);
+  -webkit-mask-image: linear-gradient(#000 60%, transparent); mask-image: linear-gradient(#000 60%, transparent); }
+.tn-hero::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle, color-mix(in srgb, var(--label) 22%, transparent) 1px, transparent 1.4px) 0 0 / 14px 14px;
+  -webkit-mask-image: radial-gradient(50% 70% at 50% 50%, #000, transparent); mask-image: radial-gradient(50% 70% at 50% 50%, #000, transparent); }
+.tn-stage { position: absolute; top: 0; left: 50%; width: 400px; height: 150px; margin-left: -200px; transform-origin: 50% 0; }
+.tn-orb { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.tn-o1, .tn-o2 { fill: none; stroke: color-mix(in srgb, var(--label) 20%, transparent); stroke-width: 1; }
+.tn-o2 { stroke-dasharray: .004 .011; stroke-linecap: round; stroke-width: 1.6; }
+.tn-bit { opacity: .9; transform-box: fill-box; transform-origin: center; }
+.tn-floor { position: absolute; left: 50%; top: 100px; width: 120px; height: 22px; margin-left: -60px; border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, #000 30%, transparent), transparent); }
+.tn-hero .tn-fl { position: absolute; translate: -50% -50%; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 0 0 .5px rgba(255, 255, 255, .25), 0 14px 28px -10px color-mix(in srgb, var(--b) 90%, transparent); }
 .mine-dlg.tn-dlg { width: min(600px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); overflow: auto; overscroll-behavior: contain; border-radius: var(--r); }
 .mine-dlg.tn-dlg form { position: relative; padding: 0; }
 .tn-grab { display: none; }
@@ -646,7 +652,8 @@ a.tb-btn:hover { text-decoration: none; }
   .mine-dlg.tn-dlg { width: 100%; max-width: 100%; margin: auto 0 0; max-height: calc(100dvh - 24px); border-radius: var(--r) var(--r) 0 0; }
   .mine-dlg.tn-dlg form { padding-bottom: env(safe-area-inset-bottom); }
   .tn-grab { display: block; position: absolute; z-index: 2; top: 7px; left: 50%; width: 36px; height: 5px; margin-left: -18px; border-radius: 3px; background: var(--label3); }
-  .tn-hero { height: 124px; }
+  .tn-hero { height: 128px; }
+  .tn-stage { scale: .86; }
   .tn-pane { padding: 0 18px 18px; }
   .tn-dlg h2 { font-size: 22px; }
   .tn-grid .tn-opt b { font-size: 15px; }
@@ -656,14 +663,18 @@ a.tb-btn:hover { text-decoration: none; }
 :root:not(.still) .tn-dlg { transition: translate .35s var(--ease-out); }
 :root:not(.still) .tn-dlg[open] { animation: tnIn .5s var(--ease-spring); }
 @media (max-width: 600px) { :root:not(.still) .tn-dlg[open] { animation: tnUp .45s var(--ease-out); } }
-:root:not(.still) .tn-hero .tn-fl { animation: tnPop .6s var(--ease-spring) calc(var(--i) * 50ms) both; }
-:root:not(.still) .tn-hero .tn-sp { animation: fadeOnly .8s ease .25s both; }
+:root:not(.still) .tn-hero .tn-fl { animation: tnBurst .7s var(--ease-spring) calc(var(--i) * 45ms) both; }
+:root:not(.still) .tn-o1 { stroke-dasharray: 1; animation: tnDraw .9s var(--ease-out) both; }
+:root:not(.still) .tn-o2 { animation: fadeOnly .8s ease .15s both; }
+:root:not(.still) .tn-bit { animation: tnBit .6s var(--ease-spring) calc(200ms + var(--i) * 30ms) both; }
 :root:not(.still) .tn-fw { animation: tnFw .45s var(--ease-out); }
 :root:not(.still) .tn-bk { animation: tnBk .45s var(--ease-out); }
 :root:not(.still) .tn-in { animation: fadeOnly .35s ease; }
 @keyframes tnIn { from { opacity: 0; transform: scale(.94); } }
 @keyframes tnUp { from { transform: translateY(100%); } }
-@keyframes tnPop { from { opacity: 0; transform: translateY(14px) scale(.6); } }
+@keyframes tnBurst { from { opacity: 0; transform: translate(var(--dx, 0), var(--dy, 14px)) scale(.4) rotate(calc(var(--r, 0deg) * -1)); } }
+@keyframes tnDraw { from { stroke-dashoffset: 1; } }
+@keyframes tnBit { from { opacity: 0; transform: scale(0) rotate(-90deg); } }
 @keyframes tnFw { from { opacity: 0; transform: translateX(28px); } }
 @keyframes tnBk { from { opacity: 0; transform: translateX(-28px); } }
 
@@ -1821,3 +1832,76 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .ft-ok, .s
 .sh-unspoil::before { content: ""; position: absolute; inset: -6px; }   /* a comfortable target */
 .wl-note { display: block; margin-top: 2px; color: var(--label2); font-size: 13px; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wl-more { margin: 14px 0 0; }
+
+/* ============================================================ polish and motion (2.36.0)
+   A finishing layer: the Tonight art's orbit style carried to the small illustrations, a little more depth on the
+   computer's boxes, tidier type, and motion for every tap. Everything that moves waits for Settings → Animations and
+   stays still for Reduce Motion (.still); nothing moves at rest. */
+:root { --ease-snap: cubic-bezier(.34, 1.56, .64, 1); }
+
+/* type: headings balanced across their lines, no lone last words, numbers that line up */
+h1, h2, h3 { text-wrap: balance; }
+p { text-wrap: pretty; }
+.tn-step, .tn-prog + .tn-step, .mine-n, .set-l small { font-variant-numeric: tabular-nums; }
+
+/* the small illustrations: the Tonight invitation and empty pages sit on an orbit with a scatter of confetti */
+.tn-c-art, .bx-tn-art { isolation: isolate; }
+.tn-c-art::before, .bx-tn-art::before { content: ""; position: absolute; z-index: -1; left: -8px; right: -8px; top: 24px; height: 30px; border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--label) 18%, transparent); }
+.tn-c-art::after, .bx-tn-art::after { content: ""; position: absolute; z-index: -1; inset: -6px -12px;
+  background: radial-gradient(circle at 6% 20%, #ffd60a 2px, transparent 2.5px), radial-gradient(circle at 96% 14%, #64d2ff 1.6px, transparent 2px),
+    radial-gradient(circle at 92% 90%, #ff375f 2px, transparent 2.5px), radial-gradient(circle at 2% 86%, #bf5af2 1.5px, transparent 2px); }
+.tn-c-art .tn-c1, .bx-tn-art .tn-c1 { top: 18px; left: -4px; }
+.tn-c-art .tn-c2, .bx-tn-art .tn-c2 { top: 21px; right: -4px; }
+.tn-c-art .tn-c3, .bx-tn-art .tn-c3 { top: 8px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), 0 10px 20px -8px color-mix(in srgb, var(--b) 90%, transparent); }
+@media (max-width: 560px) { .tn-c-art::before { top: 21px; height: 26px; } .tn-c-art .tn-c1 { top: 16px; } .tn-c-art .tn-c2 { top: 19px; } .tn-c-art .tn-c3 { top: 7px; } }
+.empty { isolation: isolate; }
+.empty-ic { position: relative; }
+.empty-ic::before { content: ""; position: absolute; z-index: -1; left: -30px; right: -30px; top: 16px; bottom: 16px; border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--label) 16%, transparent); }
+.empty-ic::after { content: ""; position: absolute; z-index: -1; inset: -14px -46px;
+  background: radial-gradient(circle at 4% 30%, #ffd60a 2.5px, transparent 3px), radial-gradient(circle at 98% 22%, #64d2ff 2px, transparent 2.5px),
+    radial-gradient(circle at 90% 92%, #ff375f 2.5px, transparent 3px), radial-gradient(circle at 12% 88%, #30d158 2px, transparent 2.5px),
+    radial-gradient(circle at 70% 4%, #bf5af2 1.6px, transparent 2px); }
+:root:not(.still) .empty-ic svg { animation: tnBit .6s var(--ease-spring) .2s both; }
+:root:not(.still) .empty-ic::after { animation: fadeOnly .6s ease .4s both; }
+
+/* depth: on computers the frosted boxes catch a little light along their top edge and cast a soft shadow */
+@media (min-width: 720px) {
+  .panel, .coll, .tn-card { box-shadow: inset 0 0 0 1px var(--fr-rim), inset 0 1px 0 rgba(255, 255, 255, .06), 0 22px 44px -30px rgba(0, 0, 0, .5); }
+}
+
+/* every tap answers: a ring of light spreads from the button (the house's light blue) and fades */
+:root:not(.still) .tap-ring { animation: tapRing .55s var(--ease-out); }
+@keyframes tapRing { from { outline: 2px solid color-mix(in srgb, var(--bt-on) 60%, transparent); outline-offset: 0; } to { outline: 2px solid transparent; outline-offset: 7px; } }
+
+/* icons inside buttons: a small lift on hover and a squeeze while pressed (sizes of the buttons themselves never change on a Mac) */
+:root:not(.still) :is(.btn, .h-cta, .h-add, .hc-r, .cal-add, .set-pill, .share-chart, .pv-ok, .ft-ok) > svg { transition: transform .45s var(--ease-snap); }
+@media (hover: hover) {
+  :root:not(.still) :is(.btn, .h-cta, .h-add, .hc-r, .cal-add, .set-pill, .share-chart):hover > svg { transform: translateY(-1px) scale(1.1); }
+}
+:root:not(.still) :is(.btn, .h-cta, .h-add, .hc-r, .cal-add, .set-pill, .share-chart, .pv-ok, .ft-ok):active > svg { transform: scale(.88); transition-duration: .12s; }
+:root:not(.still) .tn-opt .tn-chev { transition: transform .4s var(--ease-snap); }
+@media (hover: hover) { :root:not(.still) .tn-opt:hover .tn-chev { transform: translateX(3px); } }
+:root:not(.still) .tn-back svg { transition: transform .4s var(--ease-snap); }
+@media (hover: hover) { :root:not(.still) .tn-back:hover svg { transform: translateX(-3px); } }
+
+/* pop-up buttons: the chevron squeezes as the menu opens, and the new choice glides in */
+:root:not(.still) .dd-chev { transition: transform .4s var(--ease-snap), opacity .2s ease; }
+:root:not(.still) .dd:active .dd-chev { transform: scaleY(.7); }
+@media (hover: hover) { :root:not(.still) .dd:hover .dd-chev { opacity: .9; } }
+:root:not(.still) .dd-swap { animation: ddSwap .45s var(--ease-out); }
+:root:not(.still) select.dd-swap { animation: ddFlash .5s ease; }
+@keyframes ddSwap { from { opacity: 0; transform: translateY(6px); filter: blur(3px); } }
+@keyframes ddFlash { 30% { filter: brightness(1.35); } }
+
+/* switches: the knob springs across, and stretches while your finger is on it, as on iPhone */
+:root:not(.still) .sw { transition: background-color .3s ease; }
+:root:not(.still) .sw::after { transition: translate .45s var(--ease-snap), width .25s var(--ease-out); }
+:root:not(.still) :is(.mine-row, .set-row):active .sw::after { width: 33px; }
+:root:not(.still) :is(.mine-row, .set-row):active input:checked + .sw::after { translate: 14px 0; }
+
+/* popups that had no entrance of their own rise in gently over a fading backdrop */
+:root:not(.still) dialog.mine-dlg:not(.tn-dlg, .ac-del-dlg)[open] { animation: dlgIn .5s var(--ease-spring); }
+:root:not(.still) dialog.mine-dlg:not(.ac-del-dlg)[open]::backdrop { animation: fadeOnly .35s ease; }
+@keyframes dlgIn { from { opacity: 0; transform: translateY(12px) scale(.95); } }
