@@ -297,8 +297,8 @@
   // a poster card: the artwork, its score in a chip, the title and a second line, and a Watchlist button
   const card = (it, info, sub, n) => `<li class="bx-pc${n ? ' bx-pc-ranked' : ''}"><a href="${esc(it.url || '#')}" target="_blank" rel="noopener" ${reg(info)}><span class="bx-pc-art">${poster(it)}</span>${n ? `<span class="bx-pc-n" aria-label="No. ${n}">${n}</span>` : ''}${rating(it.rating).replace('bx-star', 'bx-star bx-chip')}
         <span class="bx-pc-copy"><b>${esc(it.title)}</b><small>${esc(sub)}</small></span></a>${saveBtn(info, ' bx-pc-add')}</li>`;
-  // phones: the UK's Top 10 and the top rated, each a chart of ten cards to swipe through, numbered 1 to 10 (one of each
-  // for shows and films)
+  // phones: the UK's Top 10 (numbered 1 to 10), For you, then the top rated, each a row of ten cards to swipe through
+  // (one of each chart for shows and films)
   function phoneRows() {
     const word = (k) => (k === 'movie' ? 'films' : 'shows');
     const top = kinds().map((k) => row(`bxP10-${k}`, `Top 10 ${word(k)} in the UK`, 'Updated every hour', (state.data?.overall?.[k] || []).slice(0, 10).map((it0, i) => {
@@ -306,9 +306,9 @@
       return card(it, infoFor(it, `No. ${i + 1} ${word(k).slice(0, -1)} in the UK`), it.year, i + 1);
     }), 'bx-row-p'));
     const g = state.genre != null ? state.cat?.genres?.[state.genre] : null;
-    const best = kinds().map((k) => row(`bxPTr-${k}`, `Top rated ${word(k)}${g ? ` in ${esc(g)}` : ''}`, 'The highest scores from viewers', topRated(k).map((it, i) => card(it, infoFor(it, `No. ${i + 1} top rated`), it.year, i + 1)),
+    const best = kinds().map((k) => row(`bxPTr-${k}`, `Top rated ${word(k)}${g ? ` in ${esc(g)}` : ''}`, 'The highest scores from viewers', topRated(k).map((it, i) => card(it, infoFor(it, `No. ${i + 1} top rated`), it.year)),
       'bx-row-p', `browse.html#${esc(String(new URLSearchParams({ c: 'top', ...(k === 'movie' ? { k: 'movie' } : {}) })))}`));
-    return top.join('') + best.join('');
+    return top.join('') + forYouRow() + best.join('');
   }
   function drawRows() {
     if (PHONE.matches) {
@@ -360,11 +360,14 @@
   let fyT = 0;
   function drawFy() {
     const box = $('#bxRows'), el = box?.querySelector('[aria-labelledby="bxFy"]');
-    if (!state.data || !box || PHONE.matches) return;
+    if (!state.data || !box) return;
     if (el?.matches(':hover, :focus-within') || window.tnSheet?.isOpen()) { clearTimeout(fyT); fyT = setTimeout(drawFy, 1500); return; }
     const was = fy.sig, html = forYouRow();
     if (el && was && was === fy.sig) return;   // nothing new: leave it (and where you've scrolled it to) alone
-    if (el) { if (html) el.outerHTML = html; else el.remove(); } else if (html) box.insertAdjacentHTML('afterbegin', html);
+    if (el) { if (html) el.outerHTML = html; else el.remove(); } else if (html) {   // phones: after the Top 10s, before Top rated; bigger screens: first
+      const at = PHONE.matches && box.querySelector('[aria-labelledby^="bxPTr"]');
+      if (at) at.insertAdjacentHTML('beforebegin', html); else box.insertAdjacentHTML(PHONE.matches ? 'beforeend' : 'afterbegin', html);
+    }
     const r = box.querySelector('[aria-labelledby="bxFy"] .bx-row'); if (r) edges(r);
     markSaved();
   }
