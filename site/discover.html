@@ -42,8 +42,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=2.30.0">
-  <link rel="stylesheet" href="discover.css?v=2.30.0">
+  <link rel="stylesheet" href="styles.css?v=2.31.0">
+  <link rel="stylesheet" href="discover.css?v=2.31.0">
 </head>
 <body class="discover">
   <a class="skip" href="#main">Skip to the page</a>
@@ -89,7 +89,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 2.30.0</span>
+      <span class="side-ver">Tenner 2.31.0</span>
     </div>
   </div>
 
@@ -100,6 +100,7 @@
 
 
   <main id="main" class="dwrap" tabindex="-1">
+    <div class="d-col">
     <img class="d-amb" id="dAmb" alt="" aria-hidden="true" hidden>
     <header class="d-hd">
       <h1 class="d-h"><em class="grad">Discover</em></h1>
@@ -116,14 +117,20 @@
       <button type="button" class="d-btn d-yes" id="dYes" aria-label="Add to Watchlist" title="Add to Watchlist (right arrow)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18.4l-6-4.2-6 4.2z" fill="currentColor"/></svg></button>
     </div>
     <a class="d-count" id="dCount" href="charts.html#watchlist" hidden></a>
+    </div>
+    <!-- your picks: ten titles ranked from what you've swiped, re-ranked with every swipe (beside the deck on computers, under it on phones) -->
+    <aside class="panel d-pk" id="dPk" aria-labelledby="dPkH">
+      <header class="d-pk-hd"><h2 id="dPkH">Your picks</h2><p id="dPkSub">Swipe right on a few titles and ten you’ll like line up here</p></header>
+      <ol class="d-pk-l" id="dPkL"></ol>
+    </aside>
     <p class="sr" id="dSay" aria-live="polite"></p>
   </main>
 
 
-  <script src="shell.js?v=2.30.0" defer></script>
-  <script src="links.js?v=2.30.0" defer></script>
-  <script src="sheet.js?v=2.30.0" defer></script>
-  <script src="person.js?v=2.30.0" defer></script>
-  <script src="discover.js?v=2.30.0" defer></script>
+  <script src="shell.js?v=2.31.0" defer></script>
+  <script src="links.js?v=2.31.0" defer></script>
+  <script src="sheet.js?v=2.31.0" defer></script>
+  <script src="person.js?v=2.31.0" defer></script>
+  <script src="discover.js?v=2.31.0" defer></script>
 </body>
 </html>

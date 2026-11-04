@@ -48,7 +48,7 @@
     for (let i = 0; i < pool.length; i += 10) deck.push(...pool.slice(i, i + 10).sort(() => Math.random() - 0.5));
     hist = []; $('#dUndo').disabled = true;
     stage.replaceChildren(); cards = [];
-    fill(); hint();
+    fill(); hint(); pkSoon(0);
   }
 
   // ---------- cards ----------
@@ -216,6 +216,58 @@
       || ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.dc.top') ? details : null);
     if (act) { e.preventDefault(); act(); }
   });
+
+  // ---------- Your picks: ten titles ranked from your swipes (shell.js's forYou, as the home page's For you does), redrawn
+  // a moment after each swipe. Rows keep their place in the DOM so a title glides to its new rank; one that climbs gets a
+  // small green arrow under its number for a moment, as on the Top 10. Nothing on the table now (the three cards) is listed. ----------
+  const pk = { like: {}, want: null, rows: new Map(), t: 0 };
+  const UP = '<svg class="d-pk-up" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2.2 10.4 8.6H1.6z" fill="currentColor"/></svg>';
+  const still = () => document.documentElement.classList.contains('still');
+  function pkSoon(wait = 140) { clearTimeout(pk.t); pk.t = setTimeout(pkLike, wait); }
+  // TMDB's "more like this" for your latest right swipes lifts the closest matches (fetched when signed in, kept three days)
+  function pkLike() {
+    const want = swipes.liked().slice(0, 4).join() + !!window.tn.account?.token();
+    if (want !== pk.want) { pk.want = want; window.tn.moreLike(!!window.tn.account?.token()).then((l) => { pk.like = l; pkDraw(); }); }
+    pkDraw();
+  }
+  function pkRow(x) {
+    const li = document.createElement('li'), src = img(x, 'w92'), h = hue(x.n);
+    li._x = x;
+    li.innerHTML = `<button type="button"><span class="d-pk-n"><i></i>${UP}</span><span class="d-pk-art">${src ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async">` : `<span style="background:hsl(${h} 45% 35%)"></span>`}</span>
+      <span class="d-pk-copy"><b>${esc(x.n)}</b><small>${esc([x.t === 'movie' ? 'Film' : 'Series', year(x)].filter(Boolean).join(' · '))}</small></span></button>`;
+    return li;
+  }
+  function pkDraw() {
+    if (!cat) return;
+    const list = $('#dPkL'), sub = $('#dPkSub'), table = new Set(cards.map((el) => el.dataset.k));
+    const r = window.tn.forYou(cat.items, (x) => (kind === 'both' || x.t === kind) && !table.has(keyOf(x)) && (!certs || certs.items?.[keyOf(x)]?.c !== '18'), pk.like, 10);
+    if (!r) {
+      pk.rows.clear(); list.className = 'd-pk-l sk'; list.setAttribute('aria-hidden', 'true'); list.innerHTML = '<li><i></i><em></em></li>'.repeat(5);
+      sub.textContent = 'Swipe right on a few titles and ten you’ll like line up here'; return;
+    }
+    const b = r.because;
+    sub.textContent = !b ? 'From what you’ve liked so far' : r.how === 'liked' ? `Because you liked ${b.n}` : `Because you ${r.how} ${b.n}`;
+    const had = list.classList.contains('sk') ? new Map() : pk.rows;
+    const top = new Map([...had].map(([k, li]) => [k, li.getBoundingClientRect().top]));
+    const next = new Map();
+    r.picks.forEach((x, i) => {
+      const k = keyOf(x), li = had.get(k) || pkRow(x), was = had.get(k) ? +li.dataset.n : null;
+      li.dataset.n = i; li.querySelector('.d-pk-n i').textContent = i + 1;
+      if (was != null && i < was) { li.classList.add('up'); clearTimeout(li._up); li._up = setTimeout(() => li.classList.remove('up'), 2400); }
+      next.set(k, li);
+    });
+    list.className = 'd-pk-l'; list.removeAttribute('aria-hidden');
+    list.replaceChildren(...next.values()); pk.rows = next;
+    if (still() || !had.size) return;
+    // the glide: each row from where it was to its new place, on a spring; newcomers grow in
+    for (const [k, li] of next) {
+      if (!li.animate) break;
+      if (top.has(k)) { const dy = top.get(k) - li.getBoundingClientRect().top; if (Math.abs(dy) > 1) li.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], { duration: 520, easing: 'cubic-bezier(.2,1.15,.35,1)' }); }
+      else li.animate([{ opacity: 0, transform: 'scale(.96)' }, { opacity: 1, transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.2,.9,.25,1)' });
+    }
+  }
+  $('#dPkL').addEventListener('click', (e) => { const li = e.target.closest('li'); if (li?._x) window.tnSheet?.open(infoFor(li._x)); });
+  ['tn:swiped', 'tn:saved', 'tn:account', 'tn:synced'].forEach((n) => addEventListener(n, () => pkSoon()));
 
   // the first time: the top card leans right, then left, to show it moves
   function hint() {

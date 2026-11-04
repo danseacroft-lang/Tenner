@@ -102,3 +102,44 @@ body.discover { overflow-x: clip; }
 .d-sm { color: rgba(255, 255, 255, .85); }
 .d-btn.d-no { color: #ff375f; } .d-btn.d-yes { color: #30d158; }
 @media (hover: hover) { .d-btn:not(:disabled):hover { background: var(--bt-round-hover); } }
+
+/* ---------- Your picks: ten titles ranked from your swipes, in the Top 10's box (home.css's .bx-tt), re-ranked as you go ---------- */
+.d-col { position: relative; min-width: 0; }
+.d-pk { margin: 28px 0 0; padding: 16px 16px 10px; border-radius: var(--r); }
+.d-pk-hd { margin-bottom: 8px; }
+.d-pk-hd h2 { margin: 0; font: 700 19px/1.2 var(--font); letter-spacing: -.02em; }
+.d-pk-hd p { margin: 3px 0 0; font-size: 13px; line-height: 1.35; color: var(--label2); text-wrap: pretty; }
+.d-pk-l { position: relative; display: grid; margin: 0 -8px; padding: 0; list-style: none; }
+.d-pk-l li + li { border-top: .5px solid var(--fr-rim); }
+.d-pk-l li:has(button:hover) + li { border-top-color: transparent; }
+.d-pk-l button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 4px 8px; border: 0; border-radius: var(--r); background: none; color: inherit;
+  font: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background-color .15s ease; }
+@media (hover: hover) { .d-pk-l button:hover { background: var(--fr-in); } }
+.d-pk-l button:active { background: var(--fr-in); }
+.d-pk-l button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.d-pk-n { flex: none; width: 18px; display: grid; justify-items: center; gap: 3px; font: 600 15px/1 var(--font); font-variant-numeric: tabular-nums; color: var(--label2); }
+.d-pk-n i { font-style: normal; }
+.d-pk-art { flex: none; width: 26px; aspect-ratio: 2 / 3; overflow: hidden; border-radius: var(--r); background: var(--fill); }
+.d-pk-art img, .d-pk-art span { display: block; width: 100%; height: 100%; object-fit: cover; }
+.d-pk-copy { display: grid; gap: 1px; flex: 1; min-width: 0; }
+.d-pk-copy b { font: 600 14px/1.25 var(--font); letter-spacing: -.012em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.d-pk-copy small { font-size: 12px; color: var(--label2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* a title that's just climbed: a small green arrow under its number, for a moment */
+.d-pk-up { display: none; width: 9px; height: 9px; color: var(--green); }
+.d-pk-l li.up .d-pk-up { display: block; }
+/* before there are picks: faint rows holding the place */
+.d-pk-l.sk li { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 8px; }
+.d-pk-l.sk li::before { content: ""; width: 18px; }
+.d-pk-l.sk i { flex: none; width: 26px; aspect-ratio: 2 / 3; border-radius: var(--r); background: var(--fr-in); }
+.d-pk-l.sk em { flex: 1; height: 10px; max-width: 60%; border-radius: 5px; background: var(--fr-in); }
+.d-pk-l.sk { -webkit-mask: linear-gradient(#000 20%, transparent); mask: linear-gradient(#000 20%, transparent); }
+
+/* computers and tablets: the list beside the deck, staying in view as you swipe */
+@media (min-width: 860px) {
+  .dwrap { max-width: 1000px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); column-gap: 36px; align-items: start; }
+  .d-stage { width: min(var(--cw), 100%); }
+  .d-pk { position: sticky; top: 24px; margin-top: 78px; }
+}
+/* phones: under the deck and its buttons, the deck's width */
+@media (max-width: 859px) { .d-pk { max-width: 560px; margin-inline: auto; } }
+@media (max-width: 719px) { .d-pk { margin-top: 30px; margin-bottom: 24px; } }

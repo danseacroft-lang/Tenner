@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '2.30.0';
+  const version = '2.31.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -161,6 +161,22 @@
     const because = byK.get(hits.get(k0)) || near(yes) || near(starred) || near(have) || from(yes)[0] || from(starred)[0] || from(have)[0] || null;
     const bk = because && `${because.t[0]}${because.i}`;
     return { picks, because, how: !bk ? null : sw[bk]?.[0] ? 'liked' : starred.includes(bk) ? 'loved' : 'saved' };
+  }
+  // TMDB's "more like this" for your latest right swipes (the Worker's /more), kept on this device for three days, for
+  // forYou's like: { k: [keys] }. Fetched only when asked (signed in); never waits long, since the genres alone still work
+  const LC = 'tenner-like-cache';
+  const likeCache = {
+    all() { try { const o = JSON.parse(localStorage.getItem(LC) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } },
+    put(k, l) { const o = likeCache.all(); o[k] = { at: Date.now(), l }; const ks = Object.keys(o); if (ks.length > 24) ks.sort((a, b) => o[a].at - o[b].at).slice(0, ks.length - 24).forEach((x) => delete o[x]); try { localStorage.setItem(LC, JSON.stringify(o)); } catch {} },
+  };
+  function moreLike(fetchNew) {
+    const want = swipes.liked().slice(0, 4), c = likeCache.all(), fresh = Date.now() - 3 * 864e5;
+    const like = Object.fromEntries(want.filter((k) => c[k]).map((k) => [k, c[k].l]));
+    const need = fetchNew ? want.filter((k) => !(c[k]?.at > fresh)) : [];
+    if (!need.length) return Promise.resolve(like);
+    const got = Promise.all(need.map((k) => fetch(`${api}/more/${k}`).then((r) => (r.ok ? r.json() : null))
+      .then((m) => { if (!m) return; const l = (m.like || []).map((x) => x.k).filter(Boolean); like[k] = l; likeCache.put(k, l); }).catch(() => {})));
+    return Promise.race([got, new Promise((r) => setTimeout(r, 3500))]).then(() => like);
   }
   // where you're up to in a show: { k: [season, episode] } (the last episode you've watched), also on this device only
   const PR = 'tenner-progress';
@@ -822,7 +838,7 @@
     },
   };
 
-  window.tn = { prefs, esc, hue, glide, arrows, segment, reduce, saved, stars, swipes, forYou, progress, nextUp, whenText, mine, pickMine, api, share, alerts, isIOS, account, avatar, featured, findTitle, sharedTitle, fold, score };
+  window.tn = { prefs, esc, hue, glide, arrows, segment, reduce, saved, stars, swipes, forYou, moreLike, progress, nextUp, whenText, mine, pickMine, api, share, alerts, isIOS, account, avatar, featured, findTitle, sharedTitle, fold, score };
 
   // ---------- paste or drop a link: an IMDb, TMDB, Letterboxd, JustWatch or Tenner link opens that title's sheet ----------
   // ⌘V (Ctrl+V) anywhere but a text box, or a link dragged onto the page. Anything else pasted is left alone.

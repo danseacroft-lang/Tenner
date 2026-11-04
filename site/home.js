@@ -311,24 +311,11 @@
     clScenes();
   }
   // ---------- For you (signed in): picks from what you swiped right on in Discover (and loved and saved) ----------
-  // shell.js's forYou weighs the genres; TMDB's More Like This for your latest right swipes (the Worker's /more, kept on
-  // this device for three days) lifts the closest matches. While those load, the row holds its place with skeletons.
-  const LC = 'tenner-like-cache';
-  const likeCache = {
-    all() { try { const o = JSON.parse(localStorage.getItem(LC) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } },
-    put(k, l) { const o = likeCache.all(); o[k] = { at: Date.now(), l }; const ks = Object.keys(o); if (ks.length > 24) ks.sort((a, b) => o[a].at - o[b].at).slice(0, ks.length - 24).forEach((x) => delete o[x]); try { localStorage.setItem(LC, JSON.stringify(o)); } catch {} },
-  };
+  // shell.js's forYou weighs the genres; TMDB's More Like This for your latest right swipes (shell.js's moreLike) lifts
+  // the closest matches. While those load, the row holds its place with skeletons.
   const fy = { like: {}, ready: false, want: '' };
   const signedIn = () => !!window.tn.account.token();
-  function loadLike() {
-    const want = window.tn.swipes.liked().slice(0, 4), c = likeCache.all(), fresh = Date.now() - 3 * 864e5;
-    fy.like = Object.fromEntries(want.filter((k) => c[k]).map((k) => [k, c[k].l]));
-    const need = signedIn() ? want.filter((k) => !(c[k]?.at > fresh)) : [];
-    if (!need.length) return Promise.resolve();
-    const got = Promise.all(need.map((k) => fetch(`${window.tn.api}/more/${k}`).then((r) => (r.ok ? r.json() : null))
-      .then((m) => { if (!m) return; const l = (m.like || []).map((x) => x.k).filter(Boolean); fy.like[k] = l; likeCache.put(k, l); }).catch(() => {})));
-    return Promise.race([got, new Promise((r) => setTimeout(r, 3500))]);   // never wait long: the genres alone still work
-  }
+  const loadLike = () => window.tn.moreLike(signedIn()).then((l) => { fy.like = l; });
   function forYouRow() {
     fy.sig = ''; if (!signedIn() || !state.cat?.items) return '';
     const head = (sub, acts = '') => `<header class="bx-sec-hd"><div><h2 id="bxFy">For you</h2><p>${sub}</p></div>${acts}</header>`;
