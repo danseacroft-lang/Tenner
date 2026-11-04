@@ -41,8 +41,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=2.28.0">
-  <link rel="stylesheet" href="about.css?v=2.28.0">
+  <link rel="stylesheet" href="styles.css?v=2.28.1">
+  <link rel="stylesheet" href="about.css?v=2.28.1">
   <link rel="preload" href="fonts/caveat-latin.woff2" as="font" type="font/woff2" crossorigin>
 
 </head>
@@ -90,7 +90,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 2.28.0</span>
+      <span class="side-ver">Tenner 2.28.1</span>
     </div>
   </div>
 
@@ -233,7 +233,7 @@
           <h2 id="h-priv">Private by design.</h2>
           <p>Tenner has nothing to sell you and nobody to sell you to. Your Watchlist and settings stay on this device unless you choose to sign in.</p>
           <ul class="priv-list">
-            <li><b>No cookies</b><span>Not one, of any kind.</span></li>
+            <li><b>No cookies</b><span>Not one, even with an account.</span></li>
             <li><b>No tracking</b><span>No analytics, no profiles.</span></li>
             <li><b>No adverts</b><span>Just the shows and films.</span></li>
           </ul>
@@ -292,7 +292,7 @@
     <nav class="more-links" aria-label="Site information">
       <a href="contact.html">Contact</a><a href="legal.html#privacy">Privacy Policy</a><a href="legal.html#terms">Terms of Service</a><a href="legal.html#cookies">Cookies</a>
     </nav>
-    <p class="more-ver side-ver-text">Tenner 2.28.0</p>
+    <p class="more-ver side-ver-text">Tenner 2.28.1</p>
     </main>
 
 
@@ -313,6 +313,6 @@
     }
     load(false); addEventListener('tn:check', function(){ load(true); });
   })();</script>
-  <script src="shell.js?v=2.28.0" defer></script>
+  <script src="shell.js?v=2.28.1" defer></script>
 </body>
 </html>
