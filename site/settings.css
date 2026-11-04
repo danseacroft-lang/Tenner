@@ -136,3 +136,31 @@
 .hid-list .set-l b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hid-list .btn { flex: none; height: 36px; padding: 0 12px; font-size: 14px; }
 .hid-none { justify-content: center; color: var(--label2); font-size: 15px; }
+
+/* More: each group's less-used settings, folded away under one row (a native <details>). The row reads like the others,
+   with a grey line saying what's inside and a chevron that turns down as it opens. */
+.set-more { position: relative; }
+.set-more[hidden] { display: none; }
+.set-more > summary { list-style: none; -webkit-tap-highlight-color: transparent; }
+.set-more > summary::-webkit-details-marker { display: none; }
+.set-more > summary .set-l { color: var(--label); }
+.set-more > summary .set-chev { margin-right: 4px; rotate: 0deg; }
+.set-more[open] > summary .set-chev { rotate: 90deg; }
+@media (hover: hover) { .set-page .set-group .set-more > summary:hover { background: var(--fill); } }
+.set-more > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+/* hairlines, inset the iOS way: above the More row, and between it and what it opens */
+.set-page .set-group > .set-more::before, .set-page .set-more-in > .set-row:first-child::before {
+  content: ""; position: absolute; top: 0; left: 16px; right: 0; border-top: .5px solid var(--sep); }
+.set-page .set-group > .set-more:first-child::before { display: none; }
+/* Your data: More is a slim tile, and opens to more tiles */
+.set-more-tiles > summary.set-tile { min-height: 60px; padding-left: 18px; }
+.set-more-tiles > summary .set-l { font-weight: 500; }
+.set-more-tiles .set-more-in { display: grid; gap: 10px; padding-top: 10px; }
+/* it grows open and folds shut, when Animations are on (and the browser can animate to its height) */
+@supports selector(::details-content) {
+  :root:not(.still) .set-more { interpolate-size: allow-keywords; }
+  :root:not(.still) .set-more::details-content { height: 0; overflow: clip; opacity: 0;
+    transition: height .4s var(--ease-out), opacity .3s ease, content-visibility .4s allow-discrete; }
+  :root:not(.still) .set-more[open]::details-content { height: auto; opacity: 1; }
+  :root:not(.still) .set-more > summary .set-chev { transition: rotate .35s var(--ease-spring); }
+}

@@ -251,13 +251,14 @@
     // the Sunday email goes to your account's email address (Google's, or the one you signed up with)
     // Just for you, and the alert choices: only while signed in (they're kept with your account)
     document.getElementById('setMineSec').hidden = !u;
-    document.getElementById('setAlMore').hidden = document.getElementById('setAlMoreH').hidden = !u;
-    if (u) window.tn.tip?.({ id: 'alert-choices', for: '#setAlMoreH', title: 'Choose your alerts', text: 'Pick which Watchlist alerts you get, and set quiet hours so nothing arrives overnight. They follow you on every device you sign in on.' });
+    document.getElementById('setAlMore').hidden = !u;
+    if (u) window.tn.tip?.({ id: 'alert-choices', for: '#setAlMore > summary', title: 'Choose your alerts', text: 'Pick which Watchlist alerts you get, and set quiet hours so nothing arrives overnight. They follow you on every device you sign in on.' });
     const dg = document.getElementById('setDigest'); dg.disabled = !u; dg.checked = !!u && !!prefs.get().digest;
     document.getElementById('dgNow').textContent = !u ? 'Sign in to get a short round-up of your Watchlist each Sunday morning'
       : dg.checked ? 'On. Each Sunday morning: new episodes, arrivals and what’s leaving from your Watchlist, sent to your account’s email'
       : 'A short round-up each Sunday morning: new episodes, arrivals and what’s leaving from your Watchlist';
   };
   acct(); addEventListener('tn:account', acct); addEventListener('tn:prefs', acct);
+  window.tn.tip?.({ id: 'settings-more', for: '.set-more:not([hidden]) > summary', title: 'More settings', text: 'The everyday settings sit at the top of each group. Open More for the rest: they all still work the same.' });
   show();
 })();

@@ -40,8 +40,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=2.33.3">
-  <link rel="stylesheet" href="settings.css?v=2.33.3">
+  <link rel="stylesheet" href="styles.css?v=2.34.0">
+  <link rel="stylesheet" href="settings.css?v=2.34.0">
 </head>
 <body>
   <a class="skip" href="#main">Skip to the page</a>
@@ -87,7 +87,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 2.33.3</span>
+      <span class="side-ver">Tenner 2.34.0</span>
     </div>
   </div>
 
@@ -131,10 +131,15 @@
             <label class="set-row"><span class="set-l">Show<small>Shows, films or both, to start with</small></span>
               <select name="kind"><option value="tv">Shows</option><option value="movie">Films</option><option value="both">Shows and films</option></select></label>
             <button type="button" class="set-row set-link" id="setMine"><span class="set-l">My services<small id="mineNow">All six</small></span><span class="set-pill">Choose</span></button>
-            <label class="set-row"><span class="set-l">Up and down arrows<small>How far each title has moved since yesterday</small></span>
-              <input type="checkbox" switch role="switch" name="moves"><i class="sw" aria-hidden="true"></i></label>
-            <label class="set-row"><span class="set-l">Star ratings<small>TMDB's ratings on posters and lists</small></span>
-              <input type="checkbox" switch role="switch" name="ratings"><i class="sw" aria-hidden="true"></i></label>
+            <details class="set-more">
+              <summary class="set-row"><span class="set-l">More<small>Up and down arrows and star ratings</small></span><span class="set-chev" aria-hidden="true"></span></summary>
+              <div class="set-more-in">
+                <label class="set-row"><span class="set-l">Up and down arrows<small>How far each title has moved since yesterday</small></span>
+                  <input type="checkbox" switch role="switch" name="moves"><i class="sw" aria-hidden="true"></i></label>
+                <label class="set-row"><span class="set-l">Star ratings<small>TMDB's ratings on posters and lists</small></span>
+                  <input type="checkbox" switch role="switch" name="ratings"><i class="sw" aria-hidden="true"></i></label>
+              </div>
+            </details>
           </div>
         </section>
         <section class="set-sec" aria-labelledby="setHTitles">
@@ -142,10 +147,15 @@
           <div class="set-group">
             <label class="set-row"><span class="set-l">Play trailers<small>In Tenner, or on YouTube</small></span>
               <select name="trailers"><option value="here">In Tenner</option><option value="youtube">On YouTube</option></select></label>
-            <label class="set-row"><span class="set-l">Start trailers by themselves<small>When a title opens on a computer, with the sound off</small></span>
-              <input type="checkbox" switch role="switch" name="autoplay"><i class="sw" aria-hidden="true"></i></label>
-            <label class="set-row"><span class="set-l">Hide titles rated 18<small>On the charts and in Browse</small></span>
-              <input type="checkbox" switch role="switch" name="no18"><i class="sw" aria-hidden="true"></i></label>
+            <details class="set-more">
+              <summary class="set-row"><span class="set-l">More<small>Trailers starting by themselves, and titles rated 18</small></span><span class="set-chev" aria-hidden="true"></span></summary>
+              <div class="set-more-in">
+                <label class="set-row"><span class="set-l">Start trailers by themselves<small>When a title opens on a computer, with the sound off</small></span>
+                  <input type="checkbox" switch role="switch" name="autoplay"><i class="sw" aria-hidden="true"></i></label>
+                <label class="set-row"><span class="set-l">Hide titles rated 18<small>On the charts and in Browse</small></span>
+                  <input type="checkbox" switch role="switch" name="no18"><i class="sw" aria-hidden="true"></i></label>
+              </div>
+            </details>
           </div>
         </section>
         <!-- signed in only: Watched, Not interested, notes, Spoiler shield and Your Tenner -->
@@ -154,15 +164,20 @@
           <div class="set-group">
             <label class="set-row"><span class="set-l">Spoiler shield<small>Blurs episode names, pictures and descriptions after where you’re up to. Tap one to see it</small></span>
               <input type="checkbox" switch role="switch" name="spoil"><i class="sw" aria-hidden="true"></i></label>
-            <label class="set-row"><span class="set-l">Watched leaves the Watchlist<small>When you mark something as watched, take it off your Watchlist too</small></span>
-              <input type="checkbox" switch role="switch" name="seenoff"><i class="sw" aria-hidden="true"></i></label>
-            <label class="set-row"><span class="set-l">Notes on my Watchlist<small>Your notes under each title, only you can see them</small></span>
-              <input type="checkbox" switch role="switch" name="notewl"><i class="sw" aria-hidden="true"></i></label>
-            <label class="set-row"><span class="set-l">Hide titles I’m not interested in<small>From Home, Browse, Discover and For You</small></span>
-              <input type="checkbox" switch role="switch" name="hideni"><i class="sw" aria-hidden="true"></i></label>
             <button type="button" class="set-row set-link" id="setHidden"><span class="set-l">Not interested<small id="hidNow">Nothing hidden</small></span><span class="set-pill">Manage</span></button>
-            <label class="set-row"><span class="set-l">Your Tenner<small>What you’ve watched and your favourite genres, on your account page</small></span>
-              <input type="checkbox" switch role="switch" name="stats"><i class="sw" aria-hidden="true"></i></label>
+            <details class="set-more">
+              <summary class="set-row"><span class="set-l">More<small>Watched titles, notes, hiding titles and Your Tenner</small></span><span class="set-chev" aria-hidden="true"></span></summary>
+              <div class="set-more-in">
+                <label class="set-row"><span class="set-l">Watched leaves the Watchlist<small>When you mark something as watched, take it off your Watchlist too</small></span>
+                  <input type="checkbox" switch role="switch" name="seenoff"><i class="sw" aria-hidden="true"></i></label>
+                <label class="set-row"><span class="set-l">Notes on my Watchlist<small>Your notes under each title, only you can see them</small></span>
+                  <input type="checkbox" switch role="switch" name="notewl"><i class="sw" aria-hidden="true"></i></label>
+                <label class="set-row"><span class="set-l">Hide titles I’m not interested in<small>From Home, Browse, Discover and For You</small></span>
+                  <input type="checkbox" switch role="switch" name="hideni"><i class="sw" aria-hidden="true"></i></label>
+                <label class="set-row"><span class="set-l">Your Tenner<small>What you’ve watched and your favourite genres, on your account page</small></span>
+                  <input type="checkbox" switch role="switch" name="stats"><i class="sw" aria-hidden="true"></i></label>
+              </div>
+            </details>
           </div>
         </section>
       </div>
@@ -175,27 +190,34 @@
               <input type="checkbox" switch role="switch" id="setAlerts"><i class="sw" aria-hidden="true"></i></label>
             <label class="set-row"><span class="set-l">Sunday email<small id="dgNow">A short round-up each Sunday morning: new episodes, arrivals and what’s leaving from your Watchlist</small></span>
               <input type="checkbox" switch role="switch" name="digest" id="setDigest"><i class="sw" aria-hidden="true"></i></label>
-          </div>
-          <!-- signed in only: which alerts, and quiet hours (the Worker reads them from your account) -->
-          <h3 class="set-sub" id="setAlMoreH" hidden>Alert me about</h3>
-          <div class="set-group" id="setAlMore" hidden aria-labelledby="setAlMoreH" role="group">
-            <label class="set-row"><span class="set-l">Arrivals and new seasons</span><input type="checkbox" switch role="switch" name="alarr"><i class="sw" aria-hidden="true"></i></label>
-            <label class="set-row"><span class="set-l">New episodes out today</span><input type="checkbox" switch role="switch" name="alep"><i class="sw" aria-hidden="true"></i></label>
-            <label class="set-row"><span class="set-l">Leaving soon</span><input type="checkbox" switch role="switch" name="alleave"><i class="sw" aria-hidden="true"></i></label>
-            <label class="set-row"><span class="set-l">On Freeview today</span><input type="checkbox" switch role="switch" name="altv"><i class="sw" aria-hidden="true"></i></label>
-            <label class="set-row"><span class="set-l">Cheaper to rent or buy</span><input type="checkbox" switch role="switch" name="alprice"><i class="sw" aria-hidden="true"></i></label>
-            <label class="set-row"><span class="set-l">Quiet hours<small>Arrivals wait until the morning</small></span>
-              <select name="quiet"><option value="off">Off</option><option value="22-7">10pm to 7am</option><option value="23-8">11pm to 8am</option><option value="21-9">9pm to 9am</option></select></label>
+            <!-- signed in only: which alerts, and quiet hours (the Worker reads them from your account) -->
+            <details class="set-more" id="setAlMore" hidden>
+              <summary class="set-row"><span class="set-l">Alert me about<small>Arrivals, new episodes, leaving soon, Freeview, prices and quiet hours</small></span><span class="set-chev" aria-hidden="true"></span></summary>
+              <div class="set-more-in">
+                <label class="set-row"><span class="set-l">Arrivals and new seasons</span><input type="checkbox" switch role="switch" name="alarr"><i class="sw" aria-hidden="true"></i></label>
+                <label class="set-row"><span class="set-l">New episodes out today</span><input type="checkbox" switch role="switch" name="alep"><i class="sw" aria-hidden="true"></i></label>
+                <label class="set-row"><span class="set-l">Leaving soon</span><input type="checkbox" switch role="switch" name="alleave"><i class="sw" aria-hidden="true"></i></label>
+                <label class="set-row"><span class="set-l">On Freeview today</span><input type="checkbox" switch role="switch" name="altv"><i class="sw" aria-hidden="true"></i></label>
+                <label class="set-row"><span class="set-l">Cheaper to rent or buy</span><input type="checkbox" switch role="switch" name="alprice"><i class="sw" aria-hidden="true"></i></label>
+                <label class="set-row"><span class="set-l">Quiet hours<small>Arrivals wait until the morning</small></span>
+                  <select name="quiet"><option value="off">Off</option><option value="22-7">10pm to 7am</option><option value="23-8">11pm to 8am</option><option value="21-9">9pm to 9am</option></select></label>
+              </div>
+            </details>
           </div>
         </section>
         <section class="set-sec" aria-labelledby="setHData">
           <h2 class="set-h" id="setHData">Your data</h2>
           <div class="set-tiles">
             <button type="button" class="set-tile" id="setMove"><i class="set-ic" style="--c:#0a84ff" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="11" height="8" rx="1.6"/><path d="M1.5 16h14"/><rect x="16" y="8" width="6" height="11" rx="1.6"/></svg></i><span class="set-l">Move to another device<small>A code to scan or a link to open on your other phone or computer</small></span><span class="set-chev" aria-hidden="true"></span></button>
-            <button type="button" class="set-tile" id="setExport"><i class="set-ic" style="--c:#30d158" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 14V3.5M8 7.2l4-3.7 4 3.7M7.5 10H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1.5"/></svg></i><span class="set-l">Export Watchlist and progress<small>A file to move them to another device</small></span><span class="set-chev" aria-hidden="true"></span></button>
             <label class="set-tile"><i class="set-ic" style="--c:#bf5af2" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.5V14M8 10.3l4 3.7 4-3.7M3.5 14.5V18a2.5 2.5 0 0 0 2.5 2.5h12a2.5 2.5 0 0 0 2.5-2.5v-3.5"/></svg></i><span class="set-l">Import from a file<small>A Tenner export, or your Letterboxd, IMDb, Trakt or Netflix history. Adds to what's already here</small></span><span class="set-chev" aria-hidden="true"></span>
               <input type="file" id="setImport" accept="application/json,.json,text/csv,.csv" class="set-file"></label>
-            <button type="button" class="set-tile set-danger" id="setClear"><i class="set-ic" style="--c:#ff375f" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6.5h16M9.5 6.5V4.5h5v2M6 6.5l1 13a1.6 1.6 0 0 0 1.6 1.5h6.8a1.6 1.6 0 0 0 1.6-1.5l1-13M10 10.5v6.5M14 10.5v6.5"/></svg></i><span class="set-l">Clear everything<small>Watchlist, progress, My services and these settings</small></span></button>
+            <details class="set-more set-more-tiles">
+              <summary class="set-tile"><span class="set-l">More<small>Export, or clear everything</small></span><span class="set-chev" aria-hidden="true"></span></summary>
+              <div class="set-more-in">
+                <button type="button" class="set-tile" id="setExport"><i class="set-ic" style="--c:#30d158" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 14V3.5M8 7.2l4-3.7 4 3.7M7.5 10H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1.5"/></svg></i><span class="set-l">Export Watchlist and progress<small>A file to move them to another device</small></span><span class="set-chev" aria-hidden="true"></span></button>
+                <button type="button" class="set-tile set-danger" id="setClear"><i class="set-ic" style="--c:#ff375f" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6.5h16M9.5 6.5V4.5h5v2M6 6.5l1 13a1.6 1.6 0 0 0 1.6 1.5h6.8a1.6 1.6 0 0 0 1.6-1.5l1-13M10 10.5v6.5M14 10.5v6.5"/></svg></i><span class="set-l">Clear everything<small>Watchlist, progress, My services and these settings</small></span></button>
+              </div>
+            </details>
           </div>
         </section>
       </div>
@@ -225,7 +247,7 @@
   </main>
 
 
-  <script src="shell.js?v=2.33.3" defer></script>
-  <script src="settings.js?v=2.33.3" defer></script>
+  <script src="shell.js?v=2.34.0" defer></script>
+  <script src="settings.js?v=2.34.0" defer></script>
 </body>
 </html>
