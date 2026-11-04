@@ -65,7 +65,10 @@
   const det = (k) => state.titles?.items?.[k] || null;
   const keyOf = (it, type) => (/^\d+$/.test(String(it.id ?? '')) ? `${(it.type || type) === 'movie' ? 'm' : 't'}${it.id}` : null);
   const tmdbUrl = (type, id) => `https://www.themoviedb.org/${type}/${id}`;
-  const all = () => !state.picks.length;
+  // phones show just the Top 10 and Top rated as rows of poster cards, for the whole of the UK (the services rail is a
+  // computer-sized control, so it's put away there and doesn't quietly narrow the rows)
+  const PHONE = matchMedia('(max-width: 719px)');
+  const all = () => PHONE.matches || !state.picks.length;
   const picked = (k) => all() || state.picks.includes(k);
   const pickedAny = (l) => all() || (l || []).some(picked);
   const and = (l) => (l.length > 1 ? `${l.slice(0, -1).join(', ')} and ${l[l.length - 1]}` : l[0] || '');
@@ -280,7 +283,7 @@
   });
   window.tn.arrows($('#bxHero'), () => [...$('#bxHero').querySelectorAll('[data-hero]')], (b) => showHero(+b.dataset.hero));
   // it moves on by itself only with Settings → Animations on, and waits while you're reading or looking at a title
-  const held = () => document.hidden || window.tnSheet?.isOpen() || $('#bxHero').matches(':hover, :focus-within') || document.documentElement.classList.contains('still') || reduce;
+  const held = () => PHONE.matches || document.hidden || window.tnSheet?.isOpen() || $('#bxHero').matches(':hover, :focus-within') || document.documentElement.classList.contains('still') || reduce;
   function startHero() {
     clearTimeout(heroTimer); if (heroList.length < 2) return;
     heroTimer = setTimeout(function tick() { if (held()) { heroTimer = setTimeout(tick, 2000); return; } showHero((state.hero + 1) % heroList.length); }, 9000);
@@ -291,15 +294,31 @@
       <header class="bx-sec-hd"><div><h2 id="${id}">${title}</h2>${sub ? `<p>${esc(sub)}</p>` : ''}</div>
         <span class="bx-sec-acts">${more ? `<a class="bx-more" href="${more}">See all</a>` : ''}<button type="button" class="bx-r bx-r-s" data-scroll="-1" aria-label="Back">${I.left}</button><button type="button" class="bx-r bx-r-s" data-scroll="1" aria-label="More">${I.right}</button></span></header>
       <ul class="bx-row ${cls}">${items.join('')}</ul></section>`;
+  // a poster card: the artwork, its score in a chip, the title and a second line, and a Watchlist button
+  const card = (it, info, sub) => `<li class="bx-pc"><a href="${esc(it.url || '#')}" target="_blank" rel="noopener" ${reg(info)}><span class="bx-pc-art">${poster(it)}</span>${rating(it.rating).replace('bx-star', 'bx-star bx-chip')}
+        <span class="bx-pc-copy"><b>${esc(it.title)}</b><small>${esc(sub)}</small></span></a>${saveBtn(info, ' bx-pc-add')}</li>`;
+  // phones: the UK's Top 10 and the top rated, each a row of cards to swipe through (one of each for shows and films)
+  function phoneRows() {
+    const word = (k) => (k === 'movie' ? 'films' : 'shows');
+    const top = kinds().map((k) => row(`bxP10-${k}`, `Top 10 ${word(k)} in the UK`, 'Updated every hour', (state.data?.overall?.[k] || []).slice(0, 10).map((it0, i) => {
+      const it = { ...it0, type: it0.type || k };
+      return card(it, infoFor(it, `No. ${i + 1} ${word(k).slice(0, -1)} in the UK`), [`No. ${i + 1}`, it.year].filter(Boolean).join(' · '));
+    }), 'bx-row-p'));
+    const g = state.genre != null ? state.cat?.genres?.[state.genre] : null;
+    const best = kinds().map((k) => row(`bxPTr-${k}`, `Top rated ${word(k)}${g ? ` in ${esc(g)}` : ''}`, 'The highest scores from viewers', topRated(k).map((it, i) => card(it, infoFor(it, `No. ${i + 1} top rated`), it.year)),
+      'bx-row-p', `browse.html#${esc(String(new URLSearchParams({ c: 'top', ...(k === 'movie' ? { k: 'movie' } : {}) })))}`));
+    return top.join('') + best.join('');
+  }
   function drawRows() {
+    if (PHONE.matches) {
+      $('#bxRows').innerHTML = phoneRows() || '<p class="bx-empty">Nothing matches. Try another genre.</p>';
+      for (const r of main.querySelectorAll('.bx-row')) edges(r);
+      return;
+    }
     const cat = catalogue(), g = state.genre != null ? state.cat?.genres?.[state.genre] : null;
     const words = { both: 'shows and films', tv: 'shows', movie: 'films' }[state.kind];
     // most popular: posters with their score in a chip (the first and third references)
-    const top = cat.slice().sort((a, b) => b.p - a.p).slice(0, 14).map(fromCat).map((it) => {
-      const info = infoFor(it, 'Popular');
-      return `<li class="bx-pc"><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(info)}><span class="bx-pc-art">${poster(it)}</span>${rating(it.rating).replace('bx-star', 'bx-star bx-chip')}
-        <span class="bx-pc-copy"><b>${esc(it.title)}</b><small>${esc(it.year)}</small></span></a>${saveBtn(info, ' bx-pc-add')}</li>`;
-    });
+    const top = cat.slice().sort((a, b) => b.p - a.p).slice(0, 14).map(fromCat).map((it) => card(it, infoFor(it, 'Popular'), it.year));
     // newest: posters with the title and score beneath (the second reference)
     const today = new Date().toISOString().slice(0, 10);
     const fresh = cat.filter((x) => x.d && x.d <= today).sort((a, b) => (b.d > a.d) - (b.d < a.d) || b.p - a.p).slice(0, 14).map(fromCat).map((it) => {
@@ -312,7 +331,6 @@
       + kinds().map(topList).join('')
       || '<p class="bx-empty">Nothing matches. Try another service or genre.</p>';
     for (const r of main.querySelectorAll('.bx-row')) edges(r);
-    clScenes();
   }
   // ---------- For you (signed in): picks from what you swiped right on in Discover (and loved and saved) ----------
   // shell.js's forYou weighs the genres; TMDB's More Like This for your latest right swipes (shell.js's moreLike) lifts
@@ -333,8 +351,7 @@
     fy.sig = sub + r.picks.map((x) => x.i).join();
     const items = r.picks.map(fromCat).map((it) => {
       const info = infoFor(it, 'For you');
-      return `<li class="bx-pc"><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(info)}><span class="bx-pc-art">${poster(it)}</span>${rating(it.rating).replace('bx-star', 'bx-star bx-chip')}
-        <span class="bx-pc-copy"><b>${esc(it.title)}</b><small>${esc([it.type === 'movie' ? 'Film' : 'Series', it.year].filter(Boolean).join(' · '))}</small></span></a>${saveBtn(info, ' bx-pc-add')}</li>`;
+      return card(it, info, [it.type === 'movie' ? 'Film' : 'Series', it.year].filter(Boolean).join(' · '));
     });
     return row('bxFy', 'For you', sub, items, 'bx-row-p');
   }
@@ -342,7 +359,7 @@
   let fyT = 0;
   function drawFy() {
     const box = $('#bxRows'), el = box?.querySelector('[aria-labelledby="bxFy"]');
-    if (!state.data || !box) return;
+    if (!state.data || !box || PHONE.matches) return;
     if (el?.matches(':hover, :focus-within') || window.tnSheet?.isOpen()) { clearTimeout(fyT); fyT = setTimeout(drawFy, 1500); return; }
     const was = fy.sig, html = forYouRow();
     if (el && was && was === fy.sig) return;   // nothing new: leave it (and where you've scrolled it to) alone
@@ -359,15 +376,18 @@
 
   // top rated at a glance: the home page's chart list (.cl in styles.css), ten each of the best-reviewed shows and films
   // with enough votes to trust (the same test as Browse's Top rated), kept to the service and genre you've picked
-  function topList(k) {
-    const g = state.genre != null ? state.cat?.genres?.[state.genre] : null;
+  function topRated(k) {
     const pool = catalogue().filter((x) => x.t === k && x.r), pass = (min) => pool.filter((x) => x.v >= min);
     let l = pass(300); if (l.length < 10) l = pass(100);
-    l = l.sort((a, b) => b.r - a.r || b.v - a.v).slice(0, 10).map(fromCat);
+    return l.sort((a, b) => b.r - a.r || b.v - a.v).slice(0, 10).map(fromCat);
+  }
+  function topList(k) {
+    const g = state.genre != null ? state.cat?.genres?.[state.genre] : null;
+    const l = topRated(k);
     if (!l.length) return '';
     const q = new URLSearchParams({ c: 'top', ...(k === 'movie' ? { k: 'movie' } : {}), ...(all() ? {} : { s: state.picks.join(',') }) });
     const label = (it) => (it.on || []).filter(picked).map((x) => svcOf(x)?.label).filter(Boolean).slice(0, 2).join(', ');
-    return `<section class="clist bx-clist" aria-labelledby="bxCl-${k}" data-scenes="${esc(l.slice(0, 6).map((it) => keyOf(it, k)).join(','))}">
+    return `<section class="clist bx-clist" aria-labelledby="bxCl-${k}">
       <div class="row-hd"><h2 class="row-h" id="bxCl-${k}">Top rated ${k === 'movie' ? 'films' : 'shows'}${g ? ` in ${esc(g)}` : ''} at a glance</h2>
         <a class="see-all" href="browse.html#${esc(String(q))}">See more in Browse<span class="chev" aria-hidden="true"></span></a></div>
       <ol class="cl">${l.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(infoFor(it, `No. ${i + 1} top rated${all() ? '' : ` ${where()}`}`))}>
@@ -376,19 +396,6 @@
         <span class="cl-t"><b>${esc(it.title)}</b><small>${esc([state.picks.length === 1 ? '' : label(it), it.year].filter(Boolean).join(' · '))}</small></span>
         ${it.rating ? `<span class="cl-r">★ ${it.rating.toFixed(1)}</span>` : ''}
       </a></li>`).join('')}</ol></section>`;
-  }
-  // on phones each Top rated list is a box like the Top 10, with a scene in grey behind its heading: the wide artwork
-  // comes from browse-more.json (already kept on the device by the service worker), fetched once and only on phones
-  let more = null;
-  function clScenes() {
-    if (!matchMedia('(max-width: 719px)').matches) return;
-    if (!more) { if (more === null) { more = false; fetch('data/browse-more.json').then((r) => (r.ok ? r.json() : null)).then((m) => { more = m?.items ? m : 0; clScenes(); }).catch(() => { more = 0; }); } return; }
-    const hour = Math.floor(Date.now() / 36e5);
-    for (const sec of main.querySelectorAll('.bx-clist[data-scenes]:not(.has-bg)')) {
-      const pics = sec.dataset.scenes.split(',').map((k) => more.items[k]?.[1]).filter(Boolean).slice(0, 4); if (!pics.length) continue;
-      sec.insertAdjacentHTML('afterbegin', `<div class="bx-tt-bg" aria-hidden="true">${pics.map((b, i) => { const on = i === hour % pics.length; return `<img${on ? ' class="on"' : ''} src="${esc(more.img + b)}" alt="" loading="${on ? 'eager' : 'lazy'}" decoding="async">`; }).join('')}</div>`);
-      sec.classList.add('has-bg');
-    }
   }
   // each row's arrows, and its edges frosting away when there's more to scroll
   function edges(r) {
@@ -566,6 +573,7 @@
       });
     }
   }
+  PHONE.addEventListener('change', () => state.data && draw());   // turning a tablet round, or a narrowed window
   addEventListener('popstate', () => state.data && openFromUrl());   // Forward to a title you'd closed opens it again
   load();
 })();

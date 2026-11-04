@@ -37,6 +37,15 @@ body.home { overflow-x: clip; }
   .bx-clist { order: 2; }
   #bxRows > * { scroll-margin-top: 70px; }
 }
+/* phones: just the Top 10 and Top rated, as rows of poster cards to swipe (home.js's phoneRows); the featured title, the
+   services, For you and the side boxes are for bigger screens */
+@media (max-width: 719px) {
+  .bx-hd .bx-rail, .bx-hero, .bx-side, .bx-amb, .bd-ext { display: none; }
+  .bx-pc-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bx-hd { margin: 0; }
+  .bx { padding-bottom: 24px; }
+  #bxRows > .bx-sec:first-child { margin-top: 8px; }
+}
 
 /* ---------- the featured title ---------- */
 .bx-hero { position: relative; isolation: isolate; overflow: hidden; min-height: clamp(440px, 58vh, 600px); border-radius: var(--r); color: #fff; background: #16161a;
@@ -202,27 +211,6 @@ body.home { overflow-x: clip; }
 .bx-clist .row-hd { margin: 30px 0 8px; }
 .bx-clist .row-h { font: 700 22px/1.2 var(--font); letter-spacing: -.02em; }
 @media (min-width: 1300px) { .bx-clist .cl { column-gap: 28px; } }
-/* on phones: a box like the Top 10 (numbered, compact, a scene in grey behind the heading) */
-@media (min-width: 720px) { .bx-clist .bx-tt-bg { display: none; } }
-@media (max-width: 719px) {
-  .bx-clist { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; margin-top: 16px; padding: 16px 16px 14px;
-    border-radius: var(--r); background: var(--ph-box); }
-  .bx-clist .row-hd { display: contents; }
-  .bx-clist .row-h { margin: 0 0 8px; font: 700 19px/1.2 var(--font); letter-spacing: -.02em; }
-  .bx-clist.has-bg .row-h { display: flex; align-items: flex-end; min-height: 96px; text-shadow: 0 1px 12px color-mix(in srgb, var(--bg) 70%, transparent); }
-  /* See more sits under the list, centred, like the Top 10's */
-  .bx-clist .see-all { order: 1; align-self: center; justify-content: center; min-height: 44px; margin: 6px 0 0; padding: 0 12px; font-size: 15px; }
-  .bx-clist .cl { margin: 0 -8px; }
-  .bx-clist .cl li, .bx-clist .cl li:nth-child(5n + 1) { border-top: .5px solid var(--fr-rim); }
-  .bx-clist .cl li:first-child { border-top: 0; }
-  .bx-clist .cl a { gap: 10px; padding: 4px 8px; border-radius: var(--r); -webkit-tap-highlight-color: transparent; }
-  .bx-clist .cl-n { width: 18px; font: 600 15px/1 var(--font); }
-  .bx-clist .cl img, .bx-clist .cl-ph { width: 26px; height: 39px; box-shadow: none; background: var(--fill); }
-  .bx-clist .cl-t { gap: 1px; }
-  .bx-clist .cl-t b { font: 600 14px/1.25 var(--font); letter-spacing: -.012em; }
-  .bx-clist .cl-t small { font-size: 12px; }
-  .bx-clist .cl-r { font-size: 12px; }
-}
 
 /* ---------- the side column: frosted panels ---------- */
 .bx-panel { padding: 16px 16px 14px; border-radius: var(--r); }
