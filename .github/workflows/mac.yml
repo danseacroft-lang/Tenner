@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # only to publish the ready-made app as a download on GitHub's Releases page
 
 jobs:
   build:
@@ -27,3 +27,11 @@ jobs:
           name: Tenner-Layout
           path: mac/build/Tenner-Layout.zip
           retention-days: 30
+      - name: Publish it as a download (main only)
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete mac-app --yes --cleanup-tag 2>/dev/null || true
+          gh release create mac-app "mac/build/Tenner-Layout.zip" --title "Tenner Layout (Mac app)" --target "$GITHUB_SHA" \
+            --notes "The ready-made Tenner Layout app. Unzip it, move it to Applications, and the first time open System Settings → Privacy & Security → Open Anyway."

@@ -12,8 +12,8 @@ instructions you paste to Claude, who makes the real change.
 2. Get the folder: `git clone https://github.com/danseacroft-lang/Tenner.git` (or `git pull` in your existing copy).
 3. Run `Tenner/mac/build.sh --install`. Tenner Layout opens and stays in your Applications folder (and Launchpad).
 
-**Or download it ready-made:** on GitHub, Actions → "Tenner Layout (Mac app)" → the latest run → Artifacts →
-Tenner-Layout. Unzip it and move it to Applications. The first time, macOS says it can't check the developer: open
+**Or download it ready-made:** https://github.com/danseacroft-lang/Tenner/releases/download/mac-app/Tenner-Layout.zip
+Unzip it and move it to Applications. The first time, macOS says it can't check the developer: open
 System Settings → Privacy & Security and click **Open Anyway** (it's built by GitHub from this folder, not signed by Apple).
 
 Needs macOS 13 Ventura or later.
