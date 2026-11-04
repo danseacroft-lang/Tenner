@@ -775,7 +775,7 @@ a.tb-btn:hover { text-decoration: none; }
 .sh-faces a { display: grid; justify-items: center; gap: 1px; text-align: center; color: inherit; text-decoration: none; }
 .sh-face { display: grid; place-items: center; width: 76px; aspect-ratio: 1; border-radius: 50%; overflow: hidden; color: #fff; font: 600 22px/1 var(--font);
   background: linear-gradient(160deg, hsl(var(--h) 30% 60%), hsl(var(--h) 34% 36%)); box-shadow: 0 4px 12px rgba(0, 0, 0, .18); transition: transform .3s var(--ease-out); }
-.sh-face img { width: 100%; height: 100%; object-fit: cover; object-position: center 22%; }
+.sh-face img { width: 100%; height: 100%; aspect-ratio: 1; border-radius: 50%; object-fit: cover; object-position: center 22%; }
 .sh-faces b { margin-top: 7px; width: 100%; font: 600 13px/1.2 var(--font); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .sh-faces small { width: 100%; color: var(--label2); font-size: 12px; line-height: 1.25; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 @media (hover: hover) { .sh-faces a:hover .sh-face { transform: scale(1.06); } }
@@ -1142,7 +1142,8 @@ a.sh-prov:hover { text-decoration: none; }
 /* a person's sheet (person.js): the title sheet's layout, with their portrait as a round picture where the poster hangs */
 .ps-face { display: grid; place-items: center; aspect-ratio: 1; border-radius: 50%; overflow: hidden; color: #fff; font: 600 30px/1 var(--font);
   background: linear-gradient(160deg, hsl(var(--h, 220) 45% 46%), hsl(calc(var(--h, 220) + 40) 55% 22%)); }
-.ps-face img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
+.ps-face:has(img), .sh-face:has(img), .hc-faces > span:has(img) { background: none; }
+.ps-face img { width: 100%; height: 100%; aspect-ratio: 1; border-radius: 50%; object-fit: cover; object-position: center 20%; }
 .sh-art .ps-sk { background: var(--fill); }
 .sh-art > .ph.ps-sk { -webkit-mask-image: none; mask-image: none; background: linear-gradient(var(--fill), transparent); }
 .ps-on { position: absolute; left: 6px; bottom: 6px; display: flex; gap: 3px; }
@@ -1156,7 +1157,7 @@ a.sh-prov:hover { text-decoration: none; }
 /* the menu's search: a person is a round face where a title has its poster */
 .ss-r .ss-pf { display: grid; place-items: center; width: 34px; height: 34px; margin: 0 0 0; flex: none; border-radius: 50%; overflow: hidden; color: #fff; font: 600 13px/1 var(--font);
   background: hsl(var(--h, 220) 40% 38%); box-shadow: 0 0 0 .5px var(--sep); }
-.ss-r .ss-pf img { width: 100%; height: 100%; border-radius: 0; box-shadow: none; object-position: center 20%; }
+.ss-r .ss-pf img { width: 100%; height: 100%; border-radius: 50%; box-shadow: none; object-position: center 20%; }
 @media (hover: hover) and (pointer: fine) { a.sh-prov:active { filter: var(--press); } }
 
 /* ============================================================ pointer interactions, the macOS way
@@ -1608,7 +1609,7 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .ft-ok, .s
 .hc-faces > span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; color: #fff; font: 600 11px/1 var(--font);
   background: linear-gradient(160deg, hsl(var(--h, 220) 30% 60%), hsl(var(--h, 220) 34% 36%)); box-shadow: 0 0 0 2px var(--card); }
 .hc-faces > span + span { margin-left: -8px; }
-.hc-faces img { width: 100%; height: 100%; object-fit: cover; object-position: center 22%; }
+.hc-faces img { width: 100%; height: 100%; aspect-ratio: 1; border-radius: 50%; object-fit: cover; object-position: center 22%; }
 .hc-wait .hc-faces > span { background: var(--fill); }
 .hc-who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (prefers-reduced-transparency: reduce) { .hc { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--card); } }
