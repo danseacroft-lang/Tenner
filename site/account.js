@@ -211,6 +211,7 @@
     $('#acStats').innerHTML = `<div class="ac-nums">${num(seen.length, seen.length === 1 ? 'title watched' : 'titles watched')}${num(eps, eps === 1 ? 'episode' : 'episodes')}${num(hrs, hrs === 1 ? 'hour, about' : 'hours, about')}${num(wl.length, 'on your Watchlist')}</div>`
       + `<div class="set-row"><span class="set-l">Favourite genres<small>${esc(genres.length ? genres.join(', ') : 'Watch, save or love a few titles to see yours')}</small></span></div>`
       + `<div class="set-row"><span class="set-l">Where you watch most<small>${esc(where.length ? where.join(', ') : 'We’ll know once you’ve watched a few things')}</small></span></div>`;
+    tn.tip?.({ id: 'your-tenner', for: '#acStats', title: 'Your Tenner', text: 'Your watching in numbers: titles watched, episodes, hours, your favourite genres and where you watch most. It grows as you mark things as watched.' });
   }
   ['tn:synced', 'tn:marks', 'tn:prefs'].forEach((e) => addEventListener(e, () => { if (me) stats(); }));
 

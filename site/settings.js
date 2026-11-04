@@ -252,6 +252,7 @@
     // Just for you, and the alert choices: only while signed in (they're kept with your account)
     document.getElementById('setMineSec').hidden = !u;
     document.getElementById('setAlMore').hidden = document.getElementById('setAlMoreH').hidden = !u;
+    if (u) window.tn.tip?.({ id: 'alert-choices', for: '#setAlMoreH', title: 'Choose your alerts', text: 'Pick which Watchlist alerts you get, and set quiet hours so nothing arrives overnight. They follow you on every device you sign in on.' });
     const dg = document.getElementById('setDigest'); dg.disabled = !u; dg.checked = !!u && !!prefs.get().digest;
     document.getElementById('dgNow').textContent = !u ? 'Sign in to get a short round-up of your Watchlist each Sunday morning'
       : dg.checked ? 'On. Each Sunday morning: new episodes, arrivals and what’s leaving from your Watchlist, sent to your account’s email'

@@ -320,6 +320,7 @@
         <small class="sh-epn">${nextOne ? 'Up next · ' : ''}Episode ${e.n}</small><b${ah}>${esc(e.name)}</b>${e.ov ? `<p${ah}>${esc(e.ov)}</p>` : ''}<small>${esc([when, runtime(e.rt)].filter(Boolean).join(' · '))}</small></li>`;
     }).join('')}</ul>`;
     if (!reduce) el.firstChild.classList.add('sh-in');
+    if (shield && el.querySelector('.spoil')) window.tn.tip?.({ id: 'spoiler-shield', for: '#shEps .spoil .sh-unspoil', title: 'Spoiler shield', text: 'Episodes after where you’re up to are blurred so nothing gets spoiled. Tap Show to see one, or turn it off in Settings.' });
     // the row starts at the episode you're up to
     const row = el.firstChild, at = row.querySelector('[data-up]');
     if (at) row.scrollLeft = at.offsetLeft - row.firstChild.offsetLeft;
@@ -439,6 +440,12 @@
         <p class="sh-foot" id="shFoot">Where-to-watch information from JustWatch, via TMDB.${info.tmdb ? ` <a href="${esc(info.tmdb)}" target="_blank" rel="noopener">More on TMDB</a>` : ''}</p>
       </div>`;
     fillCast(info); fillOv(info);
+    if ($('.sh-mine')) {   // Just for You (signed in) introduces itself, once each
+      const tip = window.tn.tip;
+      tip?.({ id: 'mark-watched', for: '.sh-seen', title: 'Mark as watched', text: 'Keep a list of everything you’ve watched. It’s on your Watchlist page, and by default it takes the title off your Watchlist too (change that in Settings).' });
+      tip?.({ id: 'not-interested', for: '.sh-hide', title: 'Not interested', text: 'Not for you? Tap this and it stays out of Home, Browse, Discover and For You. Bring it back here or in Settings.' });
+      tip?.({ id: 'private-notes', for: '.sh-note textarea', title: 'Your notes', text: 'Jot down why you saved something, or who recommended it. Only you can see it, and it shows under the title on your Watchlist.' });
+    }
     if (lg && !lgOk) showLogo(info, lg);
     if (d) fillMore(info);
   }
