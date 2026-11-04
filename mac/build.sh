@@ -14,7 +14,12 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
 echo "Building…"
-swiftc -O -parse-as-library -target "$(uname -m)-apple-macos13.0" TennerLayout.swift -o "$APP/Contents/MacOS/TennerLayout"
+# one app for both Intel and Apple-chip Macs
+for arch in arm64 x86_64; do
+  swiftc -O -parse-as-library -target "$arch-apple-macos13.0" TennerLayout.swift -o "build/TennerLayout-$arch"
+done
+lipo -create build/TennerLayout-arm64 build/TennerLayout-x86_64 -output "$APP/Contents/MacOS/TennerLayout"
+rm -f build/TennerLayout-arm64 build/TennerLayout-x86_64
 cp layout.js "$APP/Contents/Resources/"
 cp Info.plist "$APP/Contents/"
 

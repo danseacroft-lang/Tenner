@@ -19,6 +19,7 @@ jobs:
         run: |
           ./mac/build.sh
           test -x "mac/build/Tenner Layout.app/Contents/MacOS/TennerLayout"
+          lipo -info "mac/build/Tenner Layout.app/Contents/MacOS/TennerLayout" | grep -q x86_64   # Intel Macs too
           node --check mac/layout.js
       - name: Zip it for downloading
         run: cd mac/build && ditto -c -k --keepParent "Tenner Layout.app" "Tenner-Layout.zip"
