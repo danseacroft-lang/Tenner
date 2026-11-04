@@ -124,12 +124,12 @@ main:focus { outline: none; }
   view-transition-name: topbar;   /* it stays put while the page crossfades */
 }
 .top-row > * { position: relative; z-index: 1; animation: riseIn .6s var(--ease-out) both; }
-/* once the page scrolls, iOS's scroll edge: the page frosts and fades under the bar, with no line where it stops */
+/* once the page scrolls, iOS's scroll edge: the page fades into the page colour under the bar, with no line where it stops.
+   A soft gradient only, no blur: Safari clips a blur to the bar's own box (the bar is a backdrop root, as it has a
+   view-transition-name), which drew a hard line across the page right under the menu button. */
 .top-row::before {
   content: ""; position: absolute; z-index: 0; left: -50vw; right: -50vw; top: 0; bottom: -26px; pointer-events: none; opacity: 0; transition: opacity .3s ease;
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 90%, transparent) 40%, color-mix(in srgb, var(--bg) 60%, transparent) 75%, transparent);
-  -webkit-backdrop-filter: blur(22px) saturate(1.5); backdrop-filter: blur(22px) saturate(1.5);
-  -webkit-mask-image: linear-gradient(to bottom, #000 62%, transparent); mask-image: linear-gradient(to bottom, #000 62%, transparent);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 94%, transparent) 38%, color-mix(in srgb, var(--bg) 72%, transparent) 62%, color-mix(in srgb, var(--bg) 30%, transparent) 84%, transparent);
 }
 .scrolled .top-row::before { opacity: 1; }
 /* the page's own title slides into the bar in place of "Tenner" once its large title has scrolled away (iOS) */
