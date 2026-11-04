@@ -74,7 +74,6 @@
 .ab-pill { display: inline-flex; align-items: center; height: 28px; padding: 0 10px; border-radius: var(--r); background: var(--fr-in); color: var(--label2); font: 500 13px/1 var(--font); white-space: nowrap; }
 /* the chart list (the homepage's .cl), in one column */
 .ab-cl { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-flow: row; min-height: 395px; }
-.ab .cl li { border-radius: var(--r); }
 .ab .cl li + li { border-top: .5px solid var(--sep); }
 .ab .cl-ph { display: block; background: linear-gradient(160deg, hsl(var(--h, 220) 55% 58%), hsl(calc(var(--h, 220) + 40) 60% 30%)); }
 .ab-none { padding: 22px 10px; color: var(--label2); font-size: 15px; border: 0 !important; }
