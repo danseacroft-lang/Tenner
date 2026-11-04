@@ -273,6 +273,8 @@
   async function fillCast(info) {
     const c = await castFor(info.k), sec = $('#shCast');
     if (current !== info || !sec) return;
+    const star = $('#shStarring'), lead = (c?.cast || []).slice(0, 3);
+    if (star) { if (lead.length) star.innerHTML = `<span>Starring</span> ${lead.map((p) => `<a href="./?p=${p.id}" data-p="${p.id}">${esc(p.name)}</a>`).join(', ')}`; else star.remove(); }
     const people = [...(c?.crew || []).slice(0, 2), ...(c?.cast || [])].filter((p, i, l) => l.findIndex((q) => q.id === p.id) === i);
     if (!people.length) return;
     sec.innerHTML = `<h3 id="shCC">Cast &amp; Crew</h3><ul class="sh-faces">${people.map((p) => `<li><a href="./?p=${p.id}" data-p="${p.id}">
@@ -412,9 +414,9 @@
     gen++;
     const x = d?.items?.[info.k] || {};
     const lg = x.lg ? LOGO + x.lg : moreD.get(info.k)?.logo, lgOk = lg && okLogo.has(lg);
-    const meta = [info.type === 'tv' ? (x.se ? `${x.se} season${x.se === 1 ? '' : 's'}` : 'Series') : 'Film', info.year, runtime(x.rt),
+    // one quiet grey line under the description, the Apple TV way: genre · seasons · year · length · rating badge · stars
+    const meta = [...(x.g?.length ? x.g : info.genres || []).slice(0, 2), info.type === 'tv' ? (x.se ? `${x.se} season${x.se === 1 ? '' : 's'}` : 'Series') : 'Film', info.year, runtime(x.rt),
       x.c ? `<b class="sh-cert">${esc(x.c)}</b>` : '', info.rating ? `★ ${Number(info.rating).toFixed(1)}` : ''].filter(Boolean);
-    const genres = (x.g?.length ? x.g : info.genres || []).join(' · ');
     const art = info.backdrop ? `<img src="${esc(info.backdrop)}" alt="" decoding="async">`
       : info.poster ? `<img class="soft" src="${esc(info.poster)}" alt="" decoding="async">`
       : `<span class="ph" style="background:linear-gradient(160deg,hsl(${hue(info.title)} 45% 42%),hsl(${(hue(info.title) + 40) % 360} 55% 18%))"></span>`;
@@ -423,12 +425,12 @@
       <div class="sh-body">
         ${eyeHtml(info.eye)}
         <h2 id="shT"${lgOk ? ' class="sh-vh"' : ''}>${esc(info.title)}</h2>
-        <p class="sh-meta">${meta.map(String).map((m) => (m.startsWith('<b') ? m : esc(m))).join('<span aria-hidden="true"> · </span>')}</p>
-        ${genres ? `<p class="sh-genres">${esc(genres)}</p>` : ''}
         ${nextHtml(info, x)}
         ${btnsHtml(info, x, d)}
-        ${x.tl ? `<p class="sh-tl">${esc(x.tl)}</p>` : ''}
-        ${ovHtml(info)}
+        <div class="sh-about">
+          <div class="sh-desc">${ovHtml(info)}<p class="sh-meta">${meta.map(String).map((m) => (m.startsWith('<b') ? m : esc(m))).join('<span aria-hidden="true"> · </span>')}</p></div>
+          ${/^[mt]\d+$/.test(info.k || '') && window.tn.api ? '<p class="sh-starring" id="shStarring"></p>' : ''}
+        </div>
         <section class="sh-where" aria-labelledby="shW"><h3 id="shW">Where to Watch</h3>${whereHtml(info, d)}</section>
         ${progressHtml(info, x)}
         ${mineHtml(info)}
