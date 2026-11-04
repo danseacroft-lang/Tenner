@@ -1418,21 +1418,47 @@ a.sh-prov:hover { text-decoration: none; }
   .group h2.today { color: var(--accent); }
 }
 
+/* one-time feature tips (shell.js, tn.tip): a small frosted box pointing at something new; once, then gone. --ax: where
+   the arrow meets the feature, so the box grows out of it */
+.ft { position: fixed; z-index: 80; inset: auto; margin: 0; padding: 14px 16px 16px; border: 0; overflow: visible;
+  width: min(300px, calc(100vw - 24px)); box-sizing: border-box; border-radius: var(--r); color: var(--label);
+  background: var(--fr-bg); -webkit-backdrop-filter: var(--fr-blur); backdrop-filter: var(--fr-blur);
+  box-shadow: inset 0 0 0 1px var(--fr-rim), 0 18px 50px rgba(0, 0, 0, .3);
+  opacity: 0; transform: scale(.9); transform-origin: var(--ax, 50%) 0; }
+.ft.up { transform-origin: var(--ax, 50%) 100%; }
+.ft.in { opacity: 1; transform: none; }
+:root:not(.still) .ft { transition: opacity .2s ease, transform .5s var(--ease-spring); }
+.ft-arw { position: absolute; left: calc(var(--ax, 50%) - 9px); top: -8px; width: 18px; height: 8px;
+  background: color-mix(in srgb, var(--bg) 92%, transparent); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.ft.up .ft-arw { top: auto; bottom: -8px; clip-path: polygon(0 0, 100% 0, 50% 100%); }
+.ft .ft-new { display: flex; align-items: center; gap: 5px; margin: 0 0 6px; font: 600 13px/1 var(--font); letter-spacing: -.005em; color: var(--accent); }
+.ft .ft-new svg { width: 15px; height: 15px; }
+.ft .ft-t { margin: 0 0 4px; padding: 0; font: 600 17px/1.25 var(--font); letter-spacing: -.02em; color: var(--label); text-wrap: balance; }
+.ft .ft-x { margin: 0 0 14px; padding: 0; font: 400 15px/1.4 var(--font); line-height: 1.4; letter-spacing: -.01em; color: var(--label2); text-wrap: pretty; }
+.ft-ok { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; height: 44px; padding: 0 16px; border: 0;
+  cursor: pointer; font: 500 15px/1 var(--font); -webkit-font-smoothing: antialiased; }
+.ft-ok svg { width: 18px; height: 18px; }
+/* inside the light frost the see-through navy turns grey, so the tip's one button keeps the solid deep fill */
+.ft .ft-ok { background: #0b1e3c !important; }
+@media (hover: hover) { .ft .ft-ok:hover { background: #132a52 !important; } }
+.ft-ok:active { transform: scale(.97); }
+.ft-ok:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 /* ============================================================ buttons, everywhere (the owner's chosen design: use it for every
    new button). Solid, deep tinted fills with no glass or rim, softly rounded rectangles (circles when there's only an
    icon), an icon beside the words where there is one, and white words and icons. The same in Day and Night. */
 :root { --bt-fill: #0b1e3c; --bt-hover: #132a52; --bt-round: #222226; --bt-round-hover: #2e2e33; --bt-on: #64d2ff; }
-.btn-tinted, .dd, .share-chart, .pv-ok, .h-cta, .sh-main .btn, .h-add, .tb-round, .cal-add, .sh-btns .btn, .set-pill {
+.btn-tinted, .dd, .share-chart, .pv-ok, .ft-ok, .h-cta, .sh-main .btn, .h-add, .tb-round, .cal-add, .sh-btns .btn, .set-pill {
   background: var(--bt-fill) !important; color: #fff !important; box-shadow: none !important;
   -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
 }
-.btn-tinted, .dd, .share-chart, .pv-ok, .sh-main .btn, .sh-btns .btn, .set-pill { border-radius: var(--r) !important; font-weight: 500; letter-spacing: -.012em; }
+.btn-tinted, .dd, .share-chart, .pv-ok, .ft-ok, .sh-main .btn, .sh-btns .btn, .set-pill { border-radius: var(--r) !important; font-weight: 500; letter-spacing: -.012em; }
 .h-cta { border-radius: var(--r) !important; font-weight: 500; letter-spacing: -.012em; }
 .dd .dd-l, .dd .dd-chev, .btn-tinted svg, .h-cta svg { color: #fff; }
 /* only an icon: a circle */
 .h-add, .tb-round, .hc-r, .share-chart:not(:has(span, b)), .sh-more > .btn.sh-star { background: var(--bt-round) !important; border-radius: 50% !important; }
 @media (hover: hover) {
-  .btn-tinted:hover, .dd:hover, .share-chart:hover, .pv-ok:hover, .h-cta:hover, .sh-main .btn:hover, .cal-add:hover, .sh-btns .btn:hover, .set-pill:hover { background: var(--bt-hover) !important; }
+  .btn-tinted:hover, .dd:hover, .share-chart:hover, .pv-ok:hover, .ft-ok:hover, .h-cta:hover, .sh-main .btn:hover, .cal-add:hover, .sh-btns .btn:hover, .set-pill:hover { background: var(--bt-hover) !important; }
   .h-add:hover, .tb-round:hover, .hc-r:hover { background: var(--bt-round-hover) !important; }
 }
 .cal-add, .h-add[aria-pressed="true"], .sh-more .btn[aria-pressed="true"], .hc-r[aria-pressed="true"] { color: var(--bt-on) !important; }
@@ -1455,7 +1481,7 @@ span.av:not([style*="--h"]) { background: var(--fill-strong); color: var(--label
 .drawer .side-acct { padding: 10px 12px; margin: 0 0 10px; }
 
 /* buttons: regular weight, smoothed (greyscale antialiasing, as on Apple's own) rather than bold */
-button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .btn, .tn-opt, .coll-b, .segmented button, .nw-jump, .svc-link {
+button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .ft-ok, .sh-main .btn, .tn-opt, .coll-b, .segmented button, .nw-jump, .svc-link {
   -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 .btn, .h-cta, .sh-main .btn, .pv-ok, .dd-kind, .segmented button, .ac-main { font-weight: 500 !important; }
 
@@ -1726,7 +1752,7 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .
   --frost-blur: var(--fr-blur); --sheet-blur: var(--fr-blur);
   --bt-fill: rgba(11, 30, 60, .84); --bt-hover: rgba(19, 42, 82, .9); --bt-round: rgba(34, 34, 38, .8); --bt-round-hover: rgba(46, 46, 51, .86);
 }
-.btn-tinted, .dd, .share-chart, .pv-ok, .h-cta, .sh-main .btn, .h-add, .tb-round, .cal-add, .sh-btns .btn, .set-pill {
+.btn-tinted, .dd, .share-chart, .pv-ok, .ft-ok, .h-cta, .sh-main .btn, .h-add, .tb-round, .cal-add, .sh-btns .btn, .set-pill {
   -webkit-backdrop-filter: var(--fr-blur) !important; backdrop-filter: var(--fr-blur) !important; }
 /* boxes, bars and search boxes */
 .panel, .coll, .segmented, .view-sw, .tabs, .top-act, .tn-card, .sheet, .hc, .ss-res, .tip, .tb-pop, .mine-dlg {

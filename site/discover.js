@@ -268,6 +268,7 @@
   }
   $('#dPkL').addEventListener('click', (e) => { const li = e.target.closest('li'); if (li?._x) window.tnSheet?.open(infoFor(li._x)); });
   ['tn:swiped', 'tn:saved', 'tn:account', 'tn:synced'].forEach((n) => addEventListener(n, () => pkSoon()));
+  window.tn.tip?.({ id: 'your-picks', for: '#dPkH', title: 'Your picks', text: 'Every swipe re-ranks this list. Swipe right on what you like and ten titles you’ll probably enjoy line up here, best first. Tap one for details.' });
 
   // the first time: the top card leans right, then left, to show it moves
   function hint() {

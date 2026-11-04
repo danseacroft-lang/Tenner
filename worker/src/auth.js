@@ -120,7 +120,8 @@ const publicUser = (u) => ({ name: u.name, picture: u.picture || null, hue: u.hu
 // watchlist: [{ k, type, title, year, poster, at }], removed: { k: when }, progress: { k: [s, e] | null }, pat: { k: when },
 // services: [..] with sat (when), settings: {..} with pfat (when), stars: { k: [on (1 or 0), when] } (titles you've starred in
 // a title's sheet, for recommendations; a 0 is an unstar, kept a while so other devices hear of it), swipes: { k: [1 or 0, when] }
-// (Discover's right and left swipes, for For You). The newest change wins, item by item.
+// (Discover's right and left swipes, for For You), tips: { id: when } (one-time feature tips seen; once seen, always seen).
+// The newest change wins, item by item.
 export function merge(a = {}, b = {}) {
   const removed = { ...(a.removed || {}) };
   for (const [k, t] of Object.entries(b.removed || {})) if (!(removed[k] >= t)) removed[k] = t;
@@ -144,6 +145,7 @@ export function merge(a = {}, b = {}) {
   for (const [k, v] of Object.entries(b.swipes || {})) if (!sw[k] || v[1] > sw[k][1]) sw[k] = v;
   const swipes = Object.fromEntries(Object.entries(sw).sort((x, y) => y[1][1] - x[1][1]).slice(0, 1500));
   return { v: 1, watchlist, removed, progress, pat, stars, swipes, services: newer('services', 'sat') || [], sat: Math.max(a.sat || 0, b.sat || 0), settings: newer('settings', 'pfat') || {}, pfat: Math.max(a.pfat || 0, b.pfat || 0),
+    tips: Object.fromEntries(Object.entries({ ...(b.tips || {}), ...(a.tips || {}) }).sort((x, y) => y[1] - x[1]).slice(0, 300)),
     tv: mergeTv(a.tv, b.tv), seen: mergeMarks(a.seen, b.seen, 1000), hidden: mergeMarks(a.hidden, b.hidden, 1000), notes: mergeMarks(a.notes, b.notes, 400) };
 }
 // what you've watched, what you're not interested in and your notes: { k: [on or note, when, title, year, poster] },
@@ -202,6 +204,7 @@ function clean(d) {
     settings: Object.fromEntries(Object.entries(d?.settings && typeof d.settings === 'object' ? d.settings : {}).filter(([k, v]) => /^[a-z0-9]{1,20}$/i.test(k) && ['string', 'boolean', 'number'].includes(typeof v)).slice(0, 30)), pfat: +d?.pfat || 0,
     tv: cleanTv(d?.tv),
     seen: cleanMarks(d?.seen), hidden: cleanMarks(d?.hidden), notes: cleanMarks(d?.notes, true),
+    tips: Object.fromEntries(Object.entries(d?.tips && typeof d.tips === 'object' ? d.tips : {}).filter(([k, t]) => /^[a-z0-9-]{1,40}$/.test(k) && +t).slice(0, 300).map(([k, t]) => [k, +t])),
   };
 }
 

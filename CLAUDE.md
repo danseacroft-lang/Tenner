@@ -90,6 +90,14 @@ Mac. When in doubt, ask "would this look at home in Apple TV, Apple Music or the
   (Browse's search bar).
 - **The chart numbers never shine:** no rainbow sweep, colour turn (`hue-rotate`) or any other moving effect on the neon
   ranks, on hover or otherwise. It was removed twice because it slowed the site; the glow is drawn once and stays still.
+- **Every new feature introduces itself once** (the owner's rule): call the shared tip from the feature's own code,
+  once its button or box is on the page:
+  `tn.tip({ id: 'live-picks', for: '#pickList', title: 'Your picks', text: 'What it is and how it works, in a sentence or two.' })`.
+  `id` is a new kebab-case name per feature (never reuse one); `for` is a selector or element to point at; `delay` (ms,
+  default 1200) is optional. The frosted box (`.ft` in styles.css, `tn.tip` in shell.js) points at the feature, waits until it's
+  on screen and the privacy note is away, shows one tip at a time, and is never shown again once seen: kept in
+  `tenner-tips` and synced with the account (`tips` in `worker/src/auth.js`). Works inside sheets too. Playwright skips tips
+  unless the test sets `window.tnTipsTest = true`.
 - **Selected states** (e.g. Browse collections) get Tenner's rainbow underline.
 - **Popups** look like iOS alerts or sheets: centred glass, blurred backdrop, one clear primary button, tap outside to close.
 - **Colour:** premium and restrained. No muddy greens or browns; Apple system colours (blue `#0a84ff`, pink `#ff375f`,

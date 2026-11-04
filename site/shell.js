@@ -20,6 +20,13 @@
     get() { try { const { still, ...p } = JSON.parse(localStorage.getItem(PREFS) || '{}'); return { ...DEF, ...p }; } catch { return { ...DEF }; } },   // still: the old Reduce motion setting, gone
     set(k, v) { const p = prefs.get(); p[k] = v; try { localStorage.setItem(PREFS, JSON.stringify(p)); } catch {} meta.edit((m) => { m.pfat = Date.now(); }); apply(); dispatchEvent(new Event('tn:prefs')); },
   };
+  // ---------- one-time feature tips you've seen: { id: when }, on this device (and in your account, if you sign in) ----------
+  const TIPS = 'tenner-tips';
+  const tips = {
+    all() { try { const o = JSON.parse(localStorage.getItem(TIPS) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } },
+    seen: (id) => !!tips.all()[id],
+    mark(id) { const o = tips.all(); if (o[id]) return; o[id] = Date.now(); try { localStorage.setItem(TIPS, JSON.stringify(o)); } catch {} dispatchEvent(new Event('tn:tips')); },
+  };
   // no animations unless you switch them on in Settings (and never when the device asks for reduced motion)
   const osStill = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const apply = () => { const p = prefs.get(); root.classList.toggle('still', !p.anim || osStill); root.classList.toggle('no-moves', !p.moves); root.classList.toggle('no-ratings', !p.ratings); };
@@ -88,7 +95,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '2.32.0';
+  const version = '2.33.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -651,6 +658,7 @@
     requestAnimationFrame(() => box.classList.add('in'));
     $('#pvOk').addEventListener('click', () => {
       try { localStorage.setItem(NOTE, '1'); } catch {}
+      tipReady = true; setTimeout(nextTip, 900);
       box.classList.remove('in'); setTimeout(() => box.remove(), reduce ? 0 : 350);
     });
   }, 1200);
@@ -801,7 +809,7 @@
     },
     local() {
       const m = meta.get();
-      return { watchlist: saved.all(), removed: m.removed, progress: progress.all(), pat: m.pat, stars: stars.map(), swipes: swipes.map(), services: mine.get(), sat: m.sat, settings: prefs.get(), pfat: m.pfat, seen: seen.map(), hidden: hidden.map(), notes: notes.map() };
+      return { watchlist: saved.all(), removed: m.removed, progress: progress.all(), pat: m.pat, stars: stars.map(), swipes: swipes.map(), services: mine.get(), sat: m.sat, settings: prefs.get(), pfat: m.pfat, seen: seen.map(), hidden: hidden.map(), notes: notes.map(), tips: tips.all() };
     },
     // send this device's copy; take back the merged one
     sync() {
@@ -823,13 +831,14 @@
     for (const [f, key] of Object.entries(MARKS)) if (d[f]) lsSet(key, JSON.stringify(d[f]));
     lsSet(MS, d.services?.length ? JSON.stringify(d.services) : null);
     if (d.settings && Object.keys(d.settings).length) lsSet(PREFS, JSON.stringify({ ...DEF, ...d.settings }));
+    if (d.tips && typeof d.tips === 'object') lsSet(TIPS, JSON.stringify(d.tips));
     lsSet(SYNC, JSON.stringify({ removed: d.removed || {}, pat: d.pat || {}, sat: d.sat || 0, pfat: d.pfat || 0 }));
     if (JSON.stringify(account.local()) !== before) { apply(); dispatchEvent(new Event('tn:saved')); dispatchEvent(new Event('tn:mine')); dispatchEvent(new Event('tn:prefs')); dispatchEvent(new Event('tn:swiped')); dispatchEvent(new Event('tn:marks')); }
     applying = false;
     dispatchEvent(new Event('tn:synced'));
   }
   const soon = () => { if (applying || !account.token()) return; clearTimeout(acctT); acctT = setTimeout(account.sync, 1200); };
-  ['tn:saved', 'tn:mine', 'tn:prefs', 'tn:swiped', 'tn:marks'].forEach((e) => addEventListener(e, soon));
+  ['tn:saved', 'tn:mine', 'tn:prefs', 'tn:swiped', 'tn:marks', 'tn:tips'].forEach((e) => addEventListener(e, soon));
   addEventListener('tn:check', () => account.sync());
   if (account.token()) setTimeout(account.sync, 600);
 
@@ -867,7 +876,74 @@
     },
   };
 
-  window.tn = { prefs, member, seen, hidden, notes, esc, hue, glide, arrows, segment, reduce, saved, stars, swipes, forYou, moreLike, progress, nextUp, whenText, mine, pickMine, api, share, alerts, isIOS, account, avatar, featured, findTitle, sharedTitle, fold, score };
+  // ---------- one-time feature tips (the owner's rule: every new feature introduces itself, once) ----------
+  // From the feature's own code, once it's on the page:  tn.tip({ id: 'live-list', for: '#liveBtn', title: '…', text: '…' })
+  // A small frosted box points at the feature and says what it is and how it works. It's shown once and never again, here
+  // or on your other devices if you're signed in (tenner-tips, synced with your account). One at a time, only while the
+  // feature is on screen, never over the privacy note; Got it, Esc, or a tap anywhere else puts it away.
+  const tipQ = []; let tipOn = null, tipIO = null, tipReady = noteSeen || !!navigator.webdriver;
+  const tipEl = (o) => (typeof o.for === 'string' ? document.querySelector(o.for) : o.for);
+  const tipShows = (el) => {
+    if (!el?.isConnected) return false;
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height || r.bottom < 0 || r.top > innerHeight || r.right < 0 || r.left > innerWidth) return false;
+    let m = null; try { m = document.querySelector('dialog:modal'); } catch {}
+    return !(m && !m.contains(el)) && !el.closest('[inert]');
+  };
+  function featureTip(o) {
+    if (!o?.id || !o.for || tips.seen(o.id) || tipOn?.id === o.id || tipQ.some((x) => x.id === o.id)) return;
+    if (navigator.webdriver && !window.tnTipsTest) return;   // keeps automated checks of the pages clean
+    tipQ.push(o); setTimeout(nextTip, o.delay ?? 1200);
+  }
+  function nextTip() {
+    if (tipOn || !tipReady) return;
+    for (let i = tipQ.length - 1; i >= 0; i--) if (tips.seen(tipQ[i].id)) tipQ.splice(i, 1);
+    const o = tipQ.find((x) => tipShows(tipEl(x)));
+    if (o) return showFeatureTip(o, tipEl(o));
+    // nothing on screen yet: look again when one of them scrolls (or opens) into view
+    tipIO?.disconnect();
+    tipIO = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { tipIO.disconnect(); setTimeout(nextTip, 500); } });
+    tipQ.forEach((x) => { const el = tipEl(x); if (el) tipIO.observe(el); });
+  }
+  function showFeatureTip(o, el) {
+    tipQ.splice(tipQ.indexOf(o), 1); tips.mark(o.id); tipOn = o;
+    const b = document.createElement('aside');
+    b.className = 'ft'; b.setAttribute('aria-label', 'New feature'); b.setAttribute('aria-live', 'polite');
+    b.innerHTML = `<span class="ft-arw" aria-hidden="true"></span>
+      <p class="ft-new"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c.5 4.6 2.9 7 7.5 7.5-4.6.5-7 2.9-7.5 7.5-.5-4.6-2.9-7-7.5-7.5 4.6-.5 7-2.9 7.5-7.5zM19 15.5c.2 1.9 1.1 2.8 3 3-1.9.2-2.8 1.1-3 3-.2-1.9-1.1-2.8-3-3 1.9-.2 2.8-1.1 3-3z" fill="currentColor"/></svg>New</p>
+      <h2 class="ft-t">${esc(o.title)}</h2><p class="ft-x">${esc(o.text)}</p>
+      <button type="button" class="ft-ok"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Got it</button>`;
+    // inside the feature's own sheet, if it's in one, so it sits above it and can be tapped; in the top layer where Safari
+    // has popovers, so nothing on the page can cover it
+    (el.closest('dialog') || document.body).append(b);
+    if (b.showPopover) { b.popover = 'manual'; b.showPopover(); }
+    const place = () => {
+      if (!tipShows(el)) return close();
+      const r = el.getBoundingClientRect(), w = b.offsetWidth, h = b.offsetHeight, g = 12, gap = 12;
+      const below = r.bottom + gap + h <= innerHeight - g || r.top - gap - h < g;
+      const cx = r.left + r.width / 2, left = Math.max(g, Math.min(innerWidth - w - g, cx - w / 2));
+      b.style.left = `${left}px`; b.style.top = `${below ? r.bottom + gap : r.top - gap - h}px`;
+      b.classList.toggle('up', !below); b.style.setProperty('--ax', `${Math.max(20, Math.min(w - 20, cx - left))}px`);
+    };
+    let raf = 0; const soonPlace = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; place(); }); };
+    const outside = (e) => { if (!b.contains(e.target)) close(); };
+    const key = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
+    const watch = setInterval(place, 400);   // the feature moved, closed or went away
+    function close() {
+      if (tipOn !== o) return; tipOn = null; clearInterval(watch);
+      removeEventListener('scroll', soonPlace, true); removeEventListener('resize', soonPlace);
+      removeEventListener('pointerdown', outside, true); removeEventListener('keydown', key, true);
+      b.classList.remove('in');
+      setTimeout(() => { b.remove(); setTimeout(nextTip, 700); }, reduce ? 0 : 260);
+    }
+    place();
+    addEventListener('scroll', soonPlace, { capture: true, passive: true }); addEventListener('resize', soonPlace);
+    addEventListener('pointerdown', outside, true); addEventListener('keydown', key, true);
+    b.querySelector('.ft-ok').addEventListener('click', close);
+    requestAnimationFrame(() => requestAnimationFrame(() => b.classList.add('in')));
+  }
+
+  window.tn = { prefs, tip: featureTip, member, seen, hidden, notes, esc, hue, glide, arrows, segment, reduce, saved, stars, swipes, forYou, moreLike, progress, nextUp, whenText, mine, pickMine, api, share, alerts, isIOS, account, avatar, featured, findTitle, sharedTitle, fold, score };
 
   // ---------- paste or drop a link: an IMDb, TMDB, Letterboxd, JustWatch or Tenner link opens that title's sheet ----------
   // ⌘V (Ctrl+V) anywhere but a text box, or a link dragged onto the page. Anything else pasted is left alone.
