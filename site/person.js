@@ -39,7 +39,9 @@
     const a = new Date(born + 'T12:00:00'), b = died ? new Date(died + 'T12:00:00') : new Date();
     return b.getFullYear() - a.getFullYear() - (b < new Date(b.getFullYear(), a.getMonth(), a.getDate()) ? 1 : 0);
   };
-  const face = (p) => `<span class="sh-poster ps-face" style="--h:${hue(p.name)}">${p.photo ? `<img src="${esc(p.photo)}" alt="" decoding="async">` : esc(initials(p.name))}</span>`;
+  const face = (p) => p.photo   // a photo opens larger when tapped
+    ? `<button type="button" class="sh-poster ps-face" id="psFace" style="--h:${hue(p.name)}" aria-label="See ${esc(p.name)}’s photo larger"><img src="${esc(p.photo)}" alt="" decoding="async"></button>`
+    : `<span class="sh-poster ps-face" style="--h:${hue(p.name)}">${esc(initials(p.name))}</span>`;
   const ph = (x) => `<span class="ph" style="background:linear-gradient(160deg,hsl(${hue(x.title)} 45% 42%),hsl(${(hue(x.title) + 40) % 360} 55% 18%))">${esc(x.title)}</span>`;
   const logos = (k) => {
     const l = (cat?.on.get(k) || []).map((s) => cat.svc[s]).filter((s) => s?.logo).slice(0, 3);
@@ -84,8 +86,20 @@
     if (seg) { segment(seg, pick); seg.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) pick(b); }); }
     const bio = $('#psBio'), t = bio?.firstChild;   // four lines, then More
     if (t && t.scrollHeight > t.clientHeight + 2) { bio.classList.add('clip'); bio.insertAdjacentHTML('beforeend', '<button type="button" class="sh-ovmore" aria-label="Read the whole biography">More</button>'); }
+    if (p.photo) window.tn.tip?.({ id: 'person-photo-zoom', for: '#psFace', title: 'See them up close', text: 'Tap a photo to see it larger. Tap anywhere to close it.' });
     $('#psShare').addEventListener('click', () => window.tn.share({ heading: `Share ${p.name}`, title: `${p.name} on Tenner`, text: `${p.name}: everything they’ve made, and where to watch it`, url: `${location.origin}/?p=${p.id}` }));
   }
+
+  // ---------- the photo, larger: a round portrait over a blurred page, closed by a tap anywhere or Escape ----------
+  document.body.insertAdjacentHTML('beforeend', `<dialog class="ps-zoom" id="psZoom" aria-labelledby="psZn"><figure><span class="ps-zf"><img alt=""></span><figcaption id="psZn"></figcaption></figure></dialog>`);
+  const zoom = $('#psZoom');
+  function showPhoto() {
+    if (!pd?.photo) return;
+    $('img', zoom).src = pd.photo; $('img', zoom).alt = pd.name; $('#psZn').textContent = pd.name;
+    zoom.showModal(); navigator.vibrate?.(8);
+  }
+  zoom.addEventListener('click', () => zoom.close());
+  zoom.addEventListener('close', () => $('#psFace')?.focus({ preventScroll: true }));
 
   // ---------- open and close ----------
   async function open(id, fromUrl, name) {
@@ -134,6 +148,7 @@
       if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) close();
       return;
     }
+    if (e.target.closest('#psFace')) { showPhoto(); return; }
     if (e.target.closest('.sh-ovmore')) { const o = $('#psBio'); o.classList.add('open'); e.target.remove(); return; }
     const a = e.target.closest('a[data-pk]');
     if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button || !window.tnSheet) return;
@@ -153,7 +168,7 @@
   // phones: swipe it down to close, from the handle or the artwork
   let drag = null;
   sheet.addEventListener('pointerdown', (e) => {
-    if (e.pointerType === 'mouse' || !matchMedia('(max-width: 719px)').matches || !e.target.closest('.sh-grab, .sh-art')) return;
+    if (e.pointerType === 'mouse' || !matchMedia('(max-width: 719px)').matches || !e.target.closest('.sh-grab, .sh-art') || e.target.closest('#psFace')) return;
     drag = { id: e.pointerId, y0: e.clientY, dy: 0 };
   });
   sheet.addEventListener('pointermove', (e) => {

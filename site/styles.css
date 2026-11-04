@@ -1144,6 +1144,24 @@ a.sh-prov:hover { text-decoration: none; }
   background: linear-gradient(160deg, hsl(var(--h, 220) 45% 46%), hsl(calc(var(--h, 220) + 40) 55% 22%)); }
 .ps-face:has(img), .sh-face:has(img), .hc-faces > span:has(img) { background: none; }
 .ps-face img { width: 100%; height: 100%; aspect-ratio: 1; border-radius: 50%; object-fit: cover; object-position: center 20%; }
+button.ps-face { padding: 0; border: 0; cursor: zoom-in; -webkit-tap-highlight-color: transparent; }
+button.ps-face:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
+@media (hover: hover) { :root:not(.still) button.ps-face:hover { scale: 1.04; } }
+:root:not(.still) button.ps-face { transition: opacity .3s ease, transform .5s var(--ease-spring), scale .4s var(--ease-spring); }
+button.ps-face:active { scale: .96; }
+/* the photo, larger (tap it on a person's sheet) */
+.ps-zoom { max-width: none; max-height: none; width: 100%; height: 100%; margin: 0; padding: 16px; border: 0; background: none; cursor: zoom-out; }
+.ps-zoom[open] { display: grid; place-items: center; }
+.ps-zoom::backdrop { background: rgba(0, 0, 0, .55); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); }
+.ps-zoom figure { display: grid; justify-items: center; gap: 18px; margin: 0; }
+.ps-zf { display: block; width: min(78vw, 62vh, 420px); aspect-ratio: 1; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 .5px rgba(255, 255, 255, .25), 0 24px 60px rgba(0, 0, 0, .5); }
+.ps-zf img { display: block; width: 100%; height: 100%; aspect-ratio: 1; border-radius: 50%; object-fit: cover; object-position: center 20%; }
+.ps-zoom figcaption { color: #fff; font: 600 22px/1.2 var(--font); text-align: center; text-shadow: 0 1px 8px rgba(0, 0, 0, .4); }
+:root:not(.still) .ps-zoom[open] figure { animation: psZoomIn .5s var(--ease-spring); }
+:root:not(.still) .ps-zoom[open]::backdrop { animation: scFade .3s ease both; }
+@keyframes psZoomIn { from { opacity: 0; scale: .6; } }
+@media (prefers-reduced-motion: reduce) { .ps-zoom[open] figure, .ps-zoom[open]::backdrop { animation: none !important; } }
+@media (prefers-reduced-transparency: reduce) { .ps-zoom::backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0, 0, 0, .9); } }
 .sh-art .ps-sk { background: var(--fill); }
 .sh-art > .ph.ps-sk { -webkit-mask-image: none; mask-image: none; background: linear-gradient(var(--fill), transparent); }
 .ps-on { position: absolute; left: 6px; bottom: 6px; display: flex; gap: 3px; }
