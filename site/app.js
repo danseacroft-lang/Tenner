@@ -232,7 +232,7 @@ function pageWatchlist() {
     const what = [x.type === 'movie' ? 'Film' : 'Series', x.year, spot].filter(Boolean).join(' · ');
     const art = x.poster ? `<img src="${esc(thumb(x.poster))}" alt="" loading="lazy" decoding="async">` : `<span class="cl-ph" style="background:hsl(${hue(x.title)} 45% 35%)"></span>`;
     return `<li data-type="${x.type === 'movie' ? 'movie' : 'tv'}"><a href="${esc(tmdbUrl(x.type, x.k.slice(1)))}" target="_blank" rel="noopener" ${sh}>
-        ${art}<span class="cl-t"><b>${esc(x.title)}</b><small>${esc(what)}</small>${showLine(x)}</span>${on ? `<span class="wl-on">${on}</span>` : ''}</a>
+        ${art}<span class="cl-t"><b>${esc(x.title)}</b><small>${esc(what)}</small>${showLine(x)}${noteLine(x.k)}</span>${on ? `<span class="wl-on">${on}</span>` : ''}</a>
       <button type="button" class="wl-x" data-unsave="${esc(x.k)}" aria-label="Remove ${esc(x.title)} from your Watchlist" title="Remove">${X}</button></li>`;
   }).join('');
   const both = list.some((x) => x.type === 'movie') && list.some((x) => x.type !== 'movie');
@@ -245,7 +245,27 @@ function pageWatchlist() {
       <ol class="cl nw-cl wl-cl" data-kind="${both ? kind : 'both'}">${rows}</ol></section>`;
   return `<h1 class="large-title page-title"><em class="grad">Watchlist</em></h1>
     <p class="lede">${list.length ? `You have <b>${list.length} title${list.length === 1 ? '' : 's'}</b> on your Watchlist. ` : ''}${window.tn.account.user() ? 'Your Watchlist will be anywhere you’re signed in.' : 'It’s saved on this device. <a href="account.html">Sign in</a> to have it anywhere you’re signed in.'}</p>
-    ${list.length ? '<div class="wl-alert" id="wlAlert" hidden></div>' : ''}${body}${comingUp(list)}`;
+    ${list.length ? '<div class="wl-alert" id="wlAlert" hidden></div>' : ''}${body}${comingUp(list)}${watchedList()}`;
+}
+// your note on a title (signed in, and Settings → Notes on my Watchlist), in grey under it
+function noteLine(k) {
+  const tn = window.tn, n = tn.member() && tn.prefs.get().notewl !== false && tn.notes.get(k)?.[0];
+  return n ? `<small class="wl-note">“${esc(n)}”</small>` : '';
+}
+// Watched (signed in): what you've marked as watched in a title's sheet, newest first, in the same list
+function watchedList() {
+  if (!window.tn.member()) return '';
+  const all = window.tn.seen.list(), list = all.slice(0, state.seenAll ? 1000 : 20); if (!list.length) return '';
+  const X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+  const rows = list.map((x) => {
+    const art = x.poster ? `<img src="${esc(thumb(x.poster))}" alt="" loading="lazy" decoding="async">` : `<span class="cl-ph" style="background:hsl(${hue(x.title)} 45% 35%)"></span>`;
+    const what = [x.type === 'movie' ? 'Film' : 'Series', x.year, `Watched ${fmtDate(new Date(x.at), { day: 'numeric', month: 'short' })}`].filter(Boolean).join(' · ');
+    return `<li><a href="${esc(tmdbUrl(x.type, x.k.slice(1)))}" target="_blank" rel="noopener" ${reg(wlInfo(x, 'Watched'))}>
+        ${art}<span class="cl-t"><b>${esc(x.title)}</b><small>${esc(what)}</small>${noteLine(x.k)}</span></a>
+      <button type="button" class="wl-x" data-unseen="${esc(x.k)}" aria-label="Take ${esc(x.title)} off your Watched list" title="Take off Watched">${X}</button></li>`;
+  }).join('');
+  return `<section class="wk wl-seen" aria-labelledby="wl-seen"><div class="wk-hd"><h2 class="row-h" id="wl-seen">Watched</h2><p>${all.length} title${all.length === 1 ? '' : 's'} you’ve marked as watched</p></div>
+    <ol class="cl nw-cl wl-cl">${rows}</ol>${all.length > list.length ? '<button type="button" class="btn btn-tinted wl-more" data-seen-all>Show all</button>' : ''}</section>`;
 }
 // Shows, Films or both, without redrawing
 function wlKindInit() {
@@ -274,6 +294,9 @@ function comingUp(list) {
       <b>${esc(x.title)}</b><small>Season ${n[1]}, episode ${n[2]}</small></a></li>`; }).join('')}</ul></section>`;
 }
 view.addEventListener('click', (e) => {
+  if (e.target.closest('[data-seen-all]')) { state.seenAll = true; const y = scrollY; draw(); scrollTo(0, y); return; }
+  const u = e.target.closest('[data-unseen]');
+  if (u) { const x = window.tn.seen.list().find((s) => s.k === u.dataset.unseen); if (x) window.tn.seen.set(x, 0); return; }
   const b = e.target.closest('[data-unsave]'); if (!b) return;
   const li = b.closest('li'), next = li.nextElementSibling || li.previousElementSibling, k = b.dataset.unsave;
   const done = () => { window.tn.saved.remove(k); requestAnimationFrame(() => $(`[data-unsave="${CSS.escape(next?.querySelector('[data-unsave]')?.dataset.unsave || '')}"]`)?.focus({ preventScroll: true })); };
@@ -283,6 +306,7 @@ view.addEventListener('click', (e) => {
 });
 // saving or removing (here, in a sheet or in another tab) redraws the Watchlist and the row
 addEventListener('tn:sheet-closed', () => { if (state.savedDirty) { state.savedDirty = false; const y = scrollY; draw(); scrollTo(0, y); } });
+for (const ev of ['tn:marks', 'tn:account']) addEventListener(ev, () => { if (state.trending && !window.tnSheet?.isOpen?.()) { const y = scrollY; draw(); scrollTo(0, y); } else state.savedDirty = true; });
 addEventListener('tn:saved', () => { if (state.trending && !window.tnSheet?.isOpen?.()) { const y = scrollY; draw(); scrollTo(0, y); } else state.savedDirty = true; });
 
 // ---------- This Week: the round-up (data/week.json, rebuilt hourly from the chart history) ----------

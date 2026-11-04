@@ -118,3 +118,14 @@ div.set-tile { cursor: default; }
 @keyframes acDelFade { from { opacity: 0; } }
 .ac-link { position: relative; }
 .ac-link::before { content: ""; position: absolute; inset: -7px 0; }
+
+/* Your Tenner: four big numbers in a grid, then your favourite genres and where you watch most */
+.ac-nums { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-bottom: .5px solid var(--sep); }
+.ac-nums > div { display: grid; gap: 2px; padding: 14px 16px; }
+.ac-nums > div:nth-child(odd) { border-right: .5px solid var(--sep); }
+.ac-nums > div:nth-child(-n+2) { border-bottom: .5px solid var(--sep); }
+.ac-nums b { font: 600 28px/1.1 var(--font); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.ac-nums small { color: var(--label2); font-size: 13px; }
+.ac-nums .sk b, .ac-nums .sk small { display: block; height: 26px; width: 50%; border-radius: 6px; background: var(--fill); }
+.ac-nums .sk small { height: 12px; width: 70%; }
+.ac-stats .set-row { cursor: default; }

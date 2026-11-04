@@ -257,7 +257,11 @@
   let certs = null;
   const det = (x) => certs?.items?.[`${x.t[0]}${x.i}`];
   const no18 = window.tn.prefs.get().no18;
-  const ok18 = (x) => !no18 || !certs || det(x)?.c !== '18';
+  let hid = window.tn.hidden.keys();   // Not interested (signed in): left out, like titles rated 18 when that's on
+  addEventListener('tn:marks', () => { hid = window.tn.hidden.keys(); hidDirty = true; });
+  let hidDirty = false;
+  addEventListener('tn:sheet-closed', () => { if (hidDirty && cat) { hidDirty = false; apply(false, true); } });
+  const ok18 = (x) => !hid.has(`${x.t[0]}${x.i}`) && (!no18 || !certs || det(x)?.c !== '18');
   // released, age rating and length (the last two wait for the details, then filter)
   const okMore = (x) => (!state.y || ((+x.d.slice(0, 4) || 0) >= state.y[0] && (+x.d.slice(0, 4) || 0) <= state.y[1]))
     && (!state.a || !certs || (det(x)?.c in AGE_RANK && AGE_RANK[det(x).c] <= AGE_RANK[state.a]))

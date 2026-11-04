@@ -7,6 +7,7 @@
   form.classList.toggle('native-sw', 'switch' in HTMLInputElement.prototype);   // Safari: the real iOS switch
   const LABELS = { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+', appletv: 'Apple TV' };
   let logos = {};
+  const MEMBER = ['spoil', 'seenoff', 'notewl', 'hideni', 'stats', 'alarr', 'alep', 'alleave', 'altv', 'alprice'];
 
   function show() {
     const p = prefs.get(), th = (() => { try { return localStorage.getItem('tenner-theme') || 'dark'; } catch { return 'dark'; } })();
@@ -14,6 +15,10 @@
     form.theme.value = ['auto', 'light', 'dark'].includes(th) ? th : 'dark';
     form.kind.value = kind; form.start.value = ['new', 'watchlist'].includes(p.start) ? p.start : 'auto'; form.trailers.value = p.trailers;
     for (const k of ['anim', 'moves', 'ratings', 'autoplay', 'no18']) form[k].checked = !!p[k];
+    for (const k of MEMBER) form[k].checked = p[k] !== false && !!p[k];
+    form.quiet.value = ['off', '22-7', '23-8', '21-9'].includes(p.quiet) ? p.quiet : 'off';
+    const n = window.tn.hidden.list().length;
+    document.getElementById('hidNow').textContent = n ? `${n} title${n === 1 ? '' : 's'} hidden` : 'Nothing hidden. Choose Not interested on any title';
     const m = mine.get();
     document.getElementById('mineNow').textContent = m.length ? m.map((k) => LABELS[k] || k).join(', ') : 'All six';
   }
@@ -211,6 +216,24 @@
     try { ['tenner-watchlist', 'tenner-progress', 'tenner-services', 'tenner-settings', 'tenner-kind'].forEach((k) => localStorage.removeItem(k)); } catch {}
     saved.set([]); mine.set([]); prefs.set('start', 'auto'); show(); say('Cleared');
   });
+  // ---------- Not interested (signed in): the hidden titles, each one tap from coming back ----------
+  const hidDlg = document.getElementById('hidDlg'), hidList = document.getElementById('hidList');
+  const { esc } = window.tn;
+  const drawHidden = () => {
+    const l = window.tn.hidden.list();
+    hidList.innerHTML = l.length ? l.map((x) => `<li>${x.poster ? `<img src="${esc(x.poster)}" alt="" loading="lazy">` : `<span class="hid-ph" style="--h:${window.tn.hue(x.title)}"></span>`}
+      <span class="set-l"><b>${esc(x.title)}</b><small>${esc([x.type === 'movie' ? 'Film' : 'Series', x.year].filter(Boolean).join(' · '))}</small></span>
+      <button type="button" class="btn btn-tinted" data-unhide="${esc(x.k)}">Show again</button></li>`).join('') : '<li class="hid-none">Nothing hidden. Everything’s back.</li>';
+  };
+  document.getElementById('setHidden').addEventListener('click', () => { drawHidden(); hidDlg.showModal(); });
+  hidDlg.addEventListener('click', (e) => {
+    if (e.target === hidDlg) { hidDlg.close(); return; }
+    const b = e.target.closest('[data-unhide]'); if (!b) return;
+    const x = window.tn.hidden.list().find((h) => h.k === b.dataset.unhide); if (x) window.tn.hidden.set(x, 0);
+    drawHidden(); show(); say(`${x?.title || 'It'}’s back`);
+  });
+  addEventListener('tn:marks', show);
+
   // the account row at the top: who's signed in
   const person = document.querySelector('#setArt .set-av').innerHTML;
   const acct = () => {
@@ -226,6 +249,9 @@
     } else if (u) { av.textContent = (u.name || '?').trim()[0]?.toUpperCase() || '?'; av.style.setProperty('--h', u.hue ?? 210); }
     else av.innerHTML = person;
     // the Sunday email goes to your account's email address (Google's, or the one you signed up with)
+    // Just for you, and the alert choices: only while signed in (they're kept with your account)
+    document.getElementById('setMineSec').hidden = !u;
+    document.getElementById('setAlMore').hidden = document.getElementById('setAlMoreH').hidden = !u;
     const dg = document.getElementById('setDigest'); dg.disabled = !u; dg.checked = !!u && !!prefs.get().digest;
     document.getElementById('dgNow').textContent = !u ? 'Sign in to get a short round-up of your Watchlist each Sunday morning'
       : dg.checked ? 'On. Each Sunday morning: new episodes, arrivals and what’s leaving from your Watchlist, sent to your account’s email'

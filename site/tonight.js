@@ -124,9 +124,9 @@
     const cat = await tnCat; if (!cat?.items) return `<h2 id="tnH">Couldn’t load the picks</h2><p class="tn-sub">Try again in a moment.</p><div class="tn-acts"><button type="button" class="btn btn-tinted" data-tn="again">Start again</button></div>`;
     const svcList = await services(), svc = (k) => svcList.find((s) => s.key === k);
     const mineSvcs = window.tn.mine.get(), want = new Set(mineSvcs.length ? mineSvcs : svcList.map((x) => x.key));
-    const genres = new Set(MOODS.find((m) => m[0] === tonight.mood)?.[3] || []), no18 = window.tn.prefs.get().no18;
+    const genres = new Set(MOODS.find((m) => m[0] === tonight.mood)?.[3] || []), no18 = window.tn.prefs.get().no18, hid = window.tn.hidden.keys();
     const pool = cat.items.filter((x) => (tonight.len === 'any' || x.t === tonight.len) && x.s?.some((k) => want.has(k)) && x.g?.some((g) => genres.has(g))
-        && (tonight.who !== 'family' || !x.g.some((g) => DARK.includes(g))) && (x.r || 0) >= 6.4 && (x.v || 0) >= 40 && !(no18 && titles()?.items?.[`${x.t === 'movie' ? 'm' : 't'}${x.i}`]?.c === '18'))
+        && (tonight.who !== 'family' || !x.g.some((g) => DARK.includes(g))) && (x.r || 0) >= 6.4 && (x.v || 0) >= 40 && !hid.has(`${x.t[0]}${x.i}`) && !(no18 && titles()?.items?.[`${x.t === 'movie' ? 'm' : 't'}${x.i}`]?.c === '18'))
       .map((x) => ({ x, score: (x.r || 0) * Math.log10(10 + (x.v || 0)) + Math.log10(1 + (x.p || 0)) }))
       .sort((a, b) => b.score - a.score).slice(0, 30).filter(({ x }) => !tonight.seen.has(`${x.t}${x.i}`));
     if (!pool.length) return `<h2 id="tnH">${tonight.seen.size ? 'That’s all for those answers' : 'Nothing quite fits'}</h2><p class="tn-sub">Try a different mood${mineSvcs.length ? ', or add more of your services in Settings' : ''}.</p><div class="tn-acts"><button type="button" class="btn btn-tinted" data-tn="again">Start again</button></div>`;

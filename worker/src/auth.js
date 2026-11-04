@@ -144,7 +144,15 @@ export function merge(a = {}, b = {}) {
   for (const [k, v] of Object.entries(b.swipes || {})) if (!sw[k] || v[1] > sw[k][1]) sw[k] = v;
   const swipes = Object.fromEntries(Object.entries(sw).sort((x, y) => y[1][1] - x[1][1]).slice(0, 1500));
   return { v: 1, watchlist, removed, progress, pat, stars, swipes, services: newer('services', 'sat') || [], sat: Math.max(a.sat || 0, b.sat || 0), settings: newer('settings', 'pfat') || {}, pfat: Math.max(a.pfat || 0, b.pfat || 0),
-    tv: mergeTv(a.tv, b.tv) };
+    tv: mergeTv(a.tv, b.tv), seen: mergeMarks(a.seen, b.seen, 1000), hidden: mergeMarks(a.hidden, b.hidden, 1000), notes: mergeMarks(a.notes, b.notes, 400) };
+}
+// what you've watched, what you're not interested in and your notes: { k: [on or note, when, title, year, poster] },
+// the newest change wins title by title; removals are forgotten after 120 days
+export function mergeMarks(a = {}, b = {}, max = 1000) {
+  const out = { ...(a || {}) }, cut = now() - 120 * 864e5;
+  for (const [k, v] of Object.entries(b || {})) if (!out[k] || v[1] > out[k][1]) out[k] = v;
+  for (const k of Object.keys(out)) if (!out[k][0] && out[k][1] < cut) delete out[k];
+  return Object.fromEntries(Object.entries(out).sort((x, y) => y[1][1] - x[1][1]).slice(0, max));
 }
 // Tenner TV's own things (tv.tenner.stream): pinned channels (the newest list wins, by pat) and programme reminders
 // (kept by id, a removal remembered in gone so other devices hear of it; finished programmes drop off). tenner.stream
@@ -170,6 +178,13 @@ function cleanTv(v) {
     gone: Object.fromEntries(Object.entries(v.gone && typeof v.gone === 'object' ? v.gone : {}).filter(([k, w]) => /^[a-z0-9.]{1,24}$/.test(k) && +w).slice(0, 400).map(([k, w]) => [k, +w])),
   };
 }
+function cleanMarks(o, note) {
+  const str = (s, n) => (typeof s === 'string' ? s.slice(0, n) : '');
+  return Object.fromEntries(Object.entries(o && typeof o === 'object' && !Array.isArray(o) ? o : {})
+    .filter(([k, v]) => /^[mt]\d{1,9}$/.test(k) && Array.isArray(v) && +v[1]).slice(0, 1200)
+    .map(([k, v]) => [k, [note ? str(v[0], 280).trim() || 0 : v[0] ? 1 : 0, +v[1], str(v[2], 200), str(String(v[3] ?? ''), 4) || null,
+      /^https:\/\/image\.tmdb\.org\//.test(v[4] || '') ? v[4].slice(0, 200) : null]]));
+}
 // keep what a device sends to the shape and size we expect
 function clean(d) {
   const str = (s, n) => (typeof s === 'string' ? s.slice(0, n) : null);
@@ -186,6 +201,7 @@ function clean(d) {
     services: (Array.isArray(d?.services) ? d.services : []).filter((k) => /^[a-z+]{2,20}$/.test(k)).slice(0, 10), sat: +d?.sat || 0,
     settings: Object.fromEntries(Object.entries(d?.settings && typeof d.settings === 'object' ? d.settings : {}).filter(([k, v]) => /^[a-z0-9]{1,20}$/i.test(k) && ['string', 'boolean', 'number'].includes(typeof v)).slice(0, 30)), pfat: +d?.pfat || 0,
     tv: cleanTv(d?.tv),
+    seen: cleanMarks(d?.seen), hidden: cleanMarks(d?.hidden), notes: cleanMarks(d?.notes, true),
   };
 }
 
@@ -404,7 +420,7 @@ export async function authRoute(req, env, ctx, url, json, cors, origin) {
       const text = JSON.stringify(merged);
       if (text.length > 400000) return fail('That’s too much to keep', 413);
       await env.DB.prepare('INSERT INTO userdata (user_id, data, updated) VALUES (?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET data = excluded.data, updated = excluded.updated').bind(me.id, text, now()).run();
-      ctx.waitUntil(syncAlerts(env, me.id, merged.watchlist.map((x) => x.k)));   // alerts on all your devices watch the same list
+      ctx.waitUntil(syncAlerts(env, me.id, merged.watchlist.map((x) => x.k), alertPrefs(merged.settings)));   // alerts on all your devices watch the same list
       return ok({ data: merged });
     }
     // Tenner TV (another site, so its own storage): tenner.stream, signed in, asks for a session of its own to hand over
@@ -529,14 +545,22 @@ async function takeChallenge(env, id) {
   return ch;
 }
 // the alerts on every device signed in to this account follow the account's Watchlist
-async function syncAlerts(env, userId, watch) {
+// which alerts you want and when to stay quiet (Settings, signed in): { off: ['a' arrivals, 'e' episodes, 'l' leaving,
+// 'v' on Freeview, 'p' cheaper], quiet: [from hour, to hour] or null }
+export function alertPrefs(st = {}) {
+  st ||= {};
+  const off = [['alarr', 'a'], ['alep', 'e'], ['alleave', 'l'], ['altv', 'v'], ['alprice', 'p']].filter(([k]) => st[k] === false).map(([, c]) => c);
+  const q = String(st.quiet || '').match(/^(\d{1,2})-(\d{1,2})$/);
+  return { off, quiet: q && +q[1] < 24 && +q[2] < 24 ? [+q[1], +q[2]] : null };
+}
+async function syncAlerts(env, userId, watch, al) {
   if (!env.PUSH) return;
   const subs = (await env.DB.prepare('SELECT sub_key FROM pushsubs WHERE user_id = ?').bind(userId).all()).results;
   for (const { sub_key } of subs) {
     const v = await env.PUSH.get(sub_key, 'json');
     if (!v) { await env.DB.prepare('DELETE FROM pushsubs WHERE sub_key = ?').bind(sub_key).run(); continue; }
-    if (v.watch?.length === watch.length && v.watch.every((k, i) => k === watch[i])) continue;
-    await env.PUSH.put(sub_key, JSON.stringify({ ...v, watch, user: userId }));
+    if (v.watch?.length === watch.length && v.watch.every((k, i) => k === watch[i]) && JSON.stringify(v.al || null) === JSON.stringify(al)) continue;
+    await env.PUSH.put(sub_key, JSON.stringify({ ...v, watch, al, user: userId }));
   }
 }
 // a device turning alerts on while signed in: remember whose it is
@@ -546,5 +570,7 @@ export async function linkAlerts(req, env, subKey) {
   if (!me) return null;
   await env.DB.prepare('INSERT INTO pushsubs (sub_key, user_id) VALUES (?, ?) ON CONFLICT(sub_key) DO UPDATE SET user_id = excluded.user_id').bind(subKey, me.id).run();
   const d = await env.DB.prepare('SELECT data FROM userdata WHERE user_id = ?').bind(me.id).first();
-  return d ? (JSON.parse(d.data).watchlist || []).map((x) => x.k) : null;
+  if (!d) return null;
+  const data = JSON.parse(d.data);
+  return { watch: (data.watchlist || []).map((x) => x.k), al: alertPrefs(data.settings) };
 }

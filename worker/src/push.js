@@ -44,13 +44,17 @@ export async function pushRoute(req, env, ctx, url, json, cors) {
     let watch = [...new Set((Array.isArray(body.watch) ? body.watch : []).filter((k) => /^[mt]\d{1,9}$/.test(k)))].slice(0, 500);
     const id = `sub:${await sha(ep)}`, old = await env.PUSH.get(id, 'json');
     const acct = await linkAlerts(req, env, id).catch(() => null);   // signed in: this device's alerts follow the account's Watchlist
-    if (acct) watch = acct;
-    await env.PUSH.put(id, JSON.stringify({ sub: { endpoint: ep, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } }, watch, seen: old?.seen || [], at: Date.now() }));
+    if (acct) watch = acct.watch;
+    await env.PUSH.put(id, JSON.stringify({ sub: { endpoint: ep, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } }, watch, ...(acct ? { al: acct.al } : {}), seen: old?.seen || [], at: Date.now() }));
     if (!old) ctx.waitUntil(send(sub, { title: 'Alerts are on', body: 'Tenner will tell you when something on your Watchlist arrives, has a new episode or is about to leave.', url: '/#watchlist', tag: 'tenner-hello' }, env).catch(() => {}));
     return json({ ok: true, watching: watch.length }, 200, cors);
   }
   return json({ error: 'Not found' }, 404, cors);
 }
+
+// Settings (signed in): an alert you've switched off, or quiet hours (UK time) when arrivals wait until they're over
+const wants = (s, c) => !s.al?.off?.includes(c);
+export const quietNow = (q, hour = ukNow().hour) => !!q && (q[0] > q[1] ? hour >= q[0] || hour < q[1] : hour >= q[0] && hour < q[1]);
 
 // ---------- the hourly run ----------
 export async function pushRun(env, force = false) {
@@ -161,7 +165,7 @@ async function morningBatch(env, ids, fresh) {
   const money = (n) => `£${n.toFixed(2)}`;
   for (const id of ids) {
     const s = await env.PUSH.get(id, 'json'); if (!s) continue;
-    const want = new Set(s.watch), seen = new Set(s.seen || []), hits = [];
+    const want = new Set(s.watch), seen = new Set(s.seen || []); let hits = [];
     for (const x of leaving) {
       const k = `${x.type === 'movie' ? 'm' : 't'}${x.id}`, tag = `l${k}:${x.date}`;
       if (want.has(k) && !seen.has(tag)) hits.push({ tag, k, short: `${x.title} (leaving ${dayName(x.date, day)})`,
@@ -193,6 +197,7 @@ async function morningBatch(env, ids, fresh) {
       if (name) hits.push({ tag, k: x.k, short: `${name} (${money(x.price)} to ${x.kind})`,
         title: `${name} is cheaper to ${x.kind}`, body: `${money(x.price)} on ${x.on}, down from ${money(x.was)}.` });
     }
+    hits = hits.filter((h) => wants(s, h.tag[0]));
     if (!hits.length) continue;
     const msg = hits.length === 1 ? { title: hits[0].title, body: hits[0].body, url: `/?t=${hits[0].k}` }
       : { title: `${hits.length} things from your Watchlist today`, body: hits.slice(0, 4).map((h) => h.short).join(', '), url: '/#watchlist' };
@@ -206,7 +211,7 @@ async function sendBatch(env, ids, fresh) {
   const label = { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+', appletv: 'Apple TV' };
   const arrived = (fresh.items || []).filter((x) => x.id && x.date <= today && x.date >= since);
   for (const id of ids) {
-    const s = await env.PUSH.get(id, 'json'); if (!s) continue;
+    const s = await env.PUSH.get(id, 'json'); if (!s || !wants(s, 'a') || quietNow(s.al?.quiet)) continue;   // quiet: told next hour after
     const want = new Set(s.watch), seen = new Set(s.seen || []);
     const hits = arrived.filter((x) => want.has(`${x.type === 'movie' ? 'm' : 't'}${x.id}`) && !seen.has(`${x.type[0]}${x.id}:${x.season || 0}`));
     if (!hits.length) continue;

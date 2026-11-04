@@ -100,6 +100,21 @@
   // A grey circle with an outline heart, red with a filled heart once loved
   const starBtn = (on) => `<button type="button" class="btn btn-tinted sh-star${on ? ' on' : ''}" data-act="star" aria-pressed="${on}" aria-label="${on ? 'Loved' : 'Love it'}: tell Tenner you like this" title="${on ? 'Loved' : 'Love it, for better recommendations'}">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2s-7.6-4.6-7.6-10.3A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 7.6 2.5c0 5.7-7.6 10.3-7.6 10.3z" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>`;
+  // ---------- Just for You (signed in): Watched, Not interested and a note only you can see, kept with your account ----------
+  const SEEN_IC = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="2"/><path class="c" d="m8.2 12.3 2.6 2.6 5-5.4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const HIDE_IC = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.3-6 9-6 9 6 9 6-3.3 6-9 6-9-6-9-6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4.5 19.5 19.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  const seenBtn = (on) => `<button type="button" class="btn btn-tinted sh-seen${on ? ' on' : ''}" data-act="seen" aria-pressed="${on}">${SEEN_IC}${on ? 'Watched' : 'Mark as watched'}</button>`;
+  const hideBtn = (on) => `<button type="button" class="btn btn-tinted sh-hide${on ? ' on' : ''}" data-act="hide" aria-pressed="${on}">${HIDE_IC}${on ? 'Hidden' : 'Not interested'}</button>`;
+  function mineHtml(info) {
+    if (!info.k || !window.tn.member()) return '';
+    const { seen, hidden, notes } = window.tn, note = notes.get(info.k)?.[0] || '', at = seen.get(info.k)?.[1];
+    return `<section class="sh-mine" aria-labelledby="shM"><h3 id="shM">Just for You</h3>
+      <div class="sh-mbtns">${seenBtn(!!at)}${hideBtn(hidden.has(info.k))}</div>
+      <label class="sh-note"><span class="sh-vh">Your note on ${esc(info.title)}</span><textarea data-note rows="2" maxlength="280" placeholder="Add a note. Only you can see it">${esc(note)}</textarea></label>
+      <p class="sh-msay" id="shMsay" role="status">${at ? `Watched ${esc(new Date(at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }))}` : ''}</p></section>`;
+  }
+  let msayT = 0;
+  const msay = (t) => { const el = $('#shMsay'); if (!el) return; el.textContent = t; clearTimeout(msayT); msayT = setTimeout(() => { if (el.isConnected) el.textContent = ''; }, 3500); };
   const $ = (s, el = document) => el.querySelector(s);
   let dataP = null, dataD = null;
   const details = () => (dataP ||= fetch(`data/titles.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).then((d) => (dataD = d || dataD)).catch(() => null));
@@ -295,11 +310,14 @@
     if (!se?.eps?.length) { el.innerHTML = '<p class="sh-none">No episode details for this season yet.</p>'; return; }
     const p = progress.get(info.k), done = (e) => n > 0 && p && (n < p[0] || (n === p[0] && e <= p[1])), up = nextUp(p, shown?.items?.[info.k]?.sz);
     const now = today();
+    // Spoiler shield (Settings, signed in): in a show you've started, what's after where you're up to is blurred until tapped
+    const shield = !!p && window.tn.member() && window.tn.prefs.get().spoil;
     el.innerHTML = `<ul class="sh-eps">${se.eps.map((e) => {
+      const sp = shield && n > 0 && !done(e.n), ah = sp ? ' class="sp" aria-hidden="true"' : '';
       const soon = e.date && e.date > now, when = e.date ? (soon ? `Out ${shortDate(e.date)}` : shortDate(e.date)) : '';
       const nextOne = up && up[0] === n && up[1] === e.n;
-      return `<li${nextOne ? ' data-up' : ''}${soon ? ' class="soon"' : ''}><span class="sh-still">${e.still ? `<img src="${esc(e.still)}" alt="" loading="lazy" decoding="async">` : ''}${done(e.n) ? '<i class="sh-tick" aria-label="Watched"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 8.4 2.6 2.6L12 5.4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></i>' : ''}</span>
-        <small class="sh-epn">${nextOne ? 'Up next · ' : ''}Episode ${e.n}</small><b>${esc(e.name)}</b>${e.ov ? `<p>${esc(e.ov)}</p>` : ''}<small>${esc([when, runtime(e.rt)].filter(Boolean).join(' · '))}</small></li>`;
+      return `<li${nextOne ? ' data-up' : ''}${soon || sp ? ` class="${[soon && 'soon', sp && 'spoil'].filter(Boolean).join(' ')}"` : ''}><span class="sh-still">${e.still ? `<img src="${esc(e.still)}" alt="" loading="lazy" decoding="async">` : ''}${sp ? '<button type="button" class="sh-unspoil" data-act="unspoil" aria-label="Show this episode’s name and description (it may spoil things)">Show</button>' : ''}${done(e.n) ? '<i class="sh-tick" aria-label="Watched"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 8.4 2.6 2.6L12 5.4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></i>' : ''}</span>
+        <small class="sh-epn">${nextOne ? 'Up next · ' : ''}Episode ${e.n}</small><b${ah}>${esc(e.name)}</b>${e.ov ? `<p${ah}>${esc(e.ov)}</p>` : ''}<small>${esc([when, runtime(e.rt)].filter(Boolean).join(' · '))}</small></li>`;
     }).join('')}</ul>`;
     if (!reduce) el.firstChild.classList.add('sh-in');
     // the row starts at the episode you're up to
@@ -412,6 +430,7 @@
         ${ovHtml(info)}
         <section class="sh-where" aria-labelledby="shW"><h3 id="shW">Where to Watch</h3>${whereHtml(info, d)}</section>
         ${progressHtml(info, x)}
+        ${mineHtml(info)}
         ${info.type === 'tv' && d ? `<section class="sh-sec sh-epsec" id="shEpsWrap" aria-label="Episodes"><div class="sh-h"><h3>Episodes</h3></div>${episodesSkel()}</section>` : ''}
         ${chartHtml(info)}
         <div id="shVidsWrap"></div>
@@ -572,6 +591,20 @@
       t.textContent = on ? 'Thanks. We’ll use the shows and films you like to offer you better recommendations.' : ''; t.classList.toggle('in', on);
       if (on) thanksT = setTimeout(() => t.classList.remove('in'), 4500);
     }
+    if (b.dataset.act === 'seen') {
+      const on = !window.tn.seen.has(current.k); window.tn.seen.set(current, on ? 1 : 0);
+      const off = on && window.tn.prefs.get().seenoff !== false && saved.has(current.k);
+      if (off) { saved.remove(current.k); const sv = sheet.querySelector('.sh-save'); if (sv) sv.outerHTML = saveBtn(false); }
+      b.outerHTML = seenBtn(on); sheet.querySelector('.sh-seen')?.focus({ preventScroll: true });
+      if (on) navigator.vibrate?.(10);
+      msay(on ? (off ? 'On your Watched list, and off your Watchlist' : 'On your Watched list') : 'Taken off your Watched list');
+    }
+    if (b.dataset.act === 'hide') {
+      const on = !window.tn.hidden.has(current.k); window.tn.hidden.set(current, on ? 1 : 0);
+      b.outerHTML = hideBtn(on); sheet.querySelector('.sh-hide')?.focus({ preventScroll: true });
+      msay(on ? (window.tn.prefs.get().hideni !== false ? 'Hidden from Home, Browse, Discover and For You. Bring it back here or in Settings' : 'Marked as not interested') : 'It’s back');
+    }
+    if (b.dataset.act === 'unspoil') { const li = b.closest('li'); li.classList.remove('spoil'); li.querySelectorAll('[aria-hidden="true"].sp').forEach((el) => el.removeAttribute('aria-hidden')); b.remove(); }
     if (b.dataset.act === 'watched' || b.dataset.act === 'reset') {
       const x = shown?.items?.[current.k]; if (!x?.sz) return;
       if (b.dataset.act === 'reset') progress.set(current.k, null);
@@ -593,6 +626,13 @@
     const b = sheet.querySelector(`[data-act="${act}"]`); if (!b) return;
     e.preventDefault(); b.click();
   });
+
+  // your note saves as you type (a moment after you stop), and when you leave the box
+  let noteT = 0;
+  const saveNote = (el) => { clearTimeout(noteT); if (!current) return; const t = el.value.trim(), was = window.tn.notes.get(current.k)?.[0] || '';
+    if (t === was) return; window.tn.notes.set(current, t || 0); msay(t ? 'Note saved' : 'Note removed'); };
+  sheet.addEventListener('input', (e) => { const el = e.target.closest('[data-note]'); if (el) { clearTimeout(noteT); noteT = setTimeout(() => saveNote(el), 800); } });
+  sheet.addEventListener('focusout', (e) => { const el = e.target.closest?.('[data-note]'); if (el) saveNote(el); });
 
   // choosing a season or episode from the menus
   function redrawProgress(focus) {

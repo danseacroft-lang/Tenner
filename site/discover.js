@@ -40,9 +40,9 @@
   // the deck: everything on the six services not already saved or skipped, popular first but shuffled a little in small
   // batches so it feels fresh
   function build() {
-    const skip = skipped.all(), withArt = cat.items.some((x) => x.img);
+    const skip = skipped.all(), hid = window.tn.hidden.keys(), withArt = cat.items.some((x) => x.img);
     const pool = cat.items.filter((x) => (kind === 'both' || x.t === kind) && x.s.length && (!withArt || x.img)
-      && !skip[keyOf(x)] && !saved.has(keyOf(x)) && (!certs || certs.items?.[keyOf(x)]?.c !== '18'))
+      && !skip[keyOf(x)] && !saved.has(keyOf(x)) && !hid.has(keyOf(x)) && (!certs || certs.items?.[keyOf(x)]?.c !== '18'))
       .sort((a, b) => (b.p * (0.6 + (b.r || 6) / 20)) - (a.p * (0.6 + (a.r || 6) / 20)));
     deck = [];
     for (let i = 0; i < pool.length; i += 10) deck.push(...pool.slice(i, i + 10).sort(() => Math.random() - 0.5));

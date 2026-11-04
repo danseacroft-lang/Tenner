@@ -40,9 +40,9 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=2.31.0">
-  <link rel="stylesheet" href="settings.css?v=2.31.0">
-  <link rel="stylesheet" href="account.css?v=2.31.0">
+  <link rel="stylesheet" href="styles.css?v=2.32.0">
+  <link rel="stylesheet" href="settings.css?v=2.32.0">
+  <link rel="stylesheet" href="account.css?v=2.32.0">
 </head>
 <body>
   <a class="skip" href="#main">Skip to the page</a>
@@ -88,7 +88,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 2.31.0</span>
+      <span class="side-ver">Tenner 2.32.0</span>
     </div>
   </div>
 
@@ -173,6 +173,11 @@
               <div class="set-row ac-hues" id="acHues"><span class="set-l">Colour<small>For your initial, where there’s no picture</small></span><span class="ac-sw" id="acSw"></span></div>
             </div>
           </section>
+          <!-- Your Tenner: what you've watched, your favourite genres and where you watch (Settings → Your Tenner) -->
+          <section class="set-sec" aria-labelledby="acHStats" id="acStatsSec" hidden>
+            <h2 class="set-h" id="acHStats">Your Tenner</h2>
+            <div class="set-group ac-stats" id="acStats"></div>
+          </section>
         </div>
 
         <div class="set-col">
@@ -237,7 +242,7 @@
   </main>
 
 
-  <script src="shell.js?v=2.31.0" defer></script>
-  <script src="account.js?v=2.31.0" defer></script>
+  <script src="shell.js?v=2.32.0" defer></script>
+  <script src="account.js?v=2.32.0" defer></script>
 </body>
 </html>

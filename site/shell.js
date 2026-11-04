@@ -12,7 +12,10 @@
     edit(fn) { const m = meta.get(); fn(m); try { localStorage.setItem(SYNC, JSON.stringify(m)); } catch {} },
   };
   // ---------- settings (settings.html), on this device (and in your account, if you sign in) ----------
-  const PREFS = 'tenner-settings', DEF = { start: 'auto', anim: false, moves: true, ratings: true, trailers: 'here', autoplay: true, no18: false, digest: false };
+  const PREFS = 'tenner-settings', DEF = { start: 'auto', anim: false, moves: true, ratings: true, trailers: 'here', autoplay: true, no18: false, digest: false,
+    // signed in only: Spoiler shield, watched titles leave the Watchlist, hide Not interested titles, notes on the Watchlist,
+    // Your Tenner on the account page, which alerts to send and when to stay quiet (the Worker reads these from the account)
+    spoil: false, seenoff: true, hideni: true, notewl: true, stats: true, alarr: true, alep: true, alleave: true, altv: true, alprice: true, quiet: 'off' };
   const prefs = {
     get() { try { const { still, ...p } = JSON.parse(localStorage.getItem(PREFS) || '{}'); return { ...DEF, ...p }; } catch { return { ...DEF }; } },   // still: the old Reduce motion setting, gone
     set(k, v) { const p = prefs.get(); p[k] = v; try { localStorage.setItem(PREFS, JSON.stringify(p)); } catch {} meta.edit((m) => { m.pfat = Date.now(); }); apply(); dispatchEvent(new Event('tn:prefs')); },
@@ -85,7 +88,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '2.31.0';
+  const version = '2.32.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -137,6 +140,31 @@
       try { localStorage.setItem(SW, JSON.stringify(m)); } catch {} dispatchEvent(new Event('tn:swiped'));
     },
   };
+  // ---------- signed in only: what you've watched, what you're not interested in, and your own notes ----------
+  // Each is { k: [on (1 or 0; a note's text or 0), when, title, year, poster] }. A 0 is a removal, kept a while so your
+  // other devices hear of it when your account syncs (the newest change wins, title by title). Pages hear "tn:marks".
+  const member = () => { try { return !!localStorage.getItem('tenner-session'); } catch { return false; } };
+  const MARKS = { seen: 'tenner-seen', hidden: 'tenner-hidden', notes: 'tenner-notes' };
+  const marks = (key) => {
+    const m = {
+      map() { try { const o = JSON.parse(localStorage.getItem(key) || '{}'); return o && typeof o === 'object' && !Array.isArray(o) ? o : {}; } catch { return {}; } },
+      get(k) { const v = m.map()[k]; return v?.[0] ? v : null; },
+      has(k) { return !!k && !!m.get(k); },
+      list() { return Object.entries(m.map()).filter(([, v]) => v?.[0]).sort((a, b) => b[1][1] - a[1][1])
+        .map(([k, v]) => ({ k, v: v[0], at: v[1], title: v[2] || '', year: v[3] || null, poster: v[4] || null, type: k[0] === 'm' ? 'movie' : 'tv' })); },
+      set(info, v) {
+        if (!info?.k) return; const o = m.map(), cut = Date.now() - 120 * 864e5;
+        o[info.k] = [v || 0, Date.now(), String(info.title || '').slice(0, 200), info.year ? String(info.year).slice(0, 4) : null, info.poster || null];
+        for (const [k, x] of Object.entries(o)) if (!x?.[0] && x?.[1] < cut) delete o[k];
+        const ks = Object.keys(o); if (ks.length > 1000) ks.sort((a, b) => o[a][1] - o[b][1]).slice(0, ks.length - 1000).forEach((x) => delete o[x]);
+        try { localStorage.setItem(key, JSON.stringify(o)); } catch {} dispatchEvent(new Event('tn:marks'));
+      },
+    };
+    return m;
+  };
+  const seen = marks(MARKS.seen), hidden = marks(MARKS.hidden), notes = marks(MARKS.notes);
+  // the titles to leave out of Home, Browse, Discover and For You (only while signed in, and Settings says so)
+  hidden.keys = () => (member() && prefs.get().hideni !== false ? new Set(hidden.list().map((x) => x.k)) : new Set());
   // For You: titles from the catalogue (data/browse.json's items) you'd probably like, from what you swiped right on in
   // Discover (most), loved (stars) and saved; left swipes count a little against their genres. TMDB's own "more like this"
   // for your latest right swipes (like: { k: [keys] }) lifts those titles well up. Nothing you've swiped, saved or loved
@@ -149,7 +177,7 @@
     yes.slice(0, 200).forEach((k) => add(k, 3)); starred.forEach((k) => add(k, 2)); have.forEach((k) => add(k, 1));
     Object.entries(sw).filter(([, v]) => !v[0]).sort((a, b) => b[1][1] - a[1][1]).slice(0, 300).forEach(([k]) => add(k, -0.6));
     const hits = new Map(); for (const [src, l] of Object.entries(like)) for (const k of l || []) if (!hits.has(k)) hits.set(k, src);
-    const top = Math.max(1, ...w.values()), skip = new Set([...Object.keys(sw), ...starred, ...have]);
+    const top = Math.max(1, ...w.values()), skip = new Set([...Object.keys(sw), ...starred, ...have, ...hidden.keys()]);
     const picks = items.filter((x) => x.img && x.s?.length && ok(x) && !skip.has(`${x.t[0]}${x.i}`) && ((x.r >= 6.3 && x.v >= 40) || hits.has(`${x.t[0]}${x.i}`)))
       .map((x) => { const g = x.g.reduce((s, id) => s + (w.get(id) || 0), 0) / top / Math.sqrt(Math.max(1, x.g.length));
         return [x, (Math.max(0, g) + (hits.has(`${x.t[0]}${x.i}`) ? 1.6 : 0)) * (x.r || 6) * Math.log10(10 + (x.v || 0))]; })
@@ -194,7 +222,7 @@
     return n <= 0 ? (n === 0 ? 'Today' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })) : n === 1 ? 'Tomorrow'
       : n < 7 ? d.toLocaleDateString('en-GB', { weekday: 'long' }) : d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
   };
-  addEventListener('storage', (e) => { if (e.key === WL || e.key === PR || e.key === ST) dispatchEvent(new Event('tn:saved')); if (e.key === MS) dispatchEvent(new Event('tn:mine')); if (e.key === PREFS) { apply(); dispatchEvent(new Event('tn:prefs')); } });
+  addEventListener('storage', (e) => { if (e.key === WL || e.key === PR || e.key === ST) dispatchEvent(new Event('tn:saved')); if (e.key === MS) dispatchEvent(new Event('tn:mine')); if (Object.values(MARKS).includes(e.key)) dispatchEvent(new Event('tn:marks')); if (e.key === PREFS) { apply(); dispatchEvent(new Event('tn:prefs')); } });
 
   // ---------- My services: the ones you pay for, on this device. The Top 10 gets a chart of just those, and Browse
   // starts filtered to them. Empty means "all six". ----------
@@ -613,8 +641,8 @@
   // Shown once, at the foot of the screen in Tenner's frosted style; Got it puts it away for good on this device.
   // Its wording changed when accounts arrived, so it's shown once more under a new name (the old one is tidied away).
   const NOTE = 'tenner-note-seen-2';
-  let seen = false; try { localStorage.removeItem('tenner-note-seen'); seen = !!localStorage.getItem(NOTE); } catch {}
-  if (!seen && !navigator.webdriver) setTimeout(() => {
+  let noteSeen = false; try { localStorage.removeItem('tenner-note-seen'); noteSeen = !!localStorage.getItem(NOTE); } catch {}
+  if (!noteSeen && !navigator.webdriver) setTimeout(() => {
     document.body.insertAdjacentHTML('beforeend', `<aside class="pv-note" id="pvNote" aria-label="Privacy">
       <span class="pv-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2.5 11.2 6 7.8l3.2 1.1 2.6-1.6a2.2 2.2 0 0 1 2.3 0l5.9 3.7-3.4 3.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="m16.6 14.4-4.1-3.1-2 1.3a1.5 1.5 0 0 1-2-.4 1.5 1.5 0 0 1 .3-2.1l3-2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="m2.5 11.2 3.3 3.6M7.6 16.6l1.6 1.5a1.3 1.3 0 0 0 1.8 0M10.2 15.2l2.3 2.1a1.3 1.3 0 0 0 1.8 0 1.3 1.3 0 0 0 0-1.8M12.6 14l2.1 2a1.3 1.3 0 0 0 1.8-.1 1.3 1.3 0 0 0 0-1.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       <p>Tenner doesn’t use cookies or tracking. Your Watchlist and settings stay on this device unless you sign in to sync them. <a href="legal.html#cookies">Privacy Policy</a></p>
@@ -725,7 +753,7 @@
   // ---------- iPhone and iPad: a one-time tip to put Tenner on the Home Screen (full screen, and alerts) ----------
   // On the third page you open in Safari, after the privacy note has been put away; Got it puts it away for good.
   const A2 = 'tenner-a2hs';
-  if (isIOS && !standalone && seen && !navigator.webdriver) {
+  if (isIOS && !standalone && noteSeen && !navigator.webdriver) {
     let n = 0; try { n = +localStorage.getItem(A2) || 0; } catch {}
     if (n >= 0) {
       try { localStorage.setItem(A2, String(n + 1)); } catch {}
@@ -769,11 +797,11 @@
     async signOut(clear) {
       try { await account.call('POST', '/auth/logout'); } catch {}
       account.forget();
-      if (clear) { ['tenner-watchlist', 'tenner-progress', 'tenner-services', 'tenner-stars', SW, SYNC].forEach((k) => lsSet(k, null)); dispatchEvent(new Event('tn:saved')); dispatchEvent(new Event('tn:mine')); }
+      if (clear) { ['tenner-watchlist', 'tenner-progress', 'tenner-services', 'tenner-stars', SW, SYNC, ...Object.values(MARKS)].forEach((k) => lsSet(k, null)); dispatchEvent(new Event('tn:saved')); dispatchEvent(new Event('tn:mine')); }
     },
     local() {
       const m = meta.get();
-      return { watchlist: saved.all(), removed: m.removed, progress: progress.all(), pat: m.pat, stars: stars.map(), swipes: swipes.map(), services: mine.get(), sat: m.sat, settings: prefs.get(), pfat: m.pfat };
+      return { watchlist: saved.all(), removed: m.removed, progress: progress.all(), pat: m.pat, stars: stars.map(), swipes: swipes.map(), services: mine.get(), sat: m.sat, settings: prefs.get(), pfat: m.pfat, seen: seen.map(), hidden: hidden.map(), notes: notes.map() };
     },
     // send this device's copy; take back the merged one
     sync() {
@@ -792,15 +820,16 @@
     lsSet(PR, JSON.stringify(d.progress || {}));
     lsSet(ST, JSON.stringify(d.stars || {}));
     if (d.swipes) lsSet(SW, JSON.stringify(d.swipes));
+    for (const [f, key] of Object.entries(MARKS)) if (d[f]) lsSet(key, JSON.stringify(d[f]));
     lsSet(MS, d.services?.length ? JSON.stringify(d.services) : null);
     if (d.settings && Object.keys(d.settings).length) lsSet(PREFS, JSON.stringify({ ...DEF, ...d.settings }));
     lsSet(SYNC, JSON.stringify({ removed: d.removed || {}, pat: d.pat || {}, sat: d.sat || 0, pfat: d.pfat || 0 }));
-    if (JSON.stringify(account.local()) !== before) { apply(); dispatchEvent(new Event('tn:saved')); dispatchEvent(new Event('tn:mine')); dispatchEvent(new Event('tn:prefs')); dispatchEvent(new Event('tn:swiped')); }
+    if (JSON.stringify(account.local()) !== before) { apply(); dispatchEvent(new Event('tn:saved')); dispatchEvent(new Event('tn:mine')); dispatchEvent(new Event('tn:prefs')); dispatchEvent(new Event('tn:swiped')); dispatchEvent(new Event('tn:marks')); }
     applying = false;
     dispatchEvent(new Event('tn:synced'));
   }
   const soon = () => { if (applying || !account.token()) return; clearTimeout(acctT); acctT = setTimeout(account.sync, 1200); };
-  ['tn:saved', 'tn:mine', 'tn:prefs', 'tn:swiped'].forEach((e) => addEventListener(e, soon));
+  ['tn:saved', 'tn:mine', 'tn:prefs', 'tn:swiped', 'tn:marks'].forEach((e) => addEventListener(e, soon));
   addEventListener('tn:check', () => account.sync());
   if (account.token()) setTimeout(account.sync, 600);
 
@@ -838,7 +867,7 @@
     },
   };
 
-  window.tn = { prefs, esc, hue, glide, arrows, segment, reduce, saved, stars, swipes, forYou, moreLike, progress, nextUp, whenText, mine, pickMine, api, share, alerts, isIOS, account, avatar, featured, findTitle, sharedTitle, fold, score };
+  window.tn = { prefs, member, seen, hidden, notes, esc, hue, glide, arrows, segment, reduce, saved, stars, swipes, forYou, moreLike, progress, nextUp, whenText, mine, pickMine, api, share, alerts, isIOS, account, avatar, featured, findTitle, sharedTitle, fold, score };
 
   // ---------- paste or drop a link: an IMDb, TMDB, Letterboxd, JustWatch or Tenner link opens that title's sheet ----------
   // ⌘V (Ctrl+V) anywhere but a text box, or a link dragged onto the page. Anything else pasted is left alone.

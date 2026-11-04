@@ -40,8 +40,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=2.31.0">
-  <link rel="stylesheet" href="settings.css?v=2.31.0">
+  <link rel="stylesheet" href="styles.css?v=2.32.0">
+  <link rel="stylesheet" href="settings.css?v=2.32.0">
 </head>
 <body>
   <a class="skip" href="#main">Skip to the page</a>
@@ -87,7 +87,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 2.31.0</span>
+      <span class="side-ver">Tenner 2.32.0</span>
     </div>
   </div>
 
@@ -148,6 +148,23 @@
               <input type="checkbox" switch role="switch" name="no18"><i class="sw" aria-hidden="true"></i></label>
           </div>
         </section>
+        <!-- signed in only: Watched, Not interested, notes, Spoiler shield and Your Tenner -->
+        <section class="set-sec" aria-labelledby="setHMine" id="setMineSec" hidden>
+          <h2 class="set-h" id="setHMine">Just for you</h2>
+          <div class="set-group">
+            <label class="set-row"><span class="set-l">Spoiler shield<small>Blurs episode names, pictures and descriptions after where you’re up to. Tap one to see it</small></span>
+              <input type="checkbox" switch role="switch" name="spoil"><i class="sw" aria-hidden="true"></i></label>
+            <label class="set-row"><span class="set-l">Watched leaves the Watchlist<small>When you mark something as watched, take it off your Watchlist too</small></span>
+              <input type="checkbox" switch role="switch" name="seenoff"><i class="sw" aria-hidden="true"></i></label>
+            <label class="set-row"><span class="set-l">Notes on my Watchlist<small>Your notes under each title, only you can see them</small></span>
+              <input type="checkbox" switch role="switch" name="notewl"><i class="sw" aria-hidden="true"></i></label>
+            <label class="set-row"><span class="set-l">Hide titles I’m not interested in<small>From Home, Browse, Discover and For You</small></span>
+              <input type="checkbox" switch role="switch" name="hideni"><i class="sw" aria-hidden="true"></i></label>
+            <button type="button" class="set-row set-link" id="setHidden"><span class="set-l">Not interested<small id="hidNow">Nothing hidden</small></span><span class="set-pill">Manage</span></button>
+            <label class="set-row"><span class="set-l">Your Tenner<small>What you’ve watched and your favourite genres, on your account page</small></span>
+              <input type="checkbox" switch role="switch" name="stats"><i class="sw" aria-hidden="true"></i></label>
+          </div>
+        </section>
       </div>
 
       <div class="set-col">
@@ -158,6 +175,17 @@
               <input type="checkbox" switch role="switch" id="setAlerts"><i class="sw" aria-hidden="true"></i></label>
             <label class="set-row"><span class="set-l">Sunday email<small id="dgNow">A short round-up each Sunday morning: new episodes, arrivals and what’s leaving from your Watchlist</small></span>
               <input type="checkbox" switch role="switch" name="digest" id="setDigest"><i class="sw" aria-hidden="true"></i></label>
+          </div>
+          <!-- signed in only: which alerts, and quiet hours (the Worker reads them from your account) -->
+          <h3 class="set-sub" id="setAlMoreH" hidden>Alert me about</h3>
+          <div class="set-group" id="setAlMore" hidden aria-labelledby="setAlMoreH" role="group">
+            <label class="set-row"><span class="set-l">Arrivals and new seasons</span><input type="checkbox" switch role="switch" name="alarr"><i class="sw" aria-hidden="true"></i></label>
+            <label class="set-row"><span class="set-l">New episodes out today</span><input type="checkbox" switch role="switch" name="alep"><i class="sw" aria-hidden="true"></i></label>
+            <label class="set-row"><span class="set-l">Leaving soon</span><input type="checkbox" switch role="switch" name="alleave"><i class="sw" aria-hidden="true"></i></label>
+            <label class="set-row"><span class="set-l">On Freeview today</span><input type="checkbox" switch role="switch" name="altv"><i class="sw" aria-hidden="true"></i></label>
+            <label class="set-row"><span class="set-l">Cheaper to rent or buy</span><input type="checkbox" switch role="switch" name="alprice"><i class="sw" aria-hidden="true"></i></label>
+            <label class="set-row"><span class="set-l">Quiet hours<small>Arrivals wait until the morning</small></span>
+              <select name="quiet"><option value="off">Off</option><option value="22-7">10pm to 7am</option><option value="23-8">11pm to 8am</option><option value="21-9">9pm to 9am</option></select></label>
           </div>
         </section>
         <section class="set-sec" aria-labelledby="setHData">
@@ -186,11 +214,18 @@
         <p id="takeP"></p>
         <div class="mine-acts"><button class="btn btn-tinted" value="no">Not now</button><button class="btn btn-tinted mine-done" value="yes">Add them</button></div>
       </form></dialog>
+    <!-- Not interested: the titles you've hidden, each with Show again -->
+    <dialog class="mine-dlg hid-dlg" id="hidDlg" aria-labelledby="hidH">
+      <form method="dialog"><h2 id="hidH">Not interested</h2>
+        <p>These stay out of Home, Browse, Discover and For You. Bring any of them back here.</p>
+        <ul class="hid-list" id="hidList"></ul>
+        <div class="mine-acts"><button class="btn btn-tinted mine-done" value="done">Done</button></div>
+      </form></dialog>
     <p class="set-ver side-ver-text">Tenner</p>
   </main>
 
 
-  <script src="shell.js?v=2.31.0" defer></script>
-  <script src="settings.js?v=2.31.0" defer></script>
+  <script src="shell.js?v=2.32.0" defer></script>
+  <script src="settings.js?v=2.32.0" defer></script>
 </body>
 </html>

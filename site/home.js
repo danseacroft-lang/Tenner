@@ -83,8 +83,8 @@
   // the catalogue (Browse's), kept to the kind, service and genre you've picked
   function catalogue() {
     const c = state.cat; if (!c?.items) return [];
-    const ks = kinds();
-    return c.items.filter((x) => ks.includes(x.t) && x.s?.length && pickedAny(x.s) && (state.genre == null || (x.g || []).includes(+state.genre)));
+    const ks = kinds(), hid = window.tn.hidden.keys();   // Not interested (signed in): left out
+    return c.items.filter((x) => !hid.has(`${x.t[0]}${x.i}`) && ks.includes(x.t) && x.s?.length && pickedAny(x.s) && (state.genre == null || (x.g || []).includes(+state.genre)));
   }
   const fromCat = (x) => ({ id: x.i, type: x.t, title: x.n, year: (x.d || '').slice(0, 4), date: x.d, rating: x.r, on: x.s, url: tmdbUrl(x.t, x.i),
     poster: x.img ? (x.img.startsWith('/') ? state.cat.img + x.img : x.img) : null });
@@ -114,6 +114,10 @@
     window.tnSheet?.openKey?.(k);
   }
   addEventListener('tn:saved', () => { markSaved(); drawSide(); });
+  // Not interested (signed in) changed: the rows and lists without it, once the sheet is closed
+  let marksDirty = false;
+  addEventListener('tn:marks', () => { marksDirty = true; if (!window.tnSheet?.isOpen?.() && state.cat) { marksDirty = false; drawRows(); drawSide(); } });
+  addEventListener('tn:sheet-closed', () => { if (marksDirty && state.cat) { marksDirty = false; drawRows(); drawSide(); } });
   function markSaved() {
     for (const b of main.querySelectorAll('[data-save]')) {
       const info = shown.get(b.dataset.save), on = window.tn.saved.has(info?.k);

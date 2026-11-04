@@ -754,8 +754,8 @@ a.tb-btn:hover { text-decoration: none; }
 .sh-next b { font-weight: 600; color: var(--accent); }
 .sh-next span { color: var(--label2); font-size: 14px; }
 .sh-next.done { background: var(--fill); } .sh-next.done b { color: var(--label2); }
-.sh-prog, .sh-track, .sh-cast, .sh-sec { margin-top: 22px; padding-top: 18px; border-top: .5px solid var(--sep); }
-.sh-prog h3, .sh-track h3, .sh-cast h3, .sh-sec h3 { margin: 0 0 10px; font: 700 20px/1.2 var(--font); letter-spacing: .004em; }
+.sh-prog, .sh-mine, .sh-track, .sh-cast, .sh-sec { margin-top: 22px; padding-top: 18px; border-top: .5px solid var(--sep); }
+.sh-prog h3, .sh-mine h3, .sh-track h3, .sh-cast h3, .sh-sec h3 { margin: 0 0 10px; font: 700 20px/1.2 var(--font); letter-spacing: .004em; }
 /* Cast & Crew in the sheet: a row of round faces, Apple TV style */
 .sh-faces { display: grid; grid-auto-flow: column; grid-auto-columns: 88px; gap: 14px; margin: 0 -24px; padding: 4px 24px 6px; list-style: none;
   overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding-left: 24px; scrollbar-width: none; }
@@ -1765,3 +1765,26 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .sh-main .
   :root .set-page .set-form .set-group, :root .set-page .set-form .set-tile, :root .set-page .set-group, :root .set-page .set-tile { background: var(--ph-box); }
 }
 @media (max-width: 719px) and (prefers-reduced-transparency: reduce) { :root:root { --ph-box: var(--bg2); } }
+
+/* ============================================================ Just for You (signed in): Watched, Not interested and your
+   note in a title's sheet; Spoiler shield blurs episodes after where you're up to; notes and Watched on the Watchlist */
+.sh-mbtns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.sh-mbtns .btn { width: 100%; min-width: 0; height: 44px; justify-content: center; gap: 8px; border-radius: var(--r); padding: 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sh-mbtns .btn svg { width: 17px; height: 17px; flex: none; }
+.sh-seen .c { opacity: 0; transition: opacity .2s ease; }
+.sh-mbtns .btn[aria-pressed="true"] { color: var(--bt-on) !important; }   /* on: the house's light blue, like In Watchlist */
+.sh-seen.on .c { opacity: 1; }
+.sh-note { display: block; margin-top: 10px; }
+.sh-note textarea { display: block; width: 100%; min-height: 64px; padding: 11px 14px; border: 0; border-radius: var(--r); resize: vertical;
+  font: 400 16px/1.4 var(--font); color: var(--label); background: var(--fr-in); box-shadow: inset 0 0 0 .5px var(--fr-rim, var(--sep)); }
+.sh-note textarea::placeholder { color: var(--label3); }
+.sh-note textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sh-msay { min-height: 18px; margin: 8px 2px 0; font-size: 13px; color: var(--label2); }
+.sh-eps li.spoil .sh-still img { filter: blur(14px) saturate(1.2); transform: scale(1.15); }
+.sh-eps li.spoil .sp { filter: blur(5px); user-select: none; }
+.sh-unspoil { position: absolute; inset: 50% auto auto 50%; translate: -50% -50%; min-height: 32px; padding: 0 14px; border: 0; border-radius: var(--r);
+  font: 500 14px/1 var(--font); -webkit-font-smoothing: antialiased; color: #fff; background: color-mix(in srgb, var(--bt-fill, #1d3a6e) 88%, transparent);
+  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); cursor: pointer; }
+.sh-unspoil::before { content: ""; position: absolute; inset: -6px; }   /* a comfortable target */
+.wl-note { display: block; margin-top: 2px; color: var(--label2); font-size: 13px; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wl-more { margin: 14px 0 0; }

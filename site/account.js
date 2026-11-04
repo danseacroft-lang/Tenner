@@ -179,8 +179,41 @@
     eyes($('#acWays'));
     $('#acDevices').innerHTML = me.sessions.map((x) => `<div class="set-row"><span class="set-l"><span>${esc(x.label)}${x.here ? ' <em class="ac-here">This device</em>' : ''}</span><small>Signed in ${esc(when(x.created).toLowerCase())}${x.here ? '' : ` · seen ${esc(when(x.seen).toLowerCase())}`}</small></span>${x.here || !x.id ? '' : `<button type="button" class="ac-x" data-ses="${+x.id}" aria-label="Sign out ${esc(x.label)}">Remove</button>`}</div>`).join('')
       + (me.sessions.length > 1 ? '<button type="button" class="set-row set-link" id="acOthers"><span class="set-l">Sign out everywhere else</span></button>' : '');
-    syncLine();
+    syncLine(); stats();
   }
+  // ---------- Your Tenner: worked out on this device from what your account keeps (Watched, progress, loves, Watchlist) ----------
+  let statsData = null;
+  const SVCS = { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+', appletv: 'Apple TV' };
+  async function stats() {
+    const sec = $('#acStatsSec'), tn = window.tn;
+    if (!account.token() || tn.prefs.get().stats === false) { sec.hidden = true; return; }
+    if (!$('#acStats').innerHTML) $('#acStats').innerHTML = '<div class="ac-nums">' + '<div class="sk"><b></b><small></small></div>'.repeat(4) + '</div>';
+    sec.hidden = false;
+    statsData ||= Promise.all(['titles', 'browse'].map((f) => fetch(`data/${f}.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null)));
+    const [t, b] = await statsData, items = t?.items || {}, cat = new Map((b?.items || []).map((x) => [`${x.t[0]}${x.i}`, x]));
+    const seen = tn.seen.list(), prog = tn.progress.all(), loved = tn.stars.all(), wl = tn.saved.all();
+    let eps = 0, mins = 0;
+    for (const [k, p] of Object.entries(prog)) {
+      if (!Array.isArray(p)) continue; const sz = items[k]?.sz, n = (sz ? sz.slice(0, p[0] - 1).reduce((a, x) => a + x, 0) : 0) + p[1];
+      eps += n; mins += n * (items[k]?.rt || 45);
+    }
+    const films = seen.filter((x) => x.type === 'movie'); for (const x of films) mins += items[x.k]?.rt || 110;
+    // genres and services, weighted: watched and started count most, then loved, then saved
+    const g = new Map(), sv = new Map(), add = (k, w) => {
+      const names = items[k]?.g || (cat.get(k)?.g || []).map((id) => b?.genres?.[id]).filter(Boolean);
+      for (const n of new Set(names)) g.set(n, (g.get(n) || 0) + w);
+      for (const s of new Set(cat.get(k)?.s || [])) if (SVCS[s]) sv.set(s, (sv.get(s) || 0) + w);
+    };
+    seen.forEach((x) => add(x.k, 3)); Object.keys(prog).forEach((k) => add(k, 3)); loved.forEach((k) => add(k, 2)); wl.forEach((x) => add(x.k, 1));
+    const top = (m, n) => [...m].sort((a, c) => c[1] - a[1]).slice(0, n).map(([k]) => k);
+    const hrs = Math.round(mins / 60), num = (v, l) => `<div><b>${v.toLocaleString('en-GB')}</b><small>${l}</small></div>`;
+    const genres = top(g, 3), where = top(sv, 3).map((k) => SVCS[k]);
+    $('#acStats').innerHTML = `<div class="ac-nums">${num(seen.length, seen.length === 1 ? 'title watched' : 'titles watched')}${num(eps, eps === 1 ? 'episode' : 'episodes')}${num(hrs, hrs === 1 ? 'hour, about' : 'hours, about')}${num(wl.length, 'on your Watchlist')}</div>`
+      + `<div class="set-row"><span class="set-l">Favourite genres<small>${esc(genres.length ? genres.join(', ') : 'Watch, save or love a few titles to see yours')}</small></span></div>`
+      + `<div class="set-row"><span class="set-l">Where you watch most<small>${esc(where.length ? where.join(', ') : 'We’ll know once you’ve watched a few things')}</small></span></div>`;
+  }
+  ['tn:synced', 'tn:marks', 'tn:prefs'].forEach((e) => addEventListener(e, () => { if (me) stats(); }));
+
   function syncLine() {
     const n = window.tn.saved.all().length;
     $('#acSync').textContent = `Synced · ${n} title${n === 1 ? '' : 's'} in your Watchlist, kept in step on every device you sign in on`;
