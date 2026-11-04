@@ -1,4 +1,4 @@
-/* Privacy Policy & Terms of Service, and Contact. One centred
+/* Privacy Policy & Terms of Service. One centred
    column, a title and "Last updated" line, small grey section labels, and each document in its own rounded box that
    scrolls on its own (frosted at night); on phones the text simply runs on down the page. */
 
@@ -32,73 +32,14 @@
 .policy-box::-webkit-scrollbar-thumb { background: var(--label3); border-radius: var(--r); }
 .policy-box::-webkit-scrollbar-track { background: transparent; }
 /* night: frosted boxes */
-:root[data-theme="dark"] :is(.policy-box, .c-sheet) { background: rgba(44, 44, 48, .62); border-color: transparent; box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .12);
+:root[data-theme="dark"] .policy-box { background: rgba(44, 44, 48, .62); border-color: transparent; box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .12);
   -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) :is(.policy-box, .c-sheet) { background: rgba(44, 44, 48, .62); border-color: transparent;
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .policy-box { background: rgba(44, 44, 48, .62); border-color: transparent;
   box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .12); -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%); } }
 /* phones: no box scrolling inside the page; the text runs on */
 @media (max-width: 600px) { .policy-box { height: auto; overflow: visible; } .policy-box::after { display: none; } }
 
-/* ============================================================ Contact: a compose sheet, the Apple Mail way
-   Rows like Mail's (To, From, Subject), a topic switch, then the message. Send opens your own email app with it all
-   filled in: nothing is sent to or stored by Tenner. */
-.c-icon {
-  display: grid; place-items: center; width: 64px; height: 64px; margin: 10px 0 4px; border-radius: var(--r); color: var(--accent);
-  background: var(--frost); box-shadow: var(--frost-line); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur);
-}
-.c-icon svg { width: 30px; height: 30px; }
-.c-icon + h1 { margin-top: 12px; }
-.c-sheet { width: 100%; background: var(--card); border: .5px solid var(--sep); border-radius: var(--r); overflow: hidden; }
-.c-row { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 16px; border-bottom: .5px solid var(--sep); }
-.c-row > span:first-child { flex: none; width: 64px; color: var(--label2); font-size: 15px; }
-.c-row input {
-  flex: 1; min-width: 0; border: 0; padding: 8px 0; background: none; color: var(--label); font: 400 16px/1.3 var(--font); letter-spacing: -.016em;
-}
-.c-row input::placeholder, .c-msg::placeholder { color: var(--label3); }
-.c-row input:focus, .c-msg:focus { outline: none; }
-.c-row:focus-within, .c-msg:focus { background: color-mix(in srgb, var(--accent) 6%, transparent); }
-.c-msg {
-  display: block; width: 100%; min-height: 200px; padding: 14px 16px; border: 0; resize: vertical; background: none;
-  color: var(--label); font: 400 16px/1.5 var(--font); letter-spacing: -.016em;
-}
-.c-actions { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 14px; }
-.c-note { margin: 0; font-size: 13px; color: var(--label2); text-wrap: pretty; }
-.c-note.bad { color: #ff453a; }
-.c-send.busy { opacity: .6; }
-.c-row select { flex: 1; min-width: 0; height: 34px; margin: 0 -4px 0 0; padding: 0 28px 0 0; border: 0; background: transparent var(--pop-chev) no-repeat right 6px center / 8px 13px;
-  appearance: none; -webkit-appearance: none; font: 400 16px/1 var(--font); letter-spacing: -.016em; color: var(--label3); cursor: pointer; }
-.c-row select.chosen { color: var(--label); }
-.c-row select:focus { outline: none; }
-.c-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
-/* sent: a tick and a thank-you in place of the form */
-.c-done { width: 100%; display: grid; justify-items: center; gap: 6px; padding: 34px 20px 28px; text-align: center; border-radius: var(--r); background: var(--card); border: .5px solid var(--sep); outline: none; }
-.c-done h2 { margin: 6px 0 0; font: 700 22px/1.2 var(--font); }
-.c-done p { margin: 0 0 12px; color: var(--label2); }
-.c-tick { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; color: #fff; background: var(--green); }
-.c-tick svg { width: 30px; height: 30px; }
-:root:not(.still) .c-tick { animation: cPop .5s var(--ease-spring) both; }
-@keyframes cPop { from { transform: scale(.4); opacity: 0; } }
-.c-send { flex: none; gap: 8px; height: 40px; padding: 0 18px 0 15px; color: var(--accent); }
-.c-send svg { width: 16px; height: 16px; }
-.c-more { width: 100%; margin-top: 24px; }
-.c-list { list-style: none; margin: 0; padding: 0; background: var(--bg2); border-radius: var(--r); overflow: hidden; }
-.c-list li + li { border-top: .5px solid var(--sep); }
-.c-list a { display: flex; align-items: center; gap: 12px; padding: 13px 16px; color: var(--label); }
-.c-list a:hover { text-decoration: none; }
-@media (hover: hover) { .c-list a:hover { background: var(--fill); } }
-.c-list .gi { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: var(--r); color: #fff; }
-.c-list .gi svg { width: 17px; height: 17px; }
-.c-list .tx { flex: 1; min-width: 0; display: grid; gap: 1px; }
-.c-list .tx b { font-weight: 500; font-size: 16px; }
-.c-list .tx small { color: var(--label2); font-size: 13px; }
-.c-list .chev { flex: none; width: 8px; height: 8px; border-right: 2px solid var(--label3); border-bottom: 2px solid var(--label3); transform: rotate(-45deg); }
-@media (max-width: 560px) {
-  .c-actions { flex-direction: column-reverse; align-items: stretch; }
-  .c-send { justify-content: center; height: 44px; }
-  .c-note { text-align: center; }
-  .c-row > span:first-child { width: 56px; }
-}
 /* computers: the title starts on the same line as every other page's */
 @media (min-width: 1000px) { .lwrap { padding-top: 20px; } }
 /* phones: the boxes filled, with no outline round them */
-@media (max-width: 719px) { .policy-box, .c-sheet, .c-done { border-color: transparent; } }
+@media (max-width: 719px) { .policy-box { border-color: transparent; } }

@@ -1,0 +1,177 @@
+/* Tenner's Contact page: a big friendly headline beside one frosted compose card. Pick what it's about from four tiles
+   (the page's light takes that tile's colour), then name, email and message in fields whose labels float up as you
+   type. Sending flies the paper plane off and turns the card into a green tick. Everything uses Tenner's one corner
+   (--r) and one frost (--fr-bg over --fr-blur, --fr-in for boxes inside the card). */
+
+@property --tone { syntax: "<color>"; inherits: true; initial-value: #0a84ff; }
+
+.cx {
+  --tone: #0a84ff;
+  position: relative; max-width: 1180px; margin: 0 auto 0 var(--page-left);
+  padding: 18px var(--gutter-r) 0 var(--gutter);
+  display: grid; gap: 28px; align-content: start;
+  transition: --tone .8s ease;
+}
+.cx:has(input[value="Feedback"]:checked) { --tone: #ff375f; }
+.cx:has(input[value="Suggestions"]:checked) { --tone: #bf5af2; }
+.cx:has(input[value="Support"]:checked) { --tone: #0a84ff; }
+.cx:has(input[value="Legal"]:checked) { --tone: #ff9f0a; }
+.cx:has(.cx-done:not([hidden])) { --tone: #30d158; }
+
+/* ---------- the light: three soft pools of the chosen colour, fixed behind everything (the sidebar's frost picks them up) */
+.cx-aura { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: clip; contain: strict; }
+.cx-aura i { position: absolute; border-radius: 50%; opacity: .22;
+  background: radial-gradient(closest-side, var(--tone), transparent); }
+.cx-aura i:nth-child(1) { width: 70vmax; height: 70vmax; right: -22vmax; top: -30vmax; }
+.cx-aura i:nth-child(2) { width: 46vmax; height: 46vmax; left: 8vw; top: 30vh; opacity: .12; background: radial-gradient(closest-side, #bf5af2, transparent); }
+.cx-aura i:nth-child(3) { width: 54vmax; height: 54vmax; right: 0; bottom: -34vmax; opacity: .14; }
+:root[data-theme="dark"] .cx-aura i { opacity: .34; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) .cx-aura i { opacity: .34; } }
+:root:not(.still) .cx-aura i { animation: cxDrift 22s ease-in-out infinite alternate; }
+:root:not(.still) .cx-aura i:nth-child(2) { animation-duration: 28s; animation-direction: alternate-reverse; }
+@keyframes cxDrift { to { transform: translate(-6vmax, 5vmax) scale(1.12); } }
+
+/* ---------- the headline side */
+.cx-head { min-width: 0; }
+.cx-pill { display: inline-flex; align-items: center; gap: 8px; height: 30px; margin: 0; padding: 0 12px 0 11px; border-radius: var(--r);
+  font: 500 13px/1 var(--font); letter-spacing: -.008em; color: var(--label2);
+  background: var(--fr-bg); box-shadow: inset 0 0 0 1px var(--fr-rim); -webkit-backdrop-filter: var(--fr-blur); backdrop-filter: var(--fr-blur); }
+.cx-dot { position: relative; width: 8px; height: 8px; border-radius: 50%; background: #30d158; }
+:root:not(.still) .cx-dot::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: #30d158; animation: cxPing 2.4s ease-out infinite; }
+@keyframes cxPing { from { transform: scale(1); opacity: .7; } 70%, to { transform: scale(2.8); opacity: 0; } }
+.cx-head h1 { margin: 18px 0 12px; font: 700 clamp(46px, 7vw, 76px)/1.02 var(--font-display); letter-spacing: -.03em; text-wrap: balance; }
+.cx-lede { margin: 0; max-width: 30em; font-size: 19px; line-height: 1.45; color: var(--label2); text-wrap: pretty; }
+
+/* more help: two rows in one frosted box */
+.cx-help { list-style: none; margin: 0; padding: 0; border-radius: var(--r); overflow: hidden;
+  background: var(--fr-bg); box-shadow: inset 0 0 0 1px var(--fr-rim); -webkit-backdrop-filter: var(--fr-blur); backdrop-filter: var(--fr-blur); }
+.cx-help li + li { border-top: .5px solid var(--sep); margin-inline: 16px; }
+.cx-help li + li a { margin-inline: -16px; }
+.cx-help a { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 13px 16px; color: var(--label); transition: background-color .2s; }
+.cx-help a:hover { text-decoration: none; }
+@media (hover: hover) { .cx-help a:hover { background: var(--fr-in); } }
+.cx-help .tx { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.cx-help .tx b { font-weight: 500; font-size: 16px; }
+.cx-help .tx small { color: var(--label2); font-size: 13px; }
+.cx-help .chev { flex: none; width: 8px; height: 8px; border-right: 2px solid var(--label3); border-bottom: 2px solid var(--label3); transform: rotate(-45deg); }
+.cx .gi { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: var(--r); color: #fff; background: var(--c); }
+.cx .gi svg { width: 17px; height: 17px; }
+
+/* ---------- the compose card */
+.cx-card { position: relative; container-type: inline-size; min-width: 0; padding: clamp(18px, 3vw, 30px); border-radius: var(--r);
+  background: var(--fr-bg); -webkit-backdrop-filter: var(--fr-blur); backdrop-filter: var(--fr-blur);
+  box-shadow: inset 0 0 0 1px var(--fr-rim), 0 40px 90px -40px color-mix(in srgb, var(--tone) 60%, transparent); }
+/* a fine line of the chosen colour along the top edge, fading out at both ends */
+.cx-card::before { content: ""; position: absolute; top: 0; left: 12%; right: 12%; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--tone), transparent); }
+.cx-card form { display: grid; gap: 12px; }
+
+/* what it's about: four tiles, a radio each */
+.cx-topics { margin: 0 0 10px; padding: 0; border: 0; min-width: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.cx-topics legend { margin: 0 0 12px; padding: 0; font: 600 17px/1.3 var(--font); letter-spacing: -.02em; }
+.cx-topics label { position: relative; display: grid; align-content: start; gap: 2px; min-height: 44px; padding: 14px 14px 16px; border-radius: var(--r);
+  background: var(--fr-in); cursor: pointer; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none;
+  transition: background-color .25s, box-shadow .25s, transform .45s var(--ease-spring); }
+.cx-topics input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.cx-topics .gi { width: 34px; height: 34px; margin-bottom: 10px; transition: opacity .3s, transform .45s var(--ease-spring); }
+.cx-topics .gi svg { width: 19px; height: 19px; }
+.cx-topics b { font: 500 16px/1.25 var(--font); letter-spacing: -.02em; }
+.cx-topics small { font-size: 12.5px; line-height: 1.3; color: var(--label2); }
+@media (hover: hover) { .cx-topics label:hover { background: color-mix(in srgb, var(--c) 10%, var(--fr-in)); } }
+.cx-topics label:active { transform: scale(.96); }
+.cx-topics label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cx-topics label:has(input:checked) { background: color-mix(in srgb, var(--c) 15%, transparent); box-shadow: inset 0 0 0 1.5px var(--c); }
+.cx-topics label:has(input:checked) .gi { transform: scale(1.08); }
+.cx-topics:has(input:checked) label:not(:has(input:checked)) .gi { opacity: .5; }
+/* the chosen one gets Tenner's rainbow underline */
+.cx-topics label::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: 6px; height: 2.5px; border-radius: 2px; pointer-events: none;
+  background: linear-gradient(90deg, #ff375f, #ff9f0a, #ffd60a, #30d158, #0a84ff, #bf5af2); opacity: 0; transform: scaleX(.4);
+  transition: opacity .3s ease, transform .45s var(--ease-spring); }
+.cx-topics label:has(input:checked)::after { opacity: 1; transform: none; }
+.cx-topics.bad label { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, #ff453a 70%, transparent); }
+
+/* fields whose labels float up as you type */
+.cx-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cx-f { position: relative; display: block; min-width: 0; }
+.cx-f input, .cx-f textarea { display: block; width: 100%; box-sizing: border-box; height: 58px; margin: 0; padding: 25px 15px 8px;
+  border: 0; border-radius: var(--r); background: var(--fr-in); color: var(--label); font: 400 17px/1.3 var(--font); letter-spacing: -.022em;
+  box-shadow: inset 0 0 0 1px transparent; transition: background-color .2s, box-shadow .25s; -webkit-appearance: none; appearance: none; }
+.cx-f input[type="email"] { padding-right: 44px; }
+.cx-f :is(input, textarea):focus { outline: none; background: color-mix(in srgb, var(--tone) 7%, var(--fr-in));
+  box-shadow: inset 0 0 0 1.5px var(--tone), 0 0 0 4px color-mix(in srgb, var(--tone) 18%, transparent); }
+.cx-f > span { position: absolute; left: 16px; top: 18px; right: 16px; pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font: 400 17px/1.3 var(--font); letter-spacing: -.022em; color: var(--label2); transform-origin: 0 0; transition: transform .4s var(--ease-spring), color .2s; }
+.cx-f > span i { font-style: normal; color: var(--label3); }
+.cx-f :is(input, textarea):is(:focus, :not(:placeholder-shown)) + span { transform: translateY(-10px) scale(.74); }
+.cx-f :is(input, textarea):focus + span { color: var(--label); }
+.cx-ok { position: absolute; right: 14px; top: 19px; width: 20px; height: 20px; color: var(--green); opacity: 0; transform: scale(.4);
+  transition: opacity .2s, transform .45s var(--ease-spring); pointer-events: none; }
+.cx-f input:valid:not(:placeholder-shown) ~ .cx-ok { opacity: 1; transform: none; }
+.cx-msg textarea { height: auto; min-height: 200px; max-height: 60vh; padding: 30px 15px 34px; line-height: 1.47; resize: none; field-sizing: content; }
+.cx-count { position: absolute; right: 14px; bottom: 10px; font: 400 12px/1 var(--font); color: var(--label3); font-variant-numeric: tabular-nums; pointer-events: none; }
+.cx-count.near { color: #ff9f0a; }
+.cx-f.bad :is(input, textarea) { box-shadow: inset 0 0 0 1.5px #ff453a; }
+:root:not(.still) .bad.shake { animation: cxShake .42s var(--ease-out); }
+@keyframes cxShake { 20% { transform: translateX(-7px); } 45% { transform: translateX(6px); } 70% { transform: translateX(-3px); } to { transform: none; } }
+
+/* the foot: a note, and Send */
+.cx-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 6px; }
+.cx-note { margin: 0; font-size: 13px; line-height: 1.4; color: var(--label2); text-wrap: pretty; }
+.cx-note.bad { color: #ff453a; }
+.cx-send { flex: none; gap: 9px; height: 48px; padding: 0 20px 0 17px; font-size: 17px; overflow: hidden; }
+.cx-send svg { width: 18px; height: 18px; flex: none; }
+.cx-send kbd { margin-left: 4px; font: 400 13px/1 var(--font); opacity: .55; }
+@media (hover: none), (pointer: coarse), (max-width: 599px) { .cx-send kbd { display: none; } }
+.cx-send.busy { pointer-events: none; }
+:root:not(.still) .cx-send.busy svg { animation: cxFly .9s var(--ease-out) infinite; }
+@keyframes cxFly { 0% { transform: none; opacity: 1; } 55% { transform: translate(22px, -22px) scale(.6); opacity: 0; } 56% { transform: translate(-18px, 18px) scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.c-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+/* ---------- sent */
+.cx-done { display: grid; justify-items: center; gap: 8px; padding: clamp(30px, 6vw, 56px) 8px; text-align: center; outline: none; }
+.cx-tick { position: relative; display: grid; place-items: center; width: 76px; height: 76px; margin-bottom: 8px; border-radius: 50%; color: #fff; background: #30d158;
+  box-shadow: 0 14px 40px -10px rgba(48, 209, 88, .7); }
+.cx-tick svg { width: 40px; height: 40px; }
+.cx-tick::before { content: ""; position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 2px #30d158; opacity: 0; }
+:root:not(.still) .cx-tick { animation: cxPop .6s var(--ease-spring) both; }
+:root:not(.still) .cx-tick svg path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: cxDraw .45s .25s var(--ease-out) forwards; }
+:root:not(.still) .cx-tick::before { animation: cxRing .9s .15s ease-out; }
+@keyframes cxPop { from { transform: scale(.3); opacity: 0; } }
+@keyframes cxDraw { to { stroke-dashoffset: 0; } }
+@keyframes cxRing { from { opacity: .8; transform: scale(1); } to { opacity: 0; transform: scale(1.9); } }
+.cx-done h2 { margin: 0; font: 700 28px/1.15 var(--font); letter-spacing: -.02em; }
+.cx-done p { margin: 0 0 16px; max-width: 26em; color: var(--label2); text-wrap: pretty; }
+.cx-done-btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.cx-done-btns .btn { gap: 8px; height: 44px; padding: 0 18px 0 15px; }
+.cx-done-btns svg { width: 17px; height: 17px; }
+
+/* the card's contents trade places with a gentle cross-fade */
+::view-transition-old(cx-card), ::view-transition-new(cx-card) { animation-duration: .35s; }
+.cx-card { view-transition-name: cx-card; }
+
+/* ---------- narrow cards: tiles two by two, fields stacked, Send across the width */
+@container (max-width: 500px) {
+  .cx-topics { grid-template-columns: 1fr 1fr; }
+  .cx-pair { grid-template-columns: 1fr; }
+  .cx-foot { flex-direction: column-reverse; align-items: stretch; }
+  .cx-send { justify-content: center; }
+  .cx-note { text-align: center; }
+}
+@container (max-width: 340px) { .cx-topics small { display: none; } }
+
+/* computers: headline on the left (staying put while you write), the card on the right */
+@media (min-width: 1000px) {
+  .cx { grid-template-columns: minmax(0, .9fr) minmax(0, 1.25fr); grid-template-rows: auto 1fr; grid-template-areas: "head card" "help card";
+    column-gap: clamp(32px, 4vw, 64px); row-gap: 28px; padding-top: 56px; align-items: start; }
+  .cx-head { grid-area: head; padding-top: 6px; }
+  .cx-card { grid-area: card; }
+  .cx-help { grid-area: help; margin: 0; }
+}
+@media (min-width: 720px) and (max-width: 999px) { .cx { max-width: 720px; margin-inline: auto; padding-top: 24px; } }
+
+/* Reduce Transparency: solid boxes */
+@media (prefers-reduced-transparency: reduce) {
+  .cx-card, .cx-help, .cx-pill { background: var(--bg2); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+@media (forced-colors: active) { .cx-aura { display: none; } }
