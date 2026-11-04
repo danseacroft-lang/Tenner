@@ -40,8 +40,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=2.28.0">
-  <link rel="stylesheet" href="legal.css?v=2.28.0">
+  <link rel="stylesheet" href="styles.css?v=2.28.1">
+  <link rel="stylesheet" href="legal.css?v=2.28.1">
 </head>
 <body class="legal">
   <a class="skip" href="#main">Skip to the page</a>
@@ -87,7 +87,7 @@
       <a class="side-link" href="legal.html#privacy" aria-current="page">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies" aria-current="page">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 2.28.0</span>
+      <span class="side-ver">Tenner 2.28.1</span>
     </div>
   </div>
 
@@ -99,7 +99,7 @@
 
   <main id="main" class="lwrap" tabindex="-1">
     <h1>Privacy Policy &amp; Terms of Service</h1>
-    <p class="l-updated">Last updated: 24 October 2026</p>
+    <p class="l-updated">Last updated: 4 November 2026</p>
 
     <p class="section-label" id="privacy">Privacy Policy</p>
     <div class="policy-box" tabindex="0" role="region" aria-label="Privacy Policy, scrollable">
@@ -113,7 +113,7 @@
       <ul>
         <li>analytics or visitor-tracking tools;</li>
         <li>advertising or advertising networks;</li>
-        <li>cookies of any kind.</li>
+        <li>cookies of any kind, including for accounts (see section 5).</li>
       </ul>
       <p>We don’t ask for your location. The charts are for the UK as a whole.</p>
       <p><strong>If you send us a message.</strong> The Contact page’s form sends your message, your email address, the type of enquiry you choose and your name, if you add it, to us as an email, through our search service on Cloudflare. It isn’t stored there: it’s passed straight on to our inbox. If you email us at <a class="contact-email" href="mailto:support@tenner.stream">support@tenner.stream</a> instead, we receive your email address and whatever you include in your message. We use it only to read and reply to you. We don’t add you to any mailing list or share your details with anyone. Emails are kept only as long as needed to deal with your message, and you can ask us to delete them at any time. Our email provider processes messages under its own privacy policy.</p>
@@ -130,7 +130,7 @@
         <li><strong>Where you’re signed in:</strong> the kind of device (such as “iPhone”), when you signed in and when it was last used. The sign-in itself is a random code kept on your device; we store only a scrambled copy of it;</li>
         <li><strong>Your shared list link</strong>, if you turn sharing on. Anyone with the link can see your name, picture and Watchlist until you turn it off.</li>
       </ul>
-      <p id="delete">This is kept in a database run by Cloudflare. We use it only to run your account. You can see it on the Account page, sign out of any device, and delete your account there at any time, which removes everything above straight away. Accounts don’t use cookies.</p>
+      <p id="delete">This is kept in a database run by Cloudflare. We use it only to run your account. You can see it on the Account page, sign out of any device, and delete your account there at any time, which removes everything above straight away. Accounts don’t use cookies: how this device stays signed in is explained in section 3.</p>
 
       <h2>3. Information Stored on Your Device</h2>
       <p>To make the site work better, your browser keeps a few things on your own device:</p>
@@ -146,6 +146,8 @@
         <li><strong>Browse:</strong> whether you like posters or a list, and that you’ve seen the note about Browse changing.</li>
         <li><strong>Suggestions:</strong> which of Tenner’s suggestion cards you’ve closed, so they stay closed, and, for the length of a visit, whether you’re seeing one.</li>
         <li><strong>Hearts:</strong> the shows and films you’ve loved, used only to suggest things you might like in For You.</li>
+        <li><strong>Your sign-in,</strong> if you have an account: the random code that keeps this device signed in, a copy of your name, picture, email address and colour so the menu can show who’s signed in straight away, and when your Watchlist, services and settings last changed, so your devices stay in step. They’re removed when you sign out (and you can choose to remove your Watchlist and the rest from the device too), or when you’re signed out from another device.</li>
+        <li><strong>Passkeys,</strong> if you add one: these are kept by your device or password manager, not by Tenner.</li>
         <li><strong>The privacy note:</strong> that you’ve pressed Got it, so the note about cookies isn’t shown again.</li>
       </ul>
       <p>Your filters and searches on Browse live only in the page’s address, so you can bookmark or share them; they aren’t saved anywhere. <strong>Move to another device</strong> (in Settings) puts your Watchlist, progress and services into a link or QR code that only you see; nothing is uploaded. Apart from Watchlist alerts and your account, if you choose them (above), none of this is ever sent to us or anyone else. You can remove it at any time by clearing your browser’s data for this site.</p>
@@ -163,16 +165,19 @@
       <p>The charts and where-to-watch details are gathered every hour by our own automated process from TMDB (with where-to-watch data from JustWatch), Netflix’s published Top 10 and Watchmode. Your browser doesn’t contact JustWatch, Netflix or Watchmode while you use Tenner. Watchmode also supplies the Coming soon and Leaving soon dates and the rent and buy prices. If you follow a link to Netflix, TMDB or another site, that site’s own policies apply.</p>
 
       <h2 id="cookies">5. Cookies</h2>
-      <p>Tenner doesn’t set any cookies, and doesn’t use any third-party cookies. The things described in section 3 are kept in your browser’s local storage, not in cookies, and never leave your device.</p>
+      <p>Tenner doesn’t set any cookies, and doesn’t use any third-party cookies for tracking or advertising, so there’s nothing to accept or turn off. The things described in section 3 are kept in your browser’s own storage on this device, not in cookies.</p>
+      <p><strong>Accounts don’t use cookies either.</strong> When you sign in, this device is given a random code that’s kept in your browser’s storage and sent with Tenner’s own requests to its account service, so it knows it’s you; we store only a scrambled copy of it. It isn’t shared with anyone and can’t follow you to other websites. Signing out, or signing a device out from the Account page, makes it stop working straight away.</p>
+      <p><strong>Sign in with Google.</strong> Google’s button only loads on the Account page. Google may use its own cookies, on its own site, to know whether you’re signed in to Google and to keep its sign-in secure. Those are Google’s, under <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google’s Privacy Policy</a>; Tenner can’t read them. If you sign in with a passkey or an email and password, Google isn’t involved.</p>
+      <p>Apart from your account and Watchlist alerts, if you choose them (section 2), what’s in section 3 never leaves your device.</p>
 
       <h2>6. Links to Other Websites</h2>
       <p>Tenner links to other websites, such as Netflix and TMDB, so you can watch or read more about a title. We aren’t responsible for the content or privacy practices of those sites; please check their own privacy policies.</p>
 
       <h2>7. Children</h2>
-      <p>Tenner is a general-audience site. We don’t collect personal information from anyone, including children. Some of the titles shown may not be suitable for younger viewers; check each service’s age ratings.</p>
+      <p>Tenner is a general-audience site. We don’t collect personal information from visitors, including children; only people who choose to make an account, turn on alerts or contact us share anything with us (section 2). Some of the titles shown may not be suitable for younger viewers; check each service’s age ratings.</p>
 
       <h2>8. Your Rights</h2>
-      <p>Under UK data protection law (the UK GDPR and the Data Protection Act 2018), you have rights over any personal data we hold about you, including the right to see it, correct it or have it deleted. As we don’t collect personal data, this will normally only apply to emails you send us. If you have concerns, you can also contact the <a href="https://ico.org.uk" target="_blank" rel="noopener">Information Commissioner’s Office</a>.</p>
+      <p>Under UK data protection law (the UK GDPR and the Data Protection Act 2018), you have rights over any personal data we hold about you, including the right to see it, correct it or have it deleted. This applies to your account, if you make one (you can see it, change your name and delete it on the Account page), the push address kept for Watchlist alerts, and emails you send us. Otherwise we don’t hold personal data about you. If you have concerns, you can also contact the <a href="https://ico.org.uk" target="_blank" rel="noopener">Information Commissioner’s Office</a>.</p>
 
       <h2>9. Changes to This Policy</h2>
       <p>If we change how Tenner handles information, we’ll update this policy and the date at the top before the change takes effect.</p>
@@ -225,6 +230,6 @@
   </main>
 
 
-  <script src="shell.js?v=2.28.0" defer></script>
+  <script src="shell.js?v=2.28.1" defer></script>
 </body>
 </html>

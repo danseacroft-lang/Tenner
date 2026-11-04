@@ -85,7 +85,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '2.28.0';
+  const version = '2.28.1';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -595,12 +595,13 @@
 
   // ---------- a one-time note about privacy: not a consent banner (there's nothing to consent to), just reassurance ----------
   // Shown once, at the foot of the screen in Tenner's frosted style; Got it puts it away for good on this device.
-  const NOTE = 'tenner-note-seen';
-  let seen = false; try { seen = !!localStorage.getItem(NOTE); } catch {}
+  // Its wording changed when accounts arrived, so it's shown once more under a new name (the old one is tidied away).
+  const NOTE = 'tenner-note-seen-2';
+  let seen = false; try { localStorage.removeItem('tenner-note-seen'); seen = !!localStorage.getItem(NOTE); } catch {}
   if (!seen && !navigator.webdriver) setTimeout(() => {
     document.body.insertAdjacentHTML('beforeend', `<aside class="pv-note" id="pvNote" aria-label="Privacy">
       <span class="pv-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2.5 11.2 6 7.8l3.2 1.1 2.6-1.6a2.2 2.2 0 0 1 2.3 0l5.9 3.7-3.4 3.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="m16.6 14.4-4.1-3.1-2 1.3a1.5 1.5 0 0 1-2-.4 1.5 1.5 0 0 1 .3-2.1l3-2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="m2.5 11.2 3.3 3.6M7.6 16.6l1.6 1.5a1.3 1.3 0 0 0 1.8 0M10.2 15.2l2.3 2.1a1.3 1.3 0 0 0 1.8 0 1.3 1.3 0 0 0 0-1.8M12.6 14l2.1 2a1.3 1.3 0 0 0 1.8-.1 1.3 1.3 0 0 0 0-1.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      <p>Tenner doesn’t use cookies or tracking. Your Watchlist and settings stay on this device. <a href="legal.html#cookies">Privacy Policy</a></p>
+      <p>Tenner doesn’t use cookies or tracking. Your Watchlist and settings stay on this device unless you sign in to sync them. <a href="legal.html#cookies">Privacy Policy</a></p>
       <button type="button" class="pv-ok" id="pvOk">Got it</button></aside>`);
     const box = $('#pvNote');
     requestAnimationFrame(() => box.classList.add('in'));
