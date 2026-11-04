@@ -918,7 +918,7 @@ main { padding-bottom: 40px; }   /* breathing room at the end of every page */
 .sheet::backdrop { background: rgba(0, 0, 0, 0); transition: background-color .25s ease; }
 .sheet.in::backdrop { background: rgba(0, 0, 0, .42); }
 .sheet {
-  position: fixed; inset: auto; margin: 0; padding: 0; border: 0; max-width: none; left: 50%; top: 50%; width: min(680px, calc(100vw - 48px)); max-height: min(88vh, 860px);
+  position: fixed; inset: auto; margin: 0; padding: 0; border: 0; max-width: none; left: 50%; top: 50%; width: min(780px, calc(100vw - 48px)); max-height: min(90vh, 960px);
   display: flex; flex-direction: column; border-radius: var(--r); overflow: hidden; color: var(--label);
   background: var(--sheet-bg); -webkit-backdrop-filter: var(--sheet-blur); backdrop-filter: var(--sheet-blur);
   box-shadow: 0 30px 80px rgba(0, 0, 0, .35);
