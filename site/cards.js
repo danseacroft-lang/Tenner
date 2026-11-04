@@ -73,13 +73,8 @@
   const el = document.createElement('section');
   el.className = `dyn dyn-${card.theme}`; el.setAttribute('aria-label', 'A suggestion from Tenner');
   el.innerHTML = card.html(null) + '<button type="button" class="dyn-x" aria-label="Hide this suggestion" title="Hide this suggestion"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>';
-  // on computers, among the filters (after Sort by); on phones, above the genres
-  const wide = matchMedia('(min-width: 821px)');
-  const place = () => {
-    const sort = document.querySelector('#sort')?.closest('.panel'), rows = document.querySelector('#bRows');
-    if (wide.matches && sort) sort.after(el); else rows?.after(el);
-  };
-  place(); wide.addEventListener('change', place);
+  // under For You, above the genres
+  document.querySelector('#bRows')?.after(el);
   if (api) fetch(`${api}/title/${card.k}`).then((r) => (r.ok ? r.json() : null)).then((d) => {
     if (!d) return; const x = el.querySelector('.dyn-x'); el.innerHTML = card.html(d); el.append(x);
   }).catch(() => {});

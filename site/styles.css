@@ -1770,7 +1770,6 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .ft-ok, .s
 @media (max-width: 719px) { .drawer { background: var(--fr-bg); -webkit-backdrop-filter: var(--fr-blur); backdrop-filter: var(--fr-blur); } }
 @media (min-width: 1000px) { .top-row { background: var(--fr-bg); -webkit-backdrop-filter: var(--fr-blur); backdrop-filter: var(--fr-blur); }
   .top-row .tabs, .top-row .top-act { background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; } }
-.hs::after, .hs.stuck::after { background: var(--fr-bg); -webkit-backdrop-filter: var(--fr-blur); backdrop-filter: var(--fr-blur); }
 /* boxes inside a frosted box: the faint tint */
 .side-search input, .mine-subs .mine-row, .mine-all, .seg-thumb { background: var(--fr-in); }
 .side-search input:focus { background: color-mix(in srgb, var(--label) 11%, transparent); }

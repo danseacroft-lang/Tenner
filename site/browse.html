@@ -42,8 +42,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=2.34.1">
-  <link rel="stylesheet" href="browse.css?v=2.34.1">
+  <link rel="stylesheet" href="styles.css?v=2.35.0">
+  <link rel="stylesheet" href="browse.css?v=2.35.0">
 </head>
 <body class="browse">
   <a class="skip" href="#grid">Skip to the titles</a>
@@ -89,7 +89,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 2.34.1</span>
+      <span class="side-ver">Tenner 2.35.0</span>
     </div>
   </div>
 
@@ -101,20 +101,31 @@
 
 
   <main id="main" class="bwrap" tabindex="-1">
-    <!-- the spotlight: the best of whatever you're browsing, one after another, full width and melting into the page -->
-    <section class="spot" id="spot" aria-label="Spotlight">
-      <div class="spot-bg" aria-hidden="true"><div class="spot-art" id="spotArt"></div><div class="spot-wash"></div></div>
-      <div class="spot-copy">
-        <p class="spot-eye" id="spotEye">Every popular show and film</p>
-        <h1 class="spot-h" data-title="Browse"><em class="grad">Browse</em></h1>
-        <p class="spot-lede">Search Netflix, HBO Max, Prime Video, Paramount+, Disney+, Apple TV and more.</p>
+    <!-- the featured hero: the best of whatever you're browsing, one at a time, its artwork running full width (and on under the
+         sidebar's glass) and melting into the page; its name, a line about it, Where to watch and +, and a bar for each pick -->
+    <section class="spot" id="spot" aria-roledescription="carousel" aria-label="Featured">
+      <div class="spot-bg" aria-hidden="true"><div class="spot-ext" id="spotExt"></div><div class="spot-art" id="spotArt"></div><div class="spot-wash"></div></div>
+      <h1 class="spot-h"><em class="grad">Browse</em></h1>
+      <div class="spot-feat" id="spotFeat" aria-live="polite" hidden>
+        <p class="spot-eye" id="spotEye"></p>
+        <h2 class="spot-t"><button type="button" id="spotT"></button></h2>
+        <p class="spot-m" id="spotM"></p>
+        <p class="spot-o" id="spotO"></p>
+        <div class="spot-acts">
+          <button type="button" class="btn btn-tinted spot-go" id="spotGo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.8v12.4a.8.8 0 0 0 1.2.7l9.9-6.2a.8.8 0 0 0 0-1.4L9.2 5.1A.8.8 0 0 0 8 5.8z" fill="currentColor"/></svg><span>Where to watch</span></button>
+          <button type="button" class="rb spot-add" id="spotAdd" aria-pressed="false" aria-label="Add to Watchlist" title="Add to Watchlist"></button>
+        </div>
+      </div>
+      <div class="spot-nav" id="spotNav" hidden>
+        <button type="button" class="rb spot-step" data-step="-1" aria-label="Previous" title="Previous"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6 8.5 12l6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="spot-dots" id="spotDots" role="tablist" aria-label="Featured titles"></div>
+        <button type="button" class="rb spot-step" data-step="1" aria-label="Next" title="Next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
     </section>
 
-    <!-- the search: one deep pane of glass, lit around its edge in Tenner's colours, that glows when you're in it and stays at the top as you scroll -->
+    <!-- the search bar: one frosted bar that stays at the top as you scroll, its edge lit in Tenner's colours while you type -->
     <div class="cmd-mark" id="cmdMark" aria-hidden="true"></div>
     <div class="hs" id="cmd">
-      <span class="hs-bloom" aria-hidden="true"></span>
       <div class="search" role="search">
         <svg class="s-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.3"/><path d="M15.5 15.5 20 20" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/></svg>
         <input id="q" type="search" placeholder=" " autocomplete="off" spellcheck="false" enterkeyhint="search" aria-label="Search shows and films">
@@ -122,31 +133,54 @@
         <kbd class="s-key" aria-hidden="true">/</kbd>
         <button type="button" class="s-clear" id="qClear" aria-label="Clear search" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke="var(--bg)" stroke-width="2" stroke-linecap="round"/></svg></button>
       </div>
-      <label class="hs-kind" id="kindDD"><span class="dd-l" id="kindL">Shows</span><span class="dd-chev" aria-hidden="true"></span>
+      <label class="dd hs-kind" id="kindDD"><span class="dd-l" id="kindL">Shows</span><span class="dd-chev" aria-hidden="true"></span>
         <select id="kindSel" aria-label="Shows, films or both"><option value="tv">Shows</option><option value="movie">Films</option><option value="both">Shows and films</option></select></label>
-      <button type="button" class="hs-btn b-dice" aria-label="Surprise me" title="Surprise me: a good one at random"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"/></svg></button>
+      <button type="button" class="btn btn-tinted hs-filters" id="openFilters" aria-haspopup="dialog" aria-controls="filters" aria-label="Filters" title="Filters">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="17" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/></svg><span class="hs-fl">Filters</span><span class="badge" id="fCount" hidden></span></button>
     </div>
 
-    <!-- the collections: one glass bar (as on Apple TV), the chosen one lit, with Tenner's rainbow underline -->
+    <!-- the collections: one frosted bar, the chosen one lit, with Tenner's rainbow underline -->
     <nav class="coll" aria-label="Collections"><div class="coll-track" id="coll" role="radiogroup" aria-label="Collections"></div></nav>
+
+    <!-- what's filtering the list, each a button that takes it away -->
+    <div class="chips" id="chips" aria-label="Filters in use" role="group" hidden></div>
 
     <!-- for you: a row of posters picked from your Watchlist -->
     <div class="b-rows" id="bRows" hidden></div>
 
-    <!-- explore by genre: big tiles of three fanned posters each -->
+    <!-- explore by genre: a tile for each of the biggest genres, three posters fanned -->
     <section class="moods" id="moods" aria-label="Explore by genre" hidden></section>
 
-    <div class="b-body">
-      <aside class="filters" id="filters" aria-label="Filters">
-        <div class="sheet-head"><h2>Filters</h2><button type="button" class="btn btn-tinted" id="done">Done</button></div>
-        <section class="panel" id="pWhere">
-          <h3>Where to watch <button type="button" class="mine-link" id="mineLink">My services</button></h3>
-          <div class="where" id="where"></div>
-        </section>
-        <section class="panel">
-          <h3>Sort by</h3>
-          <div class="sort" id="sort" role="radiogroup" aria-label="Sort by"></div>
-        </section>
+    <section class="results" aria-labelledby="count">
+      <div class="r-bar">
+        <h2 id="count" class="count" aria-live="polite">Loading…</h2>
+        <label class="dd r-sort"><span class="dd-l" id="sortL">Most popular</span><span class="dd-chev" aria-hidden="true"></span>
+          <select id="sortSel" aria-label="Sort by"></select></label>
+        <button type="button" class="rb b-dice" aria-label="Surprise me" title="Surprise me: a good one at random"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"/></svg></button>
+        <div class="view-sw" id="viewSw" role="radiogroup" aria-label="Show as">
+          <button type="button" role="radio" data-view="grid" aria-checked="true" aria-label="Posters" title="Posters"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.8"/><rect x="13" y="4" width="7" height="7" rx="1.8"/><rect x="4" y="13" width="7" height="7" rx="1.8"/><rect x="13" y="13" width="7" height="7" rx="1.8"/></svg></button>
+          <button type="button" role="radio" data-view="list" aria-checked="false" aria-label="List" title="List"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4.5" width="4" height="6" rx="1.2"/><rect x="4" y="13.5" width="4" height="6" rx="1.2"/><path d="M11 6.5h9M11 9h6M11 15.5h9M11 18h6" fill="none" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+        </div>
+      </div>
+      <ol class="grid" id="grid"></ol>
+      <div class="more" id="more" aria-hidden="true"></div>
+      <section class="web" id="web" aria-labelledby="webH" hidden>
+        <div class="web-hd"><h2 id="webH">All films &amp; shows</h2><p class="count" id="webNote" aria-live="polite"></p></div>
+        <ol class="grid" id="webGrid"></ol>
+        <div class="more" id="webEnd" aria-hidden="true"></div>
+      </section>
+    </section>
+  </main>
+
+  <!-- the filters: one sheet (from the bottom on phones, centred on computers), the page dimmed and blurred behind it -->
+  <dialog class="fsheet" id="filters" aria-labelledby="fH" closedby="any">
+    <div class="fs-head"><span></span><h2 id="fH">Filters</h2><button type="button" class="btn btn-tinted" id="done">Done</button></div>
+    <div class="fs-body">
+      <section class="panel fs-where" id="pWhere">
+        <h3>Where to watch <button type="button" class="mine-link" id="mineLink">My services</button></h3>
+        <div class="where" id="where"></div>
+      </section>
+      <div class="fs-col">
         <section class="panel">
           <h3>Genres</h3>
           <div class="genres" id="genres"></div>
@@ -169,38 +203,20 @@
           <h3>Length <span class="p-sub">episodes, for shows</span></h3>
           <div class="genres" id="lens" role="radiogroup" aria-label="Length"></div>
         </section>
-        <button type="button" class="btn btn-tinted clear" id="clear">Clear filters</button>
-      </aside>
-
-      <section class="results" aria-labelledby="count">
-        <div class="r-bar">
-          <p id="count" class="count" aria-live="polite">Loading…</p>
-          <button type="button" class="hs-btn f-btn b-mini" id="openFilters" aria-controls="filters" aria-expanded="false" aria-label="Filters" title="Filters">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="17" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/></svg><span class="badge" id="fCount" hidden></span></button>
-          <button type="button" class="hs-btn b-dice b-dice-m b-mini" aria-label="Surprise me" title="Surprise me"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"/></svg></button>
-          <div class="view-sw" id="viewSw" role="radiogroup" aria-label="Show as">
-            <button type="button" role="radio" data-view="grid" aria-checked="true" aria-label="Posters" title="Posters"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.8"/><rect x="13" y="4" width="7" height="7" rx="1.8"/><rect x="4" y="13" width="7" height="7" rx="1.8"/><rect x="13" y="13" width="7" height="7" rx="1.8"/></svg></button>
-            <button type="button" role="radio" data-view="list" aria-checked="false" aria-label="List" title="List"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4.5" width="4" height="6" rx="1.2"/><rect x="4" y="13.5" width="4" height="6" rx="1.2"/><path d="M11 6.5h9M11 9h6M11 15.5h9M11 18h6" fill="none" stroke-width="1.8" stroke-linecap="round"/></svg></button>
-          </div>
-        </div>
-        <ol class="grid" id="grid"></ol>
-        <div class="more" id="more" aria-hidden="true"></div>
-        <section class="web" id="web" aria-labelledby="webH" hidden>
-          <div class="web-hd"><h2 id="webH">All films &amp; shows</h2><p class="count" id="webNote" aria-live="polite"></p></div>
-          <ol class="grid" id="webGrid"></ol>
-          <div class="more" id="webEnd" aria-hidden="true"></div>
-        </section>
-      </section>
+      </div>
     </div>
-  </main>
-  <div class="scrim" id="scrim" hidden></div>
+    <div class="fs-foot">
+      <button type="button" class="btn btn-tinted" id="clear"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 4.5v4h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Clear filters</span></button>
+      <button type="button" class="btn btn-tinted fs-show" id="showN"><span>Show results</span></button>
+    </div>
+  </dialog>
 
 
-  <script src="shell.js?v=2.34.1" defer></script>
-  <script src="links.js?v=2.34.1" defer></script>
-  <script src="sheet.js?v=2.34.1" defer></script>
-  <script src="person.js?v=2.34.1" defer></script>
-  <script src="browse.js?v=2.34.1" defer></script>
-  <script src="cards.js?v=2.34.1" defer></script>
+  <script src="shell.js?v=2.35.0" defer></script>
+  <script src="links.js?v=2.35.0" defer></script>
+  <script src="sheet.js?v=2.35.0" defer></script>
+  <script src="person.js?v=2.35.0" defer></script>
+  <script src="browse.js?v=2.35.0" defer></script>
+  <script src="cards.js?v=2.35.0" defer></script>
 </body>
 </html>

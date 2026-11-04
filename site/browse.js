@@ -135,34 +135,38 @@
   const needDetails = () => { if (!certs && !detailsP && window.tnSheet?.details) detailsP = window.tnSheet.details().then((d) => { certs = d; apply(false); }); };
 
   // ---------- controls ----------
+  const sheet = $('#filters');
   function buildControls() {
-    // collections: one glass bar of words, the chosen one lit and underlined in rainbow (it scrolls sideways when narrow)
+    // collections: one frosted bar of words, the chosen one lit and underlined in rainbow (it scrolls sideways when narrow)
     $('#coll').insertAdjacentHTML('beforeend', COLLECTIONS.map((c) =>
       `<button type="button" role="radio" class="coll-b" data-c="${c.key}" aria-checked="false">${esc(c.label)}</button>`).join(''));
     $('#coll').addEventListener('click', (e) => { const b = e.target.closest('.coll-b'); if (!b) return;
       state.c = b.dataset.c; state.sort = null; apply(true); });
-
-    // Shows, Films or both: the system's own pop-up menu
-    $('#kindSel').addEventListener('change', (e) => { state.k = e.target.value; state.g = state.g.filter((g) => genreSet().has(g)); apply(true); });
     arrows($('#coll'), () => [...document.querySelectorAll('.coll-b')], (b) => b.click());
-    arrows($('#sort'), () => [...document.querySelectorAll('.s-b')], (b) => b.click());
+
+    // Shows, Films or both, and the sort: the system's own pop-up menus
+    $('#kindSel').addEventListener('change', (e) => { state.k = e.target.value; state.g = state.g.filter((g) => genreSet().has(g)); apply(true); });
+    $('#sortSel').innerHTML = `<option value="">Best match</option>${SORTS.map((s) => `<option value="${s.key}">${esc(s.label)}</option>`).join('')}`;
+    $('#sortSel').addEventListener('change', (e) => { const col = collection();
+      state.sort = !e.target.value || (!state.q && e.target.value === (col.sort || '')) ? null : e.target.value; apply(true); });
+
     $('#grid').addEventListener('click', (e) => {   // the empty state's button clears whatever is hiding the results
       const c = e.target.closest('[data-clear]'); if (!c) return;
-      if (c.dataset.clear === 'q') { state.q = ''; apply(true); $('#q').focus(); } else $('#clear').click();
+      if (c.dataset.clear === 'q') { state.q = ''; apply(true); $('#q').focus(); } else clearAll();
     });
 
-    $('#where').innerHTML = Object.keys(labels).map((k) => `<button type="button" class="w-b" data-s="${k}" aria-pressed="false" title="${esc(labels[k])}">
-      <span class="w-ic">${logos[k] ? `<img src="${esc(logos[k])}" alt="">` : esc(labels[k][0])}</span><span>${esc(labels[k])}</span></button>`).join('');
+    // where to watch: a row per service with its logo and a switch (Safari's own iOS switch where it has one)
+    $('#where').innerHTML = Object.keys(labels).map((k) => `<label class="w-b">
+      <span class="w-ic">${logos[k] ? `<img src="${esc(logos[k])}" alt="">` : esc(labels[k][0])}</span><span class="w-l">${esc(labels[k])}</span>
+      <input type="checkbox" switch role="switch" data-s="${k}"><i class="sw" aria-hidden="true"></i></label>`).join('');
+    sheet.classList.toggle('native-sw', 'switch' in HTMLInputElement.prototype);
     $('#mineLink').addEventListener('click', () => window.tn.pickMine(Object.keys(labels).map((k) => ({ key: k, label: labels[k], logo: logos[k] }))));
     addEventListener('tn:mine', () => { readHash(); apply(false); });
-    $('#where').addEventListener('click', (e) => { const b = e.target.closest('.w-b'); if (!b) return;
-      const k = b.dataset.s; state.s = state.s.includes(k) ? state.s.filter((x) => x !== k) : [...state.s, k]; apply(true); });
-
-    $('#sort').innerHTML = SORTS.map((s) => `<button type="button" role="radio" class="s-b" data-sort="${s.key}" aria-checked="false">${esc(s.label)}<i aria-hidden="true"></i></button>`).join('');
-    $('#sort').addEventListener('click', (e) => { const b = e.target.closest('.s-b'); if (!b) return; state.sort = b.dataset.sort; apply(true); });
+    $('#where').addEventListener('change', (e) => { const k = e.target.dataset.s; if (!k) return;
+      state.s = e.target.checked ? [...new Set([...state.s, k])] : state.s.filter((x) => x !== k); apply(true, true); });
 
     $('#genres').addEventListener('click', (e) => { const b = e.target.closest('.g-b'); if (!b) return;
-      const g = +b.dataset.g; state.g = state.g.includes(g) ? state.g.filter((x) => x !== g) : [...state.g, g]; apply(true); });
+      const g = +b.dataset.g; state.g = state.g.includes(g) ? state.g.filter((x) => x !== g) : [...state.g, g]; apply(true, true); });
 
     const rating = $('#rating');
     rating.addEventListener('input', () => { state.r = +rating.value; paintRating(); apply(true, true); });
@@ -170,7 +174,7 @@
     // age rating and length: one choice each (tap it again for Any)
     const chips = (box, opts, key) => {
       $(box).innerHTML = opts.map(([v, l]) => `<button type="button" role="radio" class="g-b" data-v="${v}" aria-checked="false">${esc(l)}</button>`).join('');
-      $(box).addEventListener('click', (e) => { const b = e.target.closest('.g-b'); if (!b) return; state[key] = state[key] === b.dataset.v ? '' : b.dataset.v; apply(true); });
+      $(box).addEventListener('click', (e) => { const b = e.target.closest('.g-b'); if (!b) return; state[key] = state[key] === b.dataset.v ? '' : b.dataset.v; apply(true, true); });
       arrows($(box), () => [...$(box).querySelectorAll('.g-b')], (b) => b.click());
     };
     chips('#ages', AGES, 'a'); chips('#lens', LENS, 'rt');
@@ -185,7 +189,18 @@
     };
     lo.addEventListener('input', years); hi.addEventListener('input', years);
 
-    $('#clear').addEventListener('click', () => { Object.assign(state, { s: [], g: [], sort: null, r: 0, y: null, a: '', rt: '' }); apply(true); });
+    $('#clear').addEventListener('click', clearAll);
+
+    // what's in use, as a row of buttons under the collections: each one takes its filter away
+    $('#chips').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-chip]'); if (!b) return;
+      const [k, v] = b.dataset.chip.split(':');
+      if (k === 'all') return clearAll();
+      if (k === 's') state.s = []; else if (k === 'g') state.g = state.g.filter((g) => g !== +v);
+      else if (k === 'r') state.r = 0; else if (k === 'y') state.y = null; else if (k === 'a') state.a = ''; else if (k === 'rt') state.rt = '';
+      apply(true);
+      ($('#chips [data-chip]') || $('#openFilters')).focus({ preventScroll: true });
+    });
 
     // posters or a list (remembered on this device)
     const sw = $('#viewSw'), setView = (v) => {
@@ -202,7 +217,7 @@
 
     // search: results as you type; / or ⌘K jumps to the box (shell.js); Escape clears it
     const qi = $('#q');
-    qi.addEventListener('input', () => { state.q = qi.value; apply(true, true); if (scrollY > 300) scrollTo({ top: 0, behavior: 'auto' }); });
+    qi.addEventListener('input', () => { state.q = qi.value; apply(true, true); if (scrollY > 300) $('#cmdMark').scrollIntoView({ block: 'start' }); });
     qi.addEventListener('keydown', (e) => { if (e.key === 'Escape' && qi.value) { e.preventDefault(); state.q = ''; apply(true); } if (e.key === 'Enter') qi.blur(); });
     $('#qClear').addEventListener('click', () => { state.q = ''; apply(true); qi.focus(); });
 
@@ -215,31 +230,29 @@
       nu.className = 'hs-hint-t in'; nu.textContent = text; hint.append(nu);
       old?.classList.add('out'); setTimeout(() => old?.remove(), 700);
     };
-    if (!document.documentElement.classList.contains('still')) setInterval(() => {
-      if (document.hidden || qi.value || window.tnSheet?.isOpen()) return;
+    if (!still()) setInterval(() => {
+      if (document.hidden || qi.value || window.tnSheet?.isOpen() || sheet.open) return;
       const picks = list.filter((x) => !x._x).slice(0, 12);
       hintAt = (hintAt + 1) % (picks.length + 1);
       sayHint(hintAt && picks[hintAt - 1] ? `Try “${picks[hintAt - 1].n}”` : base);
     }, 4200);
 
-    // phones: the filters open as a sheet from the bottom
-    const sheet = $('#filters'), scrim = $('#scrim'), openBtn = $('#openFilters');
-    const setSheet = (on) => {
-      sheet.classList.toggle('open', on); scrim.hidden = !on; openBtn.setAttribute('aria-expanded', on);
-      document.documentElement.classList.toggle('sheet-open', on);
-      // the rest of the page goes inert (the browser's own way to keep taps, focus and screen readers in the sheet)
-      for (let el = sheet; el && el !== document.body; el = el.parentElement)
-        for (const sib of el.parentElement.children) if (sib !== el && sib !== scrim && !sib.contains(scrim)) sib.inert = on;
-      if (on) sheet.querySelector('button')?.focus({ preventScroll: true });
-    };
-    openBtn.addEventListener('click', () => setSheet(true));
-    $('#done').addEventListener('click', () => { setSheet(false); openBtn.focus(); });
-    scrim.addEventListener('click', () => setSheet(false));
-    addEventListener('keydown', (e) => { if (e.key === 'Escape' && sheet.classList.contains('open')) setSheet(false); });
+    // the filters: a native <dialog> (it keeps focus, Escape and screen readers inside, and the page inert behind it)
+    const openBtn = $('#openFilters');
+    openBtn.addEventListener('click', () => { sheet.showModal(); document.documentElement.classList.add('sheet-open'); });
+    $('#done').addEventListener('click', () => sheet.close());
+    $('#showN').addEventListener('click', () => { sheet.close(); $('#cmdMark').scrollIntoView({ behavior: still() ? 'auto' : 'smooth', block: 'start' }); });
+    sheet.addEventListener('click', (e) => { if (e.target === sheet) sheet.close(); });   // a tap outside it (where closedby="any" isn't known yet)
+    sheet.addEventListener('close', () => { document.documentElement.classList.remove('sheet-open'); openBtn.focus({ preventScroll: true }); writeHash(); });
 
     new IntersectionObserver((es) => { if (es[0].isIntersecting) more(); }, { rootMargin: '600px 0px' }).observe($('#more'));
     addEventListener('hashchange', () => { readHash(); apply(false); });
+
+    // new here: the filters sheet and the row of what's in use (once, the owner's rule)
+    window.tn.tip({ id: 'browse-filter-sheet', for: '#openFilters', title: 'Filters, in one place',
+      text: 'Services, genres, ratings, years, age and length all live here now. Whatever you pick shows as a button under the collections: tap one to take it away.' });
   }
+  function clearAll() { Object.assign(state, { s: [], g: [], sort: null, r: 0, y: null, a: '', rt: '' }); apply(true); }
 
   const genreSet = () => new Set(cat.items.filter(kindOk).flatMap((x) => x.g));
   function paintRating() {
@@ -287,8 +300,10 @@
     { const tr = $('#coll'), on = tr.querySelector('[aria-checked="true"]');   // phones: the chosen one slides into view
       if (on && tr.scrollWidth > tr.clientWidth + 1) tr.scrollTo({ left: Math.max(0, on.offsetLeft - tr.clientWidth / 2 + on.offsetWidth / 2), behavior: reduce ? 'auto' : 'smooth' }); }
     $('#kindSel').value = state.k; $('#kindL').textContent = { tv: 'Shows', movie: 'Films', both: 'Both' }[state.k];
-    document.querySelectorAll('.w-b').forEach((b) => b.setAttribute('aria-pressed', state.s.includes(b.dataset.s)));
-    document.querySelectorAll('.s-b').forEach((b) => b.setAttribute('aria-checked', b.dataset.sort === (q && !state.sort ? '' : sortKey())));   // searching: best match first unless you pick a sort
+    document.querySelectorAll('#where input').forEach((i) => { i.checked = state.s.includes(i.dataset.s); });
+    const sk = q && !state.sort ? '' : sortKey();   // searching: best match first unless you pick a sort
+    const o0 = $('#sortSel').options[0]; o0.textContent = q ? 'Best match' : 'By day'; o0.hidden = !q && !collection().order;
+    $('#sortSel').value = sk; $('#sortL').textContent = sk ? SORTS.find((s) => s.key === sk).label : o0.textContent;
     const gs = [...genreSet()].filter((g) => cat.genres[g]).sort((a, b) => cat.genres[a].localeCompare(cat.genres[b]));
     $('#genres').innerHTML = gs.map((g) => `<button type="button" class="g-b" data-g="${g}" aria-pressed="${state.g.includes(g)}">${esc(cat.genres[g])}</button>`).join('');
     paintRating();
@@ -299,12 +314,16 @@
     const span = THIS_YEAR - firstYear || 1;
     $('#yLo').parentElement.style.setProperty('--a', `${((+$('#yLo').value - firstYear) / span) * 100}%`);
     $('#yLo').parentElement.style.setProperty('--b', `${((+$('#yHi').value - firstYear) / span) * 100}%`);
-    const n = (state.s.length ? 1 : 0) + state.g.length + (state.r ? 1 : 0) + (state.sort ? 1 : 0) + (state.y ? 1 : 0) + (state.a ? 1 : 0) + (state.rt ? 1 : 0);   // services count once, however many
+    const n = (state.s.length ? 1 : 0) + state.g.length + (state.r ? 1 : 0) + (state.y ? 1 : 0) + (state.a ? 1 : 0) + (state.rt ? 1 : 0);   // services count once, however many
     $('#fCount').hidden = !n; $('#fCount').textContent = n;
+    $('#openFilters').setAttribute('aria-label', n ? `Filters, ${n} on` : 'Filters');
     $('#clear').disabled = !n;
+    paintChips();
 
+    const many = list.length.toLocaleString('en-GB'), what = q || state.k === 'both' ? (list.length === 1 ? 'title' : 'titles') : state.k === 'movie' ? (list.length === 1 ? 'film' : 'films') : (list.length === 1 ? 'show' : 'shows');
     // nothing on the services: no "0 results" line; the full catalogue's results below say it
-    $('#count').textContent = !q || (!list.length && window.tn.api) ? '' : `${list.length.toLocaleString('en-GB')} on the six services`;
+    $('#count').textContent = q ? (!list.length && window.tn.api ? '' : `${many} on the six services`) : `${many} ${what}`;
+    $('#showN').firstElementChild.textContent = list.length ? `Show ${many} ${what}` : 'No matches';
     document.body.classList.toggle('searching', !!q);
 
     document.body.classList.toggle('mixed', !!q || state.k === 'both');   // show/film labels on the tiles when both are listed
@@ -320,41 +339,99 @@
     rows();
   }
 
-  // ---------- the spotlight: five of the best of whatever you're browsing, each a full-width picture for a few seconds ----------
-  // The wide artwork comes from browse-more.json (fetched once, after the grid); just the pictures, no card over them.
-  // It moves on by itself unless Animations are off, you're pointing at it, or a sheet is open.
+  // ---------- what's filtering the list: one button for each, with a cross, and Clear all once there are two ----------
+  const X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 7.5l9 9M16.5 7.5l-9 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+  function paintChips() {
+    const c = [];
+    if (state.s.length) c.push(['s', state.s.length === 1 ? labels[state.s[0]] : `${state.s.length} services`, state.s.slice(0, 3).map((k) => logos[k] ? `<img src="${esc(logos[k])}" alt="">` : '').join('')]);
+    for (const g of state.g) if (cat.genres[g]) c.push([`g:${g}`, cat.genres[g]]);
+    if (state.r) c.push(['r', `Rated ${state.r}+`]);
+    if (state.y) c.push(['y', state.y[0] === state.y[1] ? `${state.y[0]}` : `${state.y[0]} to ${state.y[1]}`]);
+    if (state.a) c.push(['a', `Up to ${state.a}`]);
+    if (state.rt) c.push(['rt', `Up to ${LENS.find(([v]) => v === state.rt)[1]}`]);
+    if (c.length > 1) c.push(['all', 'Clear all']);
+    const box = $('#chips');
+    box.innerHTML = c.map(([k, l, ic]) => `<button type="button" class="btn btn-tinted chip${k === 'all' ? ' chip-all' : ''}" data-chip="${esc(k)}" aria-label="${k === 'all' ? 'Clear all filters' : `Remove ${esc(l)}`}">${ic ? `<span class="chip-ic">${ic}</span>` : ''}<span>${esc(l)}</span>${k === 'all' ? '' : X}</button>`).join('');
+    box.hidden = !c.length;
+  }
+
+  // ---------- the featured hero: five of the best of whatever you're browsing, one at a time ----------
+  // Its wide artwork (browse-more.json, fetched once) fills the top of the page and runs on, blurred, under the sidebar's
+  // glass; without one, the poster blurred big does the same, so the hero is never empty. A thin bar for each pick fills
+  // while it's showing (CSS), and when it's full the next one glides in; pointing at the hero, an open sheet or Animations
+  // off hold it still. Swipe on touch, the arrows or ← → on the bars elsewhere.
   const still = () => reduce || document.documentElement.classList.contains('still');
-  const spot = { key: '', picks: [], at: 0, timer: 0 }, fk = (x) => `${x.t[0]}${x.i}`;
+  const spot = { key: '', picks: [], at: 0 }, fk = (x) => `${x.t[0]}${x.i}`;
   const kindWord = () => (state.k === 'movie' ? 'Films' : state.k === 'both' ? 'Shows and films' : 'Shows');
+  const posterOf = (x) => x.img ? (x.img.startsWith('/') ? cat.img + x.img : x.img) : null;
   async function spotlight() {
     const col = collection();
     $('#spotEye').textContent = `${col.label} · ${kindWord()}${state.s.length ? ` · ${state.s.length === 1 ? labels[state.s[0]] : `${state.s.length} services`}` : ''}`;
-    const m = await moreData(); if (!m?.items) return;
-    // five of the top 24 with wide artwork, led by the ones you haven't seen in the spotlight lately (each title once)
-    const pool = list.slice(0, 24).filter((x) => m.items[fk(x)]?.[1]), key = pool.map(fk).join(',');
+    const m = await moreData();
+    // five of the top 24, those with wide artwork first, led by the ones you haven't seen featured lately (each title once)
+    const wide = (x) => !!m?.items?.[fk(x)]?.[1];
+    const pool = list.filter((x) => !x._x || x.img).slice(0, 24).filter((x) => wide(x) || x.img), key = pool.map(fk).join(',');
     if (key === spot.key) return;
-    const picks = window.tn.featured.pick(pool, fk, 5);
-    spot.key = key; spot.picks = picks; spot.at = 0; clearInterval(spot.timer);
-    const art = $('#spotArt');
-    if (!picks.length) { art.innerHTML = ''; $('#spot').classList.remove('has-art'); return; }
-    art.innerHTML = picks.map((x, i) => `<img ${i ? 'data-' : 'fetchpriority="high" '}src="${esc(m.img.replace('/w780', '/w1280') + m.items[`${x.t[0]}${x.i}`][1])}" alt="" decoding="async">`).join('');
-    $('#spot').classList.add('has-art');
+    const picks = window.tn.featured.pick(pool, fk, 5, wide);
+    spot.key = key; spot.picks = picks; spot.at = 0;
+    const art = $('#spotArt'), ext = $('#spotExt');
+    $('#spot').classList.toggle('has-feat', !!picks.length); $('#spotFeat').hidden = !picks.length; $('#spotNav').hidden = picks.length < 2;
+    if (!picks.length) { art.innerHTML = ext.innerHTML = ''; return; }
+    const src = (x) => (wide(x) ? m.img.replace('/w780', '/w1280') + m.items[fk(x)][1] : posterOf(x));
+    art.innerHTML = picks.map((x, i) => `<img class="${wide(x) ? 'wide' : 'blur'}" ${i ? 'data-' : 'fetchpriority="high" '}src="${esc(src(x))}" alt="" decoding="async">`).join('');
+    ext.innerHTML = picks.map((x, i) => `<img ${i ? 'data-' : ''}src="${esc(src(x))}" alt="" decoding="async">`).join('');
+    $('#spotDots').innerHTML = picks.map((x, i) => `<button type="button" role="tab" aria-selected="false" aria-label="${esc(x.n)}" data-i="${i}"><i></i></button>`).join('');
     showSpot(0);
-    if (!still() && picks.length > 1) spot.timer = setInterval(() => { if (!document.hidden && !window.tnSheet?.isOpen() && !$('#spot').matches(':hover')) showSpot(spot.at + 1); }, 7000);
   }
   function showSpot(n) {
-    const imgs = [...$('#spotArt').children], picks = spot.picks; if (!picks.length) return;
-    spot.at = (n + picks.length) % picks.length; window.tn.featured.saw(fk(picks[spot.at]));
+    const picks = spot.picks; if (!picks.length) return;
+    spot.at = (n + picks.length) % picks.length; const x = picks[spot.at];
+    window.tn.featured.saw(fk(x));
     const want = (img) => { if (img?.dataset.src) { img.src = img.dataset.src; delete img.dataset.src; } };
-    want(imgs[spot.at]); want(imgs[(spot.at + 1) % imgs.length]);
-    imgs.forEach((img, i) => img.classList.toggle('on', i === spot.at));
+    for (const box of [$('#spotArt'), $('#spotExt')]) {
+      const imgs = [...box.children]; want(imgs[spot.at]); want(imgs[(spot.at + 1) % imgs.length]);
+      imgs.forEach((img, i) => img.classList.toggle('on', i === spot.at));
+    }
+    const words = () => {
+      $('#spotT').textContent = x.n;
+      const g = x.g.map((id) => cat.genres[id]).find(Boolean);
+      $('#spotM').innerHTML = [x.t === 'tv' ? 'Show' : 'Film', g, (x.d || '').slice(0, 4), x.r ? `★ ${x.r.toFixed(1)}` : ''].filter(Boolean).map(esc).join(' · ')
+        + (x.s.length ? `<span class="on">${x.s.slice(0, 3).map((k) => logos[k] ? `<img src="${esc(logos[k])}" alt="${esc(labels[k])}" data-tip="${esc(labels[k])}">` : '').join('')}</span>` : '');
+      moreData().then((m) => { if (spot.picks[spot.at] === x) $('#spotO').textContent = m?.sample ? '' : m?.items?.[fk(x)]?.[0] || ''; });
+      const add = $('#spotAdd'), on = window.tn.saved.has(fk(x));
+      add.dataset.save = fk(x); add.setAttribute('aria-pressed', on); add.innerHTML = on ? TICK : PLUS;
+      add.title = on ? 'In your Watchlist' : 'Add to Watchlist'; add.setAttribute('aria-label', `${add.title}: ${x.n}`);
+    };
+    // the words glide across with the picture, where the browser can
+    const feat = $('#spotFeat');
+    if (!still() && feat.animate && feat.dataset.k) feat.animate([{ opacity: 1 }, { opacity: 0, translate: '0 6px' }], { duration: 180, easing: 'ease-in' }).finished.then(() => {
+      words(); feat.animate([{ opacity: 0, translate: '0 -6px', filter: 'blur(4px)' }, { opacity: 1, translate: '0 0', filter: 'blur(0)' }], { duration: 420, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    }); else words();
+    feat.dataset.k = fk(x);
+    // the bars: the ones before full, this one filling (its animation's end moves things on), the rest empty
+    $('#spotDots').querySelectorAll('button').forEach((b, i) => {
+      b.setAttribute('aria-selected', i === spot.at); b.tabIndex = i === spot.at ? 0 : -1;
+      b.classList.toggle('done', i < spot.at); b.classList.remove('run'); if (i === spot.at) { void b.offsetWidth; b.classList.add('run'); }
+    });
   }
-  // swipe the spotlight on a phone or tablet
+  $('#spotDots').addEventListener('animationend', (e) => {
+    if (e.animationName !== 'spotFill') return;
+    if (document.hidden || window.tnSheet?.isOpen() || sheet.open) { const b = e.target.closest('button'); b.classList.remove('run'); void b.offsetWidth; b.classList.add('run'); return; }
+    showSpot(spot.at + 1);
+  });
+  $('#spotDots').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) showSpot(+b.dataset.i); });
+  arrows($('#spotDots'), () => [...$('#spotDots').children], (b) => showSpot(+b.dataset.i));
+  $('#spotNav').addEventListener('click', (e) => { const b = e.target.closest('[data-step]'); if (b) showSpot(spot.at + +b.dataset.step); });
+  // its name, Where to watch, or the picture itself: the title's sheet
+  const openSpot = async () => { const x = spot.picks[spot.at]; if (x) window.tnSheet?.open(await sheetFor(x)); };
+  $('#spotT').addEventListener('click', openSpot); $('#spotGo').addEventListener('click', openSpot);
+  $('#spot').addEventListener('click', (e) => { if (!e.target.closest('button, a, select, input') && !getSelection().toString()) openSpot(); });
+  // swipe it on a phone or tablet
   let spX = null;
   $('#spot').addEventListener('touchstart', (e) => { spX = [e.touches[0].clientX, e.touches[0].clientY]; }, { passive: true });
   $('#spot').addEventListener('touchend', (e) => {
     if (!spX || spot.picks.length < 2) return; const t = e.changedTouches[0], dx = t.clientX - spX[0], dy = t.clientY - spX[1]; spX = null;
-    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) { showSpot(spot.at + (dx < 0 ? 1 : -1)); clearInterval(spot.timer); }
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) showSpot(spot.at + (dx < 0 ? 1 : -1));
   }, { passive: true });
 
   // ---------- explore by genre: a tile for each of the biggest genres, three of its best posters fanned out ----------
@@ -384,8 +461,6 @@
     $('#cmdMark').scrollIntoView({ behavior: still() ? 'auto' : 'smooth', block: 'start' });
   });
 
-  // ---------- the collections bar: glass that firms up once it's holding on at the top ----------
-  new IntersectionObserver(([e]) => $('#cmd').classList.toggle('stuck', !e.isIntersecting && e.boundingClientRect.top < 200), { rootMargin: '-90px 0px 0px 0px' }).observe($('#cmdMark'));
 
   // ---------- posters lean towards the pointer, with a sheen of light across them (computers) ----------
   const tiltOk = () => fine.matches && !still();
