@@ -1,10 +1,13 @@
-// Tenner Discover: a deck of shows and films from Tenner's whole catalogue (all six services), one card at a time. Swipe right to add it to
+// Tenner Discover: a deck of shows and films, one card at a time: Tenner's catalogue (all six services), and films from
+// TMDB's whole catalogue (through the search service) mixed in, streaming or not; those open the usual sheet, which says
+// where they are, if anywhere. Swipe right to add it to
 // your Watchlist, left to skip it, down (or tap) for the details sheet. The buttons and arrow keys do the same.
 // Skipped titles are remembered on this device so they don't come round again; Undo takes back the last swipe.
 (() => {
   const { esc, hue, reduce, saved, swipes } = window.tn;   // from shell.js
   const $ = (s) => document.querySelector(s);
-  const SKIP = 'tenner-skipped', KIND = 'tenner-discover-kind', HINTED = 'tenner-discover-hinted';
+  const SKIP = 'tenner-skipped', KIND = 'tenner-discover-kind', HINTED = 'tenner-discover-hinted', WIDE = 'tenner-discover-page';
+  const TMDB_IMG = 'https://image.tmdb.org/t/p';
   const stage = $('#dStage'), mouse = matchMedia('(hover: hover) and (pointer: fine)');
 
 
@@ -17,19 +20,25 @@
   };
 
   // ---------- data ----------
-  let cat = null, more = null, certs = null, labels = {}, logos = {}, deck = [], cards = [], hist = [], added = 0;
+  let known = new Set(), cat = null, more = null, certs = null, labels = {}, logos = {}, deck = [], cards = [], hist = [], added = 0;
   let kind = (() => { try { const k = localStorage.getItem(KIND); return ['tv', 'movie', 'both'].includes(k) ? k : 'both'; } catch { return 'both'; } })();
   const keyOf = (x) => `${x.t[0]}${x.i}`;
-  const img = (x, w) => (!x.img ? null : x.img.startsWith('/') ? cat.img.replace(/\/w\d+$/, `/${w}`) + x.img : x.img);
+  const img = (x, w) => (!x.img ? null : x.wide ? `${TMDB_IMG}/${w}${x.img}` : x.img.startsWith('/') ? cat.img.replace(/\/w\d+$/, `/${w}`) + x.img : x.img);
   const year = (x) => (x.d || '').slice(0, 4) || null;
-  const extra = (x) => more?.items?.[keyOf(x)] || [];
+  const extra = (x) => (x.wide ? [x.ov || '', x.bd] : more?.items?.[keyOf(x)] || []);
+  const backdrop = (x, e) => (!e[1] ? null : x.wide ? `${TMDB_IMG}/w1280${e[1]}` : more?.img ? more.img + e[1] : null);
+  // TMDB's film genres, for the cards from its whole catalogue (Tenner's own list covers only what's on the services)
+  const FILM_GENRES = { 28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime', 99: 'Documentary', 18: 'Drama', 10751: 'Family',
+    14: 'Fantasy', 36: 'History', 27: 'Horror', 10402: 'Music', 9648: 'Mystery', 10749: 'Romance', 878: 'Sci-Fi', 10770: 'TV film', 53: 'Thriller',
+    10752: 'War', 37: 'Western' };
+  const genresOf = (x, n) => [...new Set(x.g.map((g) => cat.genres[g] || FILM_GENRES[g]).filter(Boolean))].slice(0, n);
 
   window.tn.loading.wrap(Promise.all([
     fetch('data/browse.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))),
     fetch('data/trending.json').then((r) => (r.ok ? r.json() : null)).catch(() => null),
     window.tn.prefs.get().no18 ? window.tnSheet?.details() : null,   // Settings: "Hide titles rated 18"
   ])).then(([c, t, d]) => {
-    cat = c; certs = d;
+    cat = c; certs = d; known = new Set(cat.items.map(keyOf));
     for (const s of t?.services || []) { logos[s.key] = s.logo; labels[s.key] = s.label; }
     if (!Object.keys(labels).length) Object.assign(labels, { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+', appletv: 'Apple TV' });
     build();
@@ -46,9 +55,50 @@
       .sort((a, b) => (b.p * (0.6 + (b.r || 6) / 20)) - (a.p * (0.6 + (a.r || 6) / 20)));
     deck = [];
     for (let i = 0; i < pool.length; i += 10) deck.push(...pool.slice(i, i + 10).sort(() => Math.random() - 0.5));
-    hist = []; $('#dUndo').disabled = true;
+    hist = []; $('#dUndo').disabled = true; dealt = 0;
+    wide.q = []; wide.gen++; wide.busy = null; wide.end = false;
     stage.replaceChildren(); cards = [];
     fill(); hint(); pkSoon(0);
+    if (kind !== 'tv') wideMore().then(() => { if (cards.length < 3) fill(); });
+  }
+
+  // ---------- the whole film catalogue: TMDB's films, most popular first, a page (20) at a time from the search service.
+  // Pages are taken in a shuffled order within each run of ten, so the mix feels fresh; where you'd got to is kept on
+  // this device so a return visit doesn't wade back through films already seen. Anything on the six services is left
+  // to Tenner's own deck (which knows the services); if the service is down, the deck is just Tenner's catalogue. ----------
+  const wide = { q: [], gen: 0, busy: null, end: false, order: [], down: 0 };
+  let dealt = 0;
+  const wideAt = (v) => { try { if (v == null) return Math.max(0, parseInt(localStorage.getItem(WIDE), 10) || 0); localStorage.setItem(WIDE, String(v)); } catch {} return 0; };
+  const wideFresh = (x) => { const k = keyOf(x); return !known.has(k) && !skipped.all()[k] && !saved.has(k) && !window.tn.hidden.keys().has(k) && !cards.some((el) => el.dataset.k === k); };
+  function wideMore() {
+    if (!window.tn.api || wide.end || wide.q.length >= 8 || Date.now() < wide.down) return Promise.resolve();
+    if (wide.busy) return wide.busy;
+    const gen = wide.gen, no18 = window.tn.prefs.get().no18;
+    wide.busy = (async () => {
+      for (let tries = 0; tries < 4 && wide.q.length < 8; tries++) {
+        let at = wideAt();
+        if (!wide.order.length) { const b = Math.floor(at / 10) * 10; wide.order = Array.from({ length: 10 }, (_, i) => b + i + 1).filter((n) => n > at).sort(() => Math.random() - 0.5); }
+        const page = wide.order.shift();
+        if (!page || page > 500) { wide.end = true; break; }
+        const d = await fetch(`${window.tn.api}/discover?page=${page}${no18 ? '&no18=1' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+        if (gen !== wide.gen) return;
+        if (!d) { wide.order.unshift(page); wide.down = Date.now() + 60000; break; }   // the service is down: Tenner's own deck for a minute
+        if (!wide.order.length) wideAt(Math.floor(at / 10) * 10 + 10);   // that run of ten is done
+        if (page > (d.pages || 500)) { wide.end = true; break; }
+        wide.q.push(...(d.items || []).map((x) => ({ ...x, wide: 1, s: [] })).filter(wideFresh).sort(() => Math.random() - 0.5));
+      }
+    })().finally(() => { if (gen === wide.gen) wide.busy = null; });
+    return wide.busy;
+  }
+  // the next card: Tenner's own deck, with a film from the whole catalogue every other card (Films) or every third (both)
+  function next() {
+    const every = kind === 'movie' ? 2 : kind === 'both' ? 3 : 0;
+    while (wide.q.length && !wideFresh(wide.q[0])) wide.q.shift();
+    const takeWide = every && wide.q.length && (!deck.length || dealt % every === every - 1);
+    if (every && wide.q.length < 8 && !wide.busy) wideMore().then(() => { if (cards.length < 3) fill(); });
+    const x = takeWide ? wide.q.shift() : deck.shift();
+    if (x) dealt++;
+    return x;
   }
 
   // ---------- cards ----------
@@ -57,7 +107,7 @@
   function cardFor(x) {
     const el = document.createElement('article'), h = hue(x.n), src = img(x, 'w500');
     el.className = 'dc'; el.dataset.k = keyOf(x); el._x = x;
-    const genres = [...new Set(x.g.map((g) => cat.genres[g]).filter(Boolean))].slice(0, 2);
+    const genres = genresOf(x, 2);
     const meta = [x.t === 'movie' ? 'Film' : 'Series', year(x), ...genres].filter(Boolean).map(esc).join(' · ');
     const svc = x.s.filter((s) => labels[s]).slice(0, 3).map((s) => (logos[s] ? `<img src="${esc(logos[s])}" alt="${esc(labels[s])}" data-tip="${esc(labels[s])}">` : `<span>${esc(labels[s])}</span>`)).join('');
     el.innerHTML = `${src ? `<img class="dc-img" src="${esc(src)}" srcset="${esc(src)} 500w, ${esc(img(x, 'w780'))} 780w" sizes="380px" alt="" decoding="async" draggable="false">`
@@ -71,15 +121,21 @@
   function fillBlurb(el) { const ov = extra(el._x)[0]; if (ov) el.querySelector('.dc-ov').textContent = ov; }
   // keep three cards on the table: the top one and two waiting behind
   function fill() {
-    while (cards.length < 3 && deck.length) { const el = cardFor(deck.shift()); el.style.setProperty('--d', cards.length); cards.push(el); stage.prepend(el); }
+    let x;
+    while (cards.length < 3 && (x = next())) { const el = cardFor(x); el.style.setProperty('--d', cards.length); cards.push(el); stage.prepend(el); }
     depths(); ambient();
     const empty = !cards.length;
     $('#dActs').classList.toggle('off', empty);
+    if (empty && wide.busy) return;   // more films are on their way
     if (empty && !stage.querySelector('.d-end')) {
       stage.insertAdjacentHTML('beforeend', `<div class="d-end"><span class="d-end-ic" aria-hidden="true">${SAVE}</span><h2>You’ve seen them all</h2>
         <p>That’s everything${kind === 'tv' ? ' in shows' : kind === 'movie' ? ' in films' : ''} in the catalogue for now. New titles arrive every hour.</p>
         <div class="d-end-b"><button type="button" class="btn btn-tinted" id="dAgain"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Show skipped again</button><a class="btn btn-tinted" href="charts.html#watchlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18.4l-6-4.2-6 4.2z" fill="currentColor"/></svg>Your Watchlist</a></div></div>`);
-      $('#dAgain').addEventListener('click', () => { const o = skipped.all(); for (const x of cat.items) if (kind === 'both' || x.t === kind) delete o[keyOf(x)]; skipped.set(o); build(); });
+      $('#dAgain').addEventListener('click', () => {
+        const o = skipped.all(); for (const x of cat.items) if (kind === 'both' || x.t === kind) delete o[keyOf(x)];
+        if (kind !== 'tv') { for (const k of Object.keys(o)) if (k[0] === 'm' && !known.has(k)) delete o[k]; wideAt(0); wide.order = []; }   // the whole catalogue's films too, from the top
+        skipped.set(o); build();
+      });
     }
   }
   function depths() {
@@ -97,8 +153,8 @@
   const say = (t) => { $('#dSay').textContent = t; };
   const infoFor = (x) => {
     const e = extra(x);
-    return { k: keyOf(x), type: x.t, title: x.n, year: year(x), rating: x.r || null, poster: img(x, 'w342'), backdrop: e[1] && more?.img ? more.img + e[1] : null, overview: e[0] || '',
-      genres: [...new Set(x.g.map((g) => cat.genres[g]).filter(Boolean))].slice(0, 3), tmdb: `https://www.themoviedb.org/${x.t}/${x.i}`,
+    return { k: keyOf(x), type: x.t, title: x.n, year: year(x), rating: x.r || null, poster: img(x, 'w342'), backdrop: backdrop(x, e), overview: e[0] || '',
+      genres: genresOf(x, 3), tmdb: `https://www.themoviedb.org/${x.t}/${x.i}`,
       services: x.s.map((s) => ({ label: labels[s] || s, logo: logos[s] })) };
   };
   function counter() {
@@ -132,7 +188,7 @@
     swipes.set(k, null);
     stage.querySelector('.d-end')?.remove();
     // the third card goes back in the pile; the undone one returns on top
-    if (cards.length >= 3) { const last = cards.pop(); deck.unshift(last._x); last.remove(); }
+    if (cards.length >= 3) { const last = cards.pop(); (last._x.wide ? wide.q : deck).unshift(last._x); last.remove(); }
     const el = cardFor(h.x); cards.unshift(el); stage.append(el); depths(); ambient(); $('#dActs').classList.remove('off');
     say(`${h.x.n} is back`);
     if (!reduce && el.animate) { const dir = h.yes ? 1 : -1; el.animate([{ transform: `translate(${dir * (innerWidth + 100)}px,40px) rotate(${dir * 20}deg)` }, { transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.2,.9,.25,1.05)' }); }
@@ -268,6 +324,8 @@
   }
   $('#dPkL').addEventListener('click', (e) => { const li = e.target.closest('li'); if (li?._x) window.tnSheet?.open(infoFor(li._x)); });
   ['tn:swiped', 'tn:saved', 'tn:account', 'tn:synced'].forEach((n) => addEventListener(n, () => pkSoon()));
+  window.tn.tip?.({ id: 'discover-every-film', for: $('#dKindDD').offsetParent ? '#dKindDD' : '#dInfo',   // the menu on computers; on phones it's tucked away, so Details
+    title: 'Every film', text: 'Discover now deals films from the whole film catalogue, not just what’s on your services. Tap one to see where it’s on, if it’s anywhere.' });
   window.tn.tip?.({ id: 'your-picks', for: '#dPkH', title: 'Your picks', text: 'Every swipe re-ranks this list. Swipe right on what you like and ten titles you’ll probably enjoy line up here, best first. Tap one for details.' });
 
   // the first time: the top card leans right, then left, to show it moves

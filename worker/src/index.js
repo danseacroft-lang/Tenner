@@ -9,6 +9,8 @@
 //                     seasons, the film series it's part of, reviews, the Information section and its IMDb number
 //   GET /season/t123/2  one season's episodes (name, date, running time, still, description)
 //   GET /collection/123 a film series, in order
+//   GET /discover?page=…&no18=1  a page of TMDB's whole film catalogue, most popular first (Discover's deck draws on it
+//                     beyond the six services); 20 a page, up to page 500; no18 leaves out films rated 18 in the UK
 //   /push/…           Watchlist alerts (push.js)
 //   /auth/…, /me…, /share/…  accounts: passkeys, Google, sync, shared lists (auth.js)
 //   /digest/off       the Sunday email's unsubscribe link (digest.js)
@@ -68,6 +70,13 @@ export default {
       path = `/tv/${k.slice(1)}/season/${n}`; params = { language: 'en-GB' }; shape = seasonShape; ttl = 21600;
     } else if (/^\/collection\/\d{1,9}$/.test(url.pathname)) {
       path = url.pathname; params = { language: 'en-GB' }; shape = collectionShape; ttl = 604800;
+    } else if (url.pathname === '/discover') {
+      const page = Math.min(500, Math.max(1, parseInt(url.searchParams.get('page'), 10) || 1));
+      // films out now that enough people have rated to be worth a card; the date is today's, so the cache turns over daily
+      params = { language: 'en-GB', region: REGION, include_adult: 'false', include_video: 'false', sort_by: 'popularity.desc', 'vote_count.gte': '150',
+        'primary_release_date.lte': new Date().toISOString().slice(0, 10), page: String(page),
+        ...(url.searchParams.get('no18') ? { certification_country: REGION, 'certification.lte': '15' } : {}) };
+      path = '/discover/movie'; shape = discoverShape; ttl = 86400;
     } else {
       const m = url.pathname.match(/^\/title\/([mt])(\d{1,9})$/);
       if (!m) return json({ error: 'Not found' }, 404, cors);
@@ -102,6 +111,18 @@ function searchShape(d) {
       k: `${x.media_type === 'movie' ? 'm' : 't'}${x.id}`, type: x.media_type, title: x.title || x.name,
       year: (x.release_date || x.first_air_date || '').slice(0, 4) || null, rating: x.vote_count >= 20 ? Math.round(x.vote_average * 10) / 10 : null,
       poster: x.poster_path || null, backdrop: x.backdrop_path || null, overview: (x.overview || '').slice(0, 400),
+    })),
+  };
+}
+
+// in the same shape as data/browse.json's items, so Discover deals them like its own; poster and backdrop paths are
+// TMDB's, for its image sizes
+function discoverShape(d) {
+  return {
+    page: d.page || 1, pages: Math.min(500, d.total_pages || 1),
+    items: (d.results || []).filter((x) => x.poster_path && !x.adult).map((x) => ({
+      i: x.id, t: 'movie', n: x.title, d: x.release_date || undefined, r: x.vote_count >= 20 ? Math.round(x.vote_average * 10) / 10 : undefined,
+      p: Math.round(x.popularity || 0), img: x.poster_path, bd: x.backdrop_path || undefined, g: (x.genre_ids || []).slice(0, 3), ov: (x.overview || '').slice(0, 400) || undefined,
     })),
   };
 }

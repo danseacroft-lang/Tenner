@@ -162,7 +162,9 @@
     }
     const groups = [['Included with', x.f], ['Free', x.fr], ['Rent', x.re], ['Buy', x.bu]]
       .map(([label, ids]) => { const list = providerList(ids, d, info); return list ? `<div class="sh-grp"><h4>${label}</h4><div class="sh-provs">${list}</div></div>` : ''; }).join('');
-    return (groups + priceHtml(info) + tvHtml(info)) || '<p class="sh-none">Not available to stream, rent or buy in the UK right now.</p>';
+    // not on any subscription or free service (a film from Discover's whole catalogue, say): a gentle line first
+    const none = !providerList(x.f, d, info) && !providerList(x.fr, d, info) && groups ? '<p class="sh-none">Not streaming in the UK right now.</p>' : '';
+    return (none + groups + priceHtml(info) + tvHtml(info)) || '<p class="sh-none">Not available to stream, rent or buy in the UK right now.</p>';
   }
   // its next two Freeview showings this week, each opening Tenner TV's search for it (where Watch live is a tap away)
   const fold = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim().replace(/^the /, '');
