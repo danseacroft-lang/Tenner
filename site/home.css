@@ -328,3 +328,30 @@ html.still .bx-tt-bg img { transition: none; }
 .bx-fy-go svg { width: 16px; height: 16px; }
 /* a placeholder poster this small (the Top 10 box, Climbing) shows its colours only: its name was cut to a few letters */
 .bx-up-art .bx-ph span { display: none; }
+
+/* ---------- Christmas (home.js): a festive slide, a winter night behind the page and falling snow ---------- */
+/* the night sky fades in behind everything while the Christmas slide (or, on phones, its card) is showing */
+:root.xmas body::after { content: ""; position: fixed; z-index: -1; inset: 0; pointer-events: none; opacity: 0;
+  background: radial-gradient(1.2px 1.2px at 12% 18%, rgba(255, 255, 255, .8), transparent), radial-gradient(1px 1px at 33% 9%, rgba(255, 255, 255, .7), transparent),
+    radial-gradient(1.4px 1.4px at 58% 22%, rgba(255, 255, 255, .75), transparent), radial-gradient(1px 1px at 76% 6%, rgba(255, 255, 255, .6), transparent),
+    radial-gradient(1.2px 1.2px at 91% 27%, rgba(255, 255, 255, .7), transparent), radial-gradient(1px 1px at 47% 35%, rgba(255, 255, 255, .5), transparent),
+    radial-gradient(90% 60% at 72% 0%, rgba(64, 200, 224, .16), transparent 70%), radial-gradient(70% 55% at 85% 100%, rgba(255, 159, 10, .12), transparent 70%),
+    linear-gradient(#060a22, #0b1236 45%, #141436);
+  background-size: 420px 420px, 380px 380px, 520px 520px, 460px 460px, 400px 400px, 300px 300px, auto, auto, auto; }
+:root.xmas-in body::after { opacity: 1; }
+:root:not(.still).xmas body::after { transition: opacity 1.2s var(--ease-out); }
+/* by day: a pale winter morning instead, so the words stay dark and easy to read */
+:root[data-theme="light"].xmas body::after { background: radial-gradient(90% 60% at 72% 0%, rgba(100, 210, 255, .22), transparent 70%), radial-gradient(70% 55% at 85% 100%, rgba(255, 159, 10, .1), transparent 70%), linear-gradient(#c9d6ee, #e3eaf6 45%, #f2f5fb); background-size: auto; }
+@media (prefers-color-scheme: light) { :root:not([data-theme]).xmas body::after { background: radial-gradient(90% 60% at 72% 0%, rgba(100, 210, 255, .22), transparent 70%), radial-gradient(70% 55% at 85% 100%, rgba(255, 159, 10, .1), transparent 70%), linear-gradient(#c9d6ee, #e3eaf6 45%, #f2f5fb); background-size: auto; } }
+.bx-snow { position: fixed; z-index: 55; inset: 0; width: 100vw; height: 100vh; pointer-events: none; }
+.bx-eye-x svg { color: #ffd60a; }
+.bx-h-how { margin: -2px 0 0; font-size: 13.5px; color: rgba(255, 255, 255, .72); }
+/* phones: the same, as a card above the charts */
+.bx-xph { position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: flex-end; min-height: 400px; margin: 10px 0 4px; border-radius: var(--r); color: #fff; background: #0b1236;
+  box-shadow: 0 0 0 .5px rgba(255, 255, 255, .1), 0 24px 50px -28px rgba(0, 0, 0, .7); }
+.bx-xph > img { position: absolute; z-index: -1; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 74% center; }
+.bx-xph::after { content: ""; position: absolute; z-index: -1; inset: 0; background: linear-gradient(to top, rgba(4, 6, 24, .92), rgba(4, 6, 24, .6) 45%, transparent 75%); }
+.bx-xph-copy { display: grid; justify-items: start; gap: 9px; padding: 18px 18px 20px; }
+.bx-xph h2 { margin: 0; font: 800 30px/1.05 var(--font-display); letter-spacing: -.03em; text-shadow: 0 2px 20px rgba(0, 0, 0, .4); }
+.bx-xph-copy > p:not([class]) { margin: 0; font-size: 15px; line-height: 1.42; color: rgba(255, 255, 255, .88); }
+.bx-xph .bx-cta { height: 44px; }

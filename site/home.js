@@ -41,6 +41,9 @@
     cross: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>',
     info: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 10.5v7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="6.4" r="1.6" fill="currentColor"/></svg>',
     mark: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18.4l-6-4.2-6 4.2z" fill="currentColor"/></svg>',
+    share: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M7.8 7.6 12 3.4l4.2 4.2M6.5 11H6a1.5 1.5 0 0 0-1.5 1.5v6A1.5 1.5 0 0 0 6 20h12a1.5 1.5 0 0 0 1.5-1.5v-6A1.5 1.5 0 0 0 18 11h-.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    sparkle: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c.5 4.6 2.9 7 7.5 7.5-4.6.5-7 2.9-7.5 7.5-.5-4.6-2.9-7-7.5-7.5 4.6-.5 7-2.9 7.5-7.5zM19 15.5c.2 1.9 1.1 2.8 3 3-1.9.2-2.8 1.1-3 3-.2-1.9-1.1-2.8-3-3 1.9-.2 2.8-1.1 3-3z" fill="currentColor"/></svg>',
+    install: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M7.8 10.4 12 14.6l4.2-4.2M5 15.5v2A2.5 2.5 0 0 0 7.5 20h9a2.5 2.5 0 0 0 2.5-2.5v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   };
 
   // ---------- data ----------
@@ -195,11 +198,133 @@
   });
   const morph = (fn) => (document.startViewTransition && !document.documentElement.classList.contains('still') ? document.startViewTransition(fn) : fn());
 
+  // ---------- Christmas (1 November to Boxing Day): a festive slide among the featured titles ----------
+  // Its own artwork (a snowy village at night, a lit tree), a countdown in the scores' box, a nudge to add Tenner to the
+  // Home Screen for the holidays and a Share button. While it's showing, the page turns to a winter night and snow falls
+  // from the top of the window; it all goes back when another title comes round. On phones it's a card above the charts,
+  // and the snow falls while the card's in view. Never any snow when the device asks for Reduce Motion.
+  const XMAS = (() => { const d = new Date(); return d.getMonth() === 10 || (d.getMonth() === 11 && d.getDate() <= 26); })();
+  const XMAS_IT = { title: 'Christmas on Tenner', poster: 'xmas-poster.webp', xmas: true };
+  const xmasDays = () => {
+    const now = new Date(), day = new Date(now.getFullYear(), 11, 25), ms = day - now;
+    return ms <= 0 ? null : { d: Math.floor(ms / 864e5), h: Math.floor(ms / 36e5) % 24, m: Math.floor(ms / 6e4) % 60 };
+  };
+  const isMacSafari = /Macintosh/.test(navigator.userAgent) && /Version\/[\d.]+.*Safari/.test(navigator.userAgent) && !window.tn.isIOS;
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  let installEv = null;   // Chrome and Edge: their own Install button
+  addEventListener('beforeinstallprompt', (e) => { if (!XMAS) return; e.preventDefault(); installEv = e; xmasCopy(); });
+  const xmasHow = () => (standalone ? 'Tenner’s already on your Home Screen. Merry Christmas!'
+    : window.tn.isIOS ? 'On iPhone or iPad, tap Share, then Add to Home Screen.'
+      : isMacSafari ? 'On a Mac, in Safari choose File, then Add to Dock.' : '');
+  const xmasActs = () => `<button type="button" class="btn btn-tinted bx-cta" data-xmas="share">${I.share}Share Tenner</button>${installEv && !standalone ? `<button type="button" class="btn btn-tinted bx-cta bx-cta-2" data-xmas="install">${I.install}Install</button>` : ''}`;
+  function xmasCount() {
+    const c = xmasDays(); if (!c) return '';
+    const cells = [[c.d, c.d === 1 ? 'day' : 'days'], [c.h, c.h === 1 ? 'hour' : 'hours'], [c.m, c.m === 1 ? 'minute' : 'minutes']];
+    return `<dl class="bx-score" aria-label="${c.d} days until Christmas">${cells.map(([v, l]) => `<div><dt>${v}</dt><dd>${l}</dd></div>`).join('')}</dl>`;
+  }
+  function xmasCopy() {
+    const c = $('#bxCopy'); if (!c || !heroList[state.hero]?.it.xmas) { drawXmasCard(); return; }
+    const here = !xmasDays();
+    c.innerHTML = `${xmasCount()}
+      <p class="bx-eye bx-eye-x">${I.sparkle}<span>${here ? 'Merry Christmas' : 'Christmas is coming'}</span></p>
+      <h2 class="bx-h-t">${here ? 'Merry Christmas from Tenner' : 'Christmas is nearly here'}</h2>
+      <p class="bx-h-ov">Add Tenner to your Home Screen for easy access over the holidays, and stay up to date with the very best films and shows this Christmas. Share it with friends and family too.</p>
+      ${xmasHow() ? `<p class="bx-h-how">${esc(xmasHow())}</p>` : ''}
+      <div class="bx-h-acts">${xmasActs()}</div>`;
+  }
+  // phones: a card above the charts
+  const xmasCard = () => (!XMAS ? '' : `<section class="bx-xph" id="bxXph" aria-labelledby="bxXphT"><img src="xmas.webp" alt="" decoding="async">
+      <div class="bx-xph-copy"><p class="bx-eye bx-eye-x">${I.sparkle}<span>${xmasDays() ? `${xmasDays().d} days to Christmas` : 'Merry Christmas'}</span></p>
+      <h2 id="bxXphT">${xmasDays() ? 'Christmas is nearly here' : 'Merry Christmas from Tenner'}</h2>
+      <p>Add Tenner to your Home Screen for easy access over the holidays, and stay up to date with the very best films and shows this Christmas.</p>
+      ${xmasHow() ? `<p class="bx-h-how">${esc(xmasHow())}</p>` : ''}
+      <div class="bx-h-acts">${xmasActs()}</div></div></section>`);
+  function drawXmasCard() { const old = $('#bxXph'); if (old) old.outerHTML = xmasCard(); watchXmasCard(); }
+  let xmasIO = null;
+  function watchXmasCard() {
+    xmasIO?.disconnect(); const el = $('#bxXph'); if (!el) return;
+    xmasIO = new IntersectionObserver(([e]) => xmasMood(e.intersectionRatio > .35), { threshold: [0, .35, .6] });
+    xmasIO.observe(el);
+    window.tn.tip({ id: 'christmas', for: el.querySelector('[data-xmas="share"]'), title: 'Christmas on Tenner', text: 'While this card’s on screen, snow falls on the page. Share Tenner with friends and family, or add it to your Home Screen for the holidays.' });
+  }
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-xmas]'); if (!b) return;
+    window.tn.haptic?.();
+    if (b.dataset.xmas === 'install') { installEv?.prompt(); installEv?.userChoice.finally(() => { installEv = null; xmasCopy(); }); return; }
+    const o = { heading: 'Share Tenner with friends and family', title: 'Tenner', text: 'Tenner shows what’s popular on UK streaming, all in one place. Perfect for finding something to watch this Christmas.', url: 'https://tenner.stream/' };
+    if (navigator.share) navigator.share({ title: o.title, text: o.text, url: o.url }).catch(() => {});   // the system's own share sheet
+    else window.tn.share(o);   // elsewhere Tenner's share card, with Copy link
+  });
+  // the page's winter night: a deep sky behind everything and the falling snow, in and out together
+  let xmasOn = false, xmasClock = 0;
+  function xmasMood(on) {
+    if (on === xmasOn) return; xmasOn = on;
+    const root = document.documentElement;
+    if (on) { root.classList.add('xmas'); requestAnimationFrame(() => root.classList.add('xmas-in')); } else { root.classList.remove('xmas-in'); setTimeout(() => !xmasOn && root.classList.remove('xmas'), 1300); }
+    clearInterval(xmasClock);
+    if (on && !PHONE.matches) xmasClock = setInterval(() => { const d = $('#bxCopy .bx-score'); if (d && heroList[state.hero]?.it.xmas) d.outerHTML = xmasCount(); }, 20000);
+    snow(on && !matchMedia('(prefers-reduced-motion: reduce)').matches);   // the snow is the slide's point, so it falls even with Animations off; never with Reduce Motion
+  }
+  // the snow: one canvas over the window, each flake at its own depth (nearer ones bigger, softer and a little faster),
+  // drifting on a slow breeze and swaying as it falls. It starts above the top, so it falls in, and when it's put away
+  // it stops coming and fades out. Paused with the tab in the background, like everything drawn each frame.
+  let cv = null, ctx = null, flakes = [], raf = 0, snowing = false, fade = 0, lastT = 0, sprites = null, sw = 0, sh = 0;
+  function spriteOf(soft, light) {
+    const s = 64, c = document.createElement('canvas'); c.width = c.height = s; const g = c.getContext('2d');
+    const gr = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+    if (soft) { gr.addColorStop(0, 'rgba(255,255,255,.9)'); gr.addColorStop(.45, 'rgba(255,255,255,.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); }
+    else { gr.addColorStop(0, '#fff'); gr.addColorStop(.42, 'rgba(255,255,255,.95)'); gr.addColorStop(.62, light ? 'rgba(120,140,180,.35)' : 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); }
+    g.fillStyle = gr; g.fillRect(0, 0, s, s); return c;
+  }
+  const isLight = () => { const t = document.documentElement.getAttribute('data-theme'); return t === 'light' || (!t && matchMedia('(prefers-color-scheme: light)').matches); };
+  function flake(top) {
+    const z = Math.random() ** 1.6;   // most are far away
+    return { x: Math.random() * sw, y: top ? -Math.random() * sh - 10 : -12, z, r: 1.2 + z * z * 5.5 + (z > .85 ? 3 : 0), vy: 16 + z * 44 + Math.random() * 8,
+      a: .45 + z * .5, sway: 8 + Math.random() * 26, f: .15 + Math.random() * .45, ph: Math.random() * 6.3, soft: z > .82 };
+  }
+  function sizeSnow() {
+    const d = Math.min(2, devicePixelRatio || 1); sw = innerWidth; sh = innerHeight;
+    cv.width = Math.round(sw * d); cv.height = Math.round(sh * d); ctx.setTransform(d, 0, 0, d, 0, 0);
+  }
+  function snow(on) {
+    if (on && !cv) {
+      cv = document.createElement('canvas'); cv.className = 'bx-snow'; cv.setAttribute('aria-hidden', 'true'); document.body.append(cv);
+      ctx = cv.getContext('2d'); sizeSnow(); addEventListener('resize', () => cv && sizeSnow());
+    }
+    if (!cv) return;
+    if (on) {
+      const light = isLight(); sprites = [spriteOf(false, light), spriteOf(true, light)];
+      const want = Math.round(Math.min(240, Math.max(70, (sw * sh) / 6500)));
+      if (!snowing) flakes = flakes.concat(Array.from({ length: Math.max(0, want - flakes.length) }, () => flake(true)));
+      snowing = true; cv.classList.add('on');
+    } else { snowing = false; cv.classList.remove('on'); }
+    if (!raf) { lastT = performance.now(); raf = requestAnimationFrame(frame); }
+  }
+  function frame(t) {
+    const dt = Math.min(.05, (t - lastT) / 1000); lastT = t;
+    fade = Math.max(0, Math.min(1, fade + (snowing ? dt / .8 : -dt / 1.1)));
+    ctx.clearRect(0, 0, sw, sh);
+    const wind = 6 + Math.sin(t / 7000) * 8;
+    for (let i = flakes.length - 1; i >= 0; i--) {
+      const p = flakes[i];
+      p.y += p.vy * dt; p.ph += p.f * dt * 6.283;
+      p.x += (wind * (.4 + p.z) + Math.cos(p.ph) * p.sway * p.f * 1.4) * dt;
+      if (p.x > sw + 20) p.x -= sw + 40; else if (p.x < -20) p.x += sw + 40;
+      if (p.y > sh + 20) { if (snowing) flakes[i] = flake(false); else flakes.splice(i, 1); continue; }
+      const s = p.r * (p.soft ? 3.2 : 2.4);
+      ctx.globalAlpha = p.a * fade; ctx.drawImage(sprites[p.soft ? 1 : 0], p.x - s / 2, p.y - s / 2, s, s);
+    }
+    ctx.globalAlpha = 1;
+    if (!snowing && (fade <= 0 || !flakes.length)) { raf = 0; flakes = []; ctx.clearRect(0, 0, sw, sh); return; }
+    raf = requestAnimationFrame(frame);
+  }
+
   // ---------- the featured title ----------
   let heroList = [], heroTimer = 0;
   function drawHero() {
     const picks = popular(), withArt = picks.filter((p) => p.it.backdrop);
     heroList = (withArt.length >= 3 ? withArt : picks).slice(0, 10);
+    if (XMAS && heroList.length) heroList.splice(1, 0, { it: XMAS_IT });   // second, so the top title still leads
     const box = $('#bxHero'); box.classList.remove('sk');
     if (!heroList.length) { box.hidden = true; return; }
     box.hidden = false; state.hero = Math.min(state.hero, heroList.length - 1);
@@ -212,18 +337,21 @@
     $('#bxStrip').addEventListener('scroll', stripArrows, { passive: true });
     showHero(state.hero, true);
     requestAnimationFrame(stripArrows);
+    if (XMAS && !PHONE.matches) window.tn.tip({ id: 'christmas', for: '#bxStrip [data-hero="1"]', title: 'Christmas on Tenner',
+      text: 'A festive slide for the holidays: while it’s showing, the page turns to a winter night and snow falls. Share Tenner with friends and family from it, too.' });
   }
   function showHero(i, first) {
     state.hero = i; const { it } = heroList[i];
     const art = $('#bxArt'), layer = document.createElement('div');
-    layer.className = 'bx-h-l'; layer.innerHTML = it.backdrop ? `<img src="${esc(it.backdrop.replace('/w1280/', '/original/'))}" srcset="${esc(it.backdrop)} 1280w, ${esc(it.backdrop.replace('/w1280/', '/original/'))} 1920w" sizes="(min-width: 1000px) 70vw, 100vw" alt="">` : wide(it);
+    layer.className = 'bx-h-l'; layer.innerHTML = it.xmas ? '<img src="xmas.webp" alt="">' : it.backdrop ? `<img src="${esc(it.backdrop.replace('/w1280/', '/original/'))}" srcset="${esc(it.backdrop)} 1280w, ${esc(it.backdrop.replace('/w1280/', '/original/'))} 1920w" sizes="(min-width: 1000px) 70vw, 100vw" alt="">` : wide(it);
     const put = () => {
       art.append(layer); requestAnimationFrame(() => layer.classList.add('in'));
       setTimeout(() => [...art.children].slice(0, -1).forEach((c) => c.remove()), first || reduce ? 0 : 900);
     };
     const img = layer.querySelector('img'); img?.decode ? img.decode().then(put, put) : put();
-    ambient(it);
+    ambient(it.xmas ? 'xmas.webp' : it.backdrop ? it.backdrop.replace('/w1280/', '/w780/') : it.poster);
     drawHeroCopy();
+    xmasMood(!!it.xmas && !PHONE.matches);
     for (const b of $('#bxHero').querySelectorAll('[data-hero]')) { const on = +b.dataset.hero === i; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; }
     // keep the chosen poster in view in the strip
     const strip = $('#bxStrip'), b = strip?.querySelector(`[data-hero="${i}"]`);
@@ -233,6 +361,7 @@
   }
   function drawHeroCopy() {
     const p = heroList[state.hero], c = $('#bxCopy'); if (!p || !c) return;
+    if (p.it.xmas) { xmasCopy(); return; }
     const { it } = p, x = det(keyOf(it)) || {}, info = infoFor(it, 'Popular');
     const on = (it.on || state.picks).filter(picked).concat(it.on || []).map(svcOf).filter(Boolean)[0];   // one you picked first
     // the scores, in a frosted box (the second reference): TMDB's rating, the year, and the running time or seasons
@@ -254,8 +383,7 @@
     markSaved();
   }
   // the artwork's colours: a soft glow behind the page, and under the sidebar's frost
-  function ambient(it) {
-    const src = it.backdrop ? it.backdrop.replace('/w1280/', '/w780/') : it.poster;
+  function ambient(src) {
     const glow = $('#bxAmb'), ext = $('#bdExt');
     if (!src) { glow.replaceChildren(); ext.replaceChildren(); return; }
     glow.innerHTML = `<img src="${esc(src)}" alt="">`; ext.innerHTML = `<img class="bd-l in" src="${esc(src)}" alt="">`;
@@ -308,14 +436,16 @@
     const g = state.genre != null ? state.cat?.genres?.[state.genre] : null;
     const best = kinds().map((k) => row(`bxPTr-${k}`, `Top rated ${word(k)}${g ? ` in ${esc(g)}` : ''}`, 'The highest scores from viewers', topRated(k).map((it, i) => card(it, infoFor(it, `No. ${i + 1} top rated`), it.year)),
       'bx-row-p', `browse.html#${esc(String(new URLSearchParams({ c: 'top', ...(k === 'movie' ? { k: 'movie' } : {}) })))}`));
-    return top.join('') + forYouRow() + best.join('');
+    return xmasCard() + top.join('') + forYouRow() + best.join('');
   }
   function drawRows() {
     if (PHONE.matches) {
       $('#bxRows').innerHTML = phoneRows() || '<p class="bx-empty">Nothing matches. Try another genre.</p>';
       for (const r of main.querySelectorAll('.bx-row')) edges(r);
+      watchXmasCard();
       return;
     }
+    xmasIO?.disconnect();
     const cat = catalogue(), g = state.genre != null ? state.cat?.genres?.[state.genre] : null;
     const words = { both: 'shows and films', tv: 'shows', movie: 'films' }[state.kind];
     // most popular: posters with their score in a chip (the first and third references)

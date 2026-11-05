@@ -30,7 +30,7 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
   if (url.origin === location.origin) {
     if (url.pathname.endsWith('.woff2')) { e.respondWith(cacheFirst(e, FONTS)); return; }   // only off Apple devices
-    if (/\.(png|svg|jpg)$/.test(url.pathname)) { e.respondWith(cacheFirst(e, SHELL)); return; }
+    if (/\.(png|svg|jpg|webp)$/.test(url.pathname)) { e.respondWith(cacheFirst(e, SHELL)); return; }
     e.respondWith(networkFirst(e)); return;
   }
   if (url.hostname === 'image.tmdb.org') { e.respondWith(caches.match(req, { cacheName: KEEP }).then((hit) => hit || cacheFirst(e, IMGS, 60))); return; }
