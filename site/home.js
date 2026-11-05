@@ -323,7 +323,7 @@
   function drawHero() {
     const picks = popular(), withArt = picks.filter((p) => p.it.backdrop);
     heroList = (withArt.length >= 3 ? withArt : picks).slice(0, 10);
-    if (XMAS && heroList.length) heroList.splice(1, 0, { it: XMAS_IT });   // second, so the top title still leads
+    if (XMAS && heroList.length) heroList.unshift({ it: XMAS_IT });   // first, so it greets you whether or not the carousel moves on by itself
     const box = $('#bxHero'); box.classList.remove('sk');
     if (!heroList.length) { box.hidden = true; return; }
     box.hidden = false; state.hero = Math.min(state.hero, heroList.length - 1);
