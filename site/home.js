@@ -245,7 +245,6 @@
     xmasIO?.disconnect(); const el = $('#bxXph'); if (!el) return;
     xmasIO = new IntersectionObserver(([e]) => xmasMood(e.intersectionRatio > .35), { threshold: [0, .35, .6] });
     xmasIO.observe(el);
-    window.tn.tip({ id: 'christmas', for: el.querySelector('[data-xmas="share"]'), title: 'Christmas on Tenner', text: 'While this card’s on screen, snow falls on the page. Share Tenner with friends and family, or add it to your Home Screen for the holidays.' });
   }
   document.addEventListener('click', (e) => {
     const b = e.target.closest('[data-xmas]'); if (!b) return;
@@ -337,8 +336,6 @@
     $('#bxStrip').addEventListener('scroll', stripArrows, { passive: true });
     showHero(state.hero, true);
     requestAnimationFrame(stripArrows);
-    if (XMAS && !PHONE.matches) window.tn.tip({ id: 'christmas', for: '#bxStrip [data-hero="1"]', title: 'Christmas on Tenner',
-      text: 'A festive slide for the holidays: while it’s showing, the page turns to a winter night and snow falls. Share Tenner with friends and family from it, too.' });
   }
   function showHero(i, first) {
     state.hero = i; const { it } = heroList[i];
