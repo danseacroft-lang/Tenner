@@ -425,13 +425,15 @@
     const g = state.genre != null ? state.cat?.genres?.[state.genre] : null;
     const best = kinds().map((k) => row(`bxPTr-${k}`, `Top rated ${word(k)}${g ? ` in ${esc(g)}` : ''}`, 'The highest scores from viewers', topRated(k).map((it, i) => card(it, infoFor(it, `No. ${i + 1} top rated`), it.year)),
       'bx-row-p', `browse.html#${esc(String(new URLSearchParams({ c: 'top', ...(k === 'movie' ? { k: 'movie' } : {}) })))}`));
-    return top.join('') + forYouRow() + best.join('');
+    const ns = newShows(), fresh = ns.length ? row('bxNs', NS(), 'The most popular shows that started lately', ns.map((it, i) => card(it, infoFor(it, `No. ${i + 1} new show`), it.year, i + 1)),
+      'bx-row-p', 'browse.html#c=new&amp;sort=pop') : '';
+    return top.join('') + forYouRow() + best.join('') + fresh;
   }
   function drawRows() {
     if (PHONE.matches) {
       $('#bxRows').innerHTML = phoneRows() || '<p class="bx-empty">Nothing matches. Try another genre.</p>';
       for (const r of main.querySelectorAll('.bx-row')) edges(r);
-      return;
+      nsTip(); return;
     }
     const cat = catalogue(), g = state.genre != null ? state.cat?.genres?.[state.genre] : null;
     const words = { both: 'shows and films', tv: 'shows', movie: 'films' }[state.kind];
@@ -446,9 +448,10 @@
     });
     $('#bxRows').innerHTML = forYouRow() + row('bxTop', `Most popular${g ? ` in ${esc(g)}` : ''}`, `The ${words} everyone’s looking at${all() ? '' : ` ${where()}`}`, top, 'bx-row-p', 'browse.html')
       + row('bxNew', `Latest releases${g ? ` in ${esc(g)}` : ''}`, 'The newest arrivals, most recent first', fresh, 'bx-row-p', 'charts.html#new')
-      + kinds().map(topList).join('')
+      + kinds().map(topList).join('') + newList()
       || '<p class="bx-empty">Nothing matches. Try another service or genre.</p>';
     for (const r of main.querySelectorAll('.bx-row')) edges(r);
+    nsTip();
   }
   // ---------- For you (signed in): picks from what you swiped right on in Discover (and loved and saved) ----------
   // shell.js's forYou weighs the genres; TMDB's More Like This for your latest right swipes (shell.js's moreLike) lifts
@@ -502,16 +505,43 @@
     let l = pass(300); if (l.length < 10) l = pass(100);
     return l.sort((a, b) => b.r - a.r || b.v - a.v).slice(0, 10).map(fromCat);
   }
+  // new shows proving popular: shows that first aired lately (the last four months, or longer when that's too few to fill
+  // ten), the most popular first, kept to the service and genre you've picked; only when shows are in the mix
+  function newShows() {
+    if (!kinds().includes('tv')) return [];
+    const today = new Date().toISOString().slice(0, 10), pool = catalogue().filter((x) => x.t === 'tv' && x.d && x.d <= today);
+    let l = [];
+    for (const days of [122, 243, 365]) {
+      const from = new Date(Date.now() - days * 864e5).toISOString().slice(0, 10);
+      l = pool.filter((x) => x.d >= from); if (l.length >= 10) break;
+    }
+    return l.sort((a, b) => b.p - a.p).slice(0, 10).map(fromCat);
+  }
+  function NS() { const g = state.genre != null ? state.cat?.genres?.[state.genre] : null; return `New shows proving popular${g ? ` in ${esc(g)}` : ''}`; }
+  function nsTip() {
+    if ($('#bxNs')) window.tn.tip?.({ id: 'new-shows-popular', for: '#bxNs', title: 'New shows proving popular',
+      text: 'The ten most popular shows that started in the last few months, on the services you’ve picked. It updates every hour, so it’s a quick way to spot the next big thing.' });
+  }
+  function newList() {
+    const l = newShows(); if (!l.length) return '';
+    const q = new URLSearchParams({ c: 'new', sort: 'pop', ...(all() ? {} : { s: state.picks.join(',') }) });
+    return clList('bxNs', NS(), l, (i) => `No. ${i + 1} new show${all() ? '' : ` ${where()}`}`, `browse.html#${esc(String(q))}`);
+  }
   function topList(k) {
     const g = state.genre != null ? state.cat?.genres?.[state.genre] : null;
     const l = topRated(k);
     if (!l.length) return '';
     const q = new URLSearchParams({ c: 'top', ...(k === 'movie' ? { k: 'movie' } : {}), ...(all() ? {} : { s: state.picks.join(',') }) });
+    return clList(`bxCl-${k}`, `Top rated ${k === 'movie' ? 'films' : 'shows'}${g ? ` in ${esc(g)}` : ''} at a glance`, l,
+      (i) => `No. ${i + 1} top rated${all() ? '' : ` ${where()}`}`, `browse.html#${esc(String(q))}`);
+  }
+  // a ranked chart list (.cl), its heading linking on to Browse
+  function clList(id, head, l, eye, href) {
     const label = (it) => (it.on || []).filter(picked).map((x) => svcOf(x)?.label).filter(Boolean).slice(0, 2).join(', ');
-    return `<section class="clist bx-clist" aria-labelledby="bxCl-${k}">
-      <div class="row-hd"><h2 class="row-h" id="bxCl-${k}">Top rated ${k === 'movie' ? 'films' : 'shows'}${g ? ` in ${esc(g)}` : ''} at a glance</h2>
-        <a class="see-all" href="browse.html#${esc(String(q))}">See more in Browse<span class="chev" aria-hidden="true"></span></a></div>
-      <ol class="cl">${l.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(infoFor(it, `No. ${i + 1} top rated${all() ? '' : ` ${where()}`}`))}>
+    return `<section class="clist bx-clist" aria-labelledby="${id}">
+      <div class="row-hd"><h2 class="row-h" id="${id}">${head}</h2>
+        <a class="see-all" href="${href}">See more in Browse<span class="chev" aria-hidden="true"></span></a></div>
+      <ol class="cl">${l.map((it, i) => `<li><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(infoFor(it, eye(i)))}>
         <span class="cl-n">${i + 1}</span>
         ${it.poster ? `<img src="${esc(it.poster.replace('/t/p/w342/', '/t/p/w154/'))}" alt="" loading="lazy" decoding="async">` : `<span class="cl-ph" style="background:hsl(${hue(it.title)} 45% 35%)"></span>`}
         <span class="cl-t"><b>${esc(it.title)}</b><small>${esc([state.picks.length === 1 ? '' : label(it), it.year].filter(Boolean).join(' · '))}</small></span>
