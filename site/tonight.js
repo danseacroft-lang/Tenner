@@ -75,6 +75,8 @@
   ];
   const DARK = [27, 80, 53, 10752];   // left out when the family's watching
   let tnCat = null;
+  const AGAIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 4v4.5H9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const SPARK = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10.5 3.5l1.8 4.9 4.9 1.8-4.9 1.8-1.8 4.9-1.8-4.9-4.9-1.8 4.9-1.8z"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z"/></svg>';
   const tonight = { step: 0, len: null, mood: null, who: null, seen: new Set(), dir: 1 };
   function tonightDialog() {
     let d = $('#tnDlg');
@@ -136,7 +138,8 @@
   const tnPicksScene = () => tnScene([[tonight.len, -150, 94, 36, -12], [tonight.mood, -94, 66, 50, -8], [tonight.who, 94, 66, 50, 8], ['pop', 0, 70, 76, 0]].filter((t) => TN_TINT[t[0]]));
   async function tonightPicks() {
     tnCat ||= (opts.cat?.() ? Promise.resolve(opts.cat()) : fetch('data/browse.json').then((r) => (r.ok ? r.json() : null)).catch(() => null));   // the page has it already, usually
-    const cat = await tnCat; if (!cat?.items) return `<h2 id="tnH">Couldn’t load the picks</h2><p class="tn-sub">Try again in a moment.</p><div class="tn-acts"><button type="button" class="btn btn-tinted" data-tn="again">Start again</button></div>`;
+    const cat = await tnCat; if (!cat?.items) tnCat = null;   // try again next time, rather than keep the failure
+    if (!cat?.items) return `<h2 id="tnH">Couldn’t load the picks</h2><p class="tn-sub">Try again in a moment.</p><div class="tn-acts"><button type="button" class="btn btn-tinted" data-tn="again">${AGAIN}Start again</button></div>`;
     const svcList = await services(), svc = (k) => svcList.find((s) => s.key === k);
     const mineSvcs = window.tn.mine.get(), want = new Set(mineSvcs.length ? mineSvcs : svcList.map((x) => x.key));
     const genres = new Set(MOODS.find((m) => m[0] === tonight.mood)?.[3] || []), no18 = window.tn.prefs.get().no18, hid = window.tn.hidden.keys();
@@ -144,7 +147,7 @@
         && (tonight.who !== 'family' || !x.g.some((g) => DARK.includes(g))) && (x.r || 0) >= 6.4 && (x.v || 0) >= 40 && !hid.has(`${x.t[0]}${x.i}`) && !(no18 && titles()?.items?.[`${x.t === 'movie' ? 'm' : 't'}${x.i}`]?.c === '18'))
       .map((x) => ({ x, score: (x.r || 0) * Math.log10(10 + (x.v || 0)) + Math.log10(1 + (x.p || 0)) }))
       .sort((a, b) => b.score - a.score).slice(0, 30).filter(({ x }) => !tonight.seen.has(`${x.t}${x.i}`));
-    if (!pool.length) return `<h2 id="tnH">${tonight.seen.size ? 'That’s all for those answers' : 'Nothing quite fits'}</h2><p class="tn-sub">Try a different mood${mineSvcs.length ? ', or add more of your services in Settings' : ''}.</p><div class="tn-acts"><button type="button" class="btn btn-tinted" data-tn="again">Start again</button></div>`;
+    if (!pool.length) return `<h2 id="tnH">${tonight.seen.size ? 'That’s all for those answers' : 'Nothing quite fits'}</h2><p class="tn-sub">Try a different mood${mineSvcs.length ? ', or add more of your services in Settings' : ''}.</p><div class="tn-acts"><button type="button" class="btn btn-tinted" data-tn="again">${AGAIN}Start again</button></div>`;
     // three, each from a different part of the best thirty, so the very best one usually shows and the others vary
     const picks = []; const bag = [...pool];
     while (picks.length < 3 && bag.length) { const i = Math.floor(Math.pow(Math.random(), 1.6) * bag.length); picks.push(bag.splice(i, 1)[0].x); }
@@ -161,7 +164,7 @@
           <span class="tn-t"><b>${esc(x.n)}</b><small>${esc([x.t === 'movie' ? 'Film' : 'Series', info.year, x.r ? `★ ${x.r.toFixed(1)}` : ''].filter(Boolean).join(' · '))}</small>
           <small>On ${esc(svcs.map((s) => s.label).join(', '))}</small></span></a></li>`;
       }).join('')}</ul>
-      <div class="tn-acts"><button type="button" class="btn btn-tinted" data-tn="again">Start again</button><button type="button" class="btn btn-tinted mine-done" data-tn="more">Show me others</button></div>`;
+      <div class="tn-acts"><button type="button" class="btn btn-tinted" data-tn="again">${AGAIN}Start again</button><button type="button" class="btn btn-tinted mine-done" data-tn="more">${SPARK}Show me others</button></div>`;
   }
   document.addEventListener('click', (e) => {
     if (!e.target.closest('[data-tonight]')) return;

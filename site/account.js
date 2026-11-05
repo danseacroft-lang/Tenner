@@ -135,6 +135,7 @@
     if (!GOOGLE_CLIENT_ID) return;
     gReady ||= new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'https://accounts.google.com/gsi/client'; sc.async = true; sc.onload = res; sc.onerror = rej; document.head.append(sc); });
     gReady.then(() => {
+      if (!window.google?.accounts?.id) throw new Error('Google sign-in didn’t load');   // blocked by a content blocker, say
       window.google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, ux_mode: 'popup', callback: async ({ credential }) => {
         try {
           const out = await account.call('POST', '/auth/google', { credential });
@@ -149,7 +150,7 @@
 
 
   // ---------- signed in ----------
-  const HUES = [210, 265, 330, 5, 30, 145, 175];
+  const HUES = [210, 265, 330, 5, 30, 145, 175], HUE_NAME = { 210: 'Blue', 265: 'Purple', 330: 'Pink', 5: 'Red', 30: 'Orange', 145: 'Green', 175: 'Teal' };
   const when = (t) => { const d = (Date.now() - t) / 864e5; return d < 1 ? 'Today' : d < 2 ? 'Yesterday' : new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: d > 300 ? 'numeric' : undefined }); };
   let me = null;
   async function load() {
@@ -165,7 +166,7 @@
     $('#acHello').textContent = u.name || 'Your account';
     if (document.activeElement !== $('#acEditName')) $('#acEditName').value = u.name || '';
     $('#acHues').hidden = !!u.picture;
-    $('#acSw').innerHTML = HUES.map((h) => `<button type="button" class="ac-hue" style="--h:${h}" data-hue="${h}" aria-pressed="${h === u.hue}" aria-label="Colour ${h}"></button>`).join('');
+    $('#acSw').innerHTML = HUES.map((h) => `<button type="button" class="ac-hue" style="--h:${h}" data-hue="${h}" aria-pressed="${h === u.hue}" aria-label="${HUE_NAME[h]}" title="${HUE_NAME[h]}"></button>`).join('');
     $('#acShare').checked = !!u.share_id; $('#acLinkRow').hidden = !u.share_id;
     if (u.share_id) $('#acUrl').textContent = `${location.origin}/list.html?u=${u.share_id}`;
     $('#acWays').innerHTML = me.passkeys.map((p) => `<div class="set-row"><span class="set-l">${esc(p.label || 'Passkey')}<small>Added ${esc(when(p.created))}${p.used ? ` · last used ${esc(when(p.used).toLowerCase())}` : ''}</small></span><button type="button" class="ac-x" data-pk="${esc(p.id)}">Remove</button></div>`).join('')

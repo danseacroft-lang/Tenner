@@ -90,7 +90,7 @@
         ${up ? `<button type="button" class="btn btn-tinted" data-act="watched" aria-keyshortcuts="E">Mark S${up[0]} E${up[1]} watched</button>` : ''}
         ${p ? '<button type="button" class="btn btn-tinted sh-reset" data-act="reset" aria-label="Clear progress" title="Clear progress">Clear</button>' : ''}
       </div>
-      <p class="sh-pstat">${esc(status)}${p && !(p[0] === last[0] && p[1] === last[1]) ? ` · ${x.sz.reduce((a, n) => a + n, 0) - (x.sz.slice(0, p[0] - 1).reduce((a, n) => a + n, 0) + p[1])} episodes to go` : ''}</p>
+      <p class="sh-pstat">${esc(status)}${p && !(p[0] === last[0] && p[1] === last[1]) ? (() => { const n = x.sz.reduce((a, c) => a + c, 0) - (x.sz.slice(0, p[0] - 1).reduce((a, c) => a + c, 0) + p[1]); return n > 0 ? ` · ${n} episode${n === 1 ? '' : 's'} to go` : ''; })() : ''}</p>
     </section>`;
   }
   // the Watchlist button: a bookmark that fills in once saved
@@ -348,7 +348,7 @@
     const tv = info.type === 'tv', list = (l) => (l || []).join(', ');
     const rows = (tv ? [
       ['First shown', longDate(i.first)], ['Last shown', longDate(i.last)], ['On', list(i.networks)], ['Created by', list(i.creators)],
-      ['Episodes', i.eps ? `${i.eps} across ${x.se || (m.seasons || []).filter((s) => s.n > 0).length} season${(x.se || 0) === 1 ? '' : 's'}` : ''],
+      ['Episodes', i.eps ? (() => { const n = x.se || (m.seasons || []).filter((s) => s.n > 0).length; return `${i.eps} across ${n} season${n === 1 ? '' : 's'}`; })() : ''],
       ['Status', STATUS[i.status] ?? i.status],
     ] : [
       ['Released', longDate(i.released)], ['Running time', runtime(x.rt)], ['Rated', x.c || ''], ['Studio', list(i.studios)],

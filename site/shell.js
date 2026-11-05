@@ -108,7 +108,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '2.39.0';
+  const version = '2.40.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -242,7 +242,7 @@
     return n <= 0 ? (n === 0 ? 'Today' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })) : n === 1 ? 'Tomorrow'
       : n < 7 ? d.toLocaleDateString('en-GB', { weekday: 'long' }) : d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
   };
-  addEventListener('storage', (e) => { if (e.key === WL || e.key === PR || e.key === ST) dispatchEvent(new Event('tn:saved')); if (e.key === MS) dispatchEvent(new Event('tn:mine')); if (Object.values(MARKS).includes(e.key)) dispatchEvent(new Event('tn:marks')); if (e.key === PREFS) { apply(); dispatchEvent(new Event('tn:prefs')); } });
+  addEventListener('storage', (e) => { if (e.key === WL || e.key === PR || e.key === ST) dispatchEvent(new Event('tn:saved')); if (e.key === MS) dispatchEvent(new Event('tn:mine')); if (Object.values(MARKS).includes(e.key)) dispatchEvent(new Event('tn:marks')); if (e.key === PREFS) { apply(); dispatchEvent(new Event('tn:prefs')); } if (e.key === TIPS) tipQ.splice(0, tipQ.length, ...tipQ.filter((x) => !tips.seen(x.id))); });
 
   // ---------- My services: the ones you pay for, on this device. The Top 10 gets a chart of just those, and Browse
   // starts filtered to them. Empty means "all six". ----------
@@ -956,7 +956,58 @@
     requestAnimationFrame(() => requestAnimationFrame(() => b.classList.add('in')));
   }
 
-  window.tn = { prefs, tip: featureTip, member, seen, hidden, notes, esc, hue, glide, arrows, segment, reduce, saved, stars, swipes, forYou, moreLike, progress, nextUp, whenText, mine, pickMine, api, share, alerts, isIOS, account, avatar, featured, findTitle, sharedTitle, fold, score };
+  // ---------- loading (computers): Tenner's ring of ten, in the middle of the page, only while something is on its way ----------
+  // Ten little bars in Tenner's colours, a light running round them like Apple's activity indicator, in a frosted square.
+  // It waits a moment before it shows (so a quick page or chart never flashes it), stays long enough not to flicker, and
+  // only appears on computers. Leaving for another page shows it if that page is slow to arrive; a page's own data load
+  // shows it with tn.loading.wrap(promise). With Animations off it doesn't turn or spring, the light just runs round.
+  const ldQ = matchMedia('(min-width: 1000px) and (hover: hover) and (pointer: fine)');
+  const ldOn = new Set(); let ldEl = null, ldT = 0, ldAt = 0, ldOut = 0;
+  const LD_C = ['#ff375f', '#ff5e3a', '#ff9f0a', '#ffd60a', '#30d158', '#64d2ff', '#0a84ff', '#5e5ce6', '#bf5af2', '#ff2d92'];
+  function ldMake() {
+    if (ldEl) return ldEl;
+    ldEl = document.createElement('div'); ldEl.className = 'ld'; ldEl.hidden = true;
+    ldEl.setAttribute('role', 'status'); ldEl.setAttribute('aria-live', 'polite');
+    ldEl.innerHTML = `<div class="ld-box"><span class="ld-glow" aria-hidden="true"></span><svg class="ld-ring" viewBox="-32 -32 64 64" aria-hidden="true">${LD_C.map((c, i) =>
+      `<rect class="ld-bar" x="-2.6" y="-27" width="5.2" height="13" rx="2.6" fill="${c}" transform="rotate(${i * 36})" style="--i:${i}"/>`).join('')}</svg><span class="sh-vh">Loading</span></div>`;
+    document.body.append(ldEl); return ldEl;
+  }
+  function ldSync() {
+    const want = ldOn.size > 0 && ldQ.matches && !document.querySelector('dialog[open]');
+    clearTimeout(ldT);
+    if (want) {
+      if (ldEl && !ldEl.hidden && !ldEl.classList.contains('out')) return;
+      ldT = setTimeout(() => {
+        const el = ldMake(); clearTimeout(ldOut); el.classList.remove('out', 'in'); el.hidden = false; ldAt = Date.now();
+        requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('in')));
+      }, ldOn.has('nav') ? 160 : 380);
+    } else if (ldEl && !ldEl.hidden) {
+      const go = () => { ldEl.classList.remove('in'); ldEl.classList.add('out'); ldOut = setTimeout(() => { ldEl.hidden = true; ldEl.classList.remove('out'); }, root.classList.contains('still') ? 0 : 320); };
+      const wait = Math.max(0, 450 - (Date.now() - ldAt));   // once it's up, long enough to see, never a flicker
+      ldT = setTimeout(go, wait);
+    }
+  }
+  const loading = {
+    show(k = 'page') { ldOn.add(k); ldSync(); },
+    hide(k = 'page') { ldOn.delete(k); ldSync(); },
+    wrap(p, k = 'page') { loading.show(k); Promise.resolve(p).finally(() => loading.hide(k)); return p; },
+  };
+  // leaving for another of Tenner's pages: the ring, should it take a moment (pages that open a sheet instead say so first)
+  addEventListener('click', (e) => {
+    const a = e.target.closest?.('a[href]');
+    if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || (a.target && a.target !== '_self') || a.hasAttribute('download')) return;
+    const u = new URL(a.href, location.href);
+    if (u.origin !== location.origin || /^\/t\//.test(u.pathname) || (u.pathname === location.pathname && u.search === location.search)) return;   // another site, or this page (a #section)
+    loading.show('nav');
+  });
+  addEventListener('pagehide', () => { ldOn.clear(); clearTimeout(ldT); if (ldEl) ldEl.hidden = true; });
+  addEventListener('pageshow', (e) => { if (e.persisted) { ldOn.clear(); ldSync(); } });   // Back to a page kept in memory
+  ldQ.addEventListener('change', ldSync);
+
+  // how far a title climbed: a green badge (a round arrow, the places, and "up" beneath), as on Apple's Stocks
+  const climb = (n) => `<span class="climb"><span class="sh-vh">, up ${+n || 0} ${+n === 1 ? 'place' : 'places'}</span><span class="climb-ic" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M8 12.6V4M4.4 7.4 8 3.8l3.6 3.6" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="climb-n" aria-hidden="true"><b>${+n || 0}</b><small>${+n === 1 ? 'place' : 'places'}</small></span></span>`;
+  const haptic = (ms = 8) => { try { navigator.vibrate?.(ms); } catch {} };   // a small buzz, where the device has one
+  window.tn = { prefs, tip: featureTip, loading, haptic, climb, member, seen, hidden, notes, esc, hue, glide, arrows, segment, reduce, saved, stars, swipes, forYou, moreLike, progress, nextUp, whenText, mine, pickMine, api, share, alerts, isIOS, account, avatar, featured, findTitle, sharedTitle, fold, score };
 
   // ---------- paste or drop a link: an IMDb, TMDB, Letterboxd, JustWatch or Tenner link opens that title's sheet ----------
   // ⌘V (Ctrl+V) anywhere but a text box, or a link dragged onto the page. Anything else pasted is left alone.
@@ -1006,6 +1057,7 @@
     }
     if (window.tnOnTab) return window.tnOnTab(name);
     if (name === cur) { scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); return; }
+    loading.show('nav');
     if (name === 'about') { location.href = 'about.html'; return; }
     if (name === 'browse') { location.href = 'browse.html'; return; }
     if (name === 'new') { location.href = 'charts.html#new'; return; }
@@ -1143,6 +1195,20 @@
   document.addEventListener('click', (e) => { if (held) { held = false; e.preventDefault(); e.stopPropagation(); } }, true);
   document.addEventListener('contextmenu', (e) => { if (e.target.closest?.('[data-tip]') && (held || hold)) e.preventDefault(); });
   addEventListener('scroll', () => tipFor && hideTip(), { passive: true, capture: true });
+
+  // Privacy & Terms: only the part you're reading is marked in the menu (it marked all three at once), following you as you scroll
+  const legal = [...document.querySelectorAll('.side-link[href^="legal.html#"]')];
+  if (location.pathname.endsWith('/legal.html') && legal.length) {
+    const parts = legal.map((a) => [a, document.getElementById(a.hash.slice(1))]).filter(([, el]) => el);
+    const mark = () => {
+      const order = parts.slice().sort((x, y) => x[1].offsetTop - y[1].offsetTop), end = innerHeight + scrollY >= document.documentElement.scrollHeight - 4;
+      const line = innerHeight * 0.35, at = (end && scrollY > 0 && order.at(-1)) || parts.filter(([, el]) => el.getBoundingClientRect().top < line).sort((x, y) => y[1].getBoundingClientRect().top - x[1].getBoundingClientRect().top)[0]
+        || parts.find(([a]) => a.hash === location.hash) || order[0];
+      for (const [a] of parts) { if (a === at?.[0]) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current'); }
+    };
+    let lt = false; addEventListener('scroll', () => { if (!lt) { lt = true; requestAnimationFrame(() => { lt = false; mark(); }); } }, { passive: true });
+    addEventListener('hashchange', mark); mark();
+  }
 
   window.tnShell = { select, current: () => cur };
 

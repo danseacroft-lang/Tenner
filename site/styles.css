@@ -1924,3 +1924,48 @@ p { text-wrap: pretty; }
 :root:not(.still) dialog.mine-dlg:not(.tn-dlg, .ac-del-dlg)[open] { animation: dlgIn .5s var(--ease-spring); }
 :root:not(.still) dialog.mine-dlg:not(.ac-del-dlg)[open]::backdrop { animation: fadeOnly .35s ease; }
 @keyframes dlgIn { from { opacity: 0; transform: translateY(12px) scale(.95); } }
+
+/* ---------- loading (computers, shell.js tn.loading): Tenner's ring of ten in the middle of the page ----------
+   A frosted square (the one frost and the one corner) holding ten bars in Tenner's colours. A light runs round them as on
+   Apple's activity indicator (opacity only, so it never stutters); with Animations on the ring also turns slowly and the
+   square springs in, and its colours glow softly behind. It sits in the middle of the content, beside the sidebar. */
+.ld { position: fixed; z-index: 70; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.ld[hidden] { display: none; }
+@media (min-width: 1000px) { .ld { left: var(--side, 280px); } }
+.ld-box { position: relative; display: grid; place-items: center; width: 92px; height: 92px; border-radius: var(--r);
+  background: var(--fr-bg); -webkit-backdrop-filter: var(--fr-blur); backdrop-filter: var(--fr-blur);
+  box-shadow: inset 0 0 0 1px var(--fr-rim), 0 20px 50px rgba(0, 0, 0, .22); opacity: 0; transform: scale(.94); }
+.ld.in .ld-box { opacity: 1; transform: none; }
+.ld.out .ld-box { opacity: 0; transform: scale(.96); }
+:root:not(.still) .ld.in .ld-box { transition: opacity .28s ease, transform .6s var(--ease-spring); }
+:root:not(.still) .ld.out .ld-box { transition: opacity .24s ease, transform .3s ease-in; }
+:root.still .ld .ld-box { transition: opacity .2s ease; transform: none; }
+.ld-glow { position: absolute; inset: 14px; border-radius: 50%; opacity: .55; filter: blur(16px);
+  background: conic-gradient(from 0deg, #ff375f, #ff9f0a, #ffd60a, #30d158, #0a84ff, #bf5af2, #ff375f); }
+.ld-ring { position: relative; width: 52px; height: 52px; overflow: visible; }
+.ld-bar { opacity: .22; animation: ldRun 1s linear infinite; animation-delay: calc(var(--i) * .1s - 1s); }
+@keyframes ldRun { 0% { opacity: 1; } 75%, 100% { opacity: .22; } }
+:root:not(.still) .ld-ring { animation: ldTurn 6s linear infinite; }
+:root:not(.still) .ld-glow { animation: ldTurn 6s linear infinite reverse, ldBreathe 2.4s ease-in-out infinite alternate; }
+@keyframes ldTurn { to { transform: rotate(360deg); } }
+@keyframes ldBreathe { from { opacity: .35; scale: .9; } to { opacity: .65; scale: 1.05; } }
+@media (prefers-reduced-motion: reduce) { .ld-bar { animation-duration: 2s; } .ld-ring, .ld-glow { animation: none !important; } }
+@media (prefers-reduced-transparency: reduce) { .ld-box { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--bg2); } .ld-glow { display: none; } }
+
+/* ---------- climbing: how far a title moved up (Climbing this week, Biggest Climbers), shell.js tn.climb ----------
+   A green badge as on Apple's Stocks: a round arrow lit from above, the number of places, and the word beneath. Drawn
+   once and still (nothing on the charts shines or moves). */
+.climb { display: inline-flex; align-items: center; gap: 7px; flex: none; margin-left: auto; padding: 5px 9px 5px 5px; border-radius: var(--r);
+  color: var(--climb, #30d158); background: color-mix(in srgb, var(--climb, #30d158) 13%, transparent);
+  box-shadow: inset 0 0 0 .5px color-mix(in srgb, var(--climb, #30d158) 34%, transparent); }
+.climb-ic { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; color: #fff;
+  background: linear-gradient(180deg, #4be37a, #24b24b); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 2px 8px color-mix(in srgb, #30d158 45%, transparent); }
+.climb-ic svg { width: 14px; height: 14px; }
+.climb-n { display: grid; justify-items: start; line-height: 1; }
+.climb-n b { font: 650 16px/1 var(--font); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.climb-n small { margin-top: 2px; font: 500 9.5px/1 var(--font); letter-spacing: .02em; opacity: .8; }
+:root[data-theme="light"] { --climb: #1f9d45; }
+@media (prefers-color-scheme: light) { :root:not([data-theme]) { --climb: #1f9d45; } }
+.climb-n { min-width: 36px; }
+/* a button's icon, wherever a page hasn't sized it (zero specificity, so any page's own size wins) */
+:where(.btn > svg) { width: 17px; height: 17px; flex: none; }

@@ -242,8 +242,6 @@ body.home { overflow-x: clip; }
 
 .bx-up-art { flex: none; width: 44px; aspect-ratio: 2 / 3; overflow: hidden; border-radius: var(--r); background: var(--fill); }
 .bx-up-art img, .bx-up-art .bx-ph { width: 100%; height: 100%; object-fit: cover; }
-.bx-up-by { display: inline-flex; align-items: center; gap: 2px; flex: none; color: var(--green); font: 600 14px/1 var(--font); font-variant-numeric: tabular-nums; }
-.bx-up-by svg { width: 15px; height: 15px; }
 
 /* Discover in a box: one poster card to swipe, with skip, details and save beneath (the Discover page's deck) */
 .bx-dc { overflow: hidden; }
@@ -328,3 +326,5 @@ html.still .bx-tt-bg img { transition: none; }
 .bx-fy-none .bx-sec-hd > div { flex: 1 1 260px; min-width: 0; }
 .bx-fy-go { height: 44px; flex: none; }
 .bx-fy-go svg { width: 16px; height: 16px; }
+/* a placeholder poster this small (the Top 10 box, Climbing) shows its colours only: its name was cut to a few letters */
+.bx-up-art .bx-ph span { display: none; }

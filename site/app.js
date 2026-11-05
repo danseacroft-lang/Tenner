@@ -26,7 +26,7 @@ async function fetchData(bust) {
 
 async function load() {
   try {
-    Object.assign(state, await fetchData(false));
+    Object.assign(state, await window.tn.loading.wrap(fetchData(false)));
   } catch (err) {
     view.innerHTML = `<div class="wrap"><h1 class="large-title">The chart didn't load</h1>
       <p class="lede">${esc(err.message)}. If you've just set the site up, run the "Update and deploy" workflow once, then refresh.</p></div>`;
@@ -98,7 +98,7 @@ function newBanners(items) {
     const attrs = x.url ? `href="${esc(x.url)}" target="_blank" rel="noopener" ${reg(infoFor(x, x.type, badge, s ? [s] : []))}` : 'href="#new"';
     return `<a class="mb-card mb-pc" ${attrs} aria-label="${esc(`${badge}: ${x.title}`)}">
       <img class="mb-glow" src="${esc(x.poster)}" alt="" ${i ? 'loading="lazy"' : ''}><img class="mb-poster" src="${esc(x.poster)}" alt="" ${i ? 'loading="lazy"' : 'fetchpriority="high"'} decoding="async">
-      <span class="mb-copy"><span class="mb-badge">${esc(badge)}</span><b class="mb-title">${esc(x.title)}</b><span class="mb-meta">${esc([what, x.original ? `${s?.label} original` : ''].filter(Boolean).join(' · '))}</span></span></a>`;
+      <span class="mb-copy"><span class="mb-badge">${esc(badge)}</span><b class="mb-title">${esc(x.title)}</b><span class="mb-meta">${esc([what, x.original && s ? `${s.label} original` : ''].filter(Boolean).join(' · '))}</span></span></a>`;
   }));
 }
 function mountBanners(cards) {
@@ -156,12 +156,6 @@ function placeholder(it) {
   const h = hue(it.title);
   return `<span class="ph" style="background:linear-gradient(160deg,hsl(${h} 45% 42%),hsl(${(h + 40) % 360} 55% 18%))">${esc(it.title)}</span>`;
 }
-
-
-
-
-
-
 
 // ---------- the Watchlist: titles you've saved from a title sheet (on this device, and in your account if you sign in) ----------
 const wlKey = (it, type) => (/^\d+$/.test(String(it.id ?? '')) ? `${type === 'movie' ? 'm' : 't'}${it.id}` : null);
@@ -239,7 +233,7 @@ function pageWatchlist() {
   const body = !list.length
     ? `<div class="empty"><span class="empty-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12v18.4l-6-4.2-6 4.2z" fill="currentColor"/></svg></span>
         <h2>Nothing saved yet</h2><p>Open any title and press Watchlist to keep it here, with where to watch it.</p>
-        <a class="btn btn-tinted" href="#top">See the top 10</a></div>`
+        <a class="btn btn-tinted" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.4 12 4l8 6.4V20h-5v-5.6H9V20H4z" fill="currentColor"/></svg>See the top 10</a></div>`
     : `<section class="wk" aria-labelledby="wl-saved"><div class="row-hd wl-hd"><h2 class="row-h" id="wl-saved">Saved</h2>${both ? `<label class="dd dd-kind"><span class="dd-l" id="wlKindL">${{ tv: 'Shows', movie: 'Films', both: 'Shows and films' }[kind]}</span><span class="dd-chev" aria-hidden="true"></span>
         <select id="wlKind" aria-label="Shows, films or both">${[['tv', 'Shows'], ['movie', 'Films'], ['both', 'Shows and films']].map(([k, l]) => `<option value="${k}"${k === kind ? ' selected' : ''}>${l}</option>`).join('')}</select></label>` : ''}</div>
       <ol class="cl nw-cl wl-cl" data-kind="${both ? kind : 'both'}">${rows}</ol></section>`;
@@ -356,7 +350,7 @@ function pageNew() {
         return `<li><a href="${esc(tmdbUrl(it.type, it.id))}" target="_blank" rel="noopener" ${reg(weekInfo(x, `Up ${x.by} to No. ${x.to} ${chartName(x.c)}`))}>
           ${it.poster ? `<img src="${esc(thumb(it.poster))}" alt="" loading="lazy" decoding="async">` : `<span class="cl-ph" style="background:hsl(${hue(it.title)} 45% 35%)"></span>`}
           <span class="cl-t"><b>${esc(it.title)}</b><small>No. ${x.from} → No. ${x.to} ${esc(chartName(x.c))}</small></span>
-          <span class="mv up">▲${x.by}</span></a></li>`; }).join('')}</ol>` : '')
+          ${window.tn.climb(x.by)}</a></li>`; }).join('')}</ol>` : '')
       + sec('wk-3', 'New Arrivals', `In the UK's top 10 now, nowhere in the charts ${w.days >= 6 ? 'a week ago' : 'before'}`, w.arrivals?.length ? `<ul class="nr">${w.arrivals.map((x) => weekCard(x, `New at No. ${x.to} ${chartName(x.c)}`)).join('')}</ul>` : '');
   }
   // At the cinema: what's showing in UK cinemas, then what's coming (each with its UK date and certificate)
@@ -379,7 +373,7 @@ function pageNew() {
   if (!charts && !releases && !cinema) return `<h1 class="large-title page-title">New <em class="grad">This Week</em></h1>
     <div class="empty"><span class="empty-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.5 3.5l1.8 4.9 4.9 1.8-4.9 1.8-1.8 4.9-1.8-4.9-4.9-1.8 4.9-1.8z" fill="currentColor"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z" fill="currentColor"/></svg></span>
       <h2>${f?.error ? 'Back shortly' : 'Building up'}</h2><p>${f?.error ? "This week's round-up didn't load this time. It'll be back after the next hourly update." : 'The week fills in as Tenner keeps an eye on the charts and the services. Check back tomorrow.'}</p>
-      <a class="btn btn-tinted" href="#top">See the top 10</a></div>`;
+      <a class="btn btn-tinted" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.4 12 4l8 6.4V20h-5v-5.6H9V20H4z" fill="currentColor"/></svg>See the top 10</a></div>`;
   const jumps = [['cinema', 'At the cinema', inCinemas.length || toCinemas.length], ['released', 'New on the services', releases.includes('id="released"')], ['soon', 'Coming soon', soon.length], ['leaving', 'Leaving soon', leaving.length]]
     .filter((j) => j[2] && charts).map(([id, label]) => `<a class="nw-jump" href="#${id}" data-jump="${id}">${label}<span class="chev" aria-hidden="true"></span></a>`).join('');
   return `<h1 class="large-title page-title">New <em class="grad">This Week</em></h1>
@@ -423,6 +417,7 @@ function toast(text) {
 // ---------- tabs (pages): Home, New, Browse, Discover (phones), Watchlist, About. The bar itself lives in shell.js ----------
 const selectTab = (name) => window.tnShell.select(name);
 function openTab(name) {
+  if (['home', 'about', 'browse', 'discover'].includes(name)) window.tn.loading.show('nav');   // another page: the ring, should it be slow
   if (name === 'home') { location.href = './'; return; }
   if (name === 'about') { location.href = 'about.html'; return; }
   if (name === 'browse') { location.href = 'browse.html'; return; }

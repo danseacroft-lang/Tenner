@@ -24,11 +24,11 @@
   const year = (x) => (x.d || '').slice(0, 4) || null;
   const extra = (x) => more?.items?.[keyOf(x)] || [];
 
-  Promise.all([
+  window.tn.loading.wrap(Promise.all([
     fetch('data/browse.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))),
     fetch('data/trending.json').then((r) => (r.ok ? r.json() : null)).catch(() => null),
     window.tn.prefs.get().no18 ? window.tnSheet?.details() : null,   // Settings: "Hide titles rated 18"
-  ]).then(([c, t, d]) => {
+  ])).then(([c, t, d]) => {
     cat = c; certs = d;
     for (const s of t?.services || []) { logos[s.key] = s.logo; labels[s.key] = s.label; }
     if (!Object.keys(labels).length) Object.assign(labels, { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+', appletv: 'Apple TV' });
@@ -77,8 +77,8 @@
     $('#dActs').classList.toggle('off', empty);
     if (empty && !stage.querySelector('.d-end')) {
       stage.insertAdjacentHTML('beforeend', `<div class="d-end"><span class="d-end-ic" aria-hidden="true">${SAVE}</span><h2>You’ve seen them all</h2>
-        <p>That’s everything ${kind === 'tv' ? 'in shows' : kind === 'movie' ? 'in films' : ''} in the catalogue for now. New titles arrive every hour.</p>
-        <div class="d-end-b"><button type="button" class="btn btn-tinted" id="dAgain">Show skipped again</button><a class="btn" href="charts.html#watchlist">Your Watchlist</a></div></div>`);
+        <p>That’s everything${kind === 'tv' ? ' in shows' : kind === 'movie' ? ' in films' : ''} in the catalogue for now. New titles arrive every hour.</p>
+        <div class="d-end-b"><button type="button" class="btn btn-tinted" id="dAgain"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Show skipped again</button><a class="btn btn-tinted" href="charts.html#watchlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18.4l-6-4.2-6 4.2z" fill="currentColor"/></svg>Your Watchlist</a></div></div>`);
       $('#dAgain').addEventListener('click', () => { const o = skipped.all(); for (const x of cat.items) if (kind === 'both' || x.t === kind) delete o[keyOf(x)]; skipped.set(o); build(); });
     }
   }

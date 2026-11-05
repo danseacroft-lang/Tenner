@@ -5,7 +5,9 @@
   // one entry per service: TMDB lists plans and channels separately ("Netflix Standard with Ads", "Paramount+ Amazon
   // Channel", "Paramount Plus Premium"); they're all the same place to watch, so they fold into the service's own name
   const NAMES = { 'Disney Plus': 'Disney+', 'Amazon Prime Video': 'Prime Video', 'Amazon Prime Video Free': 'Prime Video', 'Paramount Plus': 'Paramount+', 'Apple TV Plus': 'Apple TV', 'Apple TV+': 'Apple TV', 'Channel 4 Plus': 'Channel 4',
-    'Apple TV Store': 'Apple TV', 'Amazon Video': 'Prime Video Store', 'Now TV': 'NOW', 'Now TV Cinema': 'NOW', 'NOW TV Cinema': 'NOW', 'Netflix Kids': 'Netflix' };
+    'Apple TV Store': 'Apple TV', 'Amazon Video': 'Prime Video Store', 'Now TV': 'NOW', 'Now TV Cinema': 'NOW', 'NOW TV Cinema': 'NOW', 'Netflix Kids': 'Netflix',
+    // the same services under other names TMDB has used in the UK, so they get the right button and link, not TMDB's page
+    'Max': 'HBO Max', 'HBO Max Free': 'HBO Max', 'Apple TV Plus Store': 'Apple TV', 'Channel 5': '5', 'My5': '5', 'ITV Hub': 'ITVX', 'ITVX Premium': 'ITVX', 'U': 'UKTV Play', 'Rakuten': 'Rakuten TV' };
   const brand = (n) => {
     const b = n.replace(/\s+(Standard|Basic|Premium)?\s*with Ads$/i, '').replace(/\s+(Amazon|Apple TV|Roku Premium)\s+Channel$/i, '')
       .replace(/\s+(Premium|Kids|Basic|Standard|Essential)$/i, '').replace(/^Paramount\+$/, 'Paramount Plus').trim();
@@ -13,10 +15,15 @@
   };
   // ---------- every service links somewhere that works (each address tested in a browser, October 2026) ----------
   // 1. the title itself, where Wikidata knows its ID on that service (titles.json `ln`); on phones these open the app
+  // Each ID is checked against the shape that service's addresses take: Wikidata is edited by volunteers, and an old or
+  // mistyped ID (an HBO "urn:" from before Max, a whole URL pasted in) would open a broken page, so it falls back to search.
+  const ID = { nf: /^\d{5,10}$/, dp: /^(movies\/wd|series\/wp)\/[A-Za-z0-9]{6,20}$/, pv: /^(amzn1\.dv\.gti\.[0-9a-f-]{36}|[0-9A-Z]{10,30})$/,
+    hb: /^(show|movie|feature|series)\/[A-Za-z0-9:-]{8,60}$/, ap: /^(movie|show)\/umc\.cmc\.[a-z0-9]{10,40}$/ };
+  const id = (l, f) => (ID[f].test(String(l?.[f] || '')) ? l[f] : null);
   const DIRECT = {
-    'Netflix': (l) => l.nf && `https://www.netflix.com/title/${l.nf}`, 'Disney+': (l) => l.dp && `https://www.disneyplus.com/${l.dp}`,
-    'Prime Video': (l) => l.pv && `https://www.primevideo.com/detail/${l.pv}`, 'Prime Video Store': (l) => l.pv && `https://www.primevideo.com/detail/${l.pv}`,
-    'HBO Max': (l) => l.hb && `https://play.hbomax.com/${l.hb}`, 'Apple TV': (l) => l.ap && `https://tv.apple.com/gb/${l.ap}`, 'Apple TV+': (l) => l.ap && `https://tv.apple.com/gb/${l.ap}`,
+    'Netflix': (l) => id(l, 'nf') && `https://www.netflix.com/title/${l.nf}`, 'Disney+': (l) => id(l, 'dp') && `https://www.disneyplus.com/${l.dp}`,
+    'Prime Video': (l) => id(l, 'pv') && `https://www.primevideo.com/detail/${l.pv}`, 'Prime Video Store': (l) => id(l, 'pv') && `https://www.primevideo.com/detail/${l.pv}`,
+    'HBO Max': (l) => id(l, 'hb') && `https://play.hbomax.com/${l.hb}`, 'Apple TV': (l) => id(l, 'ap') && `https://tv.apple.com/gb/${l.ap}`,
   };
   // 2. the service's own search, with the title filled in
   const q = (t) => encodeURIComponent(t);
@@ -43,7 +50,7 @@
   // channels you watch inside Prime Video or the Apple TV app open that app's search
   const link = (raw, title, ln, info) => {
     const b = brand(raw);
-    return (b === 'Netflix' && info.netflix) || DIRECT[b]?.(ln)
+    return (b === 'Netflix' && /^https:\/\/www\.netflix\.com\/title\/\d+/.test(info.netflix || '') && info.netflix) || DIRECT[b]?.(ln || {})
       || (/amazon channel$/i.test(raw) ? amazon(title) : /apple tv channel$/i.test(raw) ? apple(title) : null)
       || SEARCH[b]?.(title) || HOME[b] || info.watch;   // 4. otherwise the title's TMDB page, which lists every service
   };

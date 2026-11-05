@@ -36,7 +36,6 @@
     flame: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.4 2.8c.4 3-1.3 4.6-2.8 6.2C8.2 10.5 7 12 7 14.6A5 5 0 0 0 12 19.8a5 5 0 0 0 5-5.1c0-2.4-1.2-4-2.3-5.3-.2 1.3-.8 2.2-1.8 2.7.6-3.2-.1-6.6-.5-9.3z" fill="currentColor"/></svg>',
     left: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     right: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 5.5 6.5 6.5-6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    up: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V6M6.5 11.5 12 6l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     grid: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2" fill="currentColor"/><rect x="13.5" y="3.5" width="7" height="7" rx="2" fill="currentColor"/><rect x="3.5" y="13.5" width="7" height="7" rx="2" fill="currentColor"/><rect x="13.5" y="13.5" width="7" height="7" rx="2" fill="currentColor"/></svg>',
     tv: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.8" y="5.5" width="18.4" height="12.5" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M8.5 21h7M9 2.8l3 2.7 3-2.7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     cross: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>',
@@ -57,6 +56,7 @@
     openFromUrl();
   }
   addEventListener('tn:check', () => load(true));
+  const firstLoad = () => window.tn.loading.wrap(load());   // the ring in the middle, should the charts take a moment
 
   const services = () => (state.data?.services || []).filter((s) => !s.shop && !s.store);
   window.tnTonight?.use({ cat: () => state.cat, services: () => state.data?.services, titles: () => state.titles });   // What should I watch tonight? borrows what's loaded
@@ -561,7 +561,7 @@
     return `<section class="bx-panel panel" aria-labelledby="bxUp"><header class="bx-panel-hd"><h2 id="bxUp">Climbing this week</h2></header><ul class="bx-ups">${items.map(({ c, it }) => {
       const label = w.labels?.[c.c.split(':')[0]] || '', info = infoFor(it, 'Climbing this week');
       return `<li><a href="${esc(it.url || '#')}" target="_blank" rel="noopener" ${reg(info)}><span class="bx-up-art">${poster(it)}</span>
-        <span class="bx-up-copy"><b>${esc(it.title)}</b><small>Up ${c.by} to No. ${c.to} ${label === 'the UK' ? 'in the UK' : `on ${esc(label)}`}</small></span><span class="bx-up-by" aria-hidden="true">${I.up}${c.by}</span></a></li>`;
+        <span class="bx-up-copy"><b>${esc(it.title)}</b><small>Now No. ${c.to} ${label === 'the UK' ? 'in the UK' : `on ${esc(label)}`}</small></span>${window.tn.climb(c.by)}</a></li>`;
     }).join('')}</ul></section>`;
   }
 
@@ -579,5 +579,5 @@
   }
   PHONE.addEventListener('change', () => state.data && draw());   // turning a tablet round, or a narrowed window
   addEventListener('popstate', () => state.data && openFromUrl());   // Forward to a title you'd closed opens it again
-  load();
+  firstLoad();
 })();

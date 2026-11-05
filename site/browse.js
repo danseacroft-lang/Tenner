@@ -28,7 +28,7 @@
   const SORTS = [
     { key: 'pop', label: 'Most popular', fn: (a, b) => b.p - a.p },
     { key: 'rating', label: 'Highest rated', fn: (a, b) => b.r - a.r || b.v - a.v },
-    { key: 'new', label: 'Newest', fn: (a, b) => b.d.localeCompare(a.d) },
+    { key: 'new', label: 'Newest', fn: (a, b) => (b.d || '').localeCompare(a.d || '') },
     { key: 'old', label: 'Oldest', fn: (a, b) => (a.d || '9').localeCompare(b.d || '9') },
     { key: 'az', label: 'A to Z', fn: (a, b) => a.n.localeCompare(b.n, 'en-GB', { sensitivity: 'base' }) },
   ];
@@ -75,12 +75,12 @@
   const sortKey = () => state.sort || collection().sort || '';   // '' : the collection's own order (by the day)
 
   // ---------- data ----------
-  Promise.all([
+  window.tn.loading.wrap(Promise.all([
     fetch('data/browse.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))),
     fetch('data/trending.json').then((r) => (r.ok ? r.json() : null)).catch(() => null),
     window.tn.prefs.get().no18 ? window.tnSheet?.details() : null,   // Settings: "Hide titles rated 18" needs the certificates
     fetch('data/new.json').then((r) => (r.ok ? r.json() : null)).catch(() => null),
-  ]).then(([c, t, d, f]) => {
+  ])).then(([c, t, d, f]) => {
     cat = c; certs = d; fresh = f; mergeFresh();
     for (const s of t?.services || []) { logos[s.key] = s.logo; labels[s.key] = s.label; }
     if (!Object.keys(labels).length) Object.assign(labels, { netflix: 'Netflix', disney: 'Disney+', prime: 'Prime Video', hbomax: 'HBO Max', paramount: 'Paramount+', appletv: 'Apple TV' });
@@ -128,7 +128,7 @@
     const today = daysAgo(0), weekAgo = daysAgo(7);
     for (const f of fresh?.items || []) if (f.date >= weekAgo && f.date <= today) add(f, '_new');
     for (const f of fresh?.leaving || []) if (f.date >= today) add(f, '_gone');
-    firstYear = Math.max(1920, Math.floor(Math.min(...cat.items.map((x) => +x.d.slice(0, 4) || THIS_YEAR)) / 10) * 10);
+    firstYear = Math.max(1920, Math.floor(Math.min(...cat.items.map((x) => +(x.d || '').slice(0, 4) || THIS_YEAR)) / 10) * 10);
   }
   // the title details (certificates, lengths), the first time they're wanted
   let detailsP = null;
@@ -276,7 +276,7 @@
   addEventListener('tn:sheet-closed', () => { if (hidDirty && cat) { hidDirty = false; apply(false, true); } });
   const ok18 = (x) => !hid.has(`${x.t[0]}${x.i}`) && (!no18 || !certs || det(x)?.c !== '18');
   // released, age rating and length (the last two wait for the details, then filter)
-  const okMore = (x) => (!state.y || ((+x.d.slice(0, 4) || 0) >= state.y[0] && (+x.d.slice(0, 4) || 0) <= state.y[1]))
+  const okMore = (x) => (!state.y || ((+(x.d || '').slice(0, 4) || 0) >= state.y[0] && (+(x.d || '').slice(0, 4) || 0) <= state.y[1]))
     && (!state.a || !certs || (det(x)?.c in AGE_RANK && AGE_RANK[det(x).c] <= AGE_RANK[state.a]))
     && (!state.rt || !certs || (det(x)?.rt && det(x).rt <= +state.rt));
   function apply(user, quiet) {
@@ -619,7 +619,6 @@
   let rowsDirty = false;
   ['tn:saved', 'tn:swiped'].forEach((ev) => addEventListener(ev, () => { if (!cat) return; if (window.tnSheet?.isOpen()) rowsDirty = true; else rows(); }));
   addEventListener('tn:sheet-closed', () => { if (rowsDirty && cat) { rowsDirty = false; rows(); } });
-  addEventListener('tn:sheet-closed', () => cat && rows());
 
   // ---------- the grid ----------
   const fmt = (d) => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
