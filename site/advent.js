@@ -44,7 +44,7 @@
     const used = new Set(Object.values(store.get().doors).map((d) => d.k)), cat = catItems();
     const fresh = (k) => k && !used.has(k);
     const xmasCat = cat.filter((x) => x.img && RX.test(x.n) && fresh(`${x.t[0]}${x.i}`)).sort((a, b) => b.p - a.p).slice(0, 30);
-    if (n >= 24 || Math.random() < .72) {   // mostly Christmas, and always on the 24th and 25th
+    async function christmas() {
       if (xmasCat.length && Math.random() < .5) return { ...fromCat(shuffle(xmasCat)[0]), why: 'xmas' };
       for (const [title, year, type] of shuffle(XMAS).slice(0, 6)) {
         const hit = cat.find((x) => x.t === type && x.img && fold(x.n) === fold(title) && Math.abs(+(x.d || '').slice(0, 4) - year) <= 1);
@@ -52,15 +52,18 @@
         const r = await window.tn.findTitle({ title, year, type });
         if (r?.poster && fresh(r.k)) return { k: r.k, type: r.type, title: r.title, year: r.year, poster: r.poster, on: [], why: 'xmas' };
       }
-      if (xmasCat.length) return { ...fromCat(xmasCat[0]), why: 'xmas' };
+      return xmasCat.length ? { ...fromCat(xmasCat[0]), why: 'xmas' } : null;
     }
-    // something popular right now that isn't already on your Watchlist
-    const pop = (opts.popular?.() || []).map((p) => p.it).filter((it) => it.poster && /^\d+$/.test(String(it.id)))
-      .map((it) => ({ k: `${it.type === 'movie' ? 'm' : 't'}${it.id}`, type: it.type, title: it.title, year: +it.year || null, poster: it.poster, on: it.on || [], why: 'pop' }))
-      .filter((p) => fresh(p.k) && !window.tn.saved.has(p.k)).slice(0, 30);
-    if (pop.length) return shuffle(pop)[0];
-    const any = cat.filter((x) => x.img && fresh(`${x.t[0]}${x.i}`)).sort((a, b) => b.p - a.p).slice(0, 40);
-    return any.length ? { ...fromCat(shuffle(any)[0]), why: 'pop' } : null;
+    function popular() {   // something popular right now that isn't already on your Watchlist
+      const pop = (opts.popular?.() || []).map((p) => p.it).filter((it) => it.poster && /^\d+$/.test(String(it.id)))
+        .map((it) => ({ k: `${it.type === 'movie' ? 'm' : 't'}${it.id}`, type: it.type, title: it.title, year: +it.year || null, poster: it.poster, on: it.on || [], why: 'pop' }))
+        .filter((p) => fresh(p.k) && !window.tn.saved.has(p.k)).slice(0, 30);
+      if (pop.length) return shuffle(pop)[0];
+      const any = cat.filter((x) => x.img && fresh(`${x.t[0]}${x.i}`)).sort((a, b) => b.p - a.p).slice(0, 40);
+      return any.length ? { ...fromCat(shuffle(any)[0]), why: 'pop' } : null;
+    }
+    // mostly Christmas, and always on the 24th and 25th; whichever comes up empty, the other
+    return n >= 24 || Math.random() < .72 ? (await christmas()) || popular() : popular() || christmas();
   }
   const LINES = {
     xmas: ['A Christmas favourite for a cosy night in.', 'Hot chocolate, blanket, this. Perfect.', 'One for the whole family this Christmas.', 'A festive classic to get you in the mood.', 'Pure Christmas magic, ready when you are.'],
@@ -92,7 +95,18 @@
     moon: '<path d="M15 3.6A8.6 8.6 0 1 0 20.4 15 7 7 0 0 1 15 3.6z"/><path d="M19 4l.6 1.4L21 6l-1.4.6L19 8l-.6-1.4L17 6l1.4-.6z"/>',
     cocoa: '<path d="M5 9h11v6a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z"/><path d="M16 11h1.5a2.5 2.5 0 0 1 0 5H16M8.5 3.5c-.8 1 .8 2 0 3M12 3.5c-.8 1 .8 2 0 3"/>',
   };
-  const ORDER = [7, 18, 3, 24, 12, 1, 15, 22, 9, 5, 20, 11, 25, 2, 16, 8, 23, 13, 4, 19, 10, 21, 6, 14, 17];
+  // laid out like a real advent calendar: doors of all sizes on a 6 × 7 grid, the 25th the biggest, then the 24th
+  const MAP = [
+    [12, 3, 3, 18, 18, 8],
+    [12, 25, 25, 24, 24, 6],
+    [15, 25, 25, 24, 24, 6],
+    [15, 25, 25, 11, 20, 20],
+    [1, 1, 16, 21, 9, 9],
+    [22, 4, 10, 21, 2, 14],
+    [19, 17, 23, 13, 7, 5]];
+  const AREAS = MAP.map((r) => `"${r.map((n) => `d${n}`).join(' ')}"`).join(' ');
+  const SIZE = {}; MAP.flat().forEach((n) => { SIZE[n] = (SIZE[n] || 0) + 1; });   // how many cells each door covers
+  const ORDER = [...new Set(MAP.flat())];
   const KINDS = Object.keys(ORN);
   // deep, rich door colours: crimson, emerald, midnight and plum
   const TONES = [['#b0203c', '#5a0b1e'], ['#127a52', '#06372a'], ['#2b4cb0', '#0f1d52'], ['#7a2d93', '#2e0f3e']];
@@ -104,11 +118,28 @@
   const TICK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5.5 12.5 4.2 4.2 8.8-9.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const CAL = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 10h17M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 12.6l.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2-1.45-1.4 2-.3z" fill="currentColor"/></svg>';
   const date = (n) => `${n} December`;
+  // fairy lights wrapped round a calendar: red, green and blue bulbs on a dark wire that sags a little between them,
+  // each bulb pointing outwards and twinkling at its own pace. top/side: how many bulbs along each edge.
+  function lights(top, side) {
+    const pts = [];   // [x, y, angle, bulb?] round the edge, clockwise from the top left (0 to 100 each way)
+    const edge = (n, f, a) => { for (let i = 0; i <= n; i++) pts.push([...f(i / n), a, i > 0 && i < n]); };
+    edge(top, (t) => [t * 100, 0], 0); edge(side, (t) => [100, t * 100], 90); edge(top, (t) => [100 - t * 100, 100], 180); edge(side, (t) => [0, 100 - t * 100], 270);
+    let d = `M${pts[0][0]} ${pts[0][1]}`;
+    for (let i = 1; i < pts.length; i++) {
+      const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+      d += `Q${(mx + (50 - mx) * .05).toFixed(2)} ${(my + (50 - my) * .05).toFixed(2)} ${x1} ${y1}`;   // a gentle sag towards the middle
+    }
+    const C = [['#ff3b4e', 'rgba(255,59,78,.75)'], ['#30d158', 'rgba(48,209,88,.7)'], ['#0a84ff', 'rgba(10,132,255,.75)']];
+    let k = 0;
+    const bulbs = pts.filter((p) => p[3]).map(([x, y, a]) => { const [c, g] = C[k % 3], tilt = ((k * 37) % 30) - 15; k++;
+      return `<i style="left:${x}%;top:${y}%;--a:${a + tilt}deg;--c:${c};--g:${g};--dl:${((k * 0.37) % 2.4).toFixed(2)}s"></i>`; }).join('');
+    return `<span class="lt" aria-hidden="true"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="${d}"/></svg>${bulbs}</span>`;
+  }
   function door(n) {
     const p = store.get().doors[n], t = today(), [c1, c2] = TONES[(n * 7) % 4], kind = n === 25 ? 'tree' : KINDS[(n * 7) % KINDS.length];
-    const cls = ['adv-d', n === 25 ? 'big' : n === 1 || n === 12 ? 'w' : '', p ? 'open' : '', !p && n === t ? 'today' : '', !p && n > t ? 'locked' : ''].filter(Boolean).join(' ');
+    const cls = ['adv-d', n === 25 ? 'big' : SIZE[n] >= 4 ? 'mid' : '', p ? 'open' : '', !p && n === t ? 'today' : '', !p && n > t ? 'locked' : ''].filter(Boolean).join(' ');
     const label = p ? `Door ${n}: ${p.title}` : n <= t ? `Door ${n}, ready to open` : `Door ${n}, opens on ${date(n)}`;
-    return `<button type="button" class="${cls}" data-day="${n}" style="--c1:${c1};--c2:${c2}" aria-label="${esc(label)}">
+    return `<button type="button" class="${cls}" data-day="${n}" style="grid-area:d${n};--c1:${c1};--c2:${c2}" aria-label="${esc(label)}">
       <span class="adv-in">${p ? inside(p) : ''}</span>
       <span class="adv-leaf"><span class="adv-f">${svg(kind)}<b class="adv-n">${n}</b>${n === 25 ? '<small class="adv-mc">Merry Christmas</small>' : ''}${!p && n === t ? '<i class="adv-now">Today</i>' : ''}${!p && n > t ? `<span class="adv-lock">${LOCK}</span>` : ''}</span><span class="adv-b"></span></span></button>`;
   }
@@ -131,7 +162,7 @@
         <header class="adv-hd"><img class="adv-logo" src="logo.svg" alt="" width="46" height="46">
           <div><p class="adv-eye">Tenner</p><h2 id="advT">The Christmas calendar</h2><p class="adv-sub" id="advSub"></p></div>
           <button type="button" class="adv-x" data-advx aria-label="Close the calendar">${CLOSE}</button></header>
-        <div class="adv-grid" id="advGrid"></div>
+        <div class="adv-lit"><div class="adv-grid" id="advGrid"></div>${lights(12, 13)}</div>
         <p class="adv-say" id="advSay" role="status" aria-live="polite"></p>
       </div>
       <div class="adv-rv" id="advRv" hidden></div>
@@ -157,7 +188,7 @@
   }
   function paint() {
     $('#advSub').textContent = sub();
-    $('#advGrid').innerHTML = ORDER.map(door).join('');
+    const g = $('#advGrid'); g.style.gridTemplateAreas = AREAS; g.innerHTML = ORDER.map(door).join('');
   }
   let sayT = 0;
   function say(t) { const s = $('#advSay'); s.textContent = t; s.classList.add('on'); clearTimeout(sayT); sayT = setTimeout(() => s.classList.remove('on'), 2600); }
@@ -245,7 +276,7 @@
   function hideReveal() {
     const rv = $('#advRv'); if (rv.hidden) return;
     if (!motion()) { rv.hidden = true; return; }
-    rv.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220 }).finished.then(() => { rv.hidden = true; });
+    rv.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: 'forwards' }).finished.then((an) => { rv.hidden = true; an.cancel(); });
   }
   // closing: the calendar shrinks into its box in the right-hand column (or back into the button that opened it)
   const inView = (el) => { if (!el?.isConnected) return null; const r = el.getBoundingClientRect(); return r.width && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth ? el : null; };
@@ -267,23 +298,32 @@
     });
   }
 
-  // ---------- its box at the top of the right-hand column (once you've opened a door) ----------
+  // ---------- its box at the top of the right-hand column: the calendar in miniature, Discover's size ----------
+  // Shown from the first time you open the calendar. Opened doors show their posters; today's glows. Tap a door to open
+  // the calendar at it.
   function box() {
     const st = store.get(), doors = st.doors, t = Math.min(today(), 25);
     if (!season() || !(st.seen || Object.keys(doors).length)) return '';
     const p = t ? doors[t] : null;
-    const dots = Array.from({ length: 25 }, (_, i) => `<i class="${doors[i + 1] ? 'on' : ''}${i + 1 === t ? ' now' : ''}"></i>`).join('');
+    const mini = ORDER.map((n) => {
+      const d = doors[n], [c1, c2] = TONES[(n * 7) % 4];
+      return `<button type="button" class="bx-ad${d ? ' open' : ''}${!d && n === t ? ' today' : ''}${n > t ? ' locked' : ''}${n === 25 ? ' big' : ''}" data-adv="door" data-n="${n}" style="grid-area:d${n};--c1:${c1};--c2:${c2}"
+        aria-label="${esc(d ? `Door ${n}: ${d.title}` : n <= t ? `Door ${n}, ready to open` : `Door ${n}, opens on ${date(n)}`)}">${d ? `<img src="${esc(d.poster)}" alt="">` : `<b>${n}</b>`}</button>`;
+    }).join('');
+    const say = !t ? `The first door opens in ${untilDec()} day${untilDec() === 1 ? '' : 's'}.` : p ? `Behind door ${t}: ${p.title}` : `Door ${t} is ready to open.`;
     return `<section class="bx-panel panel bx-adv" id="bxAdv" aria-labelledby="bxAdvT">
-      <span class="bx-adv-sky" aria-hidden="true"><img src="xmas.webp" alt=""></span>
       <header class="bx-panel-hd"><h2 id="bxAdvT">Christmas calendar</h2><span class="bx-tag bx-adv-tag">${t ? `Day ${t}` : '1 December'}</span></header>
-      ${!t ? `<p class="bx-panel-say">The first door opens in ${untilDec()} day${untilDec() === 1 ? '' : 's'}. A film or show behind every one.</p>` : p ? `<button type="button" class="bx-adv-pick" data-adv="pick" data-n="${t}"><img src="${esc(p.poster)}" alt=""><span><b>${esc(p.title)}</b><small>Behind door ${t} · ${p.type === 'movie' ? 'Film' : 'Series'}${p.year ? ` · ${p.year}` : ''}</small></span></button>`
-        : `<p class="bx-panel-say">Door ${t} is ready to open.</p>`}
-      <div class="bx-adv-dots" aria-label="${Object.keys(doors).length} of 25 doors opened">${dots}</div>
+      <div class="adv-lit adv-lit-s"><div class="bx-adv-cal" style='grid-template-areas:${AREAS}'>${mini}</div>${lights(8, 9)}</div>
+      <p class="bx-panel-say bx-adv-say">${esc(say)}</p>
       <button type="button" class="btn btn-tinted bx-wide" data-adv="open">${CAL}${!t || p ? 'Open calendar' : `Open door ${t}`}</button></section>`;
   }
   document.addEventListener('click', (e) => {
     const b = e.target.closest('[data-adv]'); if (!b) return;
     if (b.dataset.adv === 'open') open(b);
+    else if (b.dataset.adv === 'door') {   // a door in the little calendar: the big one, at that door
+      open($('#bxAdv') || b);
+      setTimeout(() => { const d = dlg?.open && $(`.adv-d[data-day="${b.dataset.n}"]`, dlg); if (d) openDoor(d); }, motion() ? 640 : 0);
+    }
     else if (b.dataset.adv === 'pick') { const p = store.get().doors[b.dataset.n]; if (p) openPick(p); }
   });
   window.tnAdvent = { use: (o) => Object.assign(opts, o), open, box, icon: CAL, season };

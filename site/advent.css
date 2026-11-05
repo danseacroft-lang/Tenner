@@ -1,13 +1,13 @@
 /* Tenner's Christmas calendar (advent.js): a night-sky sheet of 25 doors, each a rich tone with a gold drawing and
    number; a door swings open on its hinge to show a poster, and the pick comes forward on a card. Night-themed in Day and
    Night alike, like the Christmas slide it opens from. Corners are --r throughout; buttons are the navy ones. */
-dialog.adv { width: min(1000px, calc(100vw - 32px)); max-width: none; max-height: calc(100dvh - 32px); padding: 0; border: 0; overflow: hidden;
+dialog.adv { width: min(900px, calc(100vw - 32px)); max-width: none; max-height: calc(100dvh - 32px); padding: 0; border: 0; overflow: hidden;
   border-radius: var(--r); color: #fff; background: #080d28; transform-origin: 0 0;
   box-shadow: 0 0 0 .5px rgba(255, 255, 255, .14), 0 0 0 1px rgba(255, 214, 120, .12), 0 50px 120px -30px rgba(0, 0, 0, .85); }
 dialog.adv::backdrop { background: rgba(3, 5, 18, .58); -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2); }
 dialog.adv.mini::backdrop { opacity: 0; transition: opacity .6s ease .1s; }
 dialog.adv.mini .adv-sc > :not(.adv-sky), dialog.adv.mini .adv-rv { opacity: 0; transition: opacity .2s ease; }
-.adv-sc { position: relative; isolation: isolate; max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain; padding: 26px 28px 30px;
+.adv-sc { position: relative; isolation: isolate; max-height: calc(100dvh - 32px); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 26px 28px 30px;
   background: radial-gradient(1.2px 1.2px at 14% 62%, rgba(255, 255, 255, .55), transparent), radial-gradient(1px 1px at 70% 74%, rgba(255, 255, 255, .45), transparent),
     radial-gradient(1.2px 1.2px at 40% 88%, rgba(255, 255, 255, .5), transparent), radial-gradient(1px 1px at 88% 56%, rgba(255, 255, 255, .45), transparent),
     radial-gradient(80% 50% at 50% 100%, rgba(255, 159, 10, .12), transparent 70%), linear-gradient(#0a1033, #080d28 60%, #0c0a26);
@@ -33,9 +33,8 @@ dialog.adv.mini .adv-sc > :not(.adv-sky), dialog.adv.mini .adv-rv { opacity: 0; 
 @media (hover: hover) { .adv-x:hover { background: var(--bt-round-hover); } }
 
 /* the doors */
-.adv-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-rows: clamp(86px, 10.6vw, 116px); grid-auto-flow: dense; gap: 10px; }
+.adv-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-rows: clamp(62px, 7.6vw, 86px); gap: 9px; }
 .adv-d { position: relative; padding: 0; border: 0; border-radius: var(--r); background: none; color: #fff; font: inherit; cursor: pointer; perspective: 900px; -webkit-tap-highlight-color: transparent; }
-.adv-d.w { grid-column: span 2; } .adv-d.big { grid-column: span 2; grid-row: span 2; }
 .adv-d.opening, .adv-d.open:hover { z-index: 2; }
 /* behind the door: warm light, then the poster */
 .adv-in { position: absolute; inset: 0; overflow: hidden; border-radius: var(--r);
@@ -55,10 +54,12 @@ dialog.adv.mini .adv-sc > :not(.adv-sky), dialog.adv.mini .adv-rv { opacity: 0; 
   -webkit-mask-image: linear-gradient(160deg, #000, transparent 70%); mask-image: linear-gradient(160deg, #000, transparent 70%); }
 .adv-f::after { content: ""; position: absolute; inset: 5px; border-radius: 6px; box-shadow: inset 0 0 0 1px rgba(255, 214, 120, .32); pointer-events: none; }
 .adv-f svg { position: relative; width: 24px; height: 24px; color: #ffd36b; opacity: .8; filter: drop-shadow(0 1px 4px rgba(0, 0, 0, .4)); }
-.adv-d.big .adv-f svg { width: 64px; height: 64px; opacity: .9; }
+.adv-d.big .adv-f svg { width: 72px; height: 72px; opacity: .9; }
+.adv-d.mid .adv-f svg { width: 40px; height: 40px; }
 .adv-n { position: relative; font: 800 clamp(30px, 3.6vw, 42px)/1 var(--font-display); letter-spacing: -.03em;
   background: linear-gradient(#fff8dc, #ffd36b 50%, #e09a2c); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .5)); }
-.adv-d.big .adv-n { font-size: clamp(64px, 8vw, 96px); }
+.adv-d.big .adv-n { font-size: clamp(64px, 8vw, 100px); }
+.adv-d.mid .adv-n { font-size: clamp(40px, 5vw, 60px); }
 .adv-mc { position: relative; margin-top: 6px; font: 600 13px/1 var(--font); letter-spacing: .08em; text-transform: uppercase; color: #ffe7b0; opacity: .9; }
 .adv-b { transform: rotateY(180deg); background: linear-gradient(155deg, var(--c2), #05040f); box-shadow: inset 0 0 0 1px rgba(255, 214, 120, .22); }
 .adv-d.open .adv-leaf { transform: rotateY(-108deg); }
@@ -112,32 +113,55 @@ dialog.adv.mini .adv-sc > :not(.adv-sky), dialog.adv.mini .adv-rv { opacity: 0; 
   .adv-sc { max-height: calc(100dvh - 16px); padding: 18px 14px 20px; }
   .adv-hd { gap: 10px; margin-bottom: 16px; } .adv-logo { width: 38px; height: 38px; align-self: flex-start; }
   .adv-sub { font-size: 14px; }
-  .adv-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 78px; gap: 8px; }
-  .adv-d.w { grid-column: span 1; }
-  .adv-n { font-size: 28px; } .adv-d.big .adv-n { font-size: 60px; }
+  .adv-grid { grid-auto-rows: clamp(50px, 14vw, 64px); gap: 6px; }
+  .adv-n { font-size: 22px; } .adv-d.big .adv-n { font-size: 52px; } .adv-d.mid .adv-n { font-size: 34px; }
+  .adv-f { gap: 2px; } .adv-f svg { width: 15px; height: 15px; } .adv-d.big .adv-f svg { width: 44px; height: 44px; } .adv-d.mid .adv-f svg { width: 26px; height: 26px; }
+  .adv-f::after { inset: 3px; border-radius: 6px; }
+  .adv-lock { right: 4px; bottom: 3px; width: 11px; height: 11px; }
+  .adv-now { top: 3px; right: 3px; padding: 2px 4px; font-size: 8.5px; }
+  .adv-mc { font-size: 10px; margin-top: 2px; }
+  .adv-in b { font-size: 9.5px; padding: 10px 4px 4px; }
+  .adv-lit { margin: 14px 8px 8px; }
   .adv-card { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 14px; padding: 18px 16px; }
   .adv-cp { width: 150px; }
   .adv-cc { justify-items: center; padding-right: 0; }
 }
 
-/* ---------- its box at the top of the homepage's right-hand column ---------- */
-.bx-adv { position: relative; isolation: isolate; overflow: hidden; }
-.bx-adv-sky { position: absolute; z-index: -1; inset: 0 0 auto; height: 110px; pointer-events: none; opacity: .55;
-  -webkit-mask-image: linear-gradient(#000, transparent); mask-image: linear-gradient(#000, transparent); }
-.bx-adv-sky img { width: 100%; height: 100%; object-fit: cover; object-position: 70% 30%; }
-.bx-adv .bx-panel-hd h2 { text-shadow: 0 1px 12px color-mix(in srgb, var(--bg) 60%, transparent); }
+/* ---------- its box at the top of the homepage's right-hand column: the calendar in miniature ---------- */
+.bx-adv { position: relative; }
 .bx-adv-tag { color: #3a2400; background: linear-gradient(#ffe8a3, #ffc94a); }
-.bx-adv-pick { display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px; border: 0; border-radius: var(--r); background: var(--fr-in); color: inherit; font: inherit; text-align: left; cursor: pointer; }
-.bx-adv-pick img { flex: none; width: 46px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 6px; box-shadow: 0 0 0 1px rgba(255, 214, 120, .45), 0 0 16px rgba(255, 196, 90, .35); }
-.bx-adv-pick span { display: grid; gap: 2px; min-width: 0; }
-.bx-adv-pick b { font-size: 15.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bx-adv-pick small { font-size: 13px; color: var(--label2); }
-@media (hover: hover) { .bx-adv-pick:hover { background: var(--gl-hover, color-mix(in srgb, var(--label) 10%, transparent)); } }
-.bx-adv-dots { display: grid; grid-template-columns: repeat(25, minmax(0, 1fr)); gap: 3px; margin: 14px 0; }
-.bx-adv-dots i { height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--label) 16%, transparent); }
-.bx-adv-dots i.on { background: linear-gradient(90deg, #ffe08a, #f0a93a); }
-.bx-adv-dots i.now { box-shadow: 0 0 0 1.5px #ffc94a; }
+.bx-adv-cal { position: relative; isolation: isolate; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-template-rows: repeat(7, minmax(0, 1fr)); aspect-ratio: 4 / 5; gap: 4px; padding: 8px;
+  overflow: hidden; border-radius: var(--r); background: #0a1033; box-shadow: inset 0 0 0 1px rgba(255, 214, 120, .25), 0 10px 26px -14px rgba(0, 0, 0, .6); }
+.bx-adv-cal::before { content: ""; position: absolute; z-index: -1; inset: 0; background: url(xmas.webp) 60% 30% / cover; opacity: .55; }
+.bx-ad { position: relative; display: grid; place-items: center; padding: 0; border: 0; border-radius: 6px; overflow: hidden; cursor: pointer; color: #fff; font: inherit;
+  background: linear-gradient(155deg, var(--c1), var(--c2)); box-shadow: inset 0 0 0 1px rgba(255, 214, 120, .3), 0 3px 8px -4px rgba(0, 0, 0, .6); }
+.bx-ad b { font: 800 15px/1 var(--font-display); letter-spacing: -.02em; background: linear-gradient(#fff8dc, #ffd36b 50%, #e09a2c); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.bx-ad.big b { font-size: 48px; }
+.bx-ad.locked { filter: saturate(.8) brightness(.8); }
+.bx-ad.open { background: #000; box-shadow: inset 0 0 0 1px rgba(255, 214, 120, .45); }
+.bx-ad img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
+.bx-ad.today { box-shadow: inset 0 0 0 1.5px #ffd36b, 0 0 14px rgba(255, 196, 90, .6); }
+@media (hover: hover) { .bx-ad:hover { filter: brightness(1.15); } }
+:root:not(.still) .bx-ad { transition: filter .2s ease, transform .3s var(--ease-spring); }
+.bx-ad:active { transform: scale(.95); }
+.bx-ad:focus-visible { outline: 2px solid #ffd36b; outline-offset: 1px; }
+.bx-adv-say { margin-bottom: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bx-adv.adv-land, .bx-xph .adv-land, .adv-land { animation: advLand 1.2s cubic-bezier(.2, .8, .2, 1); }
 @keyframes advLand { 0% { transform: scale(.97); box-shadow: 0 0 0 0 rgba(255, 214, 120, 0); }
   25% { transform: scale(1.025); box-shadow: 0 0 0 2px rgba(255, 214, 120, .9), 0 0 50px rgba(255, 196, 90, .55); }
   100% { transform: none; box-shadow: 0 0 0 0 rgba(255, 214, 120, 0); } }
+
+/* fairy lights round the calendar (and its little one) */
+.adv-lit { position: relative; margin: 10px 4px 4px; }
+.adv-lit-s { margin: 12px 6px 16px; }
+.lt { position: absolute; inset: -7px; z-index: 2; pointer-events: none; }
+.adv-lit-s .lt { inset: -5px; }
+.lt svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.lt path { fill: none; stroke: #0d2a18; stroke-width: 2; vector-effect: non-scaling-stroke; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .5)); }
+.lt i { position: absolute; width: 8px; height: 13px; margin: -13px 0 0 -4px; transform-origin: 50% 100%; transform: rotate(var(--a));
+  border-radius: 50% 50% 46% 46% / 62% 62% 38% 38%; background: radial-gradient(circle at 42% 30%, #fff 0 10%, var(--c) 48%, color-mix(in srgb, var(--c) 60%, #000));
+  box-shadow: 0 0 8px 2px var(--g), 0 0 22px 6px color-mix(in srgb, var(--g) 45%, transparent); }
+.lt i::after { content: ""; position: absolute; left: 1.5px; right: 1.5px; bottom: -3px; height: 4px; border-radius: 1px; background: #1d3524; box-shadow: none; }
+.adv-lit-s .lt i { width: 6px; height: 10px; margin: -10px 0 0 -3px; box-shadow: 0 0 6px 1px var(--g), 0 0 14px 4px color-mix(in srgb, var(--g) 40%, transparent); }
+@media (prefers-reduced-motion: no-preference) { .lt i { animation: advTw 2.4s ease-in-out infinite; animation-delay: calc(-1 * var(--dl)); } }
+@keyframes advTw { 0%, 100% { opacity: 1; filter: brightness(1.1); } 50% { opacity: .55; filter: brightness(.8); } }
