@@ -164,6 +164,8 @@
   function open(from) {
     if (!season()) return;
     build(); opener = from || null; closing = false; paint();
+    // from the first look, the calendar has its box in the right-hand column to shrink back into
+    const st = store.get(); if (!st.seen) { st.seen = Date.now(); store.set(st); opts.redraw?.(); }
     $('#advRv').hidden = true; dlg.classList.remove('mini'); dlg.getAnimations().forEach((a) => a.cancel());
     dlg.showModal();
     $('.adv-sc', dlg).scrollTop = 0;
@@ -267,17 +269,17 @@
 
   // ---------- its box at the top of the right-hand column (once you've opened a door) ----------
   function box() {
-    const doors = store.get().doors, t = Math.min(today(), 25);
-    if (!season() || !t || !Object.keys(doors).length) return '';
-    const p = doors[t];
+    const st = store.get(), doors = st.doors, t = Math.min(today(), 25);
+    if (!season() || !(st.seen || Object.keys(doors).length)) return '';
+    const p = t ? doors[t] : null;
     const dots = Array.from({ length: 25 }, (_, i) => `<i class="${doors[i + 1] ? 'on' : ''}${i + 1 === t ? ' now' : ''}"></i>`).join('');
     return `<section class="bx-panel panel bx-adv" id="bxAdv" aria-labelledby="bxAdvT">
       <span class="bx-adv-sky" aria-hidden="true"><img src="xmas.webp" alt=""></span>
-      <header class="bx-panel-hd"><h2 id="bxAdvT">Christmas calendar</h2><span class="bx-tag bx-adv-tag">Day ${t}</span></header>
-      ${p ? `<button type="button" class="bx-adv-pick" data-adv="pick" data-n="${t}"><img src="${esc(p.poster)}" alt=""><span><b>${esc(p.title)}</b><small>Behind door ${t} · ${p.type === 'movie' ? 'Film' : 'Series'}${p.year ? ` · ${p.year}` : ''}</small></span></button>`
+      <header class="bx-panel-hd"><h2 id="bxAdvT">Christmas calendar</h2><span class="bx-tag bx-adv-tag">${t ? `Day ${t}` : '1 December'}</span></header>
+      ${!t ? `<p class="bx-panel-say">The first door opens in ${untilDec()} day${untilDec() === 1 ? '' : 's'}. A film or show behind every one.</p>` : p ? `<button type="button" class="bx-adv-pick" data-adv="pick" data-n="${t}"><img src="${esc(p.poster)}" alt=""><span><b>${esc(p.title)}</b><small>Behind door ${t} · ${p.type === 'movie' ? 'Film' : 'Series'}${p.year ? ` · ${p.year}` : ''}</small></span></button>`
         : `<p class="bx-panel-say">Door ${t} is ready to open.</p>`}
       <div class="bx-adv-dots" aria-label="${Object.keys(doors).length} of 25 doors opened">${dots}</div>
-      <button type="button" class="btn btn-tinted bx-wide" data-adv="open">${CAL}${p ? 'Open calendar' : `Open door ${t}`}</button></section>`;
+      <button type="button" class="btn btn-tinted bx-wide" data-adv="open">${CAL}${!t || p ? 'Open calendar' : `Open door ${t}`}</button></section>`;
   }
   document.addEventListener('click', (e) => {
     const b = e.target.closest('[data-adv]'); if (!b) return;
