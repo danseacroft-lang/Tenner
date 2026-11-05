@@ -195,8 +195,6 @@
   function open(from) {
     if (!season()) return;
     build(); opener = from || null; closing = false; paint();
-    // from the first look, the calendar has its box in the right-hand column to shrink back into
-    const st = store.get(); if (!st.seen) { st.seen = Date.now(); store.set(st); opts.redraw?.(); }
     $('#advRv').hidden = true; dlg.classList.remove('mini'); dlg.getAnimations().forEach((a) => a.cancel());
     dlg.showModal();
     $('.adv-sc', dlg).scrollTop = 0;
@@ -283,16 +281,29 @@
   function shut() {
     if (!dlg?.open || closing) return;
     closing = true;
+    // the first time it's closed, its box joins the right-hand column: a space opens at the top (Discover slides down)
+    // and the calendar lands in it
+    let fresh = null, h = 0;
+    const st = store.get();
+    if (!st.seen) {
+      st.seen = Date.now(); store.set(st); opts.redraw?.();
+      fresh = inView($('#bxAdv'));
+      if (fresh && motion()) {
+        h = fresh.offsetHeight; fresh.style.opacity = '0';
+        fresh.animate([{ height: '0px', marginBottom: '-16px', paddingTop: '0px', paddingBottom: '0px' }, { height: `${h}px`, marginBottom: '0px' }],
+          { duration: 560, delay: 120, easing: 'cubic-bezier(.3,1.1,.4,1)', fill: 'backwards' });
+      }
+    }
     const target = inView($('#bxAdv')) || inView(opener);
-    const done = () => { dlg.close(); dlg.classList.remove('mini'); $('#advRv').hidden = true; closing = false; dlg.getAnimations().forEach((a) => a.cancel()); };
+    const done = () => { if (fresh) fresh.style.opacity = ''; dlg.close(); dlg.classList.remove('mini'); $('#advRv').hidden = true; closing = false; dlg.getAnimations().forEach((a) => a.cancel()); };
     if (!motion()) { done(); return; }
     if (!target) { dlg.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.94)' }], { duration: 260, easing: 'ease-in', fill: 'forwards' }).finished.then(done); return; }
-    const a = dlg.getBoundingClientRect(), b = target.getBoundingClientRect();
+    const a = dlg.getBoundingClientRect(), r = target.getBoundingClientRect(), b = { left: r.left, top: r.top, width: r.width, height: fresh === target && h ? h : r.height };
     dlg.classList.add('mini');   // the doors fade first, then the night sky folds away into the box
     dlg.animate([{ transform: 'none', opacity: 1 }, { transform: 'scale(.985)', opacity: 1, offset: .2 },
       { transform: `translate(${b.left - a.left}px, ${b.top - a.top}px) scale(${b.width / a.width}, ${b.height / a.height})`, opacity: .15 }],
     { duration: 780, easing: 'cubic-bezier(.55,0,.2,1)', fill: 'forwards' }).finished.then(() => {
-      done();
+      done(); target.style.opacity = '';
       target.classList.remove('adv-land'); void target.offsetWidth; target.classList.add('adv-land');
       setTimeout(() => target.classList.remove('adv-land'), 1300);
     });
@@ -303,7 +314,7 @@
   // the calendar at it.
   function box() {
     const st = store.get(), doors = st.doors, t = Math.min(today(), 25);
-    if (!season() || !(st.seen || Object.keys(doors).length)) return '';
+    if (!season() || !st.seen) return '';
     const p = t ? doors[t] : null;
     const mini = ORDER.map((n) => {
       const d = doors[n], [c1, c2] = TONES[(n * 7) % 4];
