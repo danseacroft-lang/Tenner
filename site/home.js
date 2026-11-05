@@ -203,8 +203,8 @@
   // ---------- Christmas (1 November to Boxing Day): a festive slide among the featured titles ----------
   // Its own artwork (a snowy village at night, a lit tree), a countdown in the scores' box, a nudge to add Tenner to the
   // Home Screen for the holidays and a Share button. While it's showing, the page turns to a winter night and snow falls
-  // from the top of the window; it all goes back when another title comes round. On phones it's a card above the charts,
-  // and the snow falls while the card's in view. Never any snow when the device asks for Reduce Motion.
+  // from the top of the window; it all goes back when another title comes round, or when you scroll past. Phones get the
+  // same featured titles to swipe through, Christmas first. Never any snow when the device asks for Reduce Motion.
   const XMAS = (() => { const d = new Date(); return d.getMonth() === 10 || (d.getMonth() === 11 && d.getDate() <= 26); })();
   const XMAS_IT = { title: 'Christmas on Tenner', poster: 'xmas-poster.webp', xmas: true };
   const xmasDays = () => {
@@ -226,7 +226,7 @@
     return `<dl class="bx-score" aria-label="${c.d} days until Christmas">${cells.map(([v, l]) => `<div><dt>${v}</dt><dd>${l}</dd></div>`).join('')}</dl>`;
   }
   function xmasCopy() {
-    const c = $('#bxCopy'); if (!c || !heroList[state.hero]?.it.xmas) { drawXmasCard(); return; }
+    const c = $('#bxCopy'); if (!c || !heroList[state.hero]?.it.xmas) return;
     const here = !xmasDays();
     c.innerHTML = `${xmasCount()}
       <p class="bx-eye bx-eye-x">${I.sparkle}<span>${here ? 'Merry Christmas' : 'Christmas is coming'}</span></p>
@@ -235,20 +235,9 @@
       ${xmasHow() ? `<p class="bx-h-how">${esc(xmasHow())}</p>` : ''}
       <div class="bx-h-acts">${xmasActs()}</div>`;
   }
-  // phones: a card above the charts
-  const xmasCard = () => (!XMAS ? '' : `<section class="bx-xph" id="bxXph" aria-labelledby="bxXphT"><img src="xmas.webp" alt="" decoding="async">
-      <div class="bx-xph-copy"><p class="bx-eye bx-eye-x">${I.sparkle}<span>${xmasDays() ? `${xmasDays().d} days to Christmas` : 'Merry Christmas'}</span></p>
-      <h2 id="bxXphT">${xmasDays() ? 'Christmas is nearly here' : 'Merry Christmas from Tenner'}</h2>
-      <p>${esc(xmasSay())}</p>
-      ${xmasHow() ? `<p class="bx-h-how">${esc(xmasHow())}</p>` : ''}
-      <div class="bx-h-acts">${xmasActs()}</div></div></section>`);
-  function drawXmasCard() { const old = $('#bxXph'); if (old) old.outerHTML = xmasCard(); watchXmasCard(); }
-  let xmasIO = null;
-  function watchXmasCard() {
-    xmasIO?.disconnect(); const el = $('#bxXph'); if (!el) return;
-    xmasIO = new IntersectionObserver(([e]) => xmasMood(e.intersectionRatio > .35), { threshold: [0, .35, .6] });
-    xmasIO.observe(el);
-  }
+  // the winter night only while the slide's showing and the featured titles are on screen (scrolled past, it stops)
+  let heroSeen = true;
+  new IntersectionObserver(([e]) => { heroSeen = e.intersectionRatio > .35; xmasMood(!!heroList[state.hero]?.it.xmas && heroSeen); }, { threshold: [0, .35, .6] }).observe($('#bxHero'));
   document.addEventListener('click', (e) => {
     const b = e.target.closest('[data-xmas]'); if (!b) return;
     window.tn.haptic?.();
@@ -264,7 +253,7 @@
     const root = document.documentElement;
     if (on) { root.classList.add('xmas'); requestAnimationFrame(() => root.classList.add('xmas-in')); } else { root.classList.remove('xmas-in'); setTimeout(() => !xmasOn && root.classList.remove('xmas'), 1300); }
     clearInterval(xmasClock);
-    if (on && !PHONE.matches) xmasClock = setInterval(() => { const d = $('#bxCopy .bx-score'); if (d && heroList[state.hero]?.it.xmas) d.outerHTML = xmasCount(); }, 20000);
+    if (on) xmasClock = setInterval(() => { const d = $('#bxCopy .bx-score'); if (d && heroList[state.hero]?.it.xmas) d.outerHTML = xmasCount(); }, 20000);
     snow(on && !matchMedia('(prefers-reduced-motion: reduce)').matches);   // the snow is the slide's point, so it falls even with Animations off; never with Reduce Motion
   }
   // the snow: one canvas over the window, each flake at its own depth (nearer ones bigger, softer and a little faster),
@@ -343,7 +332,7 @@
   function showHero(i, first) {
     state.hero = i; const { it } = heroList[i];
     const art = $('#bxArt'), layer = document.createElement('div');
-    layer.className = 'bx-h-l'; layer.innerHTML = it.xmas ? '<img src="xmas.webp" alt="">' : it.backdrop ? `<img src="${esc(it.backdrop.replace('/w1280/', '/original/'))}" srcset="${esc(it.backdrop)} 1280w, ${esc(it.backdrop.replace('/w1280/', '/original/'))} 1920w" sizes="(min-width: 1000px) 70vw, 100vw" alt="">` : wide(it);
+    layer.className = 'bx-h-l'; layer.innerHTML = it.xmas ? '<img class="bx-h-ximg" src="xmas.webp" alt="">' : it.backdrop ? `<img src="${esc(it.backdrop.replace('/w1280/', '/original/'))}" srcset="${esc(it.backdrop)} 1280w, ${esc(it.backdrop.replace('/w1280/', '/original/'))} 1920w" sizes="(min-width: 1000px) 70vw, 100vw" alt="">` : wide(it);
     const put = () => {
       art.append(layer); requestAnimationFrame(() => layer.classList.add('in'));
       setTimeout(() => [...art.children].slice(0, -1).forEach((c) => c.remove()), first || reduce ? 0 : 900);
@@ -351,7 +340,7 @@
     const img = layer.querySelector('img'); img?.decode ? img.decode().then(put, put) : put();
     ambient(it.xmas ? 'xmas.webp' : it.backdrop ? it.backdrop.replace('/w1280/', '/w780/') : it.poster);
     drawHeroCopy();
-    xmasMood(!!it.xmas && !PHONE.matches);
+    xmasMood(!!it.xmas && heroSeen);
     for (const b of $('#bxHero').querySelectorAll('[data-hero]')) { const on = +b.dataset.hero === i; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; }
     // keep the chosen poster in view in the strip
     const strip = $('#bxStrip'), b = strip?.querySelector(`[data-hero="${i}"]`);
@@ -436,16 +425,14 @@
     const g = state.genre != null ? state.cat?.genres?.[state.genre] : null;
     const best = kinds().map((k) => row(`bxPTr-${k}`, `Top rated ${word(k)}${g ? ` in ${esc(g)}` : ''}`, 'The highest scores from viewers', topRated(k).map((it, i) => card(it, infoFor(it, `No. ${i + 1} top rated`), it.year)),
       'bx-row-p', `browse.html#${esc(String(new URLSearchParams({ c: 'top', ...(k === 'movie' ? { k: 'movie' } : {}) })))}`));
-    return xmasCard() + top.join('') + forYouRow() + best.join('');
+    return top.join('') + forYouRow() + best.join('');
   }
   function drawRows() {
     if (PHONE.matches) {
       $('#bxRows').innerHTML = phoneRows() || '<p class="bx-empty">Nothing matches. Try another genre.</p>';
       for (const r of main.querySelectorAll('.bx-row')) edges(r);
-      watchXmasCard();
       return;
     }
-    xmasIO?.disconnect();
     const cat = catalogue(), g = state.genre != null ? state.cat?.genres?.[state.genre] : null;
     const words = { both: 'shows and films', tv: 'shows', movie: 'films' }[state.kind];
     // most popular: posters with their score in a chip (the first and third references)

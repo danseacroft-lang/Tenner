@@ -1,6 +1,6 @@
 // Tenner's Christmas calendar: 25 doors, one a day from 1 to 25 December. Behind each, a film or show picked at random
 // when you open it (mostly Christmas favourites, sometimes something big we think you'll enjoy), kept on this device so it's
-// the same next time you look. Opened from the homepage's Christmas slide (or its card on phones) with any [data-adv="open"]
+// the same next time you look. Opened from the homepage's Christmas slide with any [data-adv="open"]
 // button. A door swings open on its hinge with a burst of gold sparkles and the pick comes forward on a card; close the
 // calendar and it shrinks into its box at the top of the right-hand column (where it shows today's door from then on).
 // No door opens before its day. The home page lends what it has loaded: window.tnAdvent.use({ cat, popular, info, redraw }).
@@ -285,8 +285,8 @@
     // and the calendar lands in it
     let fresh = null, h = 0;
     const st = store.get();
-    if (!st.seen) {
-      st.seen = Date.now(); store.set(st); opts.redraw?.();
+    if (!st.landed) {
+      st.landed = Date.now(); store.set(st); opts.redraw?.();
       fresh = inView($('#bxAdv'));
       if (fresh && motion()) {
         h = fresh.offsetHeight; fresh.style.opacity = '0';
@@ -314,7 +314,7 @@
   // the calendar at it.
   function box() {
     const st = store.get(), doors = st.doors, t = Math.min(today(), 25);
-    if (!season() || !st.seen) return '';
+    if (!season() || !st.landed) return ''; // (landed, not the earlier seen: everyone sees it land afresh)
     const p = t ? doors[t] : null;
     const mini = ORDER.map((n) => {
       const d = doors[n], [c1, c2] = TONES[(n * 7) % 4];

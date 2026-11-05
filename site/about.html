@@ -41,8 +41,8 @@
   try{var t=localStorage.getItem("tenner-theme");tnTheme(t==="light"||t==="auto"?t:"dark")}catch(e){tnTheme("dark")}
   try{if(!(JSON.parse(localStorage.getItem("tenner-settings")||"{}").anim)||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("still")}catch(e){document.documentElement.classList.add("still")}
   addEventListener("pagereveal",function(e){if(e.viewTransition&&document.documentElement.classList.contains("still")){e.viewTransition.ready.catch(function(){});e.viewTransition.skipTransition()}});</script>
-  <link rel="stylesheet" href="styles.css?v=2.44.1">
-  <link rel="stylesheet" href="about.css?v=2.44.1">
+  <link rel="stylesheet" href="styles.css?v=2.45.0">
+  <link rel="stylesheet" href="about.css?v=2.45.0">
 
 </head>
 <body class="about">
@@ -89,7 +89,7 @@
       <a class="side-link" href="legal.html#privacy">Privacy Policy</a>
       <a class="side-link" href="legal.html#cookies">Cookies</a>
       <a class="side-link" href="contact.html">Contact</a>
-      <span class="side-ver">Tenner 2.44.1</span>
+      <span class="side-ver">Tenner 2.45.0</span>
     </div>
   </div>
 
@@ -188,7 +188,7 @@
     <nav class="more-links" aria-label="Site information">
       <a href="contact.html">Contact</a><a href="legal.html#privacy">Privacy Policy</a><a href="legal.html#terms">Terms of Service</a><a href="legal.html#cookies">Cookies</a>
     </nav>
-    <p class="more-ver side-ver-text">Tenner 2.44.1</p>
+    <p class="more-ver side-ver-text">Tenner 2.45.0</p>
   </main>
 
   <script>/* the live bits, from the hour's chart: the hero's picture, the top five, the try-it chart and the deck */
@@ -246,6 +246,6 @@
     if(document.readyState==='loading') addEventListener('DOMContentLoaded',function(){load(false)}); else load(false);
     addEventListener('tn:check',function(){load(true)});   /* a new hour, a new chart */
   })();</script>
-  <script src="shell.js?v=2.44.1" defer></script>
+  <script src="shell.js?v=2.45.0" defer></script>
 </body>
 </html>
