@@ -62,7 +62,9 @@
   const firstLoad = () => window.tn.loading.wrap(load());   // the ring in the middle, should the charts take a moment
 
   const services = () => (state.data?.services || []).filter((s) => !s.shop && !s.store);
-  window.tnTonight?.use({ cat: () => state.cat, services: () => state.data?.services, titles: () => state.titles });   // What should I watch tonight? borrows what's loaded
+  window.tnTonight?.use({ cat: () => state.cat, services: () => state.data?.services, titles: () => state.titles });
+  // the Christmas calendar (advent.js) picks from the same catalogue and charts, and puts its box in the side column
+  window.tnAdvent?.use({ cat: () => state.cat, popular: () => (state.data ? popular() : []), info: (x) => infoFor(fromCat(x), 'Christmas calendar'), redraw: () => drawSide() });   // What should I watch tonight? borrows what's loaded
   const svcOf = (k) => (state.data?.services || []).find((s) => s.key === k);
   const kinds = () => (state.kind === 'both' ? ['tv', 'movie'] : [state.kind]);
   const det = (k) => state.titles?.items?.[k] || null;
@@ -216,7 +218,8 @@
   const xmasHow = () => (standalone ? 'Tenner’s already on your Home Screen. Merry Christmas!'
     : window.tn.isIOS ? 'On iPhone or iPad, tap Share, then Add to Home Screen.'
       : isMacSafari ? 'On a Mac, in Safari choose File, then Add to Dock.' : '');
-  const xmasActs = () => `<button type="button" class="btn btn-tinted bx-cta" data-xmas="share">${I.share}Share Tenner</button>${installEv && !standalone ? `<button type="button" class="btn btn-tinted bx-cta bx-cta-2" data-xmas="install">${I.install}Install</button>` : ''}`;
+  const xmasActs = () => `${window.tnAdvent ? `<button type="button" class="btn btn-tinted bx-cta" data-adv="open">${window.tnAdvent.icon}Open calendar</button>` : ''}<button type="button" class="btn btn-tinted bx-cta" data-xmas="share">${I.share}Share Tenner</button>${installEv && !standalone ? `<button type="button" class="btn btn-tinted bx-cta bx-cta-2" data-xmas="install">${I.install}Install</button>` : ''}`;
+  const xmasSay = () => `${new Date().getMonth() === 11 ? 'Open today’s door in Tenner’s Christmas calendar' : 'From 1 December, open a door a day in Tenner’s Christmas calendar'}, add Tenner to your Home Screen for easy access over the holidays, and stay up to date with the very best films and shows this Christmas.`;
   function xmasCount() {
     const c = xmasDays(); if (!c) return '';
     const cells = [[c.d, c.d === 1 ? 'day' : 'days'], [c.h, c.h === 1 ? 'hour' : 'hours'], [c.m, c.m === 1 ? 'minute' : 'minutes']];
@@ -228,7 +231,7 @@
     c.innerHTML = `${xmasCount()}
       <p class="bx-eye bx-eye-x">${I.sparkle}<span>${here ? 'Merry Christmas' : 'Christmas is coming'}</span></p>
       <h2 class="bx-h-t">${here ? 'Merry Christmas from Tenner' : 'Christmas is nearly here'}</h2>
-      <p class="bx-h-ov">Add Tenner to your Home Screen for easy access over the holidays, and stay up to date with the very best films and shows this Christmas. Share it with friends and family too.</p>
+      <p class="bx-h-ov bx-h-ov-x">${esc(xmasSay())}</p>
       ${xmasHow() ? `<p class="bx-h-how">${esc(xmasHow())}</p>` : ''}
       <div class="bx-h-acts">${xmasActs()}</div>`;
   }
@@ -236,7 +239,7 @@
   const xmasCard = () => (!XMAS ? '' : `<section class="bx-xph" id="bxXph" aria-labelledby="bxXphT"><img src="xmas.webp" alt="" decoding="async">
       <div class="bx-xph-copy"><p class="bx-eye bx-eye-x">${I.sparkle}<span>${xmasDays() ? `${xmasDays().d} days to Christmas` : 'Merry Christmas'}</span></p>
       <h2 id="bxXphT">${xmasDays() ? 'Christmas is nearly here' : 'Merry Christmas from Tenner'}</h2>
-      <p>Add Tenner to your Home Screen for easy access over the holidays, and stay up to date with the very best films and shows this Christmas.</p>
+      <p>${esc(xmasSay())}</p>
       ${xmasHow() ? `<p class="bx-h-how">${esc(xmasHow())}</p>` : ''}
       <div class="bx-h-acts">${xmasActs()}</div></div></section>`);
   function drawXmasCard() { const old = $('#bxXph'); if (old) old.outerHTML = xmasCard(); watchXmasCard(); }
@@ -542,7 +545,7 @@
   // ---------- the side column: yours ----------
   function drawSide() {
     if (!state.data) return;
-    $('#bxSide').innerHTML = discover() + topTen() + (window.tnTonight?.box() || '') + climbers() + tvGuide();
+    $('#bxSide').innerHTML = (window.tnAdvent?.box() || '') + discover() + topTen() + (window.tnTonight?.box() || '') + climbers() + tvGuide();
     markSaved();
   }
   // Tenner TV: its own box here instead of a place in the menu, while it's in beta

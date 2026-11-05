@@ -355,3 +355,4 @@ html.still .bx-tt-bg img { transition: none; }
 .bx-xph h2 { margin: 0; font: 800 30px/1.05 var(--font-display); letter-spacing: -.03em; text-shadow: 0 2px 20px rgba(0, 0, 0, .4); }
 .bx-xph-copy > p:not([class]) { margin: 0; font-size: 15px; line-height: 1.42; color: rgba(255, 255, 255, .88); }
 .bx-xph .bx-cta { height: 44px; }
+.bx-h-ov-x { -webkit-line-clamp: 4; }
