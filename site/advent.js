@@ -9,7 +9,7 @@
   const { esc, fold } = window.tn;
   const $ = (s, el = document) => el.querySelector(s);
   const opts = {};
-  const motion = () => !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const motion = () => !document.documentElement.classList.contains('still');   // Settings → Animations off, or the device's Reduce Motion
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const season = () => { const d = new Date(); return d.getMonth() === 10 || (d.getMonth() === 11 && d.getDate() <= 26); };
   const today = () => { const d = new Date(); return d.getMonth() === 11 ? d.getDate() : 0; };   // 0 before December

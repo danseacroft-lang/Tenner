@@ -41,7 +41,7 @@
     const data = { tenner: 1, exported: new Date().toISOString(), watchlist: saved.all(), progress: progress.all(), services: mine.get(), settings: prefs.get() };
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' }));
-    a.download = `tenner-${new Date().toISOString().slice(0, 10)}.json`; a.click();
+    a.download = `tenner-${new Date().toLocaleDateString('en-CA')}.json`; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
     say(`Exported ${data.watchlist.length} title${data.watchlist.length === 1 ? '' : 's'}`);
   });

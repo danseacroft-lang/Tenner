@@ -231,8 +231,8 @@
       nu.className = 'hs-hint-t in'; nu.textContent = text; hint.append(nu);
       old?.classList.add('out'); setTimeout(() => old?.remove(), 700);
     };
-    if (!still()) setInterval(() => {
-      if (document.hidden || qi.value || window.tnSheet?.isOpen() || sheet.open) return;
+    setInterval(() => {
+      if (still() || document.hidden || qi.value || window.tnSheet?.isOpen() || sheet.open) return;
       const picks = list.filter((x) => !x._x).slice(0, 12);
       hintAt = (hintAt + 1) % (picks.length + 1);
       sayHint(hintAt && picks[hintAt - 1] ? `Try “${picks[hintAt - 1].n}”` : base);
