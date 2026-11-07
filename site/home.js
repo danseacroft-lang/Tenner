@@ -16,7 +16,8 @@
     const opener = first && !h && !location.search && ['new', 'watchlist'].includes(start);
     if (chart || opener) { location.replace(`charts.html${location.search}#${chart ? h : start}`); return; }
   }
-  const { esc, hue, reduce } = window.tn;
+  const { esc, hue } = window.tn;
+  const reduce = () => document.documentElement.classList.contains('still');   // Animations off, or Reduce Motion (read live)
   const $ = (s, el = document) => el.querySelector(s);
   const LOGO = 'https://image.tmdb.org/t/p/w500';
   const KINDS = { both: 'Shows and films', tv: 'Shows', movie: 'Films' };
@@ -335,7 +336,7 @@
     layer.className = 'bx-h-l'; layer.innerHTML = it.xmas ? '<img class="bx-h-ximg" src="xmas.webp" alt="">' : it.backdrop ? `<img src="${esc(it.backdrop.replace('/w1280/', '/original/'))}" srcset="${esc(it.backdrop)} 1280w, ${esc(it.backdrop.replace('/w1280/', '/original/'))} 1920w" sizes="(min-width: 1000px) 70vw, 100vw" alt="">` : wide(it);
     const put = () => {
       art.append(layer); requestAnimationFrame(() => layer.classList.add('in'));
-      setTimeout(() => [...art.children].slice(0, -1).forEach((c) => c.remove()), first || reduce ? 0 : 900);
+      setTimeout(() => [...art.children].slice(0, -1).forEach((c) => c.remove()), first || reduce() ? 0 : 900);
     };
     const img = layer.querySelector('img'); img?.decode ? img.decode().then(put, put) : put();
     ambient(it.xmas ? 'xmas.webp' : it.backdrop ? it.backdrop.replace('/w1280/', '/w780/') : it.poster);
@@ -390,7 +391,7 @@
     s.classList.toggle('at-start', s.scrollLeft < 4); s.classList.toggle('at-end', s.scrollLeft + s.clientWidth > s.scrollWidth - 4);
   }
   addEventListener('resize', () => requestAnimationFrame(stripArrows));
-  const still = () => reduce || document.documentElement.classList.contains('still');
+  const still = reduce;
   // swipe the featured title on phones
   let sx = null;
   $('#bxHero').addEventListener('pointerdown', (e) => { if (e.pointerType !== 'mouse') sx = [e.clientX, e.clientY]; }, { passive: true });
@@ -400,7 +401,7 @@
   });
   window.tn.arrows($('#bxHero'), () => [...$('#bxHero').querySelectorAll('[data-hero]')], (b) => showHero(+b.dataset.hero));
   // it moves on by itself only with Settings → Animations on, and waits while you're reading or looking at a title
-  const held = () => PHONE.matches || document.hidden || window.tnSheet?.isOpen() || $('#bxHero').matches(':hover, :focus-within') || document.documentElement.classList.contains('still') || reduce;
+  const held = () => PHONE.matches || document.hidden || window.tnSheet?.isOpen() || $('#bxHero').matches(':hover, :focus-within') || document.documentElement.classList.contains('still') || reduce();
   function startHero() {
     clearTimeout(heroTimer); if (heroList.length < 2) return;
     heroTimer = setTimeout(function tick() { if (held()) { heroTimer = setTimeout(tick, 2000); return; } showHero((state.hero + 1) % heroList.length); }, 9000);
@@ -556,7 +557,7 @@
   main.addEventListener('click', (e) => {
     const b = e.target.closest('[data-scroll]'); if (!b) return;
     const r = b.closest('.bx-sec').querySelector('.bx-row');
-    r.scrollBy({ left: +b.dataset.scroll * r.clientWidth * 0.85, behavior: reduce || document.documentElement.classList.contains('still') ? 'auto' : 'smooth' });
+    r.scrollBy({ left: +b.dataset.scroll * r.clientWidth * 0.85, behavior: reduce() ? 'auto' : 'smooth' });
   });
 
   // ---------- the side column: yours ----------

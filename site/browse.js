@@ -2,7 +2,8 @@
 // State lives in the URL (#c=top&k=movie&s=netflix,disney&g=18&sort=rating&r=7&y=1990-2010&a=12&rt=60), so any view can be
 // shared or bookmarked.
 (() => {
-  const { esc, hue, arrows, reduce } = window.tn;   // from shell.js
+  const { esc, hue, arrows } = window.tn;   // from shell.js
+  const reduce = () => document.documentElement.classList.contains('still');   // Animations off, or Reduce Motion (read live)
   const $ = (s) => document.querySelector(s);
   const PAGE = 48;
   const daysAgo = (n) => new Date(Date.now() - n * 864e5).toLocaleDateString('en-CA');   // your own date (YYYY-MM-DD), worked out each time, so it's right past midnight
@@ -298,7 +299,7 @@
     // controls reflect state
     document.querySelectorAll('.coll-b').forEach((b) => b.setAttribute('aria-checked', b.dataset.c === state.c));
     { const tr = $('#coll'), on = tr.querySelector('[aria-checked="true"]');   // phones: the chosen one slides into view
-      if (on && tr.scrollWidth > tr.clientWidth + 1) tr.scrollTo({ left: Math.max(0, on.offsetLeft - tr.clientWidth / 2 + on.offsetWidth / 2), behavior: reduce ? 'auto' : 'smooth' }); }
+      if (on && tr.scrollWidth > tr.clientWidth + 1) tr.scrollTo({ left: Math.max(0, on.offsetLeft - tr.clientWidth / 2 + on.offsetWidth / 2), behavior: reduce() ? 'auto' : 'smooth' }); }
     $('#kindSel').value = state.k; $('#kindL').textContent = { tv: 'Shows', movie: 'Films', both: 'Both' }[state.k];
     document.querySelectorAll('#where input').forEach((i) => { i.checked = state.s.includes(i.dataset.s); });
     const sk = q && !state.sort ? '' : sortKey();   // searching: best match first unless you pick a sort
@@ -334,7 +335,7 @@
     // swap the grid (a quick crossfade where the browser can)
     const draw = () => { shown = 0; $('#grid').innerHTML = ''; more(); empty(); };
     webSearch();
-    if (user && !quiet && document.startViewTransition && !reduce) document.startViewTransition(draw).ready.catch(() => {}); else draw();
+    if (user && !quiet && document.startViewTransition && !reduce()) document.startViewTransition(draw).ready.catch(() => {}); else draw();
     if (!q) { spotlight(); moods(); } else $('#moods').hidden = true;
     rows();
   }
@@ -360,7 +361,7 @@
   // glass; without one, the poster blurred big does the same, so the hero is never empty. A thin bar for each pick fills
   // while it's showing (CSS), and when it's full the next one glides in; pointing at the hero, an open sheet or Animations
   // off hold it still. Swipe on touch, the arrows or ← → on the bars elsewhere.
-  const still = () => reduce || document.documentElement.classList.contains('still');
+  const still = reduce;
   const spot = { key: '', picks: [], at: 0 }, fk = (x) => `${x.t[0]}${x.i}`;
   const kindWord = () => (state.k === 'movie' ? 'Films' : state.k === 'both' ? 'Shows and films' : 'Shows');
   const posterOf = (x) => x.img ? (x.img.startsWith('/') ? cat.img + x.img : x.img) : null;
@@ -577,7 +578,7 @@
       : w ? { k, type: w.type, title: w.title, year: w.year, poster: w.poster } : null;
     if (!info) return;
     const on = window.tn.saved.toggle(info);
-    if (on && !reduce && b.animate) b.animate([{ scale: 1 }, { scale: 1.25 }, { scale: 1 }], { duration: 360, easing: 'cubic-bezier(.3,1.5,.5,1)' });
+    if (on && !reduce() && b.animate) b.animate([{ scale: 1 }, { scale: 1.25 }, { scale: 1 }], { duration: 360, easing: 'cubic-bezier(.3,1.5,.5,1)' });
   }, true);
   addEventListener('tn:saved', () => document.querySelectorAll('[data-save]').forEach((b) => {
     const on = window.tn.saved.has(b.dataset.save);
@@ -593,7 +594,7 @@
     const pool = (good.length >= 5 ? good : list).slice(0, 80);
     if (!pool.length) return;
     const x = pool[Math.floor(Math.pow(Math.random(), 1.4) * pool.length)];   // the better ones a little more often
-    const b = e?.currentTarget || $('.b-dice'); if (!reduce && b.animate) b.querySelector('svg').animate([{ rotate: '0deg' }, { rotate: '360deg' }], { duration: 500, easing: 'cubic-bezier(.3,.9,.3,1)' });
+    const b = e?.currentTarget || $('.b-dice'); if (!reduce() && b.animate) b.querySelector('svg').animate([{ rotate: '0deg' }, { rotate: '360deg' }], { duration: 500, easing: 'cubic-bezier(.3,.9,.3,1)' });
     window.tnSheet?.open({ ...(await sheetFor(x)), eye: 'Tenner’s surprise pick' });
   }
 

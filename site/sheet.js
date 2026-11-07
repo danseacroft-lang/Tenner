@@ -6,7 +6,8 @@
 // title (its logo, episodes, trailers and extras, the film series, More Like This, reviews and Information) comes from the
 // search API as the sheet opens, and fills in below.
 (() => {
-  const { esc, hue, reduce, saved, progress, nextUp, whenText } = window.tn;
+  const { esc, hue, saved, progress, nextUp, whenText } = window.tn;
+  const reduce = () => document.documentElement.classList.contains('still');   // Animations off, or Reduce Motion (read live)
   // the chart history (data/trail.json: each charted title's recent ranks), loaded with the first sheet
   let trailP = null;
   const trail = () => (trailP ||= fetch(`data/trail.json?v=${Math.floor(Date.now() / 600000)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null));
@@ -266,7 +267,7 @@
       if (!info.overview) { el.remove(); return; }
       const fresh = el.querySelector('.sh-sk');
       el.innerHTML = `<p>${esc(info.overview)}</p>`;
-      if (fresh && !reduce) el.firstChild.classList.add('sh-in');
+      if (fresh && !reduce()) el.firstChild.classList.add('sh-in');
     }
     const el = $('#shOv'), p = el?.firstChild; if (!p || current !== info) return;
     // only offer More when the text really runs past four lines
@@ -323,7 +324,7 @@
       return `<li${nextOne ? ' data-up' : ''}${soon || sp ? ` class="${[soon && 'soon', sp && 'spoil'].filter(Boolean).join(' ')}"` : ''}><span class="sh-still">${e.still ? `<img src="${esc(e.still)}" alt="" loading="lazy" decoding="async">` : ''}${sp ? '<button type="button" class="sh-unspoil" data-act="unspoil" aria-label="Show this episode’s name and description (it may spoil things)">Show</button>' : ''}${done(e.n) ? '<i class="sh-tick" aria-label="Watched"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 8.4 2.6 2.6L12 5.4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></i>' : ''}</span>
         <small class="sh-epn">${nextOne ? 'Up next · ' : ''}Episode ${e.n}</small><b${ah}>${esc(e.name)}</b>${e.ov ? `<p${ah}>${esc(e.ov)}</p>` : ''}<small>${esc([when, runtime(e.rt)].filter(Boolean).join(' · '))}</small></li>`;
     }).join('')}</ul>`;
-    if (!reduce) el.firstChild.classList.add('sh-in');
+    if (!reduce()) el.firstChild.classList.add('sh-in');
     if (shield && el.querySelector('.spoil')) window.tn.tip?.({ id: 'spoiler-shield', for: '#shEps .spoil .sh-unspoil', title: 'Spoiler shield', text: 'Episodes after where you’re up to are blurred so nothing gets spoiled. Tap Show to see one, or turn it off in Settings.' });
     // the row starts at the episode you're up to
     const row = el.firstChild, at = row.querySelector('[data-up]');
@@ -385,7 +386,7 @@
         m.like?.length ? `<section class="sh-sec" aria-labelledby="shL"><h3 id="shL">More Like This</h3>${postersHtml(m.like)}</section>` : '',
         revsHtml(m), infoHtml(info, x, m),
       ].join('');
-      if (!reduce) for (const s of lower.children) s.classList.add('sh-in');
+      if (!reduce()) for (const s of lower.children) s.classList.add('sh-in');
     }
     const foot = $('#shFoot');
     if (foot) foot.insertAdjacentHTML('beforeend', [m.imdb ? ` <a href="https://www.imdb.com/title/${esc(m.imdb)}/" target="_blank" rel="noopener">IMDb</a>` : '',
@@ -509,7 +510,7 @@
     current = null; clearTimeout(autoT); $('#shArt iframe')?.remove(); sheet.classList.remove('in');
     document.documentElement.classList.remove('sheet-up');
     const done = () => { if (!current) { sheet.close(); body.innerHTML = ''; } };
-    reduce ? done() : setTimeout(done, 320);
+    reduce() ? done() : setTimeout(done, 320);
     if (!fromHistory && pushed) { tidy = !firstPushed; history.go(-pushed); pushed = 0; }
     else if (!fromHistory) { const u = new URL(location.href); u.searchParams.delete('t'); history.replaceState(null, '', u); }
     if (fromHistory) pushed = 0;
@@ -569,7 +570,7 @@
     clearTimeout(autoT);
     $('#shArt').innerHTML = `<iframe src="${embed(key)}" title="${esc(title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
     $('#shArt').classList.remove('auto', 'has-logo'); $('#shArt').classList.add('playing'); $('#shT')?.classList.remove('sh-vh');
-    body.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+    body.scrollTo({ top: 0, behavior: reduce() ? 'auto' : 'smooth' });
   }
   let thanksT = 0;
   sheet.addEventListener('click', (e) => {
@@ -585,7 +586,7 @@
     if (b.dataset.act === 'trailer') {
       const key = (shown || await details())?.items?.[current.k]?.tr; if (!key) return;
       // already playing by itself with the sound off: Trailer just turns the sound on
-      if ($('#shArt').classList.contains('auto')) { sound(true); body.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); return; }
+      if ($('#shArt').classList.contains('auto')) { sound(true); body.scrollTo({ top: 0, behavior: reduce() ? 'auto' : 'smooth' }); return; }
       play(key, `Trailer: ${current.title}`);
     }
     if (b.dataset.act === 'sound') sound(b.getAttribute('aria-pressed') !== 'true');
@@ -596,7 +597,7 @@
     if (b.dataset.act === 'star') {
       const on = window.tn.stars.toggle(current.k);
       b.outerHTML = starBtn(on); const nb = sheet.querySelector('.sh-star'); nb?.focus({ preventScroll: true });
-      if (on && !reduce && nb?.animate) nb.querySelector('svg').animate([{ scale: 1 }, { scale: 1.35 }, { scale: 1 }], { duration: 420, easing: 'cubic-bezier(.3,1.6,.5,1)' });
+      if (on && !reduce() && nb?.animate) nb.querySelector('svg').animate([{ scale: 1 }, { scale: 1.35 }, { scale: 1 }], { duration: 420, easing: 'cubic-bezier(.3,1.6,.5,1)' });
       if (on) navigator.vibrate?.(10);
       const t = $('#shThanks'); clearTimeout(thanksT);
       t.textContent = on ? 'Thanks. We’ll use the shows and films you like to offer you better recommendations.' : ''; t.classList.toggle('in', on);
@@ -689,7 +690,7 @@
   // description and who's in it; click anywhere else on it for the full sheet. Only with a mouse or trackpad: on touch
   // screens a tap opens the sheet, as before. Pages say which posters get one with tnSheet.hover(selector, el → info).
   const fine = matchMedia('(hover: hover) and (pointer: fine)');
-  const calm = () => reduce || document.documentElement.classList.contains('still');
+  const calm = reduce;
   const hovers = [], ART = '.nr-art, .art, .pp-art, .cover, img';   // what a card grows out of: the poster
   const hc = Object.assign(document.createElement('div'), { className: 'hc', hidden: true });
   hc.setAttribute('role', 'group'); document.body.append(hc);
@@ -744,7 +745,7 @@
       const s = p.r.width / p.w, dx = p.r.left + p.r.width / 2 - (p.left + p.w / 2), dy = p.r.top + p.r.height / 2 - (p.top + p.h / 2);
       hc.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${s})` }, { transform: 'none' }], { duration: 460, easing: 'cubic-bezier(.25, 1.12, .4, 1)' });
       hc.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'ease-out' });
-    } else if (!reduce && hc.animate) hc.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 150 });
+    } else if (!reduce() && hc.animate) hc.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 150 });
     const c = card;
     // what isn't here yet: the hour's details (or, for a title Tenner doesn't follow, the search API's), the
     // description and wider artwork, and the lead cast

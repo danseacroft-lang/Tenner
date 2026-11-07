@@ -8,7 +8,7 @@ const APIS = 'https://tenner-api.danseacroft.workers.dev', ONAIR = 'https://tenn
 // the hourly data every page reads, fetched when the app is installed (and refreshed in the background where the device
 // allows), so each page opens offline even if it's never been visited
 const DATA = ['trending', 'titles', 'trail', 'week', 'new', 'prices', 'cinema', 'browse', 'browse-more'].map((n) => `data/${n}.json`);
-const CORE = ['./', 'index.html', 'charts.html', 'home.css', 'home.js', 'advent.css', 'advent.js', 'tonight.js', 'browse.html', 'about.html', 'settings.html', 'settings.css', 'settings.js', 'legal.html', 'legal.css', 'discover.html', 'account.html', 'account.css', 'account.js', 'styles.css', 'browse.css', 'about.css', 'discover.css', 'contact.html', 'contact.css', 'contact.js', 'list.html', 'list.js', 'shell.js', 'links.js', 'sheet.js', 'app.js', 'browse.js', 'cards.js', 'person.js', 'discover.js',
+const CORE = ['./', 'index.html', 'charts.html', 'home.css', 'home.js', 'advent.css', 'advent.js', 'tonight.js', 'browse.html', 'about.html', 'settings.html', 'settings.css', 'settings.js', 'legal.html', 'legal.css', 'discover.html', 'account.html', 'account.css', 'account.js', 'styles.css', 'browse.css', 'about.css', 'discover.css', 'contact.html', 'contact.css', 'contact.js', 'list.html', 'list.js', 'shell.js', 'links.js', 'sheet.js', 'app.js', 'browse.js', 'person.js', 'discover.js',
   'logo.svg', 'favicon.svg', 'favicon.ico'];
 
 self.addEventListener('install', (e) => {

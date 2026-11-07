@@ -4,7 +4,8 @@
 // your Watchlist, left to skip it, down (or tap) for the details sheet. The buttons and arrow keys do the same.
 // Skipped titles are remembered on this device so they don't come round again; Undo takes back the last swipe.
 (() => {
-  const { esc, hue, reduce, saved, swipes } = window.tn;   // from shell.js
+  const { esc, hue, saved, swipes } = window.tn;   // from shell.js
+  const reduce = () => document.documentElement.classList.contains('still');   // Animations off, or Reduce Motion (read live)
   const $ = (s) => document.querySelector(s);
   const SKIP = 'tenner-skipped', KIND = 'tenner-discover-kind', HINTED = 'tenner-discover-hinted', WIDE = 'tenner-discover-page';
   const TMDB_IMG = 'https://image.tmdb.org/t/p';
@@ -175,7 +176,7 @@
     const w = innerWidth, sx = from?.x || 0, sy = from?.y || 0, dir = yes ? 1 : -1;
     el.classList.add(yes ? 'yes' : 'no'); el.classList.remove('top'); el.style.setProperty('--d', 0);
     const done = () => el.remove();
-    if (reduce || !el.animate) return done();
+    if (reduce() || !el.animate) return done();
     const vy = from?.vy || 0, ex = dir * (w + 200), ey = sy + vy * 260, rot = dir * 22 + sx / 30;
     el.animate([{ transform: `translate(${sx}px,${sy}px) rotate(${sx / 18}deg)` }, { transform: `translate(${ex}px,${ey}px) rotate(${rot}deg)` }],
       { duration: from ? 300 : 420, easing: from ? 'cubic-bezier(.25,.6,.4,1)' : 'cubic-bezier(.5,0,.2,1)', fill: 'forwards' }).finished.then(done, done);
@@ -191,7 +192,7 @@
     if (cards.length >= 3) { const last = cards.pop(); (last._x.wide ? wide.q : deck).unshift(last._x); last.remove(); }
     const el = cardFor(h.x); cards.unshift(el); stage.append(el); depths(); ambient(); $('#dActs').classList.remove('off');
     say(`${h.x.n} is back`);
-    if (!reduce && el.animate) { const dir = h.yes ? 1 : -1; el.animate([{ transform: `translate(${dir * (innerWidth + 100)}px,40px) rotate(${dir * 20}deg)` }, { transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.2,.9,.25,1.05)' }); }
+    if (!reduce() && el.animate) { const dir = h.yes ? 1 : -1; el.animate([{ transform: `translate(${dir * (innerWidth + 100)}px,40px) rotate(${dir * 20}deg)` }, { transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.2,.9,.25,1.05)' }); }
   }
   function details() {
     const el = cards[0]; if (!el) return;
@@ -217,7 +218,7 @@
   const springBack = (el) => {
     el.style.removeProperty('--yes'); el.style.removeProperty('--no'); el.classList.remove('armed'); stage.style.removeProperty('--p');
     const from = el.style.transform; el.style.transform = '';
-    if (!reduce && el.animate && from) el.animate([{ transform: from }, { transform: 'none' }], { duration: 520, easing: 'cubic-bezier(.2,1.4,.4,1)' });
+    if (!reduce() && el.animate && from) el.animate([{ transform: from }, { transform: 'none' }], { duration: 520, easing: 'cubic-bezier(.2,1.4,.4,1)' });
   };
   stage.addEventListener('pointerdown', (e) => {
     const el = e.target.closest('.dc.top'); if (!el || e.button || el.leaving) return;
@@ -331,7 +332,7 @@
   // the first time: the top card leans right, then left, to show it moves
   function hint() {
     let seen = false; try { seen = !!localStorage.getItem(HINTED); localStorage.setItem(HINTED, '1'); } catch {}
-    const el = cards[0]; if (seen || reduce || !el?.animate) return;
+    const el = cards[0]; if (seen || reduce() || !el?.animate) return;
     setTimeout(() => el.isConnected && !el.leaving && el.animate([{ transform: 'none' }, { transform: 'translateX(46px) rotate(3deg)' }, { transform: 'translateX(-46px) rotate(-3deg)' }, { transform: 'none' }],
       { duration: 1400, easing: 'cubic-bezier(.45,0,.3,1)' }), 700);
   }

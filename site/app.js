@@ -2,7 +2,8 @@
 // anything else here goes there. Reads data/trending.json and data/new.json (rebuilt hourly by GitHub Actions).
 // Shared helpers (esc, hue) come from shell.js, which loads first.
 
-const { esc, hue, reduce: reduceMotion } = window.tn;
+const { esc, hue } = window.tn;
+const reduceMotion = () => document.documentElement.classList.contains('still');   // Animations off (or Reduce Motion): read live, so a change in Settings or another tab applies at once
 const state = { trending: null, fresh: null, route: 'new' };
 const $ = (s, el = document) => el.querySelector(s);
 const view = $('#view');
@@ -71,7 +72,7 @@ function render() {
 }
 // Swap the page through a View Transition where the browser has one, so changes crossfade instead of jumping.
 function morph(fn) {
-  if (!document.startViewTransition || reduceMotion || !view.firstElementChild || view.querySelector('.loading')) { fn(); return; }
+  if (!document.startViewTransition || reduceMotion() || !view.firstElementChild || view.querySelector('.loading')) { fn(); return; }
   document.startViewTransition(fn).ready.catch(() => {});   // a newer change can cut one short: that's fine
 }
 function draw() {
@@ -139,7 +140,7 @@ view.addEventListener('click', (e) => {
   e.preventDefault(); window.tnSheet?.open(shown.get(a.dataset.sheet));
 });
 // on computers, resting the pointer on a poster opens it up into a hover card (sheet.js)
-window.tnSheet?.hover?.('a[data-sheet]:not(.h-cta, .mb-card)', (a) => shown.get(a.dataset.sheet));   // every title, bar the hero's own button
+window.tnSheet?.hover?.('a[data-sheet]:not(.mb-card)', (a) => shown.get(a.dataset.sheet));   // every title, bar the phone banners
 // a shared link (?t=m123) opens that title's sheet once the chart has loaded
 function openFromUrl() {
   const k = new URL(location.href).searchParams.get('t'); if (!k || window.tnSheet?.isOpen()) return;
@@ -203,7 +204,7 @@ async function alertCard() {
   $('#wlAlertX').addEventListener('click', () => {
     try { localStorage.setItem('tenner-alerts-hidden', '1'); } catch {}
     const done = () => { box.hidden = true; };
-    if (reduceMotion || !box.animate) return done();
+    if (reduceMotion() || !box.animate) return done();
     box.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.97)' }], { duration: 220, easing: 'ease-in' }).finished.then(done, done);
   });
   $('#wlAlertOn')?.addEventListener('click', async (e) => {
@@ -407,7 +408,7 @@ view.addEventListener('click', (e) => {
   const b = e.target.closest('[data-unsave]'); if (!b) return;
   const li = b.closest('li'), next = li.nextElementSibling || li.previousElementSibling, k = b.dataset.unsave;
   const done = () => { window.tn.saved.remove(k); requestAnimationFrame(() => $(`[data-unsave="${CSS.escape(next?.querySelector('[data-unsave]')?.dataset.unsave || '')}"]`)?.focus({ preventScroll: true })); };
-  if (reduceMotion || !li.animate) return done();
+  if (reduceMotion() || !li.animate) return done();
   b.disabled = true;
   li.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.9)', filter: 'blur(6px)' }], { duration: 260, easing: 'cubic-bezier(.3,0,.2,1)', fill: 'forwards' }).finished.then(done, done);
 });
@@ -511,7 +512,7 @@ function calendarFile(x) {
 }
 view.addEventListener('click', (e) => {
   const j = e.target.closest('[data-jump]');
-  if (j) { e.preventDefault(); $(`#${j.dataset.jump}`)?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' }); return; }
+  if (j) { e.preventDefault(); $(`#${j.dataset.jump}`)?.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' }); return; }
   const b = e.target.closest('[data-cal]'); if (!b) return;
   const x = calItems[+b.dataset.cal]; if (!x) return;
   const url = `data:text/calendar;charset=utf-8,${encodeURIComponent(calendarFile(x))}`, a = document.createElement('a');
@@ -535,7 +536,7 @@ function openTab(name) {
   if (name === 'about') { location.href = 'about.html'; return; }
   if (name === 'browse') { location.href = 'browse.html'; return; }
   if (name === 'discover') { location.href = 'discover.html'; return; }   // Discover (phones)
-  if (name === state.route) { scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }); return; } // tap the open tab: back to the top
+  if (name === state.route) { scrollTo({ top: 0, behavior: reduceMotion() ? 'auto' : 'smooth' }); return; } // tap the open tab: back to the top
   if (name === 'new' || name === 'watchlist') location.hash = name; else location.href = './';
 }
 window.tnOnTab = openTab;

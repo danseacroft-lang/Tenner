@@ -13,8 +13,6 @@
   --accent: #007aff; --green: #28a745; --gold: #c27c00;
   --shadow: 0 10px 30px rgba(0, 0, 0, .14), 0 2px 6px rgba(0, 0, 0, .08);
   --cover-shadow: 0 0 0 .5px rgba(0, 0, 0, .1), 0 6px 18px -8px rgba(0, 0, 0, .3);
-  /* the neon ranks */
-  --num-glass: rgba(255, 255, 255, .4); --num-glass-top: rgba(255, 255, 255, .62); --aura: .32; --core: .95;
   /* the glass shell and the wash of colour behind every page */
   --amb1: rgba(0, 122, 255, .11); --amb2: rgba(255, 55, 95, .07); --amb3: rgba(191, 90, 242, .07);
   --glass: rgba(255, 255, 255, .64);
@@ -48,7 +46,6 @@
     --accent: #0a84ff; --green: #30d158; --gold: #ffb340;
     --shadow: 0 10px 30px rgba(0, 0, 0, .6);
     --cover-shadow: 0 0 0 .5px rgba(255, 255, 255, .12), 0 6px 18px -8px rgba(0, 0, 0, .55);
-    --num-glass: rgba(0, 0, 0, .5); --num-glass-top: rgba(40, 40, 46, .38); --aura: .45;
     --amb1: rgba(10, 132, 255, .24); --amb2: rgba(255, 55, 95, .1); --amb3: rgba(191, 90, 242, .16);
     --glass: rgba(32, 32, 36, .58);
     --pill: rgba(118, 118, 128, .28);
@@ -64,7 +61,6 @@
   --accent: #0a84ff; --green: #30d158; --gold: #ffb340;
   --shadow: 0 10px 30px rgba(0, 0, 0, .6);
   --cover-shadow: 0 0 0 .5px rgba(255, 255, 255, .12), 0 6px 18px -8px rgba(0, 0, 0, .55);
-  --num-glass: rgba(0, 0, 0, .5); --num-glass-top: rgba(40, 40, 46, .38); --aura: .45;
   --amb1: rgba(10, 132, 255, .24); --amb2: rgba(255, 55, 95, .1); --amb3: rgba(191, 90, 242, .16);
   --glass: rgba(32, 32, 36, .58);
   --pill: rgba(118, 118, 128, .28);
@@ -93,7 +89,6 @@ a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 img { display: block; max-width: 100%; }
 [hidden] { display: none !important; }
-.defs { position: absolute; width: 0; height: 0; overflow: hidden; }
 .skip { position: absolute; left: -999px; }
 .skip:focus { left: 16px; top: 8px; z-index: 30; }
 :focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 2px; }
@@ -266,24 +261,8 @@ a.tb-btn:hover { text-decoration: none; }
 .large-title { margin: 14px 0 4px; font: 700 clamp(32px, 5vw, 48px)/1.1 var(--font-display); letter-spacing: -.008em; text-wrap: balance; }
 .lede { margin: 0; color: var(--label2); font-size: 17px; letter-spacing: -.022em; max-width: 60ch; }
 .lede b { color: var(--label); font-weight: 600; }
-.sub { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 0; font-size: 16px; letter-spacing: -.022em; }
-#lede { display: inline-flex; align-items: center; gap: 7px; }
-/* "Updated … ago": a quiet text button; tap it to check for a newer chart */
-.updated {
-  display: inline-flex; align-items: center; gap: 7px; margin: 0; padding: 0; border: 0; border-radius: var(--r); background: none; cursor: pointer;
-  color: var(--label2); font: 500 15px/1.3 var(--font); letter-spacing: -.016em; position: relative;
-}
-@media (hover: hover) { .updated:hover { color: var(--label); } }
-.updated::after { content: ""; position: absolute; inset: -12px -8px; }   
-/* no movement on this row, so Share stays pinned in its corner */
+/* a fade with no movement */
 @keyframes fadeOnly { from { opacity: 0; } }
-@keyframes ping { 0% { transform: scale(.5); opacity: .7; } 80%, 100% { transform: scale(1.4); opacity: 0; } }
-/* only while checking */
-@keyframes busy { 50% { transform: scale(.5); opacity: .5; } }
-#ago.swap { display: inline-block; animation: agoSwap .5s var(--ease-out); }
-@keyframes agoSwap { from { opacity: 0; transform: translateY(6px); filter: blur(3px); } }
-
-.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
 .segmented { position: relative; isolation: isolate; touch-action: pan-y;
   display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; flex: none; height: 36px; padding: 3px; border-radius: var(--r);
   background: var(--frost); box-shadow: var(--frost-line); -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); }
@@ -301,10 +280,6 @@ a.tb-btn:hover { text-decoration: none; }
 }
 .seg-thumb.held { scale: 1.06; filter: brightness(1.06); }   /* held: it swells a touch, as the iOS knob does */
 .segmented button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-
-/* the poster rows' fading edges animate these lengths; a service with no logo gets a glyph on Tenner's colours */
-@property --fl { syntax: "<length>"; inherits: true; initial-value: 0px; }
-@property --fr { syntax: "<length>"; inherits: true; initial-value: 0px; }
 
 /* Shows / Films / Both: a pop-up button (the macOS / iOS way) over the browser's own picker, a native <select> */
 .dd {
@@ -325,102 +300,32 @@ a.tb-btn:hover { text-decoration: none; }
 /* a compact capsule, its width just its words, right above the services link */
 .dd-kind { min-width: 0; height: 36px; padding: 0 14px 0 18px; gap: 10px; font: 600 16px/1 var(--font); letter-spacing: -.02em; }
 .dd-kind .dd-chev { opacity: .7; }
-@media (min-width: 561px) { .controls { flex-direction: column; align-items: flex-start; gap: 2px; } }
-
-@media (max-width: 560px) {
-  .controls { gap: 10px; flex-wrap: nowrap; align-items: center; }
-  #kindDD { flex: none; height: 40px; }
-}
-   /* the smallest phones: it still fits beside the menu */
+@media (max-width: 560px) { #kindDD { flex: none; height: 40px; } }
 
 .notice { margin: 12px 0 0; padding: 12px 16px; border-radius: var(--r); background: color-mix(in srgb, var(--accent) 12%, transparent); font-size: 15px; }
-.chart { min-width: 0; padding-top: 6px; }
 
 /* phones: page titles at the iOS Large Title size (34pt bold) */
 @media (max-width: 560px) {
   .large-title { font-size: 34px; line-height: 1.12; margin-top: 10px; }
-    .lede, .sub { font-size: 15px; }
-  .updated { flex: none; }
+  .lede { font-size: 15px; }
   .segmented button { min-width: 0; padding: 0 12px; }
   .notice { font-size: 14px; padding: 10px 14px; }
 }
 
-.posters {
-  list-style: none; margin: 0; padding: 30px var(--col) 10px;
-  display: grid; grid-auto-flow: column; grid-auto-columns: var(--cw); gap: 22px;
-  overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; scroll-padding-inline: var(--col);
-}
-.posters::-webkit-scrollbar { display: none; }
-@keyframes cardIn { from { opacity: 0; transform: translateY(26px) scale(.94); } }
-
-/* each rank is a neon sign in four layers: a soft aura, a glassy body, the rainbow tube with bloom, a white-hot core */
-.num { position: absolute; top: -14px; left: -12px; width: 156px; height: 112px; overflow: visible; pointer-events: none; z-index: 1; transition: transform .5s var(--ease-spring); }
-.num text { font: 800 96px var(--font-display); letter-spacing: -.025em; font-variant-numeric: tabular-nums; paint-order: stroke; }
-.num .aura { opacity: var(--aura); transition: opacity .4s ease; }
-.num .glass { fill: url(#glassFill); }
-.cover img, .cover .ph { width: 100%; height: auto; aspect-ratio: 2 / 3; object-fit: contain; background: var(--fill); }
+/* a title with no poster: its name on a colour of its own */
 .ph { display: grid; align-content: end; padding: 18px; color: #fff; font: 700 25px/1.05 var(--font); letter-spacing: -.03em; text-wrap: balance; }
 .star { color: var(--gold); font-weight: 600; }
 
 
-/* the row melts into the screen edges, the way Apple's own apps do it:
-   1. the posters fade out along a smootherstep curve (no visible start or end to the ramp), and
-   2. above them, six stacked layers of glass whose blur doubles towards the edge, each masked to its own band,
-      so the frosting deepens gradually instead of starting as a strip.
-   Each edge glides away when you reach that end of the row. */
-.posters {
-  --fl: var(--edge); --fr: var(--edge);
-  -webkit-mask-image: linear-gradient(to right, rgb(0 0 0 / 0.0000) calc(var(--fl) * 0.0000), rgb(0 0 0 / 0.0051) calc(var(--fl) * 0.0833), rgb(0 0 0 / 0.0355) calc(var(--fl) * 0.1667), rgb(0 0 0 / 0.1035) calc(var(--fl) * 0.2500), rgb(0 0 0 / 0.2099) calc(var(--fl) * 0.3333), rgb(0 0 0 / 0.3466) calc(var(--fl) * 0.4167), rgb(0 0 0 / 0.5000) calc(var(--fl) * 0.5000), rgb(0 0 0 / 0.6534) calc(var(--fl) * 0.5833), rgb(0 0 0 / 0.7901) calc(var(--fl) * 0.6667), rgb(0 0 0 / 0.8965) calc(var(--fl) * 0.7500), rgb(0 0 0 / 0.9645) calc(var(--fl) * 0.8333), rgb(0 0 0 / 0.9949) calc(var(--fl) * 0.9167), rgb(0 0 0 / 1.0000) calc(var(--fl) * 1.0000), rgb(0 0 0 / 1.0000) calc(100% - var(--fr) * 1.0000), rgb(0 0 0 / 0.9949) calc(100% - var(--fr) * 0.9167), rgb(0 0 0 / 0.9645) calc(100% - var(--fr) * 0.8333), rgb(0 0 0 / 0.8965) calc(100% - var(--fr) * 0.7500), rgb(0 0 0 / 0.7901) calc(100% - var(--fr) * 0.6667), rgb(0 0 0 / 0.6534) calc(100% - var(--fr) * 0.5833), rgb(0 0 0 / 0.5000) calc(100% - var(--fr) * 0.5000), rgb(0 0 0 / 0.3466) calc(100% - var(--fr) * 0.4167), rgb(0 0 0 / 0.2099) calc(100% - var(--fr) * 0.3333), rgb(0 0 0 / 0.1035) calc(100% - var(--fr) * 0.2500), rgb(0 0 0 / 0.0355) calc(100% - var(--fr) * 0.1667), rgb(0 0 0 / 0.0051) calc(100% - var(--fr) * 0.0833), rgb(0 0 0 / 0.0000) calc(100% - var(--fr) * 0.0000));
-  mask-image: linear-gradient(to right, rgb(0 0 0 / 0.0000) calc(var(--fl) * 0.0000), rgb(0 0 0 / 0.0051) calc(var(--fl) * 0.0833), rgb(0 0 0 / 0.0355) calc(var(--fl) * 0.1667), rgb(0 0 0 / 0.1035) calc(var(--fl) * 0.2500), rgb(0 0 0 / 0.2099) calc(var(--fl) * 0.3333), rgb(0 0 0 / 0.3466) calc(var(--fl) * 0.4167), rgb(0 0 0 / 0.5000) calc(var(--fl) * 0.5000), rgb(0 0 0 / 0.6534) calc(var(--fl) * 0.5833), rgb(0 0 0 / 0.7901) calc(var(--fl) * 0.6667), rgb(0 0 0 / 0.8965) calc(var(--fl) * 0.7500), rgb(0 0 0 / 0.9645) calc(var(--fl) * 0.8333), rgb(0 0 0 / 0.9949) calc(var(--fl) * 0.9167), rgb(0 0 0 / 1.0000) calc(var(--fl) * 1.0000), rgb(0 0 0 / 1.0000) calc(100% - var(--fr) * 1.0000), rgb(0 0 0 / 0.9949) calc(100% - var(--fr) * 0.9167), rgb(0 0 0 / 0.9645) calc(100% - var(--fr) * 0.8333), rgb(0 0 0 / 0.8965) calc(100% - var(--fr) * 0.7500), rgb(0 0 0 / 0.7901) calc(100% - var(--fr) * 0.6667), rgb(0 0 0 / 0.6534) calc(100% - var(--fr) * 0.5833), rgb(0 0 0 / 0.5000) calc(100% - var(--fr) * 0.5000), rgb(0 0 0 / 0.3466) calc(100% - var(--fr) * 0.4167), rgb(0 0 0 / 0.2099) calc(100% - var(--fr) * 0.3333), rgb(0 0 0 / 0.1035) calc(100% - var(--fr) * 0.2500), rgb(0 0 0 / 0.0355) calc(100% - var(--fr) * 0.1667), rgb(0 0 0 / 0.0051) calc(100% - var(--fr) * 0.0833), rgb(0 0 0 / 0.0000) calc(100% - var(--fr) * 0.0000));
-  transition: --fl .6s var(--ease-out), --fr .6s var(--ease-out);
-}
-.edge { position: absolute; z-index: 2; top: -28px; bottom: -28px; width: var(--edge);   /* a little past the row, fading out top and bottom: no hard line */
-  pointer-events: none; transition: opacity .6s var(--ease-out), translate .7s var(--ease-spring); }
-.edge.l { left: 0; --to: left; }
-.edge.r { right: 0; --to: right; }
-.edge i { position: absolute; inset: 0; }
-.edge i:nth-child(1) { -webkit-backdrop-filter: blur(0.6px); backdrop-filter: blur(0.6px); -webkit-mask-image: linear-gradient(to var(--to), transparent 0.00%, #000 14.29%, #000 28.57%, transparent 42.86%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to var(--to), transparent 0.00%, #000 14.29%, #000 28.57%, transparent 42.86%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); mask-composite: intersect; }
-.edge i:nth-child(2) { -webkit-backdrop-filter: blur(1.4px); backdrop-filter: blur(1.4px); -webkit-mask-image: linear-gradient(to var(--to), transparent 14.29%, #000 28.57%, #000 42.86%, transparent 57.14%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to var(--to), transparent 14.29%, #000 28.57%, #000 42.86%, transparent 57.14%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); mask-composite: intersect; }
-.edge i:nth-child(3) { -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); -webkit-mask-image: linear-gradient(to var(--to), transparent 28.57%, #000 42.86%, #000 57.14%, transparent 71.43%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to var(--to), transparent 28.57%, #000 42.86%, #000 57.14%, transparent 71.43%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); mask-composite: intersect; }
-.edge i:nth-child(4) { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); -webkit-mask-image: linear-gradient(to var(--to), transparent 42.86%, #000 57.14%, #000 71.43%, transparent 85.71%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to var(--to), transparent 42.86%, #000 57.14%, #000 71.43%, transparent 85.71%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); mask-composite: intersect; }
-.edge i:nth-child(5) { -webkit-backdrop-filter: blur(11px); backdrop-filter: blur(11px); -webkit-mask-image: linear-gradient(to var(--to), transparent 57.14%, #000 71.43%, #000 85.71%, transparent 100.00%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to var(--to), transparent 57.14%, #000 71.43%, #000 85.71%, transparent 100.00%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); mask-composite: intersect; }
-.edge i:nth-child(6) { -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); -webkit-mask-image: linear-gradient(to var(--to), transparent 71.43%, #000 85.71%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to var(--to), transparent 71.43%, #000 85.71%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%); mask-composite: intersect; }
-
-/* drag to scroll with a mouse: grab, fling, and it settles on a card */
-@media (hover: hover) and (pointer: fine) { .posters { cursor: grab; } }
-.posters.dragging { cursor: grabbing; scroll-snap-type: none; user-select: none; }
-.posters.dragging a { pointer-events: none; }
-
 @media (max-width: 560px) {
-    .edge i:nth-child(odd) { display: none; }   /* three layers are plenty on a phone, and cheaper to scroll */
-  .posters { gap: 16px; padding-top: 26px; }
-    .num { width: 118px; height: 85px; top: -10px; left: -9px; }
   .ph { font-size: 18px; padding: 12px; }
 }
-@media (prefers-reduced-transparency: reduce) { .edge { display: none; } }
-
-/* ============================================================ computers: the hero, the Sky / Apple TV way
-   The chart's top title as a big backdrop on the right of the page, melting into it on the left and at the bottom;
-   the page header and the hero's words run down the faded part, and the page carries on below as normal. */
-.backdrop, .bd-ext, .hero { display: none; }
+/* ============================================================ computers: the featured artwork's colours under the sidebar */
+.bd-ext { display: none; }
 @media (min-width: 1000px) {
   main { position: relative; isolation: isolate; }
-  .backdrop {
-    /* pinned to the window: it stays put while the page scrolls up over it */
-    display: block; position: fixed; z-index: -1; top: 0; right: 0; width: min(calc((100vw - var(--side, 0px)) * .84), var(--max)); height: clamp(640px, 94vh, 1000px); pointer-events: none; overflow: hidden;
-    /* two fades multiplied together: in from the left, out towards the bottom, both on soft curves so neither edge shows */
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, .12) 10%, rgba(0, 0, 0, .42) 22%, rgba(0, 0, 0, .78) 36%, #000 50%),
-                        linear-gradient(to bottom, #000 0%, #000 42%, rgba(0, 0, 0, .7) 60%, rgba(0, 0, 0, .3) 78%, transparent 100%);
-    -webkit-mask-composite: source-in;
-    mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, .12) 10%, rgba(0, 0, 0, .42) 22%, rgba(0, 0, 0, .78) 36%, #000 50%),
-                linear-gradient(to bottom, #000 0%, #000 42%, rgba(0, 0, 0, .7) 60%, rgba(0, 0, 0, .3) 78%, transparent 100%);
-    mask-composite: intersect;
-  }
-  /* as the page scrolls up over it, the picture dims, so the posters and lists stay easy to read (scroll-linked, no script) */
-  @supports (animation-timeline: scroll()) {
-    .backdrop { animation: bdDim linear both; animation-timeline: scroll(root); animation-range: 0 80vh; }
-    @keyframes bdDim { to { opacity: .32; } }
-  }
+  /* as the page scrolls, the colours dim, so the posters and lists stay easy to read (scroll-linked, no script) */
+  @keyframes bdDim { to { opacity: .32; } }
   /* Apple's background extension: the artwork, mirrored and heavily blurred, runs on under the glass sidebar, so the
      sidebar takes on the colours of what's showing. It fades out down the sidebar and dims with the backdrop. */
   .bd-ext { display: block; position: fixed; z-index: 49; top: 0; left: 0; width: var(--side); height: clamp(640px, 94vh, 1000px); overflow: hidden; pointer-events: none;
@@ -433,22 +338,8 @@ a.tb-btn:hover { text-decoration: none; }
   /* the Apple TV hero: a tall stage with the words at the bottom left, over the faded part of the artwork; arrows at
      either side, dots under the buttons and a pause button at the bottom right. A steady height, so nothing jumps as
      titles change. */
-  .hero { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: clamp(360px, calc(94vh - 390px), 620px);
-    margin: 0 calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); padding: 16px 76px 22px; }
   /* a soft shade of the page's own colour behind the words, so they read on any artwork; no edge, it melts like the fade */
   /* closest-side: the glow reaches nothing exactly at its box's edges, so it can never be cut off into a line */
-  .hero::before { content: ""; position: absolute; z-index: -1; left: -14%; right: 22%; top: -6%; bottom: -30%; pointer-events: none;
-    background: radial-gradient(closest-side, color-mix(in srgb, var(--bg) 58%, transparent) 0%, color-mix(in srgb, var(--bg) 40%, transparent) 38%, color-mix(in srgb, var(--bg) 14%, transparent) 70%, transparent 100%); }
-                        .h-cta {
-    display: inline-flex; align-items: center; justify-content: center; gap: 12px; width: min(300px, 100%); height: 64px; border-radius: var(--r);
-    background: color-mix(in srgb, var(--label) 82%, transparent); color: var(--bg); font: 600 21px/1 var(--font); letter-spacing: -.02em;
-    -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
-    transition: transform .4s var(--ease-spring), background-color .2s ease, filter .1s ease;
-  }
-  .h-cta svg { width: 20px; height: 20px; color: inherit; }
-  .h-cta:hover { text-decoration: none; background: var(--label); }
-  .h-cta:active { transform: scale(.96); }
-  .h-cta:focus-visible, .h-add:focus-visible, .h-arrow:focus-visible, .h-pause:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
                                           }
 
 .row-h { margin: 32px 0 12px; font: 700 22px/1.2 var(--font); letter-spacing: -.008em; }
@@ -476,13 +367,6 @@ a.tb-btn:hover { text-decoration: none; }
 .cl-t small { font-size: 13px; color: var(--label2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cl-r { flex: none; font-size: 13px; color: var(--label2); font-variant-numeric: tabular-nums; }
 /* movement since about a day ago: green up, red down, blue for new entries */
-.mv { font: 700 11px/1 var(--font); letter-spacing: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.mv.up { color: var(--green); }
-.mv.down { color: #ff3b30; }
-.mv.new { color: var(--accent); font-size: 9.5px; letter-spacing: .04em; }
-.mv.same { color: var(--label3); font-weight: 600; }
-.cl-n .mv { font-size: 10px; }
-.cl-n .mv.new { font-size: 8.5px; }
 
 /* New This Week, as a row of posters */
 .nr {
@@ -530,7 +414,6 @@ a.tb-btn:hover { text-decoration: none; }
 .nw-jump .chev { width: 7px; height: 7px; border-width: 0 2px 2px 0; transform: rotate(45deg); margin-top: -3px; }
 .wk { scroll-margin-top: 80px; }
 .nw-none { margin: 0; color: var(--label2); }
-.nw-cl .mv { flex: none; font-size: 13px; }
 .cal-add { flex: none; display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; color: var(--accent);
   background: color-mix(in srgb, var(--accent) 12%, transparent); -webkit-tap-highlight-color: transparent; transition: transform .3s var(--ease-spring), background-color .2s ease; }
 .cal-add svg { width: 20px; height: 20px; }
@@ -1188,16 +1071,15 @@ button.ps-face:active { scale: .96; }
   :root[data-theme="dark"] { --press: brightness(1.28); }
   button, summary, [role="tab"], [role="radio"], [role="menuitemradio"] { cursor: default; }
   /* a press is a change of shade, never of size */
-  .btn:active, .tabs button:active, .tb-btn:active, .dd:active, .scroller:active, .scroller:hover, .h-cta:active { transform: none; }
+  .btn:active, .tabs button:active, .tb-btn:active, .dd:active { transform: none; }
   .tabs button:active { filter: none; }
-  .btn:active, .tb-btn:active, .scroller:active, .segmented button:active, .dd:active { filter: var(--press); }
-  .h-cta:active { filter: var(--press); }
+  .btn:active, .tb-btn:active, .segmented button:active, .dd:active { filter: var(--press); }
   /* push buttons don't react to hover; borderless ones get a soft highlight that deepens while pressed */
   .segmented button[aria-checked="false"]:hover { color: var(--label); }
   .th-list button:active { background: var(--fill-strong); }
   .side-about:active { background: var(--fill-strong); }
   /* the Mac is quick: shades change at once */
-  .btn, .dd, .tb-btn, .scroller, .segmented button, .th-list button, .h-cta, .side-about { transition-duration: .1s; }
+  .btn, .dd, .tb-btn, .segmented button, .th-list button, .side-about { transition-duration: .1s; }
 }
 @media (hover: hover) and (pointer: fine) and (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --press: brightness(1.28); } }
 
@@ -1205,7 +1087,7 @@ button.ps-face:active { scale: .96; }
    Reduce Transparency: every glass surface turns solid. Increase Contrast: stronger text, separators and edges. */
 @media (prefers-reduced-transparency: reduce) {
   :root:is([data-theme], :not([data-theme])) { --glass: var(--bg2); --side-bg: var(--bg2); --frost: var(--bg2); --sheet-bg: var(--card); }
-  .tabs, .top-act, .dd, .tb-pop, .top-row, .scroller, .coll, .score, .step, .btn-tinted, .segmented, .h-cta, .h-add, .h-badge, .g-b, .tag, .panel, .filters, .sheet, .mine-dlg {
+  .tabs, .top-act, .dd, .tb-pop, .top-row, .coll, .score, .step, .btn-tinted, .segmented, .g-b, .tag, .panel, .filters, .sheet, .mine-dlg {
     -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
   }
   .bd-ext { display: none !important; }
@@ -1216,7 +1098,7 @@ button.ps-face:active { scale: .96; }
     --sep: color-mix(in srgb, var(--label) 45%, transparent); --label2: color-mix(in srgb, var(--label) 80%, transparent);
     --label3: color-mix(in srgb, var(--label) 62%, transparent); --fill: color-mix(in srgb, var(--label) 16%, transparent); --frost-edge: color-mix(in srgb, var(--label) 45%, transparent);
   }
-  .pcard a.cover, .f-img, .nr-art, .dd, .segmented { outline: 1px solid var(--sep); outline-offset: -1px; }
+  .nr-art, .dd, .segmented { outline: 1px solid var(--sep); outline-offset: -1px; }
   @media (max-width: 999px) { .tabs { outline: 1px solid var(--sep); outline-offset: -1px; } }   /* the floating tab bar, not the sidebar */
 }
 
@@ -1224,7 +1106,6 @@ button.ps-face:active { scale: .96; }
 /* Animations (off unless switched on in Settings, and always off when the device asks for reduced motion): nothing animates or transitions at all, not even for a moment,
    so the browser has no motion to set up and every change lands at once */
 .still, .still *, .still *::before, .still *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
-.no-moves .mv { display: none !important; }
 .no-ratings .star, .no-ratings .cl-r, .no-ratings .score, .no-ratings .bx-star { display: none !important; }
 
 /* ============================================================ the share card (shell.js), as on Channel Crossings
@@ -1322,7 +1203,7 @@ button.ps-face:active { scale: .96; }
     transition: transform .35s var(--ease-spring); }
   .mb-card:active { transform: scale(.98); }
   .mb-card:hover { text-decoration: none; }
-  .mb-card img, .mb-ph { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .mb-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .mb-card img.soft { filter: blur(18px) saturate(1.3); scale: 1.3; }
     /* the words sit on a soft shade at the bottom left, so they read on any picture */
   .mb-card::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0, 0, 0, .78) 0%, rgba(0, 0, 0, .35) 42%, transparent 70%); }
@@ -1334,10 +1215,6 @@ button.ps-face:active { scale: .96; }
   .mb-dots { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
   .mb-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--label3); transition: background-color .25s ease, transform .3s var(--ease-spring); }
   .mb-dots i.on { background: var(--label); transform: scale(1.15); }
-
-    
-    .posters { gap: 8px; padding-top: 18px; }
-      .num { width: 80px; height: 58px; top: -7px; left: -6px; }
       .ph { font-size: 13px; padding: 8px; }
   .nr { grid-auto-columns: 30vw; gap: 8px; }
   .nr-art { border-radius: var(--r); }
@@ -1375,7 +1252,7 @@ button.ps-face:active { scale: .96; }
   a.tb-round:hover { text-decoration: none; }
   .tb-menu { grid-column: 1; justify-self: start; }
   .top-brand { grid-column: 2; justify-self: center; }
-  .top-row > .share-chart, .top-row > .tb-filt { grid-column: 3; justify-self: end; }
+  .top-row > .tb-filt { grid-column: 3; justify-self: end; }
   /* Search: on the left, under the menu button, floating with it as the page scrolls; the page starts below it */
   .top-row { margin-bottom: 50px; }
   .top-row > .tb-search { position: absolute; left: var(--gutter); top: calc(env(safe-area-inset-top, 0px) + 56px); }
@@ -1486,20 +1363,19 @@ button.ps-face:active { scale: .96; }
    new button). Solid, deep tinted fills with no glass or rim, softly rounded rectangles (circles when there's only an
    icon), an icon beside the words where there is one, and white words and icons. The same in Day and Night. */
 :root { --bt-fill: #0b1e3c; --bt-hover: #132a52; --bt-round: #222226; --bt-round-hover: #2e2e33; --bt-on: #64d2ff; }
-.btn-tinted, .dd, .share-chart, .pv-ok, .ft-ok, .h-cta, .sh-main .btn, .h-add, .tb-round, .cal-add, .sh-btns .btn, .set-pill {
+.btn-tinted, .dd, .pv-ok, .ft-ok, .sh-main .btn, .tb-round, .cal-add, .sh-btns .btn, .set-pill {
   background: var(--bt-fill) !important; color: #fff !important; box-shadow: none !important;
   -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
 }
-.btn-tinted, .dd, .share-chart, .pv-ok, .ft-ok, .sh-main .btn, .sh-btns .btn, .set-pill { border-radius: var(--r) !important; font-weight: 500; letter-spacing: -.012em; }
-.h-cta { border-radius: var(--r) !important; font-weight: 500; letter-spacing: -.012em; }
-.dd .dd-l, .dd .dd-chev, .btn-tinted svg, .h-cta svg { color: #fff; }
+.btn-tinted, .dd, .pv-ok, .ft-ok, .sh-main .btn, .sh-btns .btn, .set-pill { border-radius: var(--r) !important; font-weight: 500; letter-spacing: -.012em; }
+.dd .dd-l, .dd .dd-chev, .btn-tinted svg { color: #fff; }
 /* only an icon: a circle */
-.h-add, .tb-round, .hc-r, .share-chart:not(:has(span, b)), .sh-more > .btn.sh-star { background: var(--bt-round) !important; border-radius: 50% !important; }
+.tb-round, .hc-r, .sh-more > .btn.sh-star { background: var(--bt-round) !important; border-radius: 50% !important; }
 @media (hover: hover) {
-  .btn-tinted:hover, .dd:hover, .share-chart:hover, .pv-ok:hover, .ft-ok:hover, .h-cta:hover, .sh-main .btn:hover, .cal-add:hover, .sh-btns .btn:hover, .set-pill:hover { background: var(--bt-hover) !important; }
-  .h-add:hover, .tb-round:hover, .hc-r:hover { background: var(--bt-round-hover) !important; }
+  .btn-tinted:hover, .dd:hover, .pv-ok:hover, .ft-ok:hover, .sh-main .btn:hover, .cal-add:hover, .sh-btns .btn:hover, .set-pill:hover { background: var(--bt-hover) !important; }
+  .tb-round:hover, .hc-r:hover { background: var(--bt-round-hover) !important; }
 }
-.cal-add, .h-add[aria-pressed="true"], .sh-more .btn[aria-pressed="true"], .hc-r[aria-pressed="true"] { color: var(--bt-on) !important; }
+.cal-add, .sh-more .btn[aria-pressed="true"], .hc-r[aria-pressed="true"] { color: var(--bt-on) !important; }
 .mb-badge { border-radius: var(--r); font-weight: 500; }
 .mine-done { color: #fff !important; }
 
@@ -1519,9 +1395,9 @@ span.av:not([style*="--h"]) { background: var(--fill-strong); color: var(--label
 .drawer .side-acct { padding: 10px 12px; margin: 0 0 10px; }
 
 /* buttons: regular weight, smoothed (greyscale antialiasing, as on Apple's own) rather than bold */
-button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .ft-ok, .sh-main .btn, .tn-opt, .coll-b, .segmented button, .nw-jump, .svc-link {
+button, .btn, .dd, .mb-badge, .pv-ok, .ft-ok, .sh-main .btn, .tn-opt, .coll-b, .segmented button, .nw-jump {
   -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-.btn, .h-cta, .sh-main .btn, .pv-ok, .dd-kind, .segmented button, .ac-main { font-weight: 500 !important; }
+.btn, .sh-main .btn, .pv-ok, .dd-kind, .segmented button, .ac-main { font-weight: 500 !important; }
 
 /* Shows | Films | Both and the other segmented switches: the same glass as the buttons beside them (Filters), with
    softly rounded corners, and the chosen option a lighter glass tile */
@@ -1534,25 +1410,13 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .ft-ok, .s
    at its own speed as you scroll. Scroll-driven animations only (no script): they run off the main thread, tied to the
    scroll, so they stay smooth. Only with Animations on, and never when the device asks for reduced motion. */
 @supports (animation-timeline: view()) {
-  /* computers: the picture stays pinned to the top and slowly zooms inside its frame (never pulling away from the
-     edge), while the hero's words lift away faster, so the picture feels far behind them */
-  @media (min-width: 1000px) {
-    :root:not(.still) .backdrop .bd-l { transform-origin: 70% 0; animation: pxZoom linear both; animation-timeline: scroll(root); animation-range: 0 100vh; }
-    :root:not(.still) .hero { animation: pxLift linear both; animation-timeline: scroll(root); animation-range: 0 70vh; }
-  }
-      /* each section rises gently into place as it comes on screen */
-  :root:not(.still) .chart > :is(.feats, .tn-card, .clist, .nrow) { animation: pxRise linear both; animation-timeline: view(); animation-range: entry 0% entry 45%; }
   /* New This Week and the Watchlist: each section, and each day's list, settles in the same way */
-  :root:not(.still) #view .wrap:not(.chart) :is(.wk-hd, .wk > .nr, .group, .nrow) { animation: pxRise linear both; animation-timeline: view(); animation-range: entry 0% entry 40%; }
+  :root:not(.still) #view .wrap :is(.wk-hd, .wk > .nr, .group, .nrow) { animation: pxRise linear both; animation-timeline: view(); animation-range: entry 0% entry 40%; }
   /* phones: the banners' pictures drift the other way as you swipe them */
   @media (max-width: 560px) {
     :root:not(.still) .mb-card > img:not(.mb-poster):not(.mb-glow):not(.soft) { scale: 1.16; animation: pxSwipe linear both; animation-timeline: view(inline); }
   }
 }
-@keyframes pxZoom { to { scale: 1.12; } }
-@keyframes pxLift { to { translate: 0 -90px; opacity: 0; } }
-@keyframes pxFloat { from { translate: 0 14px; } to { translate: 0 -14px; } }
-@keyframes pxPan { from { translate: 0 -6%; } to { translate: 0 6%; } }
 @keyframes pxRise { from { opacity: 0; translate: 0 34px; } }
 @keyframes pxSwipe { from { translate: 9% 0; } to { translate: -9% 0; } }
 
@@ -1586,8 +1450,8 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .ft-ok, .s
 @media (prefers-reduced-transparency: reduce) { .tip { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--card); } }
 
 /* comfortable taps: small round controls keep their look but answer to a 44pt area around them (Apple's minimum) */
-.wl-x, .svc-link { position: relative; }
-.wl-x::before, .svc-link::before { content: ""; position: absolute; inset: -7px; }
+.wl-x { position: relative; }
+.wl-x::before { content: ""; position: absolute; inset: -7px; }
 
 
 /* ============================================================ hover cards (sheet.js, computers only)
@@ -1790,7 +1654,7 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .ft-ok, .s
   --frost-blur: var(--fr-blur); --sheet-blur: var(--fr-blur);
   --bt-fill: rgba(11, 30, 60, .84); --bt-hover: rgba(19, 42, 82, .9); --bt-round: rgba(34, 34, 38, .8); --bt-round-hover: rgba(46, 46, 51, .86);
 }
-.btn-tinted, .dd, .share-chart, .pv-ok, .ft-ok, .h-cta, .sh-main .btn, .h-add, .tb-round, .cal-add, .sh-btns .btn, .set-pill {
+.btn-tinted, .dd, .pv-ok, .ft-ok, .sh-main .btn, .tb-round, .cal-add, .sh-btns .btn, .set-pill {
   -webkit-backdrop-filter: var(--fr-blur) !important; backdrop-filter: var(--fr-blur) !important; }
 /* boxes, bars and search boxes */
 .panel, .coll, .segmented, .view-sw, .tabs, .top-act, .tn-card, .sheet, .hc, .ss-res, .tip, .tb-pop, .mine-dlg {
@@ -1818,11 +1682,11 @@ button, .btn, .dd, .h-cta, .h-badge, .mb-badge, .share-chart, .pv-ok, .ft-ok, .s
   :root:root { --gutter: max(12px, env(safe-area-inset-left, 0px)); --gutter-r: max(12px, env(safe-area-inset-right, 0px));
     --ph-box: color-mix(in srgb, var(--label) 7%, color-mix(in srgb, var(--bg) 55%, transparent)); }
   /* the boxes: filled, never outlined */
-  :root .panel, :root .bx-panel.panel, :root .coll, :root .p-cmd, :root .tn-card {
+  :root .panel, :root .bx-panel.panel, :root .coll, :root .tn-card {
     background: var(--ph-box); box-shadow: none; }
-  :root .view-sw, :root .segmented, :root .seg-thumb, :root .pp-kinds button:not([aria-checked="true"]) { box-shadow: none; }
+  :root .view-sw, :root .segmented, :root .seg-thumb { box-shadow: none; }
   /* artwork cards: no hairline round the picture */
-  :root .bx-hero, :root .bx-dc-card, :root .dc, :root .mood, :root .dyn-ahs { box-shadow: 0 24px 48px -26px rgba(0, 0, 0, .6); }
+  :root .bx-hero, :root .bx-dc-card, :root .dc, :root .mood { box-shadow: 0 24px 48px -26px rgba(0, 0, 0, .6); }
   /* Settings: its groups and tiles filled, not outlined */
   :root .set-page { --sp-rim: transparent !important; }
   :root .set-page .set-form .set-group, :root .set-page .set-form .set-tile, :root .set-page .set-group, :root .set-page .set-tile { background: var(--ph-box); }
@@ -1895,11 +1759,11 @@ p { text-wrap: pretty; }
 @keyframes tapRing { from { outline: 2px solid color-mix(in srgb, var(--bt-on) 60%, transparent); outline-offset: 0; } to { outline: 2px solid transparent; outline-offset: 7px; } }
 
 /* icons inside buttons: a small lift on hover and a squeeze while pressed (sizes of the buttons themselves never change on a Mac) */
-:root:not(.still) :is(.btn, .h-cta, .h-add, .hc-r, .cal-add, .set-pill, .share-chart, .pv-ok, .ft-ok) > svg { transition: transform .45s var(--ease-snap); }
+:root:not(.still) :is(.btn, .hc-r, .cal-add, .set-pill, .pv-ok, .ft-ok) > svg { transition: transform .45s var(--ease-snap); }
 @media (hover: hover) {
-  :root:not(.still) :is(.btn, .h-cta, .h-add, .hc-r, .cal-add, .set-pill, .share-chart):hover > svg { transform: translateY(-1px) scale(1.1); }
+  :root:not(.still) :is(.btn, .hc-r, .cal-add, .set-pill):hover > svg { transform: translateY(-1px) scale(1.1); }
 }
-:root:not(.still) :is(.btn, .h-cta, .h-add, .hc-r, .cal-add, .set-pill, .share-chart, .pv-ok, .ft-ok):active > svg { transform: scale(.88); transition-duration: .12s; }
+:root:not(.still) :is(.btn, .hc-r, .cal-add, .set-pill, .pv-ok, .ft-ok):active > svg { transform: scale(.88); transition-duration: .12s; }
 :root:not(.still) .tn-opt .tn-chev { transition: transform .4s var(--ease-snap); }
 @media (hover: hover) { :root:not(.still) .tn-opt:hover .tn-chev { transform: translateX(3px); } }
 :root:not(.still) .tn-back svg { transition: transform .4s var(--ease-snap); }

@@ -3,7 +3,8 @@
 // their portrait and name, a few facts, the biography, what of theirs is on the six services now, Known For, and their
 // whole career. The address gains ?p=… so a person can be shared, and Back closes it. A title opens its own sheet.
 (() => {
-  const { esc, hue, reduce, api, segment } = window.tn;
+  const { esc, hue, api, segment } = window.tn;
+  const reduce = () => document.documentElement.classList.contains('still');   // Animations off, or Reduce Motion (read live)
   const $ = (s, el = document) => el.querySelector(s);
   const DEPT = { Acting: 'Actor', Directing: 'Director', Writing: 'Writer', Production: 'Producer', Sound: 'Composer', Camera: 'Cinematographer', Editing: 'Editor', Creator: 'Creator' };
   const initials = (n) => n.split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
@@ -126,7 +127,7 @@
     current = null; sheet.classList.remove('in');
     if (!window.tnSheet?.isOpen()) document.documentElement.classList.remove('sheet-up');
     const done = () => { if (!current) { sheet.close(); body.innerHTML = ''; } };
-    reduce ? done() : setTimeout(done, 320);
+    reduce() ? done() : setTimeout(done, 320);
     if (!fromHistory && pushed) { history.go(-pushed); pushed = 0; }
     else if (!fromHistory) { const u = new URL(location.href); u.searchParams.delete('p'); history.replaceState(history.state, '', u); }
     if (fromHistory) pushed = 0;

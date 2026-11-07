@@ -31,12 +31,12 @@
   const osStill = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const apply = () => { const p = prefs.get(); root.classList.toggle('still', !p.anim || osStill); root.classList.toggle('no-moves', !p.moves); root.classList.toggle('no-ratings', !p.ratings); };
   apply();
-  const reduce = osStill || !prefs.get().anim;
+  const reduce = () => root.classList.contains('still');   // read live: Settings, another tab or a sync can switch Animations on or off at any moment
   // every tap answers (styles.css, "polish and motion"): a ring of light from a button, the new choice gliding into a
   // pop-up button, and a small buzz from a switch where the device has one. Restarting a class replays its animation.
   const replay = (el, c) => { el.classList.remove(c); void el.offsetWidth; el.classList.add(c); };
   document.addEventListener('click', (e) => {
-    const b = e.target.closest?.('.btn, .dd, .h-cta, .h-add, .hc-r, .cal-add, .set-pill, .share-chart, .pv-ok, .ft-ok, .tn-opt');
+    const b = e.target.closest?.('.btn, .dd, .hc-r, .cal-add, .set-pill, .pv-ok, .ft-ok, .tn-opt');
     if (b && !root.classList.contains('still')) replay(b, 'tap-ring');
   }, true);
   document.addEventListener('change', (e) => {
@@ -56,7 +56,7 @@
     if (!ind || !b || !b.offsetWidth) return;
     const x = b.offsetLeft, w = b.offsetWidth, was = from.get(ind);
     from.set(ind, x);
-    if (was === undefined || !animate || reduce || !ind.animate) { ind.style.width = w + 'px'; ind.style.transform = `translateX(${x}px)`; return; }
+    if (was === undefined || !animate || reduce() || !ind.animate) { ind.style.width = w + 'px'; ind.style.transform = `translateX(${x}px)`; return; }
     const t0 = ind.style.transform, w0 = ind.style.width, mw = Math.max(parseFloat(w0), w) * stretch, mid = (was + x) / 2 - (mw - w) / 2;
     ind.style.width = w + 'px'; ind.style.transform = `translateX(${x}px)`;
     ind.animate([{ transform: t0, width: w0 }, { transform: `translateX(${mid}px)`, width: mw + 'px', offset: 0.45 }, { transform: `translateX(${x}px)`, width: w + 'px' }],
@@ -285,7 +285,7 @@
         dlg.querySelector('#mineAll').checked = rows.every((r) => r.querySelector('input').checked);
         for (const r of rows) r.querySelector('.mine-d').textContent = r.querySelector('input').checked ? 'In Top 10' : 'Add';
       };
-      const move = () => (!reduce && document.startViewTransition ? document.startViewTransition(place) : place());
+      const move = () => (!reduce() && document.startViewTransition ? document.startViewTransition(place) : place());
       dlg.addEventListener('change', (e) => {
         if (e.target.id === 'mineAll') { const v = e.target.checked; dlg.querySelectorAll('.mine-list input').forEach((i) => { i.checked = v; }); }
         move();
@@ -384,7 +384,7 @@
       <div class="sc-art">${SCENE}</div>
     </dialog>`);
     card = $('#shareCard');
-    const shut = () => { if (!card.open || card.classList.contains('out')) return; if (reduce || document.documentElement.classList.contains('still')) { card.close(); return; } card.classList.add('out'); setTimeout(() => { card.classList.remove('out'); card.close(); }, 200); };
+    const shut = () => { if (!card.open || card.classList.contains('out')) return; if (reduce()) { card.close(); return; } card.classList.add('out'); setTimeout(() => { card.classList.remove('out'); card.close(); }, 200); };
     $('#scX').addEventListener('click', shut);
     card.addEventListener('cancel', (e) => { e.preventDefault(); shut(); });
     card.addEventListener('click', (e) => {   // a tap on the dimmed page closes it
@@ -608,7 +608,7 @@
     place(); drawerQ.addEventListener('change', place);
     const shut = () => {
       if (!drawer.open || drawer.classList.contains('out')) return;
-      if (reduce || root.classList.contains('still')) { drawer.close(); return; }
+      if (reduce()) { drawer.close(); return; }
       drawer.classList.add('out'); setTimeout(() => { drawer.classList.remove('out'); drawer.close(); }, 260);
     };
     menuBtn.addEventListener('click', () => { drawer.showModal(); $('#drX').focus({ preventScroll: true }); });
@@ -646,7 +646,7 @@
       fplace(); drawerQ.addEventListener('change', fplace);
       const fshut = () => {
         if (!fl.open || fl.classList.contains('out')) return;
-        if (reduce || root.classList.contains('still')) { fl.close(); return; }
+        if (reduce()) { fl.close(); return; }
         fl.classList.add('out'); setTimeout(() => { fl.classList.remove('out'); fl.close(); }, 260);
       };
       flBtn.addEventListener('click', () => { fl.showModal(); $('#flX').focus({ preventScroll: true }); });
@@ -672,7 +672,7 @@
     $('#pvOk').addEventListener('click', () => {
       try { localStorage.setItem(NOTE, '1'); } catch {}
       tipReady = true; setTimeout(nextTip, 900);
-      box.classList.remove('in'); setTimeout(() => box.remove(), reduce ? 0 : 350);
+      box.classList.remove('in'); setTimeout(() => box.remove(), reduce() ? 0 : 350);
     });
   }, 1200);
 
@@ -785,7 +785,7 @@
           <button type="button" class="pv-ok" id="a2Ok">Got it</button></aside>`);
         const box = $('#a2Note');
         requestAnimationFrame(() => box.classList.add('in'));
-        $('#a2Ok').addEventListener('click', () => { try { localStorage.setItem(A2, '-1'); } catch {} box.classList.remove('in'); setTimeout(() => box.remove(), reduce ? 0 : 350); });
+        $('#a2Ok').addEventListener('click', () => { try { localStorage.setItem(A2, '-1'); } catch {} box.classList.remove('in'); setTimeout(() => box.remove(), reduce() ? 0 : 350); });
       }, 2500);
     }
   }
@@ -947,7 +947,7 @@
       removeEventListener('scroll', soonPlace, true); removeEventListener('resize', soonPlace);
       removeEventListener('pointerdown', outside, true); removeEventListener('keydown', key, true);
       b.classList.remove('in');
-      setTimeout(() => { b.remove(); setTimeout(nextTip, 700); }, reduce ? 0 : 260);
+      setTimeout(() => { b.remove(); setTimeout(nextTip, 700); }, reduce() ? 0 : 260);
     }
     place();
     addEventListener('scroll', soonPlace, { capture: true, passive: true }); addEventListener('resize', soonPlace);
@@ -1052,11 +1052,11 @@
   function open(name) {
     if (name === 'search') {   // Browse's own box on Browse; the menu's everywhere else
       const q = document.getElementById('q');
-      if (q) { q.focus(); q.select(); scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); return; }
+      if (q) { q.focus(); q.select(); scrollTo({ top: 0, behavior: reduce() ? 'auto' : 'smooth' }); return; }
       findAnywhere(); return;
     }
     if (window.tnOnTab) return window.tnOnTab(name);
-    if (name === cur) { scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); return; }
+    if (name === cur) { scrollTo({ top: 0, behavior: reduce() ? 'auto' : 'smooth' }); return; }
     loading.show('nav');
     if (name === 'about') { location.href = 'about.html'; return; }
     if (name === 'browse') { location.href = 'browse.html'; return; }
