@@ -110,7 +110,7 @@
     group.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, true);
   }
   // ---------- the version: change it here with every update and it shows everywhere (the sidebar, the end of About) ----------
-  const version = '2.47.2';
+  const version = '2.48.0';
   document.querySelectorAll('.side-ver, .side-ver-text').forEach((el) => { el.textContent = `Tenner ${version}`; });
 
   // ---------- the contact address: change it here and it updates everywhere (Contact, Privacy Policy, Terms) ----------
@@ -1215,6 +1215,19 @@
   }
 
   window.tnShell = { select, current: () => cur };
+
+  // ---------- computers: frosted cards catch a soft light under the pointer (drawn in CSS from --mx / --my) ----------
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    const lit = '.set-page .set-group, .cx-card, .ab-box';
+    let card = null, raf = 0, px = 0, py = 0;
+    const draw = () => { raf = 0; if (!card) return; const r = card.getBoundingClientRect(); card.style.setProperty('--mx', `${px - r.left}px`); card.style.setProperty('--my', `${py - r.top}px`); };
+    document.addEventListener('pointermove', (e) => {
+      const c = e.target.closest?.(lit) || null;
+      if (c !== card) { card?.style.removeProperty('--mx'); card?.style.removeProperty('--my'); card = c; }
+      px = e.clientX; py = e.clientY; if (card && !raf) raf = requestAnimationFrame(draw);
+    }, { passive: true });
+    document.addEventListener('pointerleave', () => { card?.style.removeProperty('--mx'); card?.style.removeProperty('--my'); card = null; });
+  }
 
   // ---------- install as an app: the offline cache (sw.js) ----------
   if ('serviceWorker' in navigator && location.protocol === 'https:') addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));

@@ -1833,3 +1833,55 @@ p { text-wrap: pretty; }
 .climb-n { min-width: 36px; }
 /* a button's icon, wherever a page hasn't sized it (zero specificity, so any page's own size wins) */
 :where(.btn > svg) { width: 17px; height: 17px; flex: none; }
+
+/* ============================================================ motion, 2026: a real spring, things that arrive and leave
+   softly, and the quieter pages settling in as you scroll. Native CSS only (it runs off the main thread); only with
+   Animations on, and never when the device asks for reduced motion (`.still` covers both). */
+:root { --spring: var(--ease-spring); }
+@supports (transition-timing-function: linear(0, 1)) {
+  /* a gently under-damped spring (a 4% overshoot, settled by the end), like iOS's default "smooth" spring */
+  :root { --spring: linear(0, .084, .266, .471, .657, .805, .911, .979, 1.017, 1.035, 1.038, 1.034, 1.027, 1.019, 1.012, 1.007, 1.003, 1.001, .999, 1); }
+}
+.btn { transition: background-color .18s, transform .5s var(--spring); }
+
+/* the toast: a frosted card that springs up from the bottom and fades away, rather than blinking on and off */
+.toast { width: max-content; max-width: calc(100vw - 32px); text-align: center; background: var(--fr-bg); color: var(--label); font-weight: 500; -webkit-font-smoothing: antialiased;
+  -webkit-backdrop-filter: var(--fr-blur); backdrop-filter: var(--fr-blur); box-shadow: inset 0 0 0 1px var(--fr-rim), var(--shadow); }
+.toast[hidden] { display: none; }
+@media (prefers-reduced-transparency: reduce) { .toast { background: var(--bg2); } }
+@media (prefers-reduced-motion: no-preference) {
+  :root:not(.still) .toast { transition: opacity .3s ease, translate .55s var(--spring), scale .55s var(--spring), display .3s allow-discrete; }
+  :root:not(.still) .toast[hidden] { display: none; opacity: 0; translate: 0 10px; scale: .96; }
+  @starting-style { :root:not(.still) .toast:not([hidden]) { opacity: 0; translate: 0 24px; scale: .92; } }
+
+  /* Tonight's picker and other small sheets ease away on close, the way they arrived */
+  :root:not(.still) .tn-dlg { transition: translate .35s var(--ease-out), opacity .25s ease, display .3s allow-discrete, overlay .3s allow-discrete; }
+  :root:not(.still) .tn-dlg:not([open]) { opacity: 0; }
+  :root:not(.still) .tn-dlg::backdrop { transition: opacity .3s ease, display .3s allow-discrete, overlay .3s allow-discrete; }
+  :root:not(.still) .tn-dlg:not([open])::backdrop { opacity: 0; }
+  @starting-style { :root:not(.still) .tn-dlg[open]::backdrop { opacity: 0; } }
+}
+
+/* Settings, Account and the policies: each group settles in as it comes into view */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    :root:not(.still) :is(.set-page .set-sec, .policy-box, .section-label) { animation: pxSettle linear both; animation-timeline: view(); animation-range: entry 0% entry 55%; }
+  }
+}
+/* big page titles (Settings, Your account, Watchlist) ease back as the page scrolls under them, like iOS's large titles */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    :root:not(.still) :is(.large-title, #lsH) { transform-origin: 0 100%; animation: ltAway linear both; animation-timeline: scroll(root); animation-range: 0 180px; }
+  }
+}
+@keyframes ltAway { to { opacity: .2; translate: 0 -14px; scale: .97; } }
+@keyframes pxSettle { from { opacity: 0; translate: 0 28px; scale: .985; } }
+
+/* computers: frosted cards catch a soft light that follows the pointer, like glass under a lamp */
+@media (hover: hover) and (pointer: fine) {
+  :root :is(.set-page .set-group, .cx-card, .ab-box) { background-image: radial-gradient(520px circle at var(--mx, 50%) var(--my, -400px), var(--lamp), transparent 62%); }
+}
+:root { --lamp: color-mix(in srgb, var(--accent) 7%, transparent); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --lamp: rgba(255, 255, 255, .06); } }
+:root[data-theme="dark"] { --lamp: rgba(255, 255, 255, .06); }
+@media (prefers-reduced-transparency: reduce) { :root { --lamp: transparent; } }
