@@ -5,8 +5,6 @@ dialog.adv { width: min(900px, calc(100vw - 32px)); max-width: none; max-height:
   border-radius: var(--r); color: #fff; background: #080d28; transform-origin: 0 0;
   box-shadow: 0 0 0 .5px rgba(255, 255, 255, .14), 0 0 0 1px rgba(255, 214, 120, .12), 0 50px 120px -30px rgba(0, 0, 0, .85); }
 dialog.adv::backdrop { background: rgba(3, 5, 18, .58); -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2); }
-dialog.adv.mini::backdrop { opacity: 0; transition: opacity .6s ease .1s; }
-dialog.adv.mini .adv-sc > :not(.adv-sky), dialog.adv.mini .adv-rv { opacity: 0; transition: opacity .2s ease; }
 .adv-sc { position: relative; isolation: isolate; max-height: calc(100dvh - 32px); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 26px 28px 30px;
   background: radial-gradient(1.2px 1.2px at 14% 62%, rgba(255, 255, 255, .55), transparent), radial-gradient(1px 1px at 70% 74%, rgba(255, 255, 255, .45), transparent),
     radial-gradient(1.2px 1.2px at 40% 88%, rgba(255, 255, 255, .5), transparent), radial-gradient(1px 1px at 88% 56%, rgba(255, 255, 255, .45), transparent),
@@ -147,9 +145,9 @@ dialog.adv.mini .adv-sc > :not(.adv-sky), dialog.adv.mini .adv-rv { opacity: 0; 
 .bx-ad:focus-visible { outline: 2px solid #ffd36b; outline-offset: 1px; }
 .bx-adv-say { margin-bottom: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .adv-land { animation: advLand 1.2s cubic-bezier(.2, .8, .2, 1); }
-@keyframes advLand { 0% { transform: scale(.97); box-shadow: 0 0 0 0 rgba(255, 214, 120, 0); }
-  25% { transform: scale(1.025); box-shadow: 0 0 0 2px rgba(255, 214, 120, .9), 0 0 50px rgba(255, 196, 90, .55); }
-  100% { transform: none; box-shadow: 0 0 0 0 rgba(255, 214, 120, 0); } }
+@keyframes advLand { 0% { box-shadow: 0 0 0 0 rgba(255, 214, 120, 0); }
+  30% { box-shadow: 0 0 0 2px rgba(255, 214, 120, .9), 0 0 50px rgba(255, 196, 90, .55); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 214, 120, 0); } }
 
 /* fairy lights round the calendar (and its little one) */
 .adv-lit { position: relative; margin: 10px 4px 4px; }

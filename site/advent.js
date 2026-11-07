@@ -2,7 +2,7 @@
 // when you open it (mostly Christmas favourites, sometimes something big we think you'll enjoy), kept on this device so it's
 // the same next time you look. Opened from the homepage's Christmas slide with any [data-adv="open"]
 // button. A door swings open on its hinge with a burst of gold sparkles and the pick comes forward on a card; close the
-// calendar and it shrinks into its box at the top of the right-hand column (where it shows today's door from then on).
+// calendar and it fades away, and the first time its box fades in at the top of the right-hand column (where it shows today's door from then on).
 // No door opens before its day. The home page lends what it has loaded: window.tnAdvent.use({ cat, popular, info, redraw }).
 // Motion is the point here, so it plays whatever Settings → Animations says, but never when the device asks for Reduce Motion.
 (() => {
@@ -195,7 +195,7 @@
   function open(from) {
     if (!season()) return;
     build(); opener = from || null; closing = false; paint();
-    $('#advRv').hidden = true; dlg.classList.remove('mini'); dlg.getAnimations().forEach((a) => a.cancel());
+    $('#advRv').hidden = true; dlg.getAnimations().forEach((a) => a.cancel());
     dlg.showModal();
     $('.adv-sc', dlg).scrollTop = 0;
     // the calendar grows out of the button that opened it
@@ -276,45 +276,35 @@
     if (!motion()) { rv.hidden = true; return; }
     rv.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: 'forwards' }).finished.then((an) => { rv.hidden = true; an.cancel(); });
   }
-  // closing: the calendar shrinks into its box in the right-hand column (or back into the button that opened it)
+  // closing: the calendar fades gently away. The first time, its box then joins the right-hand column: a space opens at
+  // the top (Discover glides down beneath it) and the little calendar fades in there. After that it's always there.
   const inView = (el) => { if (!el?.isConnected) return null; const r = el.getBoundingClientRect(); return r.width && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth ? el : null; };
   function shut() {
     if (!dlg?.open || closing) return;
     closing = true;
-    // the first time it's closed, its box joins the right-hand column: a space opens at the top (Discover slides down)
-    // and the calendar lands in it
-    let fresh = null, h = 0;
-    const st = store.get();
-    if (!st.landed) {
-      st.landed = Date.now(); store.set(st); opts.redraw?.();
-      fresh = inView($('#bxAdv'));
-      if (fresh && motion()) {
-        h = fresh.offsetHeight; fresh.style.opacity = '0';
-        fresh.animate([{ height: '0px', marginBottom: '-16px', paddingTop: '0px', paddingBottom: '0px' }, { height: `${h}px`, marginBottom: '0px' }],
-          { duration: 560, delay: 120, easing: 'cubic-bezier(.3,1.1,.4,1)', fill: 'backwards' });
-      }
+    const st = store.get(), first = !st.placed;
+    if (first) { st.placed = Date.now(); store.set(st); }
+    const done = () => { dlg.close(); $('#advRv').hidden = true; closing = false; dlg.getAnimations().forEach((a) => a.cancel()); };
+    if (!motion()) { done(); if (first) opts.redraw?.(); return; }
+    dlg.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.97)' }], { duration: 380, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' }).finished.then(done);
+    if (first) {
+      opts.redraw?.();
+      const box = $('#bxAdv'); if (!box) return;
+      const h = box.offsetHeight; box.style.overflow = 'hidden';
+      box.animate([{ height: '0px', marginBottom: '-16px', paddingTop: '0px', paddingBottom: '0px', opacity: 0 }, { height: `${h}px`, marginBottom: '0px', opacity: 0, offset: .5 }, { height: `${h}px`, opacity: 1 }],
+        { duration: 1400, delay: 250, easing: 'cubic-bezier(.3,.8,.3,1)', fill: 'backwards' }).finished.then(() => { box.style.overflow = ''; });
+    } else {
+      const box = inView($('#bxAdv')); if (!box) return;
+      setTimeout(() => { box.classList.remove('adv-land'); void box.offsetWidth; box.classList.add('adv-land'); setTimeout(() => box.classList.remove('adv-land'), 1300); }, 300);
     }
-    const target = inView($('#bxAdv')) || inView(opener);
-    const done = () => { if (fresh) fresh.style.opacity = ''; dlg.close(); dlg.classList.remove('mini'); $('#advRv').hidden = true; closing = false; dlg.getAnimations().forEach((a) => a.cancel()); };
-    if (!motion()) { done(); return; }
-    if (!target) { dlg.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.94)' }], { duration: 260, easing: 'ease-in', fill: 'forwards' }).finished.then(done); return; }
-    const a = dlg.getBoundingClientRect(), r = target.getBoundingClientRect(), b = { left: r.left, top: r.top, width: r.width, height: fresh === target && h ? h : r.height };
-    dlg.classList.add('mini');   // the doors fade first, then the night sky folds away into the box
-    dlg.animate([{ transform: 'none', opacity: 1 }, { transform: 'scale(.985)', opacity: 1, offset: .2 },
-      { transform: `translate(${b.left - a.left}px, ${b.top - a.top}px) scale(${b.width / a.width}, ${b.height / a.height})`, opacity: .15 }],
-    { duration: 780, easing: 'cubic-bezier(.55,0,.2,1)', fill: 'forwards' }).finished.then(() => {
-      done(); target.style.opacity = '';
-      target.classList.remove('adv-land'); void target.offsetWidth; target.classList.add('adv-land');
-      setTimeout(() => target.classList.remove('adv-land'), 1300);
-    });
   }
 
   // ---------- its box at the top of the right-hand column: the calendar in miniature, Discover's size ----------
-  // Shown from the first time you open the calendar. Opened doors show their posters; today's glows. Tap a door to open
+  // Shown from the first time you close the calendar. Opened doors show their posters; today's glows. Tap a door to open
   // the calendar at it.
   function box() {
     const st = store.get(), doors = st.doors, t = Math.min(today(), 25);
-    if (!season() || !st.landed) return ''; // (landed, not the earlier seen: everyone sees it land afresh)
+    if (!season() || !st.placed) return '';   // (placed: everyone sees it arrive afresh)
     const p = t ? doors[t] : null;
     const mini = ORDER.map((n) => {
       const d = doors[n], [c1, c2] = TONES[(n * 7) % 4];
