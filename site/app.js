@@ -443,7 +443,7 @@ function newItem(x, mode) {
 function dayGroups(list, mode, today) {
   const days = new Map();
   for (const x of list) days.set(x.date, [...(days.get(x.date) || []), x]);
-  const tomorrow = new Date(Date.parse(today + 'T12:00:00') + 864e5).toISOString().slice(0, 10);
+  const tomorrow = new Date(Date.parse(today + 'T12:00:00') + 864e5).toLocaleDateString('en-CA');
   return [...days].map(([d, items]) => `<section class="group">
     <h2 class="${d === today ? 'today' : ''}">${d === today ? 'Today' : d === tomorrow ? 'Tomorrow' : esc(fmtDate(new Date(d + 'T12:00:00'), { weekday: 'long', day: 'numeric', month: 'long' }))}</h2>
     <ul class="cl nw-cl">${items.map((x) => newItem(x, mode)).join('')}</ul></section>`).join('');

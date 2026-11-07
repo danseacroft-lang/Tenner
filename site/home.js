@@ -188,7 +188,7 @@
     const sel = $('#bxGen'), c = state.cat, list = genreList();
     if (state.genre != null && c?.genres && !list.includes(String(state.genre))) state.genre = null;
     const name = state.genre != null ? c?.genres?.[state.genre] : null;
-    sel.innerHTML = '<option value="">All genres</option>' + genreList().map((g) => `<option value="${esc(g)}">${esc(c.genres[g])}</option>`).join('');
+    sel.innerHTML = '<option value="">All genres</option>' + list.map((g) => `<option value="${esc(g)}">${esc(c.genres[g])}</option>`).join('');
     sel.value = state.genre ?? '';
     $('#bxGenL').textContent = name || 'All genres';
     $('#bxGenDD').classList.toggle('on', state.genre != null);
@@ -441,7 +441,7 @@
     // most popular: posters with their score in a chip (the first and third references)
     const top = cat.slice().sort((a, b) => b.p - a.p).slice(0, 14).map(fromCat).map((it) => card(it, infoFor(it, 'Popular'), it.year));
     // newest: posters with the title and score beneath (the second reference)
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date().toLocaleDateString('en-CA');
     const fresh = cat.filter((x) => x.d && x.d <= today).sort((a, b) => (b.d > a.d) - (b.d < a.d) || b.p - a.p).slice(0, 14).map(fromCat).map((it) => {
       const info = infoFor(it, 'New');
       return `<li class="bx-lp"><a href="${esc(it.url)}" target="_blank" rel="noopener" ${reg(info)}><span class="bx-lp-art">${poster(it)}</span>
@@ -510,10 +510,10 @@
   // ten), the most popular first, kept to the service and genre you've picked; only when shows are in the mix
   function newShows() {
     if (!kinds().includes('tv')) return [];
-    const today = new Date().toISOString().slice(0, 10), pool = catalogue().filter((x) => x.t === 'tv' && x.d && x.d <= today);
+    const today = new Date().toLocaleDateString('en-CA'), pool = catalogue().filter((x) => x.t === 'tv' && x.d && x.d <= today);
     let l = [];
     for (const days of [122, 243, 365]) {
-      const from = new Date(Date.now() - days * 864e5).toISOString().slice(0, 10);
+      const from = new Date(Date.now() - days * 864e5).toLocaleDateString('en-CA');
       l = pool.filter((x) => x.d >= from); if (l.length >= 10) break;
     }
     return l.sort((a, b) => b.p - a.p).slice(0, 10).map(fromCat);
@@ -613,9 +613,10 @@
     dk.at++;
     // the choice lands once the card has gone (a save redraws the side column itself)
     const next = () => {
-      if (yes) { if (!window.tn.saved.has(k)) window.tn.saved.toggle(infoFor(it)); toast(`${it.title} is on your Watchlist`); } else skips.add(k);
+      const adds = yes && !window.tn.saved.has(k);   // a new save redraws the column itself; anything else brings up the next card here
+      if (yes) { if (adds) window.tn.saved.toggle(infoFor(it)); toast(`${it.title} is on your Watchlist`); } else skips.add(k);
       window.tn.swipes.set(k, yes);   // For You learns from it
-      const box = $('#bxSide [aria-labelledby="bxDc"]'); if (box && !yes) box.outerHTML = discover();
+      const box = $('#bxSide [aria-labelledby="bxDc"]'); if (box && !adds) box.outerHTML = discover();
     };
     if (card && !still()) { card.style.transition = 'transform .35s cubic-bezier(.3,.7,.4,1), opacity .35s ease'; card.style.transform = `translateX(${yes ? 130 : -130}%) rotate(${yes ? 14 : -14}deg)`; card.style.opacity = '0'; setTimeout(next, 300); } else next();
   }
@@ -638,14 +639,16 @@
     drag.card.style.transform = `translateX(${drag.dx}px) rotate(${drag.dx / 18}deg)`;
     drag.card.style.setProperty('--yes', Math.max(0, Math.min(1, drag.dx / 90))); drag.card.style.setProperty('--no', Math.max(0, Math.min(1, -drag.dx / 90)));
   });
-  addEventListener('pointerup', (e) => {
+  const letGo = (e) => {
     if (!drag || e.pointerId !== drag.id) return;
     const { card, dx, moved } = drag; drag = null; card.classList.remove('held');
     if (!moved) return;
+    if (e.type === 'pointercancel') { card.style.transform = ''; card.style.setProperty('--yes', 0); card.style.setProperty('--no', 0); return; }   // the page took over (a scroll): the card goes back
     card.addEventListener('click', (c) => { c.preventDefault(); c.stopPropagation(); }, { once: true, capture: true });   // a swipe isn't a tap
     if (Math.abs(dx) > 90) decide(dx > 0);
     else { card.style.transform = ''; card.style.setProperty('--yes', 0); card.style.setProperty('--no', 0); }
-  });
+  };
+  addEventListener('pointerup', letGo); addEventListener('pointercancel', letGo);
   $('#bxSide').addEventListener('keydown', (e) => {
     if (!e.target.closest?.('.bx-dc')) return;
     if (e.key === 'ArrowRight') { e.preventDefault(); decide(true); $('#bxSide [data-dc="yes"]')?.focus(); }

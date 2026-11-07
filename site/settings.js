@@ -33,6 +33,8 @@
   fetch('data/trending.json').then((r) => (r.ok ? r.json() : null)).then((t) => { for (const s of t?.services || []) logos[s.key] = s.logo; }).catch(() => {});
   document.getElementById('setMine').addEventListener('click', () => window.tn.pickMine(Object.keys(LABELS).map((k) => ({ key: k, label: LABELS[k], logo: logos[k] }))));
   addEventListener('tn:mine', show);
+  // settings that change elsewhere (another tab, or your account's copy arriving after you sign in) show here at once
+  addEventListener('tn:prefs', show); addEventListener('tn:synced', show);
 
   // ---------- your data: a file to carry the Watchlist and progress to another device ----------
   document.getElementById('setExport').addEventListener('click', () => {

@@ -3,6 +3,8 @@
 // pages share (window.tn), so each exists once.
 (() => {
   const $ = (s) => document.querySelector(s);
+  // which page this is, whether the address ends in browse.html or just /browse (both reach the same page)
+  const onPage = (name) => new RegExp(`/${name}(\\.html)?$`).test(location.pathname);
   const root = document.documentElement;
   // ---------- when each thing last changed on this device, so an account can merge devices fairly (newest wins) ----------
   // { removed: { k: when } (titles taken off the Watchlist), pat: { k: when } (progress), sat (services), pfat (settings) }
@@ -391,7 +393,9 @@
       if (e.target === card) { const r = card.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) shut(); return; }
       const b = e.target.closest('[data-sc]'); if (!b || !shareNow) return;
       if (b.dataset.sc === 'copy') {
-        navigator.clipboard?.writeText(shareNow.url).then(() => { b.lastChild.textContent = 'Link copied'; setTimeout(() => (b.lastChild.textContent = 'Copy link'), 1600); }, () => { b.lastChild.textContent = shareNow.url; });
+        // no clipboard (or it said no): the link itself shows instead, for a moment, so it can be copied by hand
+        const say = (t, ms) => { b.lastChild.textContent = t; clearTimeout(b.t); b.t = setTimeout(() => (b.lastChild.textContent = 'Copy link'), ms); };
+        (navigator.clipboard ? navigator.clipboard.writeText(shareNow.url) : Promise.reject()).then(() => say('Link copied', 1600), () => say(shareNow.url, 6000));
       } else if (b.dataset.sc === 'pic') {
         b.disabled = true; b.lastChild.textContent = 'Making the picture…';
         shareNow.picture().then((p) => {
@@ -547,7 +551,7 @@
     res.addEventListener('pointerdown', (e) => { if (!phone.matches) e.preventDefault(); });   // keep the box focused while choosing
     res.addEventListener('click', (e) => {
       const a = e.target.closest('.ss-r'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
-      if (a.classList.contains('ss-all')) { show(false); if (location.pathname.endsWith('/browse.html')) { e.preventDefault(); location.hash = `q=${encodeURIComponent(qi.value.trim())}`; } return; }
+      if (a.classList.contains('ss-all')) { show(false); if (onPage('browse')) { e.preventDefault(); location.hash = `q=${encodeURIComponent(qi.value.trim())}`; } return; }
       if (a.dataset.p) {   // a person: their sheet here, or on the homepage where this page has none
         show(false); qi.blur();
         if (window.tnPerson) { e.preventDefault(); window.tnPerson.open(a.dataset.p, false, a.querySelector('b')?.textContent); }
@@ -861,7 +865,7 @@
   const links = $('.side-links');
   if (links) {
     links.insertAdjacentHTML('afterbegin', '<a class="side-acct" id="sideAcct" href="account.html"></a>');
-    const draw = () => { const u = account.user(); $('#sideAcct').innerHTML = `${avatar(u)}<span><b>${u ? esc(u.name || 'You') : 'Sign in'}</b><small>${u ? 'Your account' : 'Sync your devices'}</small></span>`; if (location.pathname.endsWith('account.html')) $('#sideAcct').setAttribute('aria-current', 'page'); };
+    const draw = () => { const u = account.user(); $('#sideAcct').innerHTML = `${avatar(u)}<span><b>${u ? esc(u.name || 'You') : 'Sign in'}</b><small>${u ? 'Your account' : 'Sync your devices'}</small></span>`; if (onPage('account')) $('#sideAcct').setAttribute('aria-current', 'page'); };
     draw(); addEventListener('tn:account', draw);
   }
   // the colour you picked for your account tints the menu links (and only them); the first blue is Tenner's own
@@ -1198,7 +1202,7 @@
 
   // Privacy & Terms: only the part you're reading is marked in the menu (it marked all three at once), following you as you scroll
   const legal = [...document.querySelectorAll('.side-link[href^="legal.html#"]')];
-  if (location.pathname.endsWith('/legal.html') && legal.length) {
+  if (onPage('legal') && legal.length) {
     const parts = legal.map((a) => [a, document.getElementById(a.hash.slice(1))]).filter(([, el]) => el);
     const mark = () => {
       const order = parts.slice().sort((x, y) => x[1].offsetTop - y[1].offsetTop), end = innerHeight + scrollY >= document.documentElement.scrollHeight - 4;

@@ -36,7 +36,7 @@
   // Where it's been No. 1: the UK chart and each service's own, the ones it tops right now first
   function onesHtml(t) {
     const w = { ...(t.p?.w || {}) }, now = new Set(t.t1 || []);
-    for (const sv of now) w[sv] ||= [1, new Date().toISOString().slice(0, 10)];
+    for (const sv of now) w[sv] ||= [1, new Date().toLocaleDateString('en-CA')];
     const list = Object.entries(w).sort(([a, x], [b, y]) => now.has(b) - now.has(a) || (a === 'all' ? -1 : b === 'all' ? 1 : 0) || y[0] - x[0] || y[1].localeCompare(x[1]));
     if (!list.length) return '';
     const day = (d) => new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
@@ -288,7 +288,7 @@
   // ---------- the lower half: episodes, trailers and extras, the film series, More Like This, reviews, Information ----------
   const longDate = (iso) => (iso ? new Date(iso + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '');
   const shortDate = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', ...(iso.slice(0, 4) !== String(new Date().getFullYear()) ? { year: 'numeric' } : {}) });
-  const today = () => new Date().toISOString().slice(0, 10);
+  const today = () => new Date().toLocaleDateString('en-CA');   // your own date (not UTC's), so an episode out today never reads as tomorrow's
   // a row of posters (More Like This, the film series), each opening its own sheet
   function postersHtml(list, here) {
     return `<ul class="nr sh-nr">${list.map((t) => {
@@ -745,7 +745,7 @@
       const s = p.r.width / p.w, dx = p.r.left + p.r.width / 2 - (p.left + p.w / 2), dy = p.r.top + p.r.height / 2 - (p.top + p.h / 2);
       hc.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${s})` }, { transform: 'none' }], { duration: 460, easing: 'cubic-bezier(.25, 1.12, .4, 1)' });
       hc.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'ease-out' });
-    } else if (!reduce() && hc.animate) hc.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 150 });
+    }
     const c = card;
     // what isn't here yet: the hour's details (or, for a title Tenner doesn't follow, the search API's), the
     // description and wider artwork, and the lead cast
