@@ -126,7 +126,8 @@ dialog.adv::backdrop { background: rgba(3, 5, 18, .58); -webkit-backdrop-filter:
 }
 
 /* ---------- its box at the top of the homepage's right-hand column: the calendar in miniature ---------- */
-.bx-adv { position: relative; }
+.bx-adv { position: relative; overflow: visible; margin: 6px 0 10px; }
+.bx-adv-cal { margin: 4px 0 12px; }
 .bx-adv-tag { color: #3a2400; background: linear-gradient(#ffe8a3, #ffc94a); }
 .bx-adv-cal { position: relative; isolation: isolate; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-template-rows: repeat(7, minmax(0, 1fr)); aspect-ratio: 4 / 5; gap: 4px; padding: 8px;
   overflow: hidden; border-radius: var(--r); background: #0a1033; box-shadow: inset 0 0 0 1px rgba(255, 214, 120, .25), 0 10px 26px -14px rgba(0, 0, 0, .6); }
@@ -149,17 +150,16 @@ dialog.adv::backdrop { background: rgba(3, 5, 18, .58); -webkit-backdrop-filter:
   30% { box-shadow: 0 0 0 2px rgba(255, 214, 120, .9), 0 0 50px rgba(255, 196, 90, .55); }
   100% { box-shadow: 0 0 0 0 rgba(255, 214, 120, 0); } }
 
-/* fairy lights round the calendar (and its little one) */
+/* fairy lights round the calendar, and round the edge of its box */
 .adv-lit { position: relative; margin: 10px 4px 4px; }
-.adv-lit-s { margin: 12px 6px 16px; }
 .lt { position: absolute; inset: -7px; z-index: 2; pointer-events: none; }
-.adv-lit-s .lt { inset: -5px; }
+.bx-adv > .lt { inset: -4px; }
 .lt svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .lt path { fill: none; stroke: #0d2a18; stroke-width: 2; vector-effect: non-scaling-stroke; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .5)); }
 .lt i { position: absolute; width: 8px; height: 13px; margin: -13px 0 0 -4px; transform-origin: 50% 100%; transform: rotate(var(--a));
   border-radius: 50% 50% 46% 46% / 62% 62% 38% 38%; background: radial-gradient(circle at 42% 30%, #fff 0 10%, var(--c) 48%, color-mix(in srgb, var(--c) 60%, #000));
   box-shadow: 0 0 8px 2px var(--g), 0 0 22px 6px color-mix(in srgb, var(--g) 45%, transparent); }
 .lt i::after { content: ""; position: absolute; left: 1.5px; right: 1.5px; bottom: -3px; height: 4px; border-radius: 1px; background: #1d3524; box-shadow: none; }
-.adv-lit-s .lt i { width: 6px; height: 10px; margin: -10px 0 0 -3px; box-shadow: 0 0 6px 1px var(--g), 0 0 14px 4px color-mix(in srgb, var(--g) 40%, transparent); }
+.bx-adv > .lt i { width: 6px; height: 10px; margin: -10px 0 0 -3px; box-shadow: 0 0 6px 1px var(--g), 0 0 14px 4px color-mix(in srgb, var(--g) 40%, transparent); }
 @media (prefers-reduced-motion: no-preference) { .lt i { animation: advTw 2.4s ease-in-out infinite; animation-delay: calc(-1 * var(--dl)); } }
 @keyframes advTw { 0%, 100% { opacity: 1; filter: brightness(1.1); } 50% { opacity: .55; filter: brightness(.8); } }

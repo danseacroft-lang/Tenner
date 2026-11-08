@@ -314,9 +314,9 @@
     const say = !t ? `The first door opens in ${untilDec()} day${untilDec() === 1 ? '' : 's'}.` : p ? `Behind door ${t}: ${p.title}` : `Door ${t} is ready to open.`;
     return `<section class="bx-panel panel bx-adv" id="bxAdv" aria-labelledby="bxAdvT">
       <header class="bx-panel-hd"><h2 id="bxAdvT">Christmas calendar</h2><span class="bx-tag bx-adv-tag">${t ? `Day ${t}` : '1 December'}</span></header>
-      <div class="adv-lit adv-lit-s"><div class="bx-adv-cal" style='grid-template-areas:${AREAS}'>${mini}</div>${lights(8, 9)}</div>
+      <div class="bx-adv-cal" style='grid-template-areas:${AREAS}'>${mini}</div>
       <p class="bx-panel-say bx-adv-say">${esc(say)}</p>
-      <button type="button" class="btn btn-tinted bx-wide" data-adv="open">${CAL}${!t || p ? 'Open calendar' : `Open door ${t}`}</button></section>`;
+      <button type="button" class="btn btn-tinted bx-wide" data-adv="open">${CAL}${!t || p ? 'Open calendar' : `Open door ${t}`}</button>${lights(9, 15)}</section>`;
   }
   document.addEventListener('click', (e) => {
     const b = e.target.closest('[data-adv]'); if (!b) return;
