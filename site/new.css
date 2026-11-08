@@ -1,0 +1,156 @@
+/* New This Week, redesigned (app.js): the week in numbers, Day by day (a ribbon of days, the chosen one's titles in the
+   chart list underneath), the week on the charts (the UK's top 10 traced day by day) and Last chance. The chart lists,
+   rows of posters and the phone banners are the homepage's own; this file only adds the new pieces. */
+
+/* ============================================================ the week in numbers: one frosted box, four counts */
+.nw-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); margin: 22px 0 0; border-radius: var(--r); overflow: hidden;
+  background: var(--fr-bg); -webkit-backdrop-filter: var(--fr-blur); backdrop-filter: var(--fr-blur); box-shadow: inset 0 0 0 1px var(--fr-rim); }
+.nw-stat { position: relative; display: grid; gap: 6px; align-content: start; min-width: 0; padding: 18px 20px 16px; color: var(--label); transition: background-color .2s ease; }
+.nw-stat + .nw-stat::before { content: ""; position: absolute; left: 0; top: 16px; bottom: 16px; width: .5px; background: var(--sep); }
+.nw-stat:hover { text-decoration: none; }
+@media (hover: hover) { .nw-stat:hover { background: var(--fr-in); } }
+.nw-stat:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--r); }
+.nw-stat b { font: 700 40px/1 var(--font-display); letter-spacing: -.02em; color: var(--c); font-variant-numeric: tabular-nums; }
+.nw-stat span { display: grid; gap: 1px; font: 500 15px/1.25 var(--font); letter-spacing: -.016em; min-width: 0; }
+.nw-stat small { font-size: 13px; font-weight: 400; color: var(--label2); }
+:root[data-theme="dark"] .nw-stat b { text-shadow: 0 0 22px color-mix(in srgb, var(--c) 45%, transparent); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .nw-stat b { text-shadow: 0 0 22px color-mix(in srgb, var(--c) 45%, transparent); } }
+@media (max-width: 719px) {
+  .nw-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 16px; background: var(--ph-box); box-shadow: none; }
+  .nw-stat { padding: 14px 14px 13px; gap: 4px; }
+  .nw-stat b { font-size: 32px; }
+  .nw-stat span { font-size: 14px; } .nw-stat small { font-size: 12px; }
+  .nw-stat:nth-child(odd)::before { display: none; }
+  .nw-stat:nth-child(n + 3)::after { content: ""; position: absolute; left: 14px; right: 14px; top: 0; height: .5px; background: var(--sep); }
+}
+
+/* ============================================================ Day by day: a ribbon of days that fades at its edges */
+.rb-hd { align-items: center; }
+.rb-ctl { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.rb-today { display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 14px 0 11px; border: 0; font: 500 15px/1 var(--font); cursor: pointer; }
+.rb-today svg { width: 18px; height: 18px; flex: none; }
+.rb-arw { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; color: #fff;
+  background: var(--bt-round); -webkit-backdrop-filter: var(--fr-blur); backdrop-filter: var(--fr-blur); transition: background-color .18s, transform .5s var(--ease-spring); }
+.rb-arw svg { width: 18px; height: 18px; }
+@media (hover: hover) { .rb-arw:hover { background: var(--bt-round-hover); } }
+.rb-arw:active { transform: scale(.92); }
+.rb-arw:focus-visible, .rb-today:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (hover: none) { .rb-arw { display: none; } }
+
+.rb-track { display: flex; gap: 6px; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; overscroll-behavior-x: contain;
+  margin: 0 calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter)); padding: 4px var(--gutter-r) 10px var(--gutter); scroll-padding-inline: var(--gutter);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 calc(var(--gutter) + 36px), #000 calc(100% - var(--gutter-r) - 36px), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 calc(var(--gutter) + 36px), #000 calc(100% - var(--gutter-r) - 36px), transparent); }
+.rb-track::-webkit-scrollbar { display: none; }
+.rb-day { --sp: 1; position: relative; flex: none; width: 108px; display: grid; justify-items: center; padding: 12px 6px 16px; border: 0; border-radius: var(--r);
+  background: none; color: var(--label); font: inherit; cursor: pointer; scroll-snap-align: center; -webkit-tap-highlight-color: transparent;
+  transition: background-color .25s ease; }
+.rb-wd { font: 600 12px/1.2 var(--font); letter-spacing: .04em; text-transform: uppercase; color: var(--label2); }
+.rb-n { margin-top: 3px; font: 700 26px/1 var(--font); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.rb-mo { min-height: 14px; font-size: 11px; line-height: 14px; color: var(--label2); }
+.rb-day.today .rb-wd, .rb-day.today .rb-n { color: var(--accent); }
+/* the day's posters, fanned like a hand of cards; they spread out when you point at the day or pick it */
+.rb-stack { position: relative; width: 92px; height: 96px; margin: 10px 0 6px; }
+.rb-stack > img, .rb-stack > i { --o: calc(var(--i) - (var(--n) - 1) / 2); position: absolute; left: 50%; top: 8px; width: 52px; height: 78px; margin-left: -26px;
+  border-radius: var(--r); object-fit: cover; z-index: calc(5 - var(--i)); background: var(--fill);
+  box-shadow: 0 0 0 .5px var(--sep), 0 8px 18px -8px rgba(0, 0, 0, .55);
+  transform: translateX(calc(var(--o) * 15px * var(--sp))) translateY(calc(var(--o) * var(--o) * 3px * var(--sp))) rotate(calc(var(--o) * 7deg * var(--sp)));
+  transition: transform .55s var(--ease-spring); }
+.rb-stack > .rb-quiet { --o: 0; background: none; box-shadow: inset 0 0 0 1.5px var(--sep); }
+.rb-c { font-size: 12px; color: var(--label2); white-space: nowrap; }
+.rb-day.past .rb-stack { opacity: .72; transition: opacity .25s ease; }
+.rb-day.none .rb-c { color: var(--label3); }
+@media (hover: hover) { .rb-day:hover { --sp: 1.45; background: color-mix(in srgb, var(--label) 5%, transparent); } .rb-day:hover .rb-stack { opacity: 1; } }
+.rb-day[aria-selected="true"] { --sp: 1.55; background: var(--fr-in); }
+.rb-day[aria-selected="true"] .rb-stack { opacity: 1; }
+.rb-day[aria-selected="true"] > .rb-stack > :first-child { transform: translateX(calc(var(--o) * 15px * var(--sp))) translateY(calc(var(--o) * var(--o) * 3px * var(--sp) - 6px)) rotate(calc(var(--o) * 7deg * var(--sp))); }
+/* the chosen day: Tenner's rainbow underline */
+.rb-day::after { content: ""; position: absolute; left: 24px; right: 24px; bottom: 6px; height: 2.5px; border-radius: 2px; pointer-events: none;
+  background: linear-gradient(90deg, #ff375f, #ff9f0a, #ffd60a, #30d158, #0a84ff, #bf5af2); opacity: 0; scale: .4 1; transition: opacity .3s ease, scale .45s var(--ease-spring); }
+.rb-day[aria-selected="true"]::after { opacity: 1; scale: 1 1; }
+.rb-day:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.rb-day:active .rb-stack { scale: .96; }
+
+/* the chosen day's titles: the chart list */
+.rb-panel { margin-top: 8px; }
+.rb-pd { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; margin: 0 0 6px; }
+.rb-pd h3 { margin: 0; font: 700 20px/1.25 var(--font); letter-spacing: -.015em; }
+.rb-pd h3.today { color: var(--accent); }
+.rb-pd p { margin: 0; font-size: 14px; color: var(--label2); }
+:root:not(.still) .rb-panel.swap > * { animation: rbSwap .5s var(--ease-out) both; }
+:root:not(.still) .rb-panel.swap > ul { animation-delay: .05s; }
+@keyframes rbSwap { from { opacity: 0; translate: 0 10px; } }
+/* the ribbon as a lens: days ease up to full size as they reach the middle (scroll-driven, so it costs nothing) */
+@supports (animation-timeline: view()) {
+  :root:not(.still) .rb-day { animation: rbLens linear both; animation-timeline: view(inline); }
+}
+@keyframes rbLens { 0% { scale: .86; opacity: .4; } 18%, 82% { scale: 1; opacity: 1; } 100% { scale: .86; opacity: .4; } }
+@media (max-width: 719px) {
+  .rb-ctl { margin-left: 0; width: 100%; display: none; }
+  .rb-day { width: 92px; padding-inline: 4px; }
+  .rb-stack { width: 80px; height: 86px; }
+  .rb-stack > img, .rb-stack > i { width: 46px; height: 69px; margin-left: -23px; }
+  .rb-pd h3 { font-size: 19px; }
+}
+
+/* ============================================================ the week on the charts: lines into posters, in a frosted box */
+.race-hd .race-dd { margin-left: auto; min-width: 0; }
+.race-box { padding: 16px 16px 12px 10px; border-radius: var(--r); background: var(--fr-bg); -webkit-backdrop-filter: var(--fr-blur); backdrop-filter: var(--fr-blur); box-shadow: inset 0 0 0 1px var(--fr-rim); }
+.race-g { --rh: 54px; display: grid; grid-template-columns: 26px minmax(0, 1fr) minmax(180px, 300px); align-items: start; }
+.race-ranks, .race-list { list-style: none; margin: 0; padding: 0; }
+.race-ranks li { height: var(--rh); display: grid; place-items: center; font: 600 14px/1 var(--font); color: var(--label2); font-variant-numeric: tabular-nums; }
+.race-plot { position: relative; min-width: 0; height: calc(var(--rh) * 10.8 + 22px); }
+.race-svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none;
+  -webkit-mask-image: linear-gradient(#000 calc(100% - var(--rh) * 1.1), transparent); mask-image: linear-gradient(#000 calc(100% - var(--rh) * 1.1), transparent); }
+.race-days { position: absolute; left: 8px; right: 6px; bottom: 0; display: flex; justify-content: space-between; font-size: 12px; color: var(--label2); }
+.race-days > span { width: 0; display: flex; justify-content: center; white-space: nowrap; }
+.race-days > span:last-child { color: var(--label); font-weight: 600; }
+.race-days i { display: none; font-style: normal; } .race-days b { font-weight: inherit; }
+.race-grid line { stroke: var(--sep); stroke-width: .5; stroke-dasharray: 2 5; }
+.race-hit { fill: none; stroke: transparent; stroke-width: 18; pointer-events: stroke; }
+.race-line { fill: none; stroke: var(--c); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 0; transition: stroke-width .3s ease; }
+.race-dot { fill: var(--c); opacity: 0; transition: opacity .25s ease; }
+.race-end { fill: var(--c); stroke: var(--bg); stroke-width: 2.5; }
+.race-ln { transition: opacity .3s ease; }
+.race-list { padding-left: 10px; }
+.race-list li { height: var(--rh); transition: opacity .3s ease; }
+.race-list a { display: flex; align-items: center; gap: 11px; height: 100%; padding: 0 8px; border-radius: var(--r); color: inherit; transition: background-color .2s ease; }
+.race-list a:hover { text-decoration: none; }
+.race-list img, .race-list .cl-ph { flex: none; height: calc(var(--rh) - 10px); width: auto; aspect-ratio: 2 / 3; object-fit: cover; border-radius: var(--r); box-shadow: 0 0 0 .5px var(--sep); }
+.race-t { display: grid; min-width: 0; }
+.race-t b { font-weight: 500; font-size: 14px; letter-spacing: -.016em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.race-t small { font-size: 12px; color: var(--label2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.race-t .mv-up { color: var(--green); } .race-t .mv-down { color: #ff375f; } .race-t .mv-new { color: var(--accent); }
+.race-list a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+/* following one title: its line comes forward, glowing, with a dot on each day; the rest step back */
+.race-g.hl .race-ln:not(.on) { opacity: .13; }
+.race-g.hl .race-list li:not(.on) { opacity: .42; }
+.race-ln.on .race-line { stroke-width: 4.5; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 70%, transparent)); }
+.race-ln.on .race-dot { opacity: 1; }
+.race-list li.on a { background: var(--fr-in); }
+/* drawn in as it comes into view: each line traced from the left, then its title arrives */
+:root:not(.still) .race-line { transition: stroke-dashoffset 1.7s cubic-bezier(.45, 0, .15, 1) calc(var(--i) * 70ms), stroke-width .3s ease; }
+:root:not(.still) .race-end { transition: opacity .4s ease calc(1.3s + var(--i) * 70ms); }
+:root:not(.still) .race-list li { transition: opacity .5s ease calc(.9s + var(--i) * 60ms), translate .7s var(--ease-spring) calc(.9s + var(--i) * 60ms); }
+:root:not(.still) .race-g.in .race-list li { transition: opacity .3s ease; }
+:root:not(.still) .race-g:not(.in) .race-line { stroke-dashoffset: 1; }
+:root:not(.still) .race-g:not(.in) .race-end { opacity: 0; }
+:root:not(.still) .race-g:not(.in) .race-list li { opacity: 0; translate: 14px 0; }
+@media (max-width: 719px) {
+  .race-box { padding: 12px 8px 10px 2px; background: var(--ph-box); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .race-g { --rh: 46px; grid-template-columns: 20px minmax(0, 1fr) 138px; }
+  .race-ranks li { font-size: 12px; }
+  .race-list { padding-left: 6px; }
+  .race-list a { gap: 7px; padding: 0 4px; }
+  .race-t b { font-size: 13px; } .race-t small { font-size: 11px; }
+  .race-days { font-size: 11px; }
+  .race-days span:not(:last-child) b { display: none; } .race-days i { display: inline; }
+  .race-days > span:last-child { justify-content: flex-start; margin-left: -8px; }
+  .race-line { stroke-width: 2.5; }
+}
+@media (max-width: 719px) { .race-hd .race-dd { margin-left: 0; } }
+
+/* Last chance: the countdown on each poster, in Tenner pink */
+.lv-when { background: color-mix(in srgb, #ff375f 78%, transparent); box-shadow: none; }
+
+@media (forced-colors: active) { .race-line { stroke: CanvasText; } .race-end, .race-dot { fill: CanvasText; } .rb-day::after { background: Highlight; } }

@@ -14,15 +14,16 @@ const todayIso = () => { const d = new Date(); return `${d.getFullYear()}-${pad(
 // ---------- data ----------
 async function fetchData(bust) {
   const v = `?v=${bust ? Date.now() : Math.floor(Date.now() / 600000)}`;
-  const [trending, fresh, cat, week, cinema] = await Promise.all([
+  const [trending, fresh, cat, week, cinema, trail] = await Promise.all([
     fetch('data/trending.json' + v, { cache: bust ? 'no-store' : 'default' })
       .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }),
     fetch('data/new.json' + v).then((r) => (r.ok ? r.json() : null)).catch(() => null),
     fetch('data/browse.json' + v).then((r) => (r.ok ? r.json() : null)).catch(() => null),   // for "Top rated at a glance"
     fetch('data/week.json' + v).then((r) => (r.ok ? r.json() : null)).catch(() => null),     // for "This Week"
     fetch('data/cinema.json' + v).then((r) => (r.ok ? r.json() : null)).catch(() => null),   // New: at the cinema
+    fetch('data/trail.json' + v).then((r) => (r.ok ? r.json() : null)).catch(() => null),    // New: the week on the charts
   ]);
-  return { trending, fresh, cat, week, cinema };
+  return { trending, fresh, cat, week, cinema, trail };
 }
 
 async function load() {
@@ -51,7 +52,7 @@ async function refresh() {
   try {
     const d = await fetchData(true);
     const changed = d.trending.generatedAt !== state.trending.generatedAt || d.fresh?.generatedAt !== state.fresh?.generatedAt;
-    if (changed) { const y = scrollY; Object.assign(state, d, { cat: d.cat || state.cat, week: d.week || state.week }); render(); requestAnimationFrame(() => scrollTo(0, y)); }
+    if (changed) { const y = scrollY; Object.assign(state, d, { cat: d.cat || state.cat, week: d.week || state.week, trail: d.trail || state.trail }); render(); requestAnimationFrame(() => scrollTo(0, y)); }
   } catch {}   // quietly: the next check catches up
   refreshing = false;
 }
@@ -79,7 +80,7 @@ function draw() {
   selectTab(state.route);
   if (state.route === 'watchlist') { shown = new Map(); hideBanners(); view.innerHTML = `<div class="wrap">${pageWatchlist()}</div>`; document.title = 'Watchlist | Tenner'; wlKindInit(); wlHero(); openFromUrl(); wantTitles(); alertCard(); return; }
   wlHero(true);
-  shown = new Map(); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; newBanners((state.fresh?.items || []).filter((x) => x.date <= todayIso())); document.title = 'New This Week | Tenner'; openFromUrl();
+  shown = new Map(); view.innerHTML = `<div class="wrap">${pageNew()}</div>`; newBanners((state.fresh?.items || []).filter((x) => x.date <= todayIso())); document.title = 'New This Week | Tenner'; nwMount(); openFromUrl();
 }
 
 // ---------- phones: New This Week's arrivals as wide banners, swiped one at a time, neighbours peeking in at the sides ----------
@@ -440,14 +441,202 @@ function newItem(x, mode) {
   const row = `${art}<span class="cl-t"><b>${esc(x.title)}</b><small>${esc(what)}</small></span>${s?.logo ? `<img class="nw-logo" src="${esc(s.logo)}" alt="" data-tip="${esc(s.label)}">` : ''}`;
   return `<li>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener" ${reg(infoFor(x, x.type, eye, s ? [s] : []))}>${row}</a>` : `<span class="nw-row">${row}</span>`}${cal}</li>`;
 }
-function dayGroups(list, mode, today) {
-  const days = new Map();
-  for (const x of list) days.set(x.date, [...(days.get(x.date) || []), x]);
-  const tomorrow = new Date(Date.parse(today + 'T12:00:00') + 864e5).toLocaleDateString('en-CA');
-  return [...days].map(([d, items]) => `<section class="group">
-    <h2 class="${d === today ? 'today' : ''}">${d === today ? 'Today' : d === tomorrow ? 'Tomorrow' : esc(fmtDate(new Date(d + 'T12:00:00'), { weekday: 'long', day: 'numeric', month: 'long' }))}</h2>
-    <ul class="cl nw-cl">${items.map((x) => newItem(x, mode)).join('')}</ul></section>`).join('');
+// ---------- New, redesigned: the week in numbers, Day by day (a ribbon of days), the week on the charts (each of the UK's
+// top 10 traced as a line over the last week), the chart lists, Last chance and the cinema ----------
+const NW = { day: null, days: new Map(), today: null, race: 'tv', ro: null, io: null };
+const isoAdd = (d, n) => new Date(Date.parse(d + 'T12:00:00Z') + n * 864e5).toISOString().slice(0, 10);
+const dayName = (d, today) => d === today ? 'Today' : d === isoAdd(today, 1) ? 'Tomorrow' : d === isoAdd(today, -1) ? 'Yesterday'
+  : fmtDate(new Date(d + 'T12:00:00'), { weekday: 'long', day: 'numeric', month: 'long' });
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+const IC = {
+  prev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  next: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  today: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="12" cy="15.2" r="2" fill="currentColor"/></svg>',
+};
+
+// The week in numbers: four counts in one frosted box, each a way into its part of the page
+function nwStats(f, w, today, leaving) {
+  const past = f ? f.items.filter((x) => x.date <= today && x.date > isoAdd(today, -7)) : [], ahead = f ? f.items.filter((x) => x.date > today && x.date <= isoAdd(today, 30)) : [];
+  const ones = (w?.ones || []).filter((x, i, all) => x.fresh && all.findIndex((y) => y.k === x.k) === i).length;
+  const cells = [
+    [past.length, past.length === 1 ? 'New arrival' : 'New arrivals', 'in the last seven days', 'nwDays', '#0a84ff', past.length ? today : null],
+    [ahead.length, 'On the way', 'over the next month', 'nwDays', '#bf5af2', ahead[0]?.date],
+    [ones, ones === 1 ? 'New No. 1' : 'New No. 1s', 'at the top of a chart', 'wk-1', '#30d158', null],
+    [leaving.length, 'Leaving soon', 'catch them before they go', 'leaving', '#ff375f', null],
+  ].filter((c) => c[0]);
+  if (cells.length < 2) return '';
+  return `<nav class="nw-stats" aria-label="This week in numbers">${cells.map(([n, label, sub, to, c, day]) => `<a class="nw-stat" href="#${to}" data-jump="${to}"${day ? ` data-day="${day}"` : ''} style="--c:${c}">
+    <b data-count="${n}">${n}</b><span>${esc(label)}<small>${esc(sub)}</small></span></a>`).join('')}</nav>`;
 }
+
+// Day by day: a ribbon of days, last week's arrivals and the month ahead, today in the middle. Pick a day and its titles
+// show underneath in the chart list (with Add to Calendar for days ahead).
+function nwRibbon(f, today) {
+  if (!f || f.disabled || f.error) return '';
+  const from = isoAdd(today, -7), to = isoAdd(today, 30), by = new Map();
+  for (const x of f.items) if (x.date > from && x.date <= to) by.set(x.date, [...(by.get(x.date) || []), x]);
+  if (!by.size) return '';
+  if (!by.has(today)) by.set(today, []);
+  const days = [...by.keys()].sort(), full = days.filter((d) => by.get(d).length);
+  NW.days = by; NW.today = today;
+  if (!by.has(NW.day)) NW.day = by.get(today).length ? today : full.find((d) => d > today) || full.at(-1);
+  let month = '';
+  const cols = days.map((d) => {
+    const l = by.get(d), dt = new Date(d + 'T12:00:00'), on = d === NW.day, mo = fmtDate(dt, { month: 'short' });
+    const stack = l.slice(0, 3).map((x, i) => x.poster ? `<img src="${esc(thumb(x.poster))}" alt="" loading="lazy" decoding="async" style="--i:${i}">`
+      : `<i class="rb-ph" style="--i:${i};background:hsl(${hue(x.title)} 45% 35%)"></i>`).join('');
+    const showMo = mo !== month; month = mo;
+    return `<button type="button" role="tab" class="rb-day${d < today ? ' past' : ''}${d === today ? ' today' : ''}${l.length ? '' : ' none'}" id="rb-${d}" data-day="${d}" aria-selected="${on}" tabindex="${on ? 0 : -1}" aria-controls="rbPanel"
+      aria-label="${esc(`${dayName(d, today)}: ${l.length ? plural(l.length, 'title', 'titles') : 'nothing new'}`)}">
+      <span class="rb-wd">${d === today ? 'Today' : esc(fmtDate(dt, { weekday: 'short' }))}</span><b class="rb-n">${dt.getDate()}</b><span class="rb-mo">${showMo ? esc(mo) : '&nbsp;'}</span>
+      <span class="rb-stack" style="--n:${Math.min(3, l.length)}">${stack || '<i class="rb-quiet"></i>'}</span>
+      <span class="rb-c">${l.length ? plural(l.length, 'title', 'titles') : 'Quiet day'}</span></button>`;
+  }).join('');
+  return `<section class="wk rb" id="nwDays" aria-labelledby="rbH">
+    <div class="wk-hd rb-hd"><h2 class="row-h" id="rbH">Day by Day</h2><p>Last week's arrivals and the month ahead</p>
+      <div class="rb-ctl"><button type="button" class="btn btn-tinted rb-today" data-rb="today">${IC.today}Today</button>
+        <button type="button" class="rb-arw" data-rb="-1" aria-label="Earlier days">${IC.prev}</button><button type="button" class="rb-arw" data-rb="1" aria-label="Later days">${IC.next}</button></div></div>
+    <div class="rb-track" id="rbTrack" role="tablist" aria-label="Days">${cols}</div>
+    <div class="rb-panel" id="rbPanel" role="tabpanel" aria-labelledby="rb-${NW.day}" aria-live="polite">${nwPanel()}</div></section>`;
+}
+function nwPanel() {
+  const d = NW.day, l = NW.days.get(d) || [], today = NW.today, ahead = d > today;
+  const say = l.length ? `${plural(l.length, 'title', 'titles')} ${ahead ? 'on the way' : d === today ? 'out today' : 'arrived'}${ahead ? '. Tap the calendar to be reminded on the day' : ''}` : 'Nothing new on the services';
+  return `<div class="rb-pd"><h3 class="${d === today ? 'today' : ''}">${esc(dayName(d, today))}</h3><p>${esc(say)}</p></div>
+    ${l.length ? `<ul class="cl nw-cl">${l.map((x) => newItem(x, ahead ? 'soon' : 'new')).join('')}</ul>` : ''}`;
+}
+function pickDay(d, how = 'smooth') {
+  if (!NW.days.has(d)) return;
+  const track = $('#rbTrack'), panel = $('#rbPanel'); if (!track || !panel) return;
+  const changed = d !== NW.day; NW.day = d;
+  track.querySelectorAll('.rb-day').forEach((b) => { const on = b.dataset.day === d; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; });
+  const col = $(`#rb-${d}`);
+  track.scrollTo({ left: col.offsetLeft - (track.clientWidth - col.offsetWidth) / 2, behavior: reduceMotion() ? 'auto' : how });
+  if (!changed) return;
+  window.tn.haptic?.();
+  panel.setAttribute('aria-labelledby', `rb-${d}`);
+  panel.innerHTML = nwPanel(); panel.classList.remove('swap'); void panel.offsetWidth; panel.classList.add('swap');
+}
+
+// The week on the charts: each of the UK's top 10 shows (or films) as a line through its place each day of the last
+// week (trail.json), ending at its poster. Point at a title or its line to follow it; a title opens its sheet.
+const RACE_C = ['#0a84ff', '#ff375f', '#30d158', '#bf5af2', '#ff9f0a', '#00c7be', '#5e5ce6', '#ff453a', '#32ade6', '#ffcc00'];
+function raceRows(type) {
+  const t = state.trail, top = (state.trending?.overall?.[type] || []).slice(0, 10);
+  if (!t?.days || t.days.length < 3 || top.length < 3) return null;
+  const n = Math.min(8, t.days.length), since = fmtDate(new Date(t.days.at(-n) + 'T12:00:00'), { weekday: 'long' });
+  return { days: t.days.slice(-n), rows: top.map((it, i) => {
+    const k = `${type === 'movie' ? 'm' : 't'}${it.id}`, tr = t.items?.[k], d = tr?.c === `all:${type}` ? tr.d.slice(-n) : Array(n).fill(0);
+    d[n - 1] = i + 1;
+    const was = d[0], dir = !was ? 'new' : was > i + 1 ? 'up' : was < i + 1 ? 'down' : 'same';
+    const move = { new: 'New this week', up: `Up ${was - i - 1} since ${since}`, down: `Down ${i + 1 - was} since ${since}`, same: 'Steady all week' }[dir];
+    return { k, it, d, rank: i + 1, move, dir };
+  }) };
+}
+function nwRace() {
+  const r = raceRows(NW.race) || raceRows(NW.race = NW.race === 'tv' ? 'movie' : 'tv'); if (!r) return '';
+  return `<section class="wk race" id="nwRace" aria-labelledby="raceH">
+    <div class="wk-hd race-hd"><h2 class="row-h" id="raceH">The Week on the Charts</h2><p>How the UK's top 10 moved, day by day</p>
+      <label class="dd dd-kind race-dd"><span class="dd-l" id="raceL">${NW.race === 'movie' ? 'Films' : 'Shows'}</span><span class="dd-chev" aria-hidden="true"></span>
+        <select id="raceKind" aria-label="Shows or films"><option value="tv"${NW.race === 'tv' ? ' selected' : ''}>Shows</option><option value="movie"${NW.race === 'movie' ? ' selected' : ''}>Films</option></select></label></div>
+    <div class="race-box" id="raceBox">${raceInner(r)}</div></section>`;
+}
+function raceInner(r) {
+  const last = r.days.length - 1;
+  return `<div class="race-g" id="raceG">
+    <ol class="race-ranks" aria-hidden="true">${r.rows.map((x) => `<li>${x.rank}</li>`).join('')}</ol>
+    <div class="race-plot" id="racePlot"><svg class="race-svg" id="raceSvg" aria-hidden="true"></svg>
+      <div class="race-days" aria-hidden="true">${r.days.map((d, i) => `<span>${i === last ? 'Today' : `<b>${esc(fmtDate(new Date(d + 'T12:00:00'), { weekday: 'short' }))}</b><i>${esc(fmtDate(new Date(d + 'T12:00:00'), { weekday: 'narrow' }))}</i>`}</span>`).join('')}</div></div>
+    <ol class="race-list">${r.rows.map((x, i) => `<li style="--c:${RACE_C[i]};--i:${i}" data-k="${x.k}"><a href="${esc(tmdbUrl(x.it.type, x.it.id))}" target="_blank" rel="noopener" ${reg(infoFor(x.it, x.it.type, `No. ${x.rank} ${x.it.type === 'movie' ? 'film' : 'show'} in the UK`))}
+      aria-label="${esc(`No. ${x.rank}, ${x.it.title}. ${x.move}`)}">
+      ${x.it.poster ? `<img src="${esc(thumb(x.it.poster))}" alt="" loading="lazy" decoding="async">` : `<span class="cl-ph" style="background:hsl(${hue(x.it.title)} 45% 35%)"></span>`}
+      <span class="race-t"><b>${esc(x.it.title)}</b><small class="mv-${x.dir}">${esc(x.move)}</small></span></a></li>`).join('')}</ol></div>`;
+}
+// the lines themselves, drawn to the plot's real size (and again whenever it changes)
+function raceDraw() {
+  const plot = $('#racePlot'), svg = $('#raceSvg'), r = raceRows(NW.race); if (!plot || !svg || !r) return;
+  const W = plot.clientWidth, rh = $('#raceG .race-list li')?.offsetHeight || 52, H = rh * 10.8, n = r.days.length;
+  const x = (i) => 8 + i * (W - 14) / (n - 1), y = (v) => (v ? (v - .5) * rh : H).toFixed(1);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('width', W); svg.setAttribute('height', H);
+  svg.innerHTML = `<g class="race-grid">${r.rows.map((_, i) => `<line x1="0" x2="${W}" y1="${(i + .5) * rh}" y2="${(i + .5) * rh}"/>`).join('')}</g>`
+    + r.rows.map((row, i) => {
+      const first = Math.max(0, row.d.findIndex((v) => v) - 1);
+      let d = `M${x(first).toFixed(1)} ${y(row.d[first])}`;
+      for (let j = first + 1; j < n; j++) { const mx = ((x(j - 1) + x(j)) / 2).toFixed(1); d += ` C${mx} ${y(row.d[j - 1])} ${mx} ${y(row.d[j])} ${x(j).toFixed(1)} ${y(row.d[j])}`; }
+      const dots = row.d.map((v, j) => v && j < n - 1 ? `<circle class="race-dot" cx="${x(j).toFixed(1)}" cy="${y(v)}" r="3.5"/>` : '').join('');
+      return `<g class="race-ln" data-k="${row.k}" style="--c:${RACE_C[i]};--i:${i}"><path class="race-hit" d="${d}"/><path class="race-line" d="${d}" pathLength="1"/>${dots}<circle class="race-end" cx="${x(n - 1).toFixed(1)}" cy="${y(row.d[n - 1])}" r="5"/></g>`;
+    }).reverse().join('');   // No. 1 drawn last, so it sits on top
+}
+function raceHl(k) {
+  const g = $('#raceG'); if (!g) return;
+  g.classList.toggle('hl', !!k);
+  g.querySelectorAll('[data-k]').forEach((el) => el.classList.toggle('on', el.dataset.k === k));
+}
+function raceMount() {
+  NW.ro?.disconnect(); const plot = $('#racePlot'); if (!plot) return;
+  raceDraw(); NW.ro = new ResizeObserver(() => raceDraw()); NW.ro.observe(plot);
+}
+
+// Last chance: what's leaving the services soon, a row of posters, each counting down
+function nwLeaving(leaving, today) {
+  if (!leaving.length) return '';
+  const left = (d) => { const n = Math.round((Date.parse(d + 'T12:00:00Z') - Date.parse(today + 'T12:00:00Z')) / 864e5); return n <= 0 ? 'Last day' : n === 1 ? '1 day left' : `${n} days left`; };
+  return `<section class="wk" id="leaving" aria-labelledby="lvH"><div class="wk-hd"><h2 class="row-h" id="lvH">Last Chance</h2><p>Leaving the services soon</p></div>
+    <ul class="nr">${leaving.map((x) => {
+      const s = svc(x.service), on = fmtDate(new Date(x.date + 'T12:00:00'), { weekday: 'short', day: 'numeric', month: 'short' });
+      const inner = `<span class="nr-art">${x.poster ? `<img src="${esc(x.poster)}" alt="" loading="lazy" decoding="async">` : placeholder(x)}<span class="cu-when lv-when">${esc(left(x.date))}</span></span>
+        <b>${esc(x.title)}</b><small>${esc(`${s?.label || 'Streaming'} · ${on}`)}</small>`;
+      return `<li>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener" ${reg(infoFor(x, x.type, `Leaving ${s?.label || 'streaming'} ${on}`, s ? [s] : []))}>${inner}</a>` : `<span>${inner}</span>`}</li>`;
+    }).join('')}</ul></section>`;
+}
+
+// once the page is drawn: the chosen day in the middle of the ribbon, the chart's lines drawing in as it comes into
+// view, the numbers counting up, and each new part introducing itself once
+function nwMount() {
+  NW.io?.disconnect();
+  if ($('#rbTrack')) pickDay(NW.day, 'auto');
+  raceMount();
+  const g = $('#raceG'), counts = view.querySelectorAll('[data-count]');
+  if (reduceMotion()) g?.classList.add('in');
+  else {
+    NW.io = new IntersectionObserver((es) => es.forEach((e) => {
+      if (!e.isIntersecting) return; NW.io.unobserve(e.target);
+      if (e.target === g) g.classList.add('in'); else countUp(e.target);
+    }), { threshold: .25 });
+    if (g) NW.io.observe(g); counts.forEach((b) => NW.io.observe(b));
+  }
+  const tip = window.tn.tip;
+  if ($('.nw-stats')) tip({ id: 'new-week-numbers', for: '.nw-stats', title: 'The week in numbers', text: 'What arrived, what’s on the way, the new No. 1s and what’s about to leave. Tap a number to jump straight to it.' });
+  if ($('#rbTrack')) tip({ id: 'new-day-by-day', for: '#rbTrack', title: 'Day by day', text: 'Swipe along the days, or use the arrows. Pick one to see what landed on the services that day, or what’s on the way, with a calendar reminder for anything ahead.' });
+  if (g) tip({ id: 'new-chart-race', for: '#raceBox', title: 'The week on the charts', text: 'Each line is one of the UK’s top 10, traced through its place each day this week. Point at a title or its line to follow it, and tap a title to see where to watch.' });
+}
+function countUp(b) {
+  const to = +b.dataset.count, t0 = performance.now(), dur = 900 + Math.min(600, to * 20);
+  const step = (t) => { const p = Math.min(1, (t - t0) / dur); b.textContent = Math.round(to * (1 - Math.pow(1 - p, 4))); if (p < 1) requestAnimationFrame(step); };
+  b.textContent = '0'; requestAnimationFrame(step);
+}
+view.addEventListener('click', (e) => {
+  const day = e.target.closest('.rb-day'); if (day) { pickDay(day.dataset.day); return; }
+  const c = e.target.closest('[data-rb]'); if (!c) return;
+  if (c.dataset.rb === 'today') { const t = NW.today; pickDay(NW.days.get(t)?.length ? t : [...NW.days.keys()].sort().find((d) => d > t && NW.days.get(d).length) || t); return; }
+  const track = $('#rbTrack'); track?.scrollBy({ left: +c.dataset.rb * track.clientWidth * .7, behavior: reduceMotion() ? 'auto' : 'smooth' });
+});
+view.addEventListener('keydown', (e) => {
+  const b = e.target.closest?.('.rb-day'); if (!b) return;
+  const all = [...view.querySelectorAll('.rb-day')], i = all.indexOf(b);
+  const k = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: all.length - 1 }[e.key]; if (k === undefined) return;
+  e.preventDefault(); const n = all[Math.max(0, Math.min(all.length - 1, k))]; n.focus({ preventScroll: true }); pickDay(n.dataset.day);
+});
+view.addEventListener('change', (e) => {
+  if (e.target.id !== 'raceKind') return;
+  NW.race = e.target.value; $('#raceL').textContent = NW.race === 'movie' ? 'Films' : 'Shows';
+  const r = raceRows(NW.race), box = $('#raceBox'); if (!r || !box) return;
+  box.innerHTML = raceInner(r); raceMount();
+  const g = $('#raceG'); if (reduceMotion()) g.classList.add('in'); else requestAnimationFrame(() => requestAnimationFrame(() => g.classList.add('in')));
+});
+view.addEventListener('pointerover', (e) => { const k = e.target.closest?.('#raceG [data-k]')?.dataset.k; if (k) raceHl(k); });
+view.addEventListener('pointerout', (e) => { if (e.target.closest?.('#raceG') && !e.relatedTarget?.closest?.('#raceG [data-k]')) raceHl(null); });
+view.addEventListener('focusin', (e) => { if (e.target.closest?.('#raceG')) raceHl(e.target.closest('[data-k]')?.dataset.k || null); });
 // New: the week on the charts (the No. 1s, the biggest climbers, new arrivals), then new on the services, coming soon
 // and leaving soon. All in the homepage's styles: rows of posters and the chart list.
 function pageNew() {
@@ -475,26 +664,16 @@ function pageNew() {
     <b>${esc(x.title)}</b><small>${esc(sub)}</small></a></li>`;
   const cinema = sec('cinema', 'At the Cinema', 'Showing in UK cinemas now', inCinemas.length ? `<ul class="nr">${inCinemas.map((x) => filmCard(x, [x.cert, `Out ${out(x)}`].filter(Boolean).join(' · '))).join('')}</ul>` : '')
     + sec('cinema-soon', 'Coming to Cinemas', 'Out in the UK over the next three months', toCinemas.length ? `<ul class="nr">${toCinemas.map((x) => filmCard(x, [x.cert, out(x)].filter(Boolean).join(' · '), window.tn.whenText(x.date))).join('')}</ul>` : '');
-  let releases = '', soon = [], leaving = [];
-  if (f && !f.disabled && !f.error) {
-    const past = f.items.filter((x) => x.date <= today).reverse();   // newest first
-    soon = f.items.filter((x) => x.date > today);
-    leaving = (f.leaving || []).filter((x) => x.date >= today);
-    releases = sec('released', 'New on the Services', 'Arriving over the last seven days', past.length ? dayGroups(past, 'new', today) : '<p class="nw-none">Nothing new on these services this week.</p>')
-      + sec('soon', 'Coming Soon', 'The next month. Tap the calendar to be reminded on the day', soon.length ? dayGroups(soon, 'soon', today) : '')
-      + sec('leaving', 'Leaving Soon', 'Catch them before they go', leaving.length ? dayGroups(leaving, 'leaving', today) : '');
-  }
-  if (!charts && !releases && !cinema) return `<h1 class="large-title page-title">New <em class="grad">This Week</em></h1>
+  const leaving = f && !f.disabled && !f.error ? (f.leaving || []).filter((x) => x.date >= today) : [];
+  const ribbon = nwRibbon(f, today), race = nwRace();
+  if (!charts && !ribbon && !cinema && !race) return `<h1 class="large-title page-title">New <em class="grad">This Week</em></h1>
     <div class="empty"><span class="empty-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.5 3.5l1.8 4.9 4.9 1.8-4.9 1.8-1.8 4.9-1.8-4.9-4.9-1.8 4.9-1.8z" fill="currentColor"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z" fill="currentColor"/></svg></span>
       <h2>${f?.error ? 'Back shortly' : 'Building up'}</h2><p>${f?.error ? "This week's round-up didn't load this time. It'll be back after the next hourly update." : 'The week fills in as Tenner keeps an eye on the charts and the services. Check back tomorrow.'}</p>
       <a class="btn btn-tinted" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.4 12 4l8 6.4V20h-5v-5.6H9V20H4z" fill="currentColor"/></svg>See the top 10</a></div>`;
-  const jumps = [['cinema', 'At the cinema', inCinemas.length || toCinemas.length], ['released', 'New on the services', releases.includes('id="released"')], ['soon', 'Coming soon', soon.length], ['leaving', 'Leaving soon', leaving.length]]
-    .filter((j) => j[2] && charts).map(([id, label]) => `<a class="nw-jump" href="#${id}" data-jump="${id}">${label}<span class="chev" aria-hidden="true"></span></a>`).join('');
   return `<h1 class="large-title page-title">New <em class="grad">This Week</em></h1>
-    <p class="lede">${w?.climbers?.length ? `What moved on the UK's charts ${esc(sinceText(w))}, and what's new on the services. Rebuilt every hour.` : 'What’s new on the services, rebuilt every hour.'} Release dates come from US listings, so a few UK dates may differ.</p>
-    ${jumps ? `<div class="nw-jumps">${jumps}</div>` : ''}
+    <p class="lede">${w?.climbers?.length ? `What moved on the UK's charts ${esc(sinceText(w))}, and what's new on the services.` : 'What’s new on the services.'} Rebuilt every hour; a few UK dates may differ from the US listings they come from.</p>
     ${state.trending.sample ? `<p class="notice"><strong>Sample data.</strong> These titles are made up.</p>` : ''}
-    ${charts}${cinema}${releases}`;
+    ${nwStats(f, w, today, leaving)}${ribbon}${race}${charts}${nwLeaving(leaving, today)}${cinema}`;
 }
 // Add to Calendar: an all-day event on the day it arrives, as a calendar file (the iPhone and Mac open it in Calendar)
 function calendarFile(x) {
@@ -512,7 +691,7 @@ function calendarFile(x) {
 }
 view.addEventListener('click', (e) => {
   const j = e.target.closest('[data-jump]');
-  if (j) { e.preventDefault(); $(`#${j.dataset.jump}`)?.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' }); return; }
+  if (j) { e.preventDefault(); if (j.dataset.day) pickDay(j.dataset.day); $(`#${j.dataset.jump}`)?.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' }); return; }
   const b = e.target.closest('[data-cal]'); if (!b) return;
   const x = calItems[+b.dataset.cal]; if (!x) return;
   const url = `data:text/calendar;charset=utf-8,${encodeURIComponent(calendarFile(x))}`, a = document.createElement('a');
