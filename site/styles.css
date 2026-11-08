@@ -579,9 +579,11 @@ a.tb-btn:hover { text-decoration: none; }
 /* Watchlist rows: where it's included, then remove */
 /* This Week */
 .wk { margin-top: 22px; }
-.wk-hd { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-bottom: 12px; }
-.wk-hd .row-h { margin: 0; }
-.wk-hd p { margin: 0; color: var(--label2); font-size: 14px; }
+.wk-hd { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 14px; margin-bottom: 12px; }
+.wk-hd .row-h { margin: 0; grid-column: 1; }
+/* a section's line of explanation always sits under its heading, never beside it; any control sits on the right */
+.wk-hd p { grid-column: 1; margin: 3px 0 0; color: var(--label2); font-size: 14px; }
+.wk-hd > :not(.row-h, p) { grid-column: 2; grid-row: 1 / span 2; }
 .wl-go { color: var(--accent); font-weight: 600; }
 /* Watchlist: the homepage's chart list (.cl), with where it's streaming and a quiet remove button on each row */
 .wl-hd { margin-top: 22px; }

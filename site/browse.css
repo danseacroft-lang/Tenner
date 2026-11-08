@@ -204,7 +204,7 @@ body.browse { overflow-x: clip; }
 /* ============================================================ For You and the genre tiles */
 .b-rows:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; margin-top: 24px; }
 .b-row { min-width: 0; }
-.b-row-hd { display: flex; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.b-row-hd { display: grid; gap: 3px; margin-bottom: 12px; }   /* the line of explanation under the heading, never beside it */
 .b-row-hd h2, .moods-h { margin: 0; font: 700 22px/1.2 var(--font); letter-spacing: -.02em; color: var(--label); }
 .b-row-hd p { margin: 0; font-size: 14px; color: var(--label2); }
 .searching .b-rows, .searching .moods { display: none; }

@@ -33,8 +33,7 @@
 }
 
 /* ============================================================ Day by day: a ribbon of days that fades at its edges */
-.rb-hd { align-items: center; }
-.rb-ctl { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.rb-ctl { display: flex; align-items: center; gap: 8px; }
 .rb-today { display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 14px 0 11px; border: 0; font: 500 15px/1 var(--font); cursor: pointer; }
 .rb-today svg { width: 18px; height: 18px; flex: none; }
 .rb-arw { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; color: #fff;
@@ -81,7 +80,7 @@
 
 /* the chosen day's titles: the chart list */
 .rb-panel { margin-top: 8px; }
-.rb-pd { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; margin: 0 0 6px; }
+.rb-pd { display: grid; gap: 2px; margin: 0 0 6px; }   /* the line under the heading, never beside it */
 .rb-pd h3 { margin: 0; font: 700 20px/1.25 var(--font); letter-spacing: -.015em; }
 .rb-pd h3.today { color: var(--accent); }
 .rb-pd p { margin: 0; font-size: 14px; color: var(--label2); }
@@ -94,7 +93,7 @@
 }
 @keyframes rbLens { 0% { scale: .86; opacity: .4; } 18%, 82% { scale: 1; opacity: 1; } 100% { scale: .86; opacity: .4; } }
 @media (max-width: 719px) {
-  .rb-ctl { margin-left: 0; width: 100%; display: none; }
+  .rb-ctl { display: none; }
   .rb-day { width: 92px; padding-inline: 4px; }
   .rb-stack { width: 80px; height: 86px; }
   .rb-stack > img, .rb-stack > i { width: 46px; height: 69px; margin-left: -23px; }
@@ -102,7 +101,7 @@
 }
 
 /* ============================================================ the week on the charts: lines into posters, in a frosted box */
-.race-hd .race-dd { margin-left: auto; min-width: 0; }
+.race-hd .race-dd { min-width: 0; }
 .race-box { padding: 16px 16px 12px 10px; border-radius: var(--r); background: var(--fr-bg); -webkit-backdrop-filter: var(--fr-blur); backdrop-filter: var(--fr-blur); box-shadow: inset 0 0 0 1px var(--fr-rim); }
 .race-g { --rh: 54px; display: grid; grid-template-columns: 26px minmax(0, 1fr) minmax(180px, 300px); align-items: start; }
 .race-ranks, .race-list { list-style: none; margin: 0; padding: 0; }
@@ -156,7 +155,6 @@
   .race-days > span:last-child { justify-content: flex-start; margin-left: -8px; }
   .race-line { stroke-width: 2.5; }
 }
-@media (max-width: 719px) { .race-hd .race-dd { margin-left: 0; } }
 
 /* Last chance: the countdown on each poster, in Tenner pink */
 .lv-when { background: color-mix(in srgb, #ff375f 78%, transparent); box-shadow: none; }
