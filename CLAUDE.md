@@ -138,7 +138,8 @@ Mac. When in doubt, ask "would this look at home in Apple TV, Apple Music or the
 - **On TV this week**: `scripts/fetch-tv.mjs` also writes `onair.json` (title → next showings); tenner.stream's title sheet
   reads it from tenner-tv's workers.dev address at `/api/onair` (the Worker adds the cross-site header; a file in `public/` is served without the Worker running), and the line opens Tenner TV's search with `?q=`.
 - **Watchdog** (`watchdog.yml`, hourly): checks the site, the charts' age, the search service and Tenner TV; re-runs
-  whatever's behind, re-checks after 7 minutes, and only then fails (GitHub emails the owner). It also checks the Watch live
+  whatever's behind, re-checks after 7 minutes, and only then fails (GitHub emails the owner). It also checks that titles' own links
+  (Netflix, Disney+, Prime Video, HBO Max and Apple TV, found on Wikidata by TMDB or IMDb ID) are still being looked up, checks the Watch live
   links still open, and fails a fortnight before tenner.stream's registration runs out (from its public RDAP record).
   `tv.yml` likewise fails a fortnight before the Cloudflare token's end date, if it has one. tv.tenner.stream is behind Cloudflare's bot check, so it checks Tenner TV at its workers.dev address.
 - Anything new should follow the same pattern: no step that needs a person, a fallback when a source is down, and a check

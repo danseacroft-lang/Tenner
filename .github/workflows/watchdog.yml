@@ -32,6 +32,10 @@ jobs:
             # each title's own page (for link previews): the No. 1 show's must be there, with its name in the preview tags
             k=$(curl -s -m 30 "https://tenner.stream/data/trending.json?v=$(date +%s)" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log("t"+JSON.parse(s).overall.tv[0].id)}catch{console.log("t0")}})')
             curl -s -m 30 "https://tenner.stream/t/$k/" | grep -q 'property="og:title"' || echo "update.yml|the link preview page for $k is missing"
+            # each title's own page on Netflix, Disney+, Prime Video, HBO Max and Apple TV (looked up on Wikidata by the
+            # hourly job): the lookups must keep getting answers, and at least half the titles must have one
+            ln=$(curl -s -m 30 "https://tenner.stream/data/titles.json?v=$(date +%s)" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const d=JSON.parse(s),l=d.links||{},it=Object.values(d.items||{}),n=it.filter(x=>x.ln&&["nf","dp","pv","hb","ap"].some(f=>x.ln[f])).length,h=Math.round((Date.now()-Date.parse(l.checked))/36e5);console.log(h>48?"Wikidata has not answered for "+h+" hours":n<it.length/2?"only "+n+" of "+it.length+" titles open on the service itself":"ok")}catch{console.log("unreadable")}})')
+            [ "$ln" = ok ] || echo "update.yml|titles' own links: $ln"
             # the search service only answers Tenner's own pages, so the check says it's from tenner.stream
             code=$(curl -s -o /dev/null -w '%{http_code}' -m 30 -H 'Origin: https://tenner.stream' https://tenner-api.danseacroft.workers.dev/title/t1413)
             [ "$code" = 200 ] || echo "api.yml|the search service answered $code"

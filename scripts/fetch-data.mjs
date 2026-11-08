@@ -425,38 +425,61 @@ export function buildTrackers(data, h, now = new Date()) {
 
 // ---------- Each title's own page on each service, from Wikidata (free, no key) ----------
 // TMDB says where a title is on, but not the link to it there. Wikidata keeps each title's Netflix, Disney+, Prime
-// Video, HBO Max and Apple TV IDs, so the title sheet can open the title itself (and on phones, the app). Looked up by
-// TMDB ID in a few batched queries; new titles straight away, then re-checked daily until found (every three days after),
-// and titles without IDs fall back to the service's own search. Kept inside titles.json as each item's `ln`: { at, nf?, dp?, pv?, hb?, ap? }.
+// Video, HBO Max and Apple TV IDs, so the title sheet can open the title itself (and on phones, the app). Looked up in
+// a few batched queries by TMDB ID, and by IMDb ID too (from TMDB), which far more Wikidata entries carry; new titles
+// straight away, the longest-unchecked first, then re-checked daily until found (every three days after). Titles
+// without IDs fall back to the service's own search. Kept inside titles.json as each item's `ln`: { at, nf?, dp?, pv?, hb?, ap? }.
 const WD_PROPS = { nf: 'P1874', dpm: 'P7595', dps: 'P7596', pv: 'P8055', pv2: 'P14440', hb: 'P8298', atm: 'P9586', ats: 'P9751' };
-export async function buildLinks(keys, old) {
-  // new titles straight away; ones Wikidata hasn't got yet every day (volunteers usually add new releases within days);
-  // ones with links every three days
-  const due = keys.filter((k) => !old?.[k] || hoursAgo(old[k].at) > (Object.keys(old[k]).length > 1 ? 72 : 24)).slice(0, 600);
-  const out = Object.fromEntries(keys.filter((k) => old?.[k]).map((k) => [k, old[k]]));
+// the shape each service's addresses take (as links.js checks them): Wikidata is edited by volunteers, so an old or
+// mistyped ID is skipped here and a good one listed after it is used instead
+const LN_OK = { nf: /^\d{5,10}$/, dp: /^(movies\/wd|series\/wp)\/[A-Za-z0-9]{6,20}$/, pv: /^(amzn1\.dv\.gti\.[0-9a-f-]{36}|[0-9A-Z]{10,30})$/,
+  hb: /^(show|movie|feature|series)\/[A-Za-z0-9:-]{8,60}$/, ap: /^(movie|show)\/umc\.cmc\.[a-z0-9]{10,40}$/ };
+const hasLinks = (x) => Object.keys(LN_OK).some((f) => x?.[f]);
+export async function buildLinks(items, old) {
+  const keys = Object.keys(items);
+  const due = keys.filter((k) => !old?.[k] || hoursAgo(old[k].at) > (hasLinks(old[k]) ? 72 : 24))
+    .sort((a, b) => (old?.[a]?.at || 0) - (old?.[b]?.at || 0)).slice(0, 600);
+  const ln = Object.fromEntries(keys.filter((k) => old?.[k]).map((k) => [k, old[k]]));
+  let asked = 0, answered = 0;
   for (const type of ['movie', 'tv']) {
-    const p = type === 'movie' ? 'm' : 't';
-    const ids = due.filter((k) => k[0] === p).map((k) => k.slice(1));
-    for (let i = 0; i < ids.length; i += 150) {
-      const batch = ids.slice(i, i + 150);
-      const vars = Object.keys(WD_PROPS).map((v) => `?${v}`).join(' ');
-      const q = `SELECT ?t ${vars} WHERE { VALUES ?t { ${batch.map((x) => `"${x}"`).join(' ')} } ?i wdt:${type === 'movie' ? 'P4947' : 'P4983'} ?t . `
+    const p = type === 'movie' ? 'm' : 't', mine = due.filter((k) => k[0] === p);
+    for (let i = 0; i < mine.length; i += 100) {
+      const batch = mine.slice(i, i + 100);
+      const byIm = Object.fromEntries(batch.filter((k) => /^tt\d{6,10}$/.test(items[k].im || '')).map((k) => [items[k].im, k]));
+      const q = `SELECT ?t ?im ${Object.keys(WD_PROPS).map((v) => `?${v}`).join(' ')} WHERE { `
+        + `{ VALUES ?t { ${batch.map((k) => `"${k.slice(1)}"`).join(' ')} } ?i wdt:${type === 'movie' ? 'P4947' : 'P4983'} ?t . } UNION `
+        + `{ VALUES ?im { ${Object.keys(byIm).map((x) => `"${x}"`).join(' ')} } ?i wdt:P345 ?im . } `
         + Object.entries(WD_PROPS).map(([v, prop]) => `OPTIONAL { ?i wdt:${prop} ?${v} }`).join(' ') + ' }';
+      asked++;
       try {
         const res = await getJSON(`https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(q)}`,
-          { 'user-agent': 'Tenner/1.0 (https://github.com/danseacroft-lang/Tenner)', accept: 'application/sparql-results+json' }, 2);
+          { 'user-agent': 'Tenner/1.0 (https://github.com/danseacroft-lang/Tenner)', accept: 'application/sparql-results+json' }, 3);
         const found = {};
-        for (const b of res.results?.bindings || []) {
-          const k = `${p}${b.t.value}`, v = (n) => b[n]?.value, f = (found[k] ||= {});
+        // matches by TMDB ID first: if the two IDs lead to different entries, TMDB's own wins
+        for (const b of (res.results?.bindings || []).sort((x, y) => !!y.t - !!x.t)) {
+          const k = b.t ? `${p}${b.t.value}` : byIm[b.im?.value]; if (!k) continue;
+          const v = (n) => b[n]?.value, f = (found[k] ||= {});
           const got = { nf: v('nf'), dp: v('dpm') ? `movies/wd/${v('dpm')}` : v('dps') ? `series/wp/${v('dps')}` : undefined,
             pv: v('pv2') || v('pv'), hb: v('hb'), ap: v('atm') ? `movie/${v('atm')}` : v('ats') ? `show/${v('ats')}` : undefined };
-          for (const [n, x] of Object.entries(got)) if (x && !f[n]) f[n] = x;   // the first ID of each kind
+          for (const [n, x] of Object.entries(got)) if (x && !f[n] && LN_OK[n].test(x)) f[n] = x;   // the first good ID of each kind
         }
-        for (const id of batch) out[`${p}${id}`] = { at: Date.now(), ...(found[`${p}${id}`] || {}) };
+        for (const k of batch) ln[k] = { at: Date.now(), ...(found[k] || {}) };
+        answered++;
       } catch (err) { warn('Links', `Wikidata didn't answer (${err.message}); keeping the last links`); }
     }
   }
-  return out;
+  return { ln, asked, answered };
+}
+// how many titles on Netflix, Disney+, Prime Video, HBO Max or Apple TV (to stream, in the UK) open the title itself there
+const LN_SVC = [[/^Netflix/, 'nf'], [/^Disney/, 'dp'], [/^Amazon Prime Video/, 'pv'], [/^(HBO )?Max\b/, 'hb'], [/^Apple TV/, 'ap']];
+function linkStats(titles) {
+  let direct = 0, of = 0;
+  for (const x of Object.values(titles.items)) {
+    const fields = new Set([...(x.f || []), ...(x.fr || [])].map((id) => titles.providers[id]?.[0] || '').filter((n) => !/Channel$/.test(n))
+      .map((n) => LN_SVC.find(([re]) => re.test(n))?.[1]).filter(Boolean));
+    for (const f of fields) { of++; if (x.ln?.[f]) direct++; }
+  }
+  return { direct, of };
 }
 
 // ---------- Title details: where to watch in the UK, runtime, age rating, trailer, logo ----------
@@ -474,7 +497,7 @@ export async function buildTitles(chartKeys, catalogueKeys, prev) {
   const order = due.sort((a, b) => (chartKeys.has(b) - chartKeys.has(a)) || ((old?.items?.[a]?.at || 0) - (old?.items?.[b]?.at || 0))).slice(0, 350);
   const fetched = await pool(order.map((k) => async () => {
     const type = k[0] === 'm' ? 'movie' : 'tv', id = k.slice(1);
-    try { return [k, await tmdb(`/${type}/${id}`, { language: 'en-GB', append_to_response: `watch/providers,videos,images,${type === 'movie' ? 'release_dates' : 'content_ratings'}`, include_image_language: 'en,null' })]; }
+    try { return [k, await tmdb(`/${type}/${id}`, { language: 'en-GB', append_to_response: `watch/providers,videos,images,${type === 'movie' ? 'release_dates' : 'content_ratings,external_ids'}`, include_image_language: 'en,null' })]; }
     catch { return [k, null]; }
   }));
   for (const [k, d] of fetched) {
@@ -498,6 +521,7 @@ export async function buildTitles(chartKeys, catalogueKeys, prev) {
       en: type === 'tv' && /Ended|Canceled/.test(d.status || '') ? 1 : undefined,
       at: Date.now(), rt: runtime || undefined, se: type === 'tv' ? d.number_of_seasons || undefined : undefined, c: cert || undefined,
       g: (d.genres || []).map((g) => g.name).slice(0, 3), tl: d.tagline || undefined,
+      im: d.imdb_id || d.external_ids?.imdb_id || undefined,   // its IMDb ID, for finding its links on Wikidata
       f: ids(gb.flatrate), fr: ids([...(gb.free || []), ...(gb.ads || [])]), re: ids(gb.rent), bu: ids(gb.buy), tr: trailer, lg: logo,
     }).filter(([, v]) => v !== undefined && !(Array.isArray(v) && !v.length)));
   }
@@ -951,9 +975,14 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       const titles = await buildTitles(chartKeys, catalogueKeys, prevTitles);
       try {   // each title's own link on each service (see buildLinks); kept from the last run if Wikidata is down
         const oldLn = Object.fromEntries(Object.entries(prevTitles?.items || {}).filter(([, x]) => x.ln).map(([k, x]) => [k, x.ln]));
-        const ln = await buildLinks(Object.keys(titles.items), oldLn);
+        const { ln, asked, answered } = await buildLinks(titles.items, oldLn);
         for (const [k, x] of Object.entries(titles.items)) if (ln[k]) x.ln = ln[k];
-        const msg = `${Object.values(ln).filter((x) => Object.keys(x).length > 1).length} of ${Object.keys(titles.items).length} titles have direct links`;
+        // when Wikidata last answered, and how many titles open on the service itself: the watchdog keeps an eye on both
+        const checked = answered || !asked ? new Date().toISOString() : prevTitles?.links?.checked;
+        titles.links = { ...(checked ? { checked } : {}), ...linkStats(titles) };
+        const any = Object.values(titles.items).filter((x) => hasLinks(x.ln)).length;
+        const msg = `${titles.links.direct} of ${titles.links.of} places to stream open the title itself; ${any} of ${Object.keys(titles.items).length} titles have a direct link`
+          + (asked ? ` (${answered} of ${asked} lookups answered)` : '');
         console.log(process.env.GITHUB_ACTIONS ? `::notice title=Links::${msg}` : `Links: ${msg}`);
       } catch (err) { warn('Links', err.message); }
       await write('titles.json', titles);

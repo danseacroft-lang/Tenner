@@ -81,18 +81,18 @@ export default {
       const m = url.pathname.match(/^\/title\/([mt])(\d{1,9})$/);
       if (!m) return json({ error: 'Not found' }, 404, cors);
       const type = m[1] === 'm' ? 'movie' : 'tv';
-      path = `/${type}/${m[2]}`; params = { language: 'en-GB', append_to_response: `watch/providers,videos,images,${type === 'movie' ? 'release_dates' : 'content_ratings'}`, include_image_language: 'en,null' };
+      path = `/${type}/${m[2]}`; params = { language: 'en-GB', append_to_response: `watch/providers,videos,images,${type === 'movie' ? 'release_dates' : 'content_ratings,external_ids'}`, include_image_language: 'en,null' };
       shape = (d) => titleShape(d, type, m[1] + m[2]); ttl = 21600;
     }
 
     // the edge cache, keyed on the request without its origin
-    const cache = caches.default, key = new Request(`https://tenner-cache/v4${url.pathname}?${new URLSearchParams(params)}`);   // bump v when a shape changes
+    const cache = caches.default, key = new Request(`https://tenner-cache/v5${url.pathname}?${new URLSearchParams(params)}`);   // bump v when a shape changes
     let hit = await cache.match(key);
     if (!hit) {
       const r = await fetch(`${TMDB}${path}?${new URLSearchParams(params)}`, { headers: { authorization: `Bearer ${env.TMDB_TOKEN}`, accept: 'application/json' } });
       if (!r.ok) return json({ error: `TMDB ${r.status}` }, r.status === 404 ? 404 : 502, cors);
-      const body = shape(await r.json());
-      if (body.items) await addLinks(body);   // the title's own page on each service, from Wikidata
+      const raw = await r.json(), body = shape(raw);
+      if (body.items) await addLinks(body, raw.imdb_id || raw.external_ids?.imdb_id);   // the title's own page on each service, from Wikidata
       hit = new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json', 'cache-control': `public, max-age=${ttl}` } });
       ctx.waitUntil(cache.put(key, hit.clone()));
     }
@@ -223,18 +223,25 @@ function collectionShape(d) {
   return { id: d.id, name: d.name, overview: (d.overview || '').trim(),
     parts: (d.parts || []).filter((x) => !x.adult).sort((a, b) => (a.release_date || '9999').localeCompare(b.release_date || '9999')).map((x) => cardOf(x, 'movie')) };
 }
-// Each title's own page on Netflix, Disney+, Prime Video, HBO Max and Apple TV, from Wikidata (as the hourly job does)
-async function addLinks(body) {
+// Each title's own page on Netflix, Disney+, Prime Video, HBO Max and Apple TV, from Wikidata (as the hourly job does):
+// found by its TMDB ID or its IMDb ID, keeping the first ID of each kind in the shape that service's addresses take
+const WD_P = { nf: 'P1874', dpm: 'P7595', dps: 'P7596', pv: 'P8055', pv2: 'P14440', hb: 'P8298', atm: 'P9586', ats: 'P9751' };
+const LN_OK = { nf: /^\d{5,10}$/, dp: /^(movies\/wd|series\/wp)\/[A-Za-z0-9]{6,20}$/, pv: /^(amzn1\.dv\.gti\.[0-9a-f-]{36}|[0-9A-Z]{10,30})$/,
+  hb: /^(show|movie|feature|series)\/[A-Za-z0-9:-]{8,60}$/, ap: /^(movie|show)\/umc\.cmc\.[a-z0-9]{10,40}$/ };
+async function addLinks(body, imdb) {
   const k = Object.keys(body.items)[0], type = k[0] === 'm' ? 'movie' : 'tv', id = k.slice(1);
-  const P = { nf: 'P1874', dpm: 'P7595', dps: 'P7596', pv: 'P8055', pv2: 'P14440', hb: 'P8298', atm: 'P9586', ats: 'P9751' };
-  const q = `SELECT ${Object.keys(P).map((v) => `?${v}`).join(' ')} WHERE { ?i wdt:${type === 'movie' ? 'P4947' : 'P4983'} "${id}" . ${Object.entries(P).map(([v, p]) => `OPTIONAL { ?i wdt:${p} ?${v} }`).join(' ')} } LIMIT 1`;
+  const by = `{ ?i wdt:${type === 'movie' ? 'P4947' : 'P4983'} "${id}" . }` + (/^tt\d{6,10}$/.test(imdb || '') ? ` UNION { ?i wdt:P345 "${imdb}" . }` : '');
+  const q = `SELECT ${Object.keys(WD_P).map((v) => `?${v}`).join(' ')} WHERE { ${by} ${Object.entries(WD_P).map(([v, p]) => `OPTIONAL { ?i wdt:${p} ?${v} }`).join(' ')} } LIMIT 30`;
   try {
     const r = await fetch(`https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(q)}`,
       { headers: { accept: 'application/sparql-results+json', 'user-agent': 'Tenner/1.0 (https://github.com/danseacroft-lang/Tenner)' }, signal: AbortSignal.timeout(4000) });
-    const b = r.ok ? (await r.json()).results?.bindings?.[0] : null; if (!b) return;
-    const v = (n) => b[n]?.value;
-    const ln = Object.fromEntries(Object.entries({ nf: v('nf'), dp: v('dpm') ? `movies/wd/${v('dpm')}` : v('dps') ? `series/wp/${v('dps')}` : undefined,
-      pv: v('pv2') || v('pv'), hb: v('hb'), ap: v('atm') ? `movie/${v('atm')}` : v('ats') ? `show/${v('ats')}` : undefined }).filter(([, x]) => x));
+    const ln = {};
+    for (const b of (r.ok ? (await r.json()).results?.bindings : null) || []) {
+      const v = (n) => b[n]?.value;
+      const got = { nf: v('nf'), dp: v('dpm') ? `movies/wd/${v('dpm')}` : v('dps') ? `series/wp/${v('dps')}` : undefined,
+        pv: v('pv2') || v('pv'), hb: v('hb'), ap: v('atm') ? `movie/${v('atm')}` : v('ats') ? `show/${v('ats')}` : undefined };
+      for (const [n, x] of Object.entries(got)) if (x && !ln[n] && LN_OK[n].test(x)) ln[n] = x;
+    }
     if (Object.keys(ln).length) body.items[k].ln = ln;
   } catch { /* no links: the sheet uses each service's search */ }
 }
