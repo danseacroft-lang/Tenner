@@ -351,23 +351,23 @@ html.still .bx-tt-bg img { transition: none; }
 .bx-h-ov-x { -webkit-line-clamp: 4; }
 @media (max-width: 899px) { .bx-h-l .bx-h-ximg { object-position: 70% center; } }
 
-/* ---------- the Watchlist's trailer (signed in): the featured title's card, on the Watchlist page (app.js wlHero) ---------- */
+/* ---------- trailers in the featured title's card: the homepage's trailer slide (home.js trPlay) and the Watchlist's (app.js wlHero) ---------- */
 body:has(#wlTop:not([hidden])) { overflow-x: clip; }   /* the glow runs the window's full width, never past it */
 .wl-top { position: relative; isolation: isolate; padding-top: 10px; padding-bottom: 8px; }
 @media (min-width: 1000px) { .wl-top { padding-top: 22px; } }
 .wl-hero { min-height: clamp(380px, 52vh, 540px); }
-.wl-art { container-type: size; }
+.wl-art, .bx-h-vid { container-type: size; }
 /* the player fills the artwork the way a picture would (cropped, never letterboxed), under the soft dark wash */
-.wl-art iframe { position: absolute; top: 50%; left: 50%; width: max(100cqw, 177.78cqh); height: max(100cqh, 56.25cqw); translate: -50% -50%; scale: 1.04;
+.wl-art iframe, .bx-h-vid iframe { position: absolute; top: 50%; left: 50%; width: max(100cqw, 177.78cqh); height: max(100cqh, 56.25cqw); translate: -50% -50%; scale: 1.04;
   border: 0; opacity: 0; pointer-events: none; }
-.wl-art.on iframe { opacity: 1; }
-:root:not(.still) .wl-art iframe { transition: opacity 1s var(--ease-out); }
+.wl-art.on iframe, .bx-h-vid.on iframe { opacity: 1; }
+:root:not(.still) .wl-art iframe, :root:not(.still) .bx-h-vid iframe { transition: opacity 1s var(--ease-out); }
 /* no wide artwork: the poster, blurred into a backdrop */
 .wl-soft .bx-h-l img { filter: blur(28px) saturate(1.4); transform: scale(1.2); }
 :root:not(.still) .wl-soft .bx-h-l.in img { animation: none; }
 :root:not(.still) .wl-copy > * { animation: wlIn .6s var(--ease-out) both; }
 @keyframes wlIn { from { opacity: 0; transform: translateY(8px); } }
-.wl-snd[aria-pressed="true"] .off, .wl-snd[aria-pressed="false"] .on { display: none; }
+.wl-snd[aria-pressed="true"] .off, .wl-snd[aria-pressed="false"] .on, .bx-snd[aria-pressed="true"] .off, .bx-snd[aria-pressed="false"] .on { display: none; }
 @media (max-width: 899px) { .wl-hero { height: clamp(400px, 104vw, 520px); } }
 @media (max-width: 719px) { .wl-top { padding-top: 6px; } .wl-hero { margin-top: 0; } }
 .wl-hero .bx-h-acts { flex-wrap: nowrap; }
@@ -376,4 +376,12 @@ body:has(#wlTop:not([hidden])) { overflow-x: clip; }   /* the glow runs the wind
   .wl-hero .bx-h-acts { gap: 8px; }
   .wl-hero .bx-r-l { width: 44px; height: 44px; }
   .wl-hero .bx-cta { font-size: 15px; }
+}
+/* the trailer slide's three buttons stay on one line, down to the smallest phones */
+.bx-h-acts:has(.bx-snd) { flex-wrap: nowrap; }
+@media (max-width: 380px) {
+  .bx-h-copy:has(.bx-snd) { padding-left: 14px; padding-right: 14px; }
+  .bx-h-acts:has(.bx-snd) { gap: 8px; }
+  .bx-h-acts:has(.bx-snd) .bx-r-l { width: 44px; height: 44px; }
+  .bx-h-acts:has(.bx-snd) .bx-cta { font-size: 15px; }
 }
