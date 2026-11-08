@@ -2,26 +2,34 @@
    chart list underneath), the week on the charts (the UK's top 10 traced day by day) and Last chance. The chart lists,
    rows of posters and the phone banners are the homepage's own; this file only adds the new pieces. */
 
-/* ============================================================ the week in numbers: one frosted box, four counts */
-.nw-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); margin: 22px 0 0; border-radius: var(--r); overflow: hidden;
-  background: var(--fr-bg); -webkit-backdrop-filter: var(--fr-blur); backdrop-filter: var(--fr-blur); box-shadow: inset 0 0 0 1px var(--fr-rim); }
-.nw-stat { position: relative; display: grid; gap: 6px; align-content: start; min-width: 0; padding: 18px 20px 16px; color: var(--label); transition: background-color .2s ease; }
-.nw-stat + .nw-stat::before { content: ""; position: absolute; left: 0; top: 16px; bottom: 16px; width: .5px; background: var(--sep); }
+/* ============================================================ the week in numbers: a frosted tile per count, each with its own
+   colour washed softly into its corner, an icon, the number and a chevron (it's a way into that part of the page) */
+.nw-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 22px 0 0; }
+.nw-stat { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; min-width: 0; padding: 16px 16px 16px 18px;
+  border-radius: var(--r); overflow: hidden; color: var(--label); isolation: isolate;
+  background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--c) 16%, transparent), transparent 60%), var(--fr-bg);
+  -webkit-backdrop-filter: var(--fr-blur); backdrop-filter: var(--fr-blur); box-shadow: inset 0 0 0 1px var(--fr-rim);
+  transition: transform .5s var(--ease-spring), background-color .2s ease; }
 .nw-stat:hover { text-decoration: none; }
-@media (hover: hover) { .nw-stat:hover { background: var(--fr-in); } }
-.nw-stat:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--r); }
-.nw-stat b { font: 700 40px/1 var(--font-display); letter-spacing: -.02em; color: var(--c); font-variant-numeric: tabular-nums; }
-.nw-stat span { display: grid; gap: 1px; font: 500 15px/1.25 var(--font); letter-spacing: -.016em; min-width: 0; }
-.nw-stat small { font-size: 13px; font-weight: 400; color: var(--label2); }
-:root[data-theme="dark"] .nw-stat b { text-shadow: 0 0 22px color-mix(in srgb, var(--c) 45%, transparent); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .nw-stat b { text-shadow: 0 0 22px color-mix(in srgb, var(--c) 45%, transparent); } }
+@media (hover: hover) { .nw-stat:hover { background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--c) 24%, transparent), transparent 65%), var(--fr-bg); }
+  .nw-stat:hover .nw-chev { translate: 3px 0; color: var(--label2); } }
+.nw-stat:active { transform: scale(.98); }
+.nw-stat:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.nw-si { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); }
+.nw-si svg { width: 22px; height: 22px; }
+.nw-sx { display: grid; min-width: 0; }
+.nw-sx b { font: 700 30px/1.05 var(--font-display); letter-spacing: -.02em; color: var(--c); font-variant-numeric: tabular-nums; }
+.nw-sl { margin-top: 3px; font: 500 15px/1.25 var(--font); letter-spacing: -.016em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nw-sx small { font-size: 13px; line-height: 1.3; color: var(--label2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nw-chev { width: 8px; height: 8px; margin-right: 4px; border: solid currentColor; border-width: 2px 2px 0 0; rotate: 45deg; color: var(--label3); transition: translate .4s var(--ease-spring), color .2s ease; }
 @media (max-width: 719px) {
-  .nw-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 16px; background: var(--ph-box); box-shadow: none; }
-  .nw-stat { padding: 14px 14px 13px; gap: 4px; }
-  .nw-stat b { font-size: 32px; }
-  .nw-stat span { font-size: 14px; } .nw-stat small { font-size: 12px; }
-  .nw-stat:nth-child(odd)::before { display: none; }
-  .nw-stat:nth-child(n + 3)::after { content: ""; position: absolute; left: 14px; right: 14px; top: 0; height: .5px; background: var(--sep); }
+  .nw-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+  .nw-stat { grid-template-columns: minmax(0, 1fr); align-items: start; gap: 10px; padding: 14px;
+    background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--c) 16%, transparent), transparent 60%), var(--ph-box); box-shadow: none; }
+  .nw-si { width: 36px; height: 36px; } .nw-si svg { width: 19px; height: 19px; }
+  .nw-sx b { font-size: 30px; }
+  .nw-sl { font-size: 14px; } .nw-sx small { font-size: 12px; white-space: normal; }
+  .nw-chev { position: absolute; top: 18px; right: 14px; }
 }
 
 /* ============================================================ Day by day: a ribbon of days that fades at its edges */

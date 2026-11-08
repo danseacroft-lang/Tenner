@@ -458,15 +458,20 @@ const IC = {
 function nwStats(f, w, today, leaving) {
   const past = f ? f.items.filter((x) => x.date <= today && x.date > isoAdd(today, -7)) : [], ahead = f ? f.items.filter((x) => x.date > today && x.date <= isoAdd(today, 30)) : [];
   const ones = (w?.ones || []).filter((x, i, all) => x.fresh && all.findIndex((y) => y.k === x.k) === i).length;
+  const ic = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
   const cells = [
-    [past.length, past.length === 1 ? 'New arrival' : 'New arrivals', 'in the last seven days', 'nwDays', '#0a84ff', past.length ? today : null],
-    [ahead.length, 'On the way', 'over the next month', 'nwDays', '#bf5af2', ahead[0]?.date],
-    [ones, ones === 1 ? 'New No. 1' : 'New No. 1s', 'at the top of a chart', 'wk-1', '#30d158', null],
-    [leaving.length, 'Leaving soon', 'catch them before they go', 'leaving', '#ff375f', null],
+    [past.length, past.length === 1 ? 'New arrival' : 'New arrivals', 'in the last seven days', 'nwDays', '#0a84ff', past.length ? today : null,
+      ic('<path d="M10.5 3.5l1.8 4.9 4.9 1.8-4.9 1.8-1.8 4.9-1.8-4.9-4.9-1.8 4.9-1.8z" fill="currentColor"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z" fill="currentColor"/>')],
+    [ahead.length, 'On the way', 'over the next month', 'nwDays', '#bf5af2', ahead[0]?.date,
+      ic('<rect x="3.5" y="5" width="17" height="15.5" rx="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>')],
+    [ones, ones === 1 ? 'New No. 1' : 'New No. 1s', 'at the top of a chart', 'wk-1', '#30d158', null,
+      ic('<path d="M4 8l4 3.5L12 5l4 6.5L20 8l-1.6 10H5.6z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>')],
+    [leaving.length, 'Leaving soon', 'catch them before they go', 'leaving', '#ff375f', null,
+      ic('<path d="M7 3.5h10M7 20.5h10M8 3.5c0 4 8 5 8 8.5s-8 4.5-8 8.5M16 3.5c0 4-8 5-8 8.5s8 4.5 8 8.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>')],
   ].filter((c) => c[0]);
   if (cells.length < 2) return '';
-  return `<nav class="nw-stats" aria-label="This week in numbers">${cells.map(([n, label, sub, to, c, day]) => `<a class="nw-stat" href="#${to}" data-jump="${to}"${day ? ` data-day="${day}"` : ''} style="--c:${c}">
-    <b data-count="${n}">${n}</b><span>${esc(label)}<small>${esc(sub)}</small></span></a>`).join('')}</nav>`;
+  return `<nav class="nw-stats" aria-label="This week in numbers">${cells.map(([n, label, sub, to, c, day, icon]) => `<a class="nw-stat" href="#${to}" data-jump="${to}"${day ? ` data-day="${day}"` : ''} style="--c:${c}">
+    <i class="nw-si">${icon}</i><span class="nw-sx"><b data-count="${n}">${n}</b><span class="nw-sl">${esc(label)}</span><small>${esc(sub)}</small></span><span class="nw-chev" aria-hidden="true"></span></a>`).join('')}</nav>`;
 }
 
 // Day by day: a ribbon of days, last week's arrivals and the month ahead, today in the middle. Pick a day and its titles
